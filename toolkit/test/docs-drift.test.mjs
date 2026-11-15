@@ -158,3 +158,8 @@ test('QUICKSTART.md and CAPABILITIES.md hold no raw HTML outside code (the websi
 		for (const [re, what] of [[/<\s*[A-Za-z!\/?]/, 'an HTML tag or comment'], [/\bon[a-z]+\s*=/i, 'an event handler'], [/(javascript|vbscript)\s*:|\]\(\s*data\s*:/i, 'a script-like URL'], [/&#?\w+;/, 'an HTML entity']]) assert.ok(!re.test(bare), `${f} holds ${what}`);
 	}
 });
+
+test('no doc promises "no Reload" or a newer Remove behaviour without saying it is newer than 181', () => {
+	const promise = /\b(no|without|never need(s)?( a)?|not need(ed)?) reload\b|reload (is )?not (needed|required)|appears? immediately|in-place confirm/i;
+	for (const f of DOCS) read(f).split('\n').forEach((l, i) => { if (promise.test(l)) assert.match(l, /newer than 181|0\.1\.18[2-9]|not promised/i, `${f}:${i + 1} ${l.slice(0, 140)}`); });
+});

@@ -68,6 +68,21 @@ Edit between `new` and `run`. After editing an engine app's `scripts/config.json
 
 The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal to it.
 
-## 5. Where things stand
+## 5. When Bolt says no (Bolt 0.1.181)
+
+| Bolt says or does | Do this |
+|---|---|
+| After a drop the dialog says `Installed ... Ready to use: your-app-id` | Type `=<chip>`. 181 refreshes its list after a pack install. A file you saved into the User Apps folder by hand needs Reload. |
+| The chip is missing | Settings, Desktop App, User Apps, click Reload. A file that failed to load is listed there with the reason. |
+| "Not run. Needs your OK" | Press Enter on the app's run row, read what it can do, accept. First run only. |
+| HIGH RISK in the install prompt | Normal for a personal app that runs a script (tier 3). Read the permissions, confirm only code you have read. |
+| "a pack is only replaced by a newer version" | `ship` already raises the version. If you packed by hand, pass a higher `--version`. To go back, Remove the app first. |
+| "already belongs to" another signer | Pack with the key you first used (`~/.bolt-apps/key.pem`), or Remove the installed app and ship again. |
+| "Bundle rejected" | You dropped it in Admin settings. Drop it on the Bolt launcher or Bolt Apps. |
+| Remove | Settings, Desktop App, User Apps, the Remove button on the app. If you built apps before a fix was announced for them: Remove the app there, then `./bolt-apps ship` it again. |
+
+Written from the 0.1.181 source, not seen in a running 181. Anything that needs a newer Bolt is marked "newer than 181" where it appears; none is promised here (for example, an install that needs no Reload even for hand-saved files, or an in-place Remove confirmation, are newer than 181).
+
+## 6. Where things stand
 
 Sample mode: `run --sample` and `check` need no key and no network. Live mode: put the key in the keychain or the `.env` file, then `run --live`. Not shipped: confinement of scripts, native MCP (a script can call one tool over stdio, tested only against a stand-in), Windows runs. The `permissions` block in an app file is shown at install and not enforced.
