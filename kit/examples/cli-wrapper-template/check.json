@@ -308,6 +308,36 @@
           "Not available on this system"
         ]
       }
+    },
+    {
+      "name": "sample mode parses fixtures.json and runs no command",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "fixture": true,
+      "expect": {
+        "text_present": [
+          "Sample data",
+          "Reachable"
+        ]
+      }
+    },
+    {
+      "name": "linux sample mode (format-only recording)",
+      "os": "linux",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "fixture": true,
+      "expect": {
+        "text_present": [
+          "Sample data",
+          "Reachable"
+        ]
+      }
     }
   ]
 }

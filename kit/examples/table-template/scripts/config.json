@@ -11,7 +11,7 @@
  "api": {
   "base_url": "https://api.example.com",
   "key_env": "TABLE_API_KEY",
-  "fixture_default": true,
+  "fixture_default": false,
   "fixture_file": "fixtures.json",
   "fixture_banner": false
  },

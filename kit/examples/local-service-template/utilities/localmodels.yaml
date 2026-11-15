@@ -4,7 +4,7 @@ runtime: http_local
 id: local-service-template
 chip: localmodels
 title: "Local service template"
-icon: box
+icon: package
 description: "Lists what a local service reports. This one reads the model list of an Ollama server on 127.0.0.1:11434."
 placeholder_examples: ["Enter to list models"]
 emits: Generic

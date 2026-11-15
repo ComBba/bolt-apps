@@ -9,7 +9,7 @@
   "timeout": 10
  },
  "api": {
-  "fixture_default": true,
+  "fixture_default": false,
   "fixture_file": "fixtures.json",
   "fixture_banner": false
  },

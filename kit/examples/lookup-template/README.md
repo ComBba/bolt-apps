@@ -25,4 +25,4 @@ node toolkit/bin/bolt-apps.mjs check kit/examples/lookup-template --update-golde
 node toolkit/bin/bolt-apps.mjs lint kit/examples/lookup-template --personal
 node toolkit/bin/bolt-apps.mjs pack kit/examples/lookup-template --personal --version 1.0.1 --out lookup-template-1.0.1.boltpack
 ```
-Live: `api.fixture_default` to `false`.
+Live is the default. `check` runs sample mode through `"fixture": true` in `check.json`.

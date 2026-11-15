@@ -1,10 +1,192 @@
 [
   {
-    "title": "This app is not set up correctly",
-    "subtitle": "config.json: icon 'gauge' is not in the launcher icon map (see kit/schema/icons.json)",
-    "icon": "AlertCircle",
+    "title": "Dashboard: deploys",
+    "subtitle": "428 this week, peak 96",
+    "icon": "activity",
     "body": "",
+    "nav": {
+      "view": "bars_rows"
+    },
     "actions": [],
+    "kpi_label": "Deploys",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "this week",
+    "kpi_foot": "",
+    "kpi_badge": "WEEK",
+    "copy_text": "",
+    "trend": [
+      42,
+      58,
+      51,
+      73,
+      96,
+      61,
+      47
+    ],
+    "open_url": "",
+    "delta": "+23",
+    "since": "Fri vs Thu"
+  },
+  {
+    "title": "Dashboard: p95 latency",
+    "subtitle": "last 12 samples",
+    "icon": "clock",
+    "body": "",
+    "nav": {
+      "view": "line_values"
+    },
+    "actions": [],
+    "kpi_label": "API latency",
+    "kpi_value": 171,
+    "kpi_unit": "ms",
+    "kpi_max": "",
+    "kpi_note": "latest sample",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "trend": [
+      182,
+      175,
+      190,
+      171,
+      168,
+      160,
+      150,
+      171,
+      168,
+      175,
+      182,
+      190
+    ],
+    "open_url": ""
+  },
+  {
+    "title": "Bars from rows",
+    "subtitle": "one row per bar: x and y",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "bars_rows"
+    },
+    "actions": [],
+    "kpi_label": "Peak day",
+    "kpi_value": 96,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Line from rows",
+    "subtitle": "line spans min to max",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "line_rows"
+    },
+    "actions": [],
+    "kpi_label": "Total",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Sparkline from rows",
+    "subtitle": "no axes",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "spark_rows"
+    },
+    "actions": [],
+    "kpi_label": "Total",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Bars from a series",
+    "subtitle": "one row, many points: bind.values",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "bars_values"
+    },
+    "actions": [],
+    "kpi_label": "Series",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "select one",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Line from a series",
+    "subtitle": "bind.values",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "line_values"
+    },
+    "actions": [],
+    "kpi_label": "Series",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "select one",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Sparkline from a series",
+    "subtitle": "bind.values",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "spark_values"
+    },
+    "actions": [],
+    "kpi_label": "Series",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "select one",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",

@@ -12,7 +12,7 @@ import sys
 import bolt_app_kit as kit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-FILE_WORDS = ("config.json", "bolt_app_kit.py")   # the helper files the bridge command lists; this app has no fixtures.json (check stubs live in fixtures/, author side only)
+FILE_WORDS = ("config.json", "fixtures.json", "bolt_app_kit.py")   # the helper files the bridge command lists, so Bolt shows them in the approval and asks again if one changes
 VIEWS = ("overview", "replies", "raw", "command")
 APP = "cli-wrapper-template"
 OS = kit.os_name()
@@ -102,6 +102,15 @@ def run_ping(cfg, cmd, deadline):
 def cacheable(res):
     """Only a real answer is kept. A timeout, a missing tool, a failure and an unresolved name are not: the next run asks again."""
     return res.get("kind") == "ok"
+
+
+def sample_result(cfg, fx):
+    """Sample mode: parse a recorded output instead of running the tool, so a copy of this app has a working path before the tool is installed."""
+    text = fx.get(OS)
+    if not isinstance(text, str):
+        return {"kind": "failed", "reason": "no sample for this system", "rc": None, "out": ""}
+    stats = parse_output(text, cfg["parse"][OS])
+    return {"kind": "ok", "stats": stats, "rc": 0, "meaning": "ok", "out": text} if stats["loss"] is not None else {"kind": "failed", "reason": "sample not readable", "rc": 0, "out": text}
 
 
 def shape(v):
@@ -232,15 +241,21 @@ def main(argv):
         kit.emit([kit.error_row(bad or bad_count, title="Not run: that input is not allowed")])
     cmd = build_command(cfg, host, count)
     key = "%s|%d" % (host, count)
+    sample = os.environ.get("BOLT_APP_FIXTURE") == "1"
     results = kit.Cache(APP + "-results", cfg["limits"]["result_ttl"], shape=shape)
-    res = None if refresh else results.get(key)
+    res = None if refresh or sample else results.get(key)
     fromcache, age = res is not None, results.age(key) if res is not None else None
-    if res is None:
+    if res is None and sample:
+        res = sample_result(cfg, load_json("fixtures.json"))
+    elif res is None:
         res = run_ping(cfg, cmd, kit.Deadline(float(cfg["limits"]["command_timeout"]) + 2))
         results.put(key, res, ok=cacheable(res))   # a timeout, a missing tool or an unresolved name is never remembered
         fromcache = False
     lastc.put("last", {"host": host, "count": None if count_word is None else count})
-    kit.emit(build(view, cfg, res, host, count, cmd, fromcache, age or 0))
+    rows = build(view, cfg, res, host, count, cmd, fromcache, age or 0)
+    if sample and view == "overview":
+        rows.insert(0, kit.row("Sample data", "A recorded ping output was parsed; nothing was run. Unset BOLT_APP_FIXTURE for the real command", icon="FileText", badge="SAMPLE", copy=False))
+    kit.emit(rows)
 
 
 def run(argv):

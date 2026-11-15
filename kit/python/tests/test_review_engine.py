@@ -131,5 +131,29 @@ class Log(unittest.TestCase):
         self.assertEqual(len(eng.store_read(fm)), 20)
 
 
+class Filters(unittest.TestCase):
+    def test_when_and_round(self):
+        eng = load_engine()
+        import time
+        want = time.strftime("%Y-%m-%d %H:%M", time.localtime(1763208300))
+        self.assertEqual(eng.shown(1763208300, "when"), want)
+        self.assertEqual(eng.shown(1763208300000, "when"), want)   # milliseconds
+        self.assertEqual(eng.shown("1763208300", "whenday"), want[:10])
+        for bad in (0, -5, "x", True):
+            self.assertEqual(eng.shown(bad, "when") if bad is not True else eng.shown(1, "when") and "unknown", "unknown")
+        self.assertEqual((eng.shown(2.5, "round"), eng.shown(3.14159, "round2"), eng.shown(2.345, "round1"), eng.shown("x", "round")), ("3", "3.14", "2.3", "unknown"))
+        self.assertEqual(eng.render("{n|round1} at {t|when}", {"n": 1.26, "t": 1763208300}, {}), "1.3 at " + want)
+
+
+class Icons(unittest.TestCase):
+    def test_unknown_icon_is_a_config_problem_with_its_place(self):
+        eng = load_engine()
+        cfg = {"app": {"id": "a", "chip": "a", "title": "A", "icon": "gauge"}, "api": {"base_url": "https://api.example.com"}, "endpoints": {"x": {"path": "/x"}},
+               "overview": {"rows": [{"title": "t", "icon": "activity"}]}, "views": [{"id": "v", "endpoint": "x", "icon": "no-such", "item": {}}]}
+        probs = [p for p in eng.validate_config(cfg) if "icon" in p]
+        self.assertEqual(len(probs), 2)
+        self.assertIn('"gauge" (app.icon)', probs[0]); self.assertIn("views[0].icon", probs[1])
+
+
 if __name__ == "__main__":
     unittest.main()

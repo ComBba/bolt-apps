@@ -478,7 +478,7 @@ def badges_row(ctx, m):
             txt += " %s/%s left" % (ctx.meta["github"]["remaining"], ctx.meta["github"]["limit"])
         bs.append(("%s %s" % (lab, txt), tone))
         bits.append("%s %s" % (lab, txt))
-    return kit.safe_row("Sources", " · ".join(bits) + " · all calls took %d ms together" % r["_wall"] if not ctx.fixture else " · ".join(bits), icon="Network" if False else "Globe", badges=bs, copy=False)
+    return kit.safe_row("Sources", " · ".join(bits) + " · all calls took %d ms together" % r["_wall"] if not ctx.fixture else " · ".join(bits), icon="network" if False else "Globe", badges=bs, copy=False)
 
 
 def overview_rows(ctx, m, since, new_snapshot_note):

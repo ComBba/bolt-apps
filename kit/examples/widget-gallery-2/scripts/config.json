@@ -3,7 +3,7 @@
   "id": "widget-gallery-2",
   "chip": "gallery2",
   "title": "Widget gallery 2",
-  "icon": "image",
+  "icon": "Image",
   "description": "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images.",
   "service": "Widget gallery",
   "searchable": false
@@ -12,7 +12,7 @@
   "base_url": "https://api.example.com",
   "key_env": "GALLERY2_API_KEY",
   "env_file": "~/.config/widget-gallery-2/.env",
-  "fixture_default": true,
+  "fixture_default": false,
   "fixture_file": "fixtures.json",
   "fixture_banner": false
  },

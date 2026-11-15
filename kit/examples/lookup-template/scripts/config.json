@@ -37,7 +37,7 @@
  "api": {
   "base_url": "https://api.open-meteo.com",
   "user_agent": "bolt-app-example/1.0 (lookup-template)",
-  "fixture_default": true,
+  "fixture_default": false,
   "fixture_file": "fixtures.json",
   "fixture_banner": true,
   "allowed_hosts": [

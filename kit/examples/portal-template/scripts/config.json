@@ -13,7 +13,7 @@
     "env_file": "~/.config/portal-template/.env",
     "auth_header": "Authorization",
     "auth_prefix": "Bearer ",
-    "fixture_default": true,
+    "fixture_default": false,
     "fixture_file": "fixtures.json",
     "fixture_banner": true
   },

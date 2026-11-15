@@ -41,7 +41,7 @@ Bikes 30 s, places 1 h, weather 15 min, Wikipedia 1 day, geocode 30 days (`sourc
 `build_auth()` makes the headers; only a masked form is ever shown (`********`). Keys are read with `kit.get_secret` (keychain, then `~/.config/around/.env` mode 0600), never from a shell variable, which does not reach the script under Bolt. The bearer, basic and optional rows are a pattern demo: no real service is called with them. Add `demo-secrets` to the query to see fake secrets built into requests and masked. Not built: the attractions call itself (the key is verified to be required; I had no key to record a real answer).
 
 ## Sample data
-`api.fixture_default` is true: real answers recorded 2026-11-15 for "Bryant Park, New York" (trimmed), clock fixed at the recording time. `attractions_sample` in `fixtures.json` is hand-written and unused. Set `api.fixture_default` to false for any place. Failure previews: add `demo-places-down`, `demo-bikes-down`, `demo-weather-down` or `demo-wiki-down`.
+The app ships live (`api.fixture_default` is false); `check` runs it in sample mode (`"fixture": true` in `check.json`) on real answers recorded 2026-11-15 for "Bryant Park, New York" (trimmed), clock fixed at the recording time. `attractions_sample` in `fixtures.json` is hand-written and unused. Any place works in the live app; set `api.fixture_default` to true only to demo sample mode. Failure previews: add `demo-places-down`, `demo-bikes-down`, `demo-weather-down` or `demo-wiki-down`.
 
 ## Copy this to build
 Any app that joins sources with no shared id except location or time: a trip planner, a store finder, an event briefing. Replace the calls in `gather()`, the `n_*` readers, `stitch()` and `verdict()`.

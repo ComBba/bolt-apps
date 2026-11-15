@@ -11,7 +11,7 @@ Every chart the launcher can draw, each fed both ways, plus a cards-only dashboa
 
 - Types: `line` (the default), `bar`, `sparkline` only. `color` is `accent` or `muted`. Hover shows values; there is nothing else interactive.
 - Axes: bars are drawn from zero so height equals value; a line or sparkline spans the series minimum to maximum. A sparkline has no axes or labels. Latest and peak numbers are shown with the chart.
-- A row whose y is not a number is skipped and the pane says so; it is never drawn as zero. At most 500 rows or points are drawn.
+- A row whose y is not a number is skipped and the pane says so; it is never drawn as zero. The pane can draw 500 points, but the engine hands a view at most 50 rows (`MAX_ROWS` in `engine.py`), so a chart here shows at most 50.
 - Not available: pie, donut, area. Stand-ins: cards with `max` and a unit as a progress meter for a share, or a table with a percent column (see `../table-template`).
 - A chart plots every row, so these views carry no Back or refresh rows; a stale or partial notice is the one extra row when data could not be refreshed.
 

@@ -3,6 +3,7 @@
   "interpreter": "python3",
   "manifest_actions": 2,
   "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
   "cases": [
     {
       "name": "valid submit: row is saved and shown, newest first, seeds below",

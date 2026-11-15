@@ -11,7 +11,7 @@ It is a tier 3 personal-use app (it runs a script and calls the network), so it 
 | 1 | `scripts/config.json` `app`, `api` | App id, chip, title; `base_url`, the key variable name, the `.env` path, the auth header |
 | 2 | `scripts/config.json` `endpoints` | One entry per API path, with `map` from your field names to the names the views use (`"title": "name"`, dotted paths such as `"owner": "assignee.name"` work) |
 | 3 | `scripts/config.json` `stats`, `overview`, `views` | Counters, the tiles on the overview, and per view: row title, subtitle, tile, up to 5 detail fields, body, link, `children` for a drill to a second list |
-| 4 | `scripts/fixtures.json` | A real response saved per endpoint. The app runs on it until you set `api.fixture_default` to `false` |
+| 4 | `scripts/fixtures.json` | A real response saved per endpoint. `check` runs on it (`"fixture": true` in `check.json`); the shipped app is live (`api.fixture_default: false`) |
 
 Then rebuild the app file and check:
 
@@ -36,7 +36,7 @@ Run these from inside the app folder. If you changed the id, write it in place o
 | Cache 45 s, old copy up to 24 h | `cache.ttl`, `cache.stale_max`; a failure is never cached |
 | Offline, rejected key, no key, partial load | one plain row each, Enter retries |
 | Key | environment variable first, then the first `NAME=...` line of the `.env` file (must be `chmod 600`). Never printed, cached or put in a row |
-| Fixture mode | `api.fixture_default: true`, or run with `BOLT_APP_FIXTURE=1` (live with `0`). No key, no network |
+| Fixture mode | `"fixture": true` in `check.json` (the whole app or one case), or `BOLT_APP_FIXTURE=1` in a terminal. No key, no network. The shipped app stays live: an installed pack cannot be flipped, because `config.json` is signed and Bolt passes no environment |
 | Preview the error rows | in fixture mode type `=<chip> tickets demo-offline`, `demo-stale`, `demo-auth` or `demo-nokey` |
 
 ## Not covered

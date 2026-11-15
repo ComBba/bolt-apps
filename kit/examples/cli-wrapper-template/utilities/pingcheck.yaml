@@ -14,8 +14,8 @@ args:
   - { name: p2, from: "query.word(2)", default: "-" }
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/wrap.py {{view}} {{p1}} {{p2}} {{scripts_dir}}/config.json {{scripts_dir}}/bolt_app_kit.py"
-    linux: "python3 {{scripts_dir}}/wrap.py {{view}} {{p1}} {{p2}} {{scripts_dir}}/config.json {{scripts_dir}}/bolt_app_kit.py"
+    macos: "python3 {{scripts_dir}}/wrap.py {{view}} {{p1}} {{p2}} {{scripts_dir}}/config.json {{scripts_dir}}/fixtures.json {{scripts_dir}}/bolt_app_kit.py"
+    linux: "python3 {{scripts_dir}}/wrap.py {{view}} {{p1}} {{p2}} {{scripts_dir}}/config.json {{scripts_dir}}/fixtures.json {{scripts_dir}}/bolt_app_kit.py"
   parse: json
   timeout_seconds: 20
 presentation:

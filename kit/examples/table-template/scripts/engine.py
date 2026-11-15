@@ -10,6 +10,7 @@ Other:   engine.py --emit-yaml    prints the launcher app file for this config
 An author edits config.json and fixtures.json only. Formatting, row structure, text safety, deadlines and the
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
 import json
+import math
 import os
 import re
 import socket
@@ -24,7 +25,7 @@ import bolt_app_kit as kit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MAPS = {}   # value labels from config.json "maps", used as {field|name}
-TOKEN = re.compile(r"\{([A-Za-z_][A-Za-z0-9_.]*)(?:\|([a-z_]+))?\}")
+TOKEN = re.compile(r"\{([A-Za-z_][A-Za-z0-9_.]*)(?:\|([a-z_][a-z0-9_]*))?\}")
 NAV_OK = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}\Z")
 MAX_VIEWS = 8            # the launcher refuses an app file with more views than this (overview counts as one)
 MAX_FIELDS = 5
@@ -62,6 +63,21 @@ def lookup(name, item, glob):
     return v if v is not None else get_path(glob, name)
 
 
+def _when(v, day_only=False):
+    """An epoch in seconds or milliseconds (a number or a string of digits) as local time, 2026-11-15 14:05, or the date only.
+    A value that is not a plausible epoch reads unknown, never 1970."""
+    n = number(v)
+    if n is None or n <= 0:
+        return kit.UNKNOWN
+    if n >= 1e11:
+        n = n / 1000.0
+    try:
+        t = time.localtime(n)
+    except (OverflowError, OSError, ValueError):
+        return kit.UNKNOWN
+    return time.strftime("%Y-%m-%d" if day_only else "%Y-%m-%d %H:%M", t)
+
+
 def shown(v, filt):
     if v is None or v == "":
         return kit.UNKNOWN
@@ -75,6 +91,14 @@ def shown(v, filt):
         return str(v)[11:16]
     if filt == "day":
         return str(v)[:10]
+    if filt in ("when", "whenday"):
+        return _when(v, filt == "whenday")
+    if filt in ("round", "round1", "round2"):
+        n = number(v)
+        if n is None:
+            return kit.UNKNOWN
+        d = {"round": 0, "round1": 1, "round2": 2}[filt]
+        return ("%." + str(d) + "f") % (math.floor(abs(n) * 10 ** d + 0.5) / 10 ** d * (1 if n >= 0 else -1))   # half up, as people count
     if filt == "upper":
         return str(v).upper()
     if filt == "lower":
@@ -185,10 +209,23 @@ def load_config(path):
     return cfg
 
 
+def icon_problems(o, path, out):
+    """Every `icon` in config.json must be a name in the launcher's icon list (kit/schema/icons.json). The launcher draws a plain plug for any other name."""
+    if isinstance(o, dict):
+        for k, v in o.items():
+            if k == "icon" and isinstance(v, str) and v not in kit.icons_data.ICONS:
+                out.append('icon "%s" (%s) is not in the launcher icon list (kit/schema/icons.json); use a listed name such as activity, list, globe, file or line-chart' % (v, (path + ".icon") if path else "icon"))
+            icon_problems(v, "%s.%s" % (path, k) if path else k, out)
+    elif isinstance(o, list):
+        for i, v in enumerate(o):
+            icon_problems(v, "%s[%d]" % (path, i), out)
+
+
 def validate_config(cfg):
     p = []
     if not isinstance(cfg, dict):
         return ["must be an object"]
+    icon_problems(cfg, "", p)
     app, api = cfg.get("app") or {}, cfg.get("api") or {}
     mode = cfg.get("mode", "views")
     if mode not in ("views", "form", "lookup"):

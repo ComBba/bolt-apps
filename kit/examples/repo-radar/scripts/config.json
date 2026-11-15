@@ -8,7 +8,7 @@
     "timeout": 25
   },
   "api": {
-    "fixture_default": true,
+    "fixture_default": false,
     "user_agent": "bolt-app-example/1.0 (repo-radar; github.com/SparcleHQ/bolt-apps)",
     "deadline_s": 13,
     "call_timeout_s": 8,

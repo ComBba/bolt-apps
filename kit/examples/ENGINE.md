@@ -42,7 +42,7 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 
 `item`: `title`, `subtitle`, `icon`, `url`, `body` (markdown), `copy`, `tile`, `fields` (up to 5 `{ label, value, kind }`), `extra` (named row fields a widget binds as `{{row.name}}`; a value that is exactly `{field}` keeps a number a number), `data_field` (a nested object for a json_tree pane), `trend_field`. A field named `left`, `right` or ending `_lines` keeps line breaks.
 
-Templates use `{field}` and `{field|filter}`: `human`, `day`, `upper`, `lower`, `yes`, `join`, `dots`, `count`. A missing value reads `unknown`.
+Templates use `{field}` and `{field|filter}`: `human`, `day`, `hhmm`, `when` (an epoch in seconds or milliseconds as local `2026-11-15 14:05`), `whenday` (the same, date only), `round`, `round1`, `round2` (a number to 0, 1 or 2 decimals), `upper`, `lower`, `yes`, `join`, `dots`, `count`, and any name from `maps`. A missing value reads `unknown`.
 
 ## Words typed after the chip (views mode)
 `=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
@@ -149,3 +149,46 @@ def main(argv):
 main(sys.argv)
 ```
 Limits: servers that need a login or a key are out of scope here (use `get_secret` and pass the key in the server's environment from the script, never in `config.json`); the server starts on every run, so slow servers feel slow; remote MCP servers over HTTP are a plain HTTP call and need no workaround.
+
+## Sample mode, live mode and what check does
+
+- A shipped engine app is live: `api.fixture_default` is `false`. An installed pack cannot be switched to sample data, because `config.json` is signed and Bolt starts the script with no environment.
+- `check` runs the script in sample mode so tests need no key and no network: put `"fixture": true` at the top of `check.json` (every case) or on one case (a case wins over the top level; `"fixture": false` forces live). The script then reads `fixtures.json`. A terminal run can use `BOLT_APP_FIXTURE=1` (or `0`).
+- Live with no key shows one setup row with the exact one-line command. Live with the network down shows the offline row, or an old copy with its age when one was cached. These are checked in sample mode with `demo-nokey`, `demo-offline`, `demo-auth` and `demo-stale`.
+
+## What check tells you
+
+- `expected_text_missing` now prints the first rows that were found, so you can copy the real text.
+- If the script printed its own error row ("This app is not set up correctly", "This app could not run"), `check` reports `app_error_row` with that row's text, for example a bad icon name in `config.json`, before it looks at expected text.
+- Every `icon` in `config.json` (the app, overview rows, views, items) must be a name in `kit/schema/icons.json`. The engine refuses an unknown name with its place (`views[0].icon`), and `lint --personal` reports `icon_unknown`: an error for `scripts/config.json` (the kit refuses the row) and a warning for the app file's own `icon:` (the launcher draws a plain plug and still shows the app).
+- A file in `golden/` that no case names is `golden_stale`. A copied template brings its goldens: keep the cases you want, delete the other goldens, then run `check --update-golden` once and read the files.
+- Stubs can answer by argument, so a tool called as `git status` and `git log` can be tested: `"stubs": {"git": {"stdout": "default", "by_args": [{"args": ["status", "--porcelain"], "file": "fixtures/macos/status.out"}, {"args": ["log"], "stdout": "abc123 first", "rc": 0}]}}`. The first rule whose words equal the first words of the command line answers; the stub's own `stdout` or `file` is the default. A case can set environment variables with `"env": {"MYVAR": "value"}` (names in capitals; `PATH` is always the stub folder and `HOME` a temporary folder).
+
+## Permissions: which list wins
+
+`bolt-app.json` `permissions` is listing text. The install prompt and `verify` show the permissions computed from the app files (`runs_commands`, `inserts_text`, `opens_links:<host>`, `network:localhost:<port>`). A declared `network` or `files` for a bridge script is never computed, shown or checked. `lint --personal` warns with `permissions_differ` when the two disagree and says which words are computed but not declared and which are declared but not computed. Keep a declared word only if it is true of the app.
+
+## Limits of views mode (so you pick the right template)
+
+- Views mode calls the list endpoints you name; it cannot call a per-id detail endpoint. `{id}`-style paths (and `{query}`) work only in `lookup` mode, where one typed word drives the calls. For a detail view, put the detail fields in the list response, or use a `lookup` app, or write a script like `repo-radar`.
+- Row actions in config are only Open (`url` on an item) and Copy (`copy`). More buttons need the app file's `actions:` (kinds `url`, `composer`, `utility`, `run`), at most 3 footer buttons including those two, and a nav row carries no actions.
+- Stitching: stats from several endpoints on the overview, and `children` that list rows of another view whose field equals this row's id. There is no cross-join of two endpoints into one row. For that, use a script (`repo-radar` joins on a repo and its package; `around` stitches by distance).
+- Lists show at most 50 rows (`MAX_ROWS` in `engine.py`); the view says so. The chart and table panes could draw more, but the engine does not hand them more.
+
+## Which file to edit in each template
+
+| Template | You edit | You do not edit |
+|---|---|---|
+| portal-template, acme-dash, chart-template, table-template, lookup-template, widget-gallery, widget-gallery-2, form-template | `scripts/config.json`, `scripts/fixtures.json` | `scripts/engine.py` |
+| file-insights-template | `scripts/config.json` (columns, rules, charts); `insights.py` only to add a rule kind | `bolt_app_kit.py` |
+| cli-wrapper-template | `scripts/config.json` (command table, exit codes, regexes) and `build()` in `scripts/wrap.py`: for a CLI app you ARE expected to edit this script, because the rows depend on what your tool prints. `scripts/fixtures.json` holds a sample output so a copy works before the tool is installed (sample mode) | `bolt_app_kit.py` |
+| repo-radar | `scripts/config.json`; `urls()`, the `n_*` readers, `model()` and `score()` in `scripts/radar.py` | `bolt_app_kit.py` |
+| around | `scripts/config.json`; `gather()`, the `n_*` readers, `stitch()` and `verdict()` in `scripts/around.py` | `bolt_app_kit.py` |
+| local-service-template | `utilities/*.yaml` only | |
+| system-glance | `scripts/system-glance.py` | `bolt_app_kit.py` |
+
+Never edit `bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --flat <app>`. Every script that lists a helper file in its command names it as `{{scripts_dir}}/<file>` (config.json, fixtures.json, bolt_app_kit.py) so Bolt shows it in the approval.
+
+## Typing free text and views in a script app
+
+The view is read from query word 0 (`view_arg` bound to `query.word(0)`), so a script app that also takes free text treats the first word as a view only when it is one of its view names and otherwise reads every word as text (`=insights ~/data.csv`, `=insights trend`). A text that starts with a view name needs a leading `./` or a different spelling. Words before the view word would need plain-word defaults (lint `view_arg_lead_default`); a default of `-` is fine for words after it. A nav row carries no actions and cannot carry text with a slash; keep the last typed text in the kit cache. To give a drilled-in view a button, add an ordinary row with `kit.action_chain(id, label, target_chip, query)` pointing at the app's own chip: a utility action to itself. That is not yet proven in the launcher.

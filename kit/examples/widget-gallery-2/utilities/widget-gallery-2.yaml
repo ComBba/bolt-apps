@@ -4,7 +4,7 @@ runtime: bridge
 id: widget-gallery-2
 chip: gallery2
 title: "Widget gallery 2"
-icon: image
+icon: Image
 description: "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images."
 placeholder_examples: ["Enter for overview", "card", "grid", "cardsimg"]
 emits: Generic
