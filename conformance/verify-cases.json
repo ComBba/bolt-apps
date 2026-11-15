@@ -179,12 +179,12 @@
       ]
     },
     {
-      "name": "script in a folder (nested folders install fine; it is only unused)",
+      "name": "script in a folder (Bolt allows it; this toolkit cannot yet check it)",
       "add": {
         "scripts/lib/util.py": "x\n"
       },
       "expect": [
-        "script_unused"
+        "script_subfolder"
       ]
     },
     {
@@ -660,10 +660,92 @@
         "scripts/a/b/c/d/e/f/g/h/i/x.py": "x\n"
       },
       "expect": [
-        "script_depth",
-        "script_unused"
-      ],
-      "bolt_error_contains": "nested more than 8 folders"
+        "script_subfolder"
+      ]
+    },
+    {
+      "name": "url action to localhost with a trailing dot",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: open, kind: url, label: Open, url_template: \"https://localhost./x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_internal"
+      ]
+    },
+    {
+      "name": "url action to a shortened loopback address",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: open, kind: url, label: Open, url_template: \"https://127.1/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_internal"
+      ]
+    },
+    {
+      "name": "url action to a hex loopback address",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: open, kind: url, label: Open, url_template: \"https://0x7f.0.0.1/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_internal"
+      ]
+    },
+    {
+      "name": "url action to the IPv6 loopback",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: open, kind: url, label: Open, url_template: \"https://[::1]/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_internal"
+      ]
+    },
+    {
+      "name": "url action with a user name in front of the host",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: open, kind: url, label: Open, url_template: \"https://user@example.com/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url"
+      ]
+    },
+    {
+      "name": "url action that hides localhost behind userinfo",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: open, kind: url, label: Open, url_template: \"https://example.com@localhost/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url"
+      ]
     }
   ]
 }

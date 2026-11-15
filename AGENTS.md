@@ -130,7 +130,7 @@ the app can do and asks the person to confirm.
 Rules a script app must follow, each one a `verify` code:
 
 - One app file per `utilities/<id>.yaml`; script names are plain
-  (`script_name`); nested folders under `scripts/` install (at most 8 deep: `script_depth`, `script_case_clash`). The kit ships as one file, `scripts/bolt_app_kit.py`, made by
+  (`script_name`); nested folders under `scripts/` install (Bolt allows them up to 8 deep; this toolkit refuses them as `script_subfolder` until it can check nested files). The kit ships as one file, `scripts/bolt_app_kit.py`, made by
   `bolt-apps kit vendor --flat <folder>`, which keeps the command's helper list short.
 - The command names the script as `{{scripts_dir}}/<name>`, bare, never in quotes
   (`command_variable_in_quotes`, `script_path_relative`, `script_missing`). Example:

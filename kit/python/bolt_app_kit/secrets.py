@@ -167,7 +167,10 @@ _CRED_SEGMENTS = frozenset(("key", "token", "secret", "pass", "password", "passw
                             "credentials", "session", "cookie", "bearer", "apikey", "access"))
 _BENIGN_NAMES = frozenset(("keyword", "keywords", "monkey", "author", "authors", "next_page_token", "page_token", "nextpagetoken", "pagetoken", "next_token",
                            "cursor", "sort_key", "order_key", "primary_key", "foreign_key", "key_id", "session_count", "access_count", "pass_count"))
-_PARAM = re.compile(r"([?&;])([A-Za-z0-9_.\-]{1,64})=([^&;\s#\"']+)")
+# The value stops at every delimiter (? & ; # and whitespace and quotes), so a credential parameter inside a nested address (?next=https://h/p?token=X),
+# after a fragment (#access_token=X) or double-encoded (%3Ftoken%3DX) is found on its own: the scan restarts at each delimiter.
+_PARAM = re.compile(r"([?&;#])([A-Za-z0-9_.\-]{1,64})=([^&;?#\s\"']+)")
+_PARAM_ENC = re.compile(r"(%3[Ff]|%26|%3[Bb]|%23)([A-Za-z0-9_.\-]{1,64})(%3[Dd])((?:(?!%26|%3[Ff]|%3[Bb]|%23|&|;|\?|#)[^\s\"'])+)")
 
 
 def _param_sub(extra):
@@ -181,6 +184,11 @@ def _param_sub(extra):
         else:
             hide = "apikey" in name or any(seg in _CRED_SEGMENTS for seg in re.split(r"[_.\-]", re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", raw).lower()))
         return "%s%s=[hidden]" % (m.group(1), m.group(2)) if hide else m.group(0)
+
+    def enc(m):
+        r = one(re.match(r"(.)(.*)=(.*)", "&%s=%s" % (m.group(2), m.group(4)), re.S))
+        return m.group(0) if r.endswith("=[hidden]") is False else "%s%s%s[hidden]" % (m.group(1), m.group(2), m.group(3))
+    one.enc = enc
     return one
 
 
@@ -190,7 +198,7 @@ def redact_tree(value, secrets=(), auth_param=None, depth=0):
 
     Cost: the forms of each secret are computed once; a string that holds none of them and has no query string or address in it is returned as it is
     (so a 5 MB body is one pass of substring tests). Only the literal secret, its encoded forms, the configured `auth_param` and a short list of
-    well-known credential parameter names (whole names: keyword, monkey and next_page_token stay) are replaced. Walks with a stack, depth 40."""
+    well-known credential parameter names (whole names: keyword, monkey and next_page_token stay) are replaced. Walks with a stack, depth 40. Not unwrapped, and said plainly: a credential parameter inside a value that is URL-encoded twice (%253F) and one that only an unknown name marks."""
     vals = [x.value if isinstance(x, Secret) else x for x in secrets]
     forms = sorted({f for v in vals if isinstance(v, str) and len(v) >= MIN_REDACT for f in _forms(v)}, key=len, reverse=True)
     sub = _param_sub(frozenset([auth_param.lower()]) if auth_param else frozenset())
@@ -200,8 +208,10 @@ def redact_tree(value, secrets=(), auth_param=None, depth=0):
             for f in forms:
                 if f in t:
                     t = t.replace(f, "[hidden]")
-        if "=" in t and ("?" in t or "&" in t or ";" in t):
+        if "=" in t and ("?" in t or "&" in t or ";" in t or "#" in t):
             t = _PARAM.sub(sub, t)
+        if "%3" in t or "%2" in t:
+            t = _PARAM_ENC.sub(sub.enc, t)
         if "://" in t and "@" in t:
             t = _USERINFO.sub(r"\1[hidden]@", t)
         return t

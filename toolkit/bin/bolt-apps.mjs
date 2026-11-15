@@ -55,7 +55,7 @@ export function lintApp(dir, opts = {}) {
 					if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
 					const r = rel ? `${rel}/${f.name}` : f.name;
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
-					else if (f.isDirectory()) walk(r);
+					else if (f.isDirectory()) E('script_subfolder', `scripts/${r} is a folder. Bolt does install nested script folders, but this toolkit matches helper files, approval hashing and the install-prompt scan by file name, so it cannot yet vouch for nested files. Keep scripts directly in scripts/ (the kit is one file: bolt-apps kit vendor --flat)`, `scripts/${r}`);
 					else if (!f.isFile()) E('script_not_plain', `scripts/${r} is not a plain file (a folder-like, device or pipe entry). Bolt refuses it ("is not a plain file")`, `scripts/${r}`);
 					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes)', `scripts/${r}`);
 					else if (!r.split('/').every(plainName)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${r}`);
@@ -295,7 +295,7 @@ function cmdPack(args) {
 	const app = r.app, version = flag(args, '--version', '1.0.0');
 	{ const vp = versionProblem(version); if (vp) die(vp + '. Example: --version 1.0.1', 1); }
 	const entries = [...manifests].sort(([a], [b]) => (a < b ? -1 : 1)).map(([p, c]) => {
-		const kind = KINDS[p.split('/')[0]], e = { path: `manifests/${p}`, kind, id: kind === 'script' ? path.basename(p) : path.basename(p).replace(/\.[^.]+$/, ''), sha256: sha(c), requires_min_schema: 1 };
+		const kind = KINDS[p.split('/')[0]], e = { path: `manifests/${p}`, kind, id: kind === 'script' ? p.replace(/^scripts\//, '') : path.basename(p).replace(/\.[^.]+$/, ''), sha256: sha(c), requires_min_schema: 1 };
 		if (kind === 'script' && INTERPRETERS[path.extname(p)]) e.interpreter = INTERPRETERS[path.extname(p)];
 		return e;
 	});

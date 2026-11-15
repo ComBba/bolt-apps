@@ -40,6 +40,16 @@ class RedactTree(unittest.TestCase):
             url = "https://x/y?%s=abc123" % name
             self.assertEqual(k.redact_tree({"u": url}, [KEY])["u"], url, name)
 
+    def test_credentials_inside_nested_encoded_and_fragment_urls(self):
+        cases = ("https://a/x?next=https://h/p?token=Zq81x7LmP&z=1", "https://a/x?redirect=https%3A%2F%2Fh%2Fp%3Ftoken%3DZq81x7LmP%26z%3D1",
+                 "https://a/x?return_url=https://h/p%3Fsig%3DZq81x7LmP", "https://a/cb#access_token=Zq81x7LmP&state=1", "https://a/x?next=https://h/p?client_secret=Zq81x7LmP#frag",
+                 "https://a/x?u=https%253A%252F%252Fh%253Ftoken%253DZq81x7LmP")
+        for c in cases[:5]:
+            self.assertNotIn("Zq81x7LmP", k.redact_tree({"u": c}, [KEY])["u"], c)
+        self.assertIn("z=1", k.redact_tree({"u": cases[0]}, [KEY])["u"])
+        self.assertIn("state=1", k.redact_tree({"u": cases[3]}, [KEY])["u"])
+        self.assertIn("next=https://h/p", k.redact_tree({"u": cases[0]}, [KEY])["u"])
+
     def test_the_configured_auth_param_is_covered(self):
         self.assertIn("appid=[hidden]", k.redact_tree({"u": "https://x/y?appid=abcdef&n=1"}, [KEY], "appid")["u"])
         self.assertIn("n=1", k.redact_tree({"u": "https://x/y?appid=abcdef&n=1"}, [KEY], "appid")["u"])

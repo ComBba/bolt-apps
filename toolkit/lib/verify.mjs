@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
 import { get, str } from './yamlsubset.mjs';
-import { layoutProblems } from './boltrules.mjs';
+import { layoutProblems, RULES as BOLT_RULES } from './boltrules.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const RULES = JSON.parse(fs.readFileSync(path.join(here, '..', '..', 'schema', 'install-rules.json'), 'utf8'));
@@ -32,6 +32,7 @@ export const FIXES = {
 	entry_kind_skipped: 'Dropping a pack on the launcher installs User Apps and scripts only. Install snippets and search engines from Bolt Apps instead.',
 	entry_kind_unknown: 'Bolt does not install this kind of file from a pack. Remove it from the app folder.',
 	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with bolt-apps pack.',
+	script_subfolder: 'Move the script directly into scripts/. Bolt installs nested folders, but this toolkit cannot yet check them (it matches files by name); the kit is one file with kit vendor --flat.',
 	script_depth: 'Use at most 8 folder levels under scripts/.',
 	script_path: 'Remove the . or .. part from the script path.',
 	script_case_clash: 'Rename one of the two files so they differ by more than letter case.',
@@ -43,7 +44,6 @@ export const FIXES = {
 	env_name: 'Use an uppercase name of letters, digits and _.',
 	env_secret_name: 'Remove it: keys belong in the keychain or ~/.config/<id>/.env, read inside the script.',
 	env_not_allowed: 'Use only a variable on the launcher\'s benign list, or read the value another way.',
-	env_inline_value: 'Write the value exactly as ${env:NAME}.',
 	timeout_default: 'Set bridge.timeout_seconds (1 to 60) so a slow app is not stopped at 10 seconds.',
 	http_port: 'Use a port from 1 to 65535.',
 	http_port_reserved: 'Pick a port outside 13017-13027 and 15432-15441.',
@@ -152,7 +152,8 @@ export function checkManifests(files, opts = {}) {
 	for (const lp of layoutProblems([...files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, ''))])) add('error', lp.code, lp.message, 'scripts');
 	for (const f of files.filter((x) => x.kind === 'script')) {
 		const rel = f.path.replace(/^scripts\//, '');
-		if (!rel.split('/').every(plainName)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
+		if (rel.includes('/')) add('error', 'script_subfolder', `${f.path} is inside a folder. Bolt does install nested script folders, but this toolkit matches helper files, approval hashing and the install-prompt scan by file name, so it cannot yet vouch for a nested file. Keep scripts directly in scripts/ (the kit is one file: kit vendor --flat)`, f.path);
+		else if (!rel.split('/').every(plainName)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
 	}
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
@@ -202,7 +203,12 @@ export function checkManifests(files, opts = {}) {
 			}
 			const pr = S(bridge, 'parse'); if (pr !== undefined && !R.parse.includes(pr)) E('parse_not_allowed', `bridge.parse "${pr}" is not accepted`, ln(bridge, 'parse', bl));
 			const to = S(bridge, 'timeout_seconds'); if (to !== undefined && !(Number.isInteger(Number(to)) && Number(to) >= R.timeout_seconds[0] && Number(to) <= R.timeout_seconds[1])) E('timeout_out_of_range', `bridge.timeout_seconds ${to} is outside ${R.timeout_seconds.join(' to ')}`, ln(bridge, 'timeout_seconds', bl));
-			const env = val(bridge, 'env'); if (env && env.t === 'm') for (const e of env.entries) if (e.value.t !== 's' || !/^\$\{env:[A-Z][A-Z0-9_]{0,63}\}$/.test(e.value.v)) E('env_inline_value', `bridge.env.${e.key} value must be exactly \${env:NAME}`, e.line ?? ln(bridge, 'env', bl));
+			const env = val(bridge, 'env'); if (env && env.t === 'm') for (const e of env.entries) {
+				// the value must be exactly one ${env:NAME}, NAME the same as the key, and the variable named inside must itself be allowed (a secret-looking name is refused under any key)
+				const m = e.value.t === 's' ? /^\$\{env:([A-Z][A-Z0-9_]{0,63})\}$/.exec(e.value.v) : null;
+				if (!m || m[1] !== e.key) E('env_inline_value', `bridge.env.${e.key} value must be exactly \${env:${e.key}}`, e.line ?? ln(bridge, 'env', bl));
+				if (m) { const nm = m[1]; if (BOLT_RULES.env.secret_name_parts.some((x) => nm.includes(x))) E('env_secret_name', `bridge.env.${e.key} passes on ${nm}, which looks like a secret; the launcher never forwards it. Keep keys in the keychain or ~/.config/<id>/.env`, e.line ?? ln(bridge, 'env', bl)); else if (!BOLT_RULES.env.benign_passthrough.includes(nm)) E('env_not_allowed', `bridge.env.${e.key} passes on ${nm}, which is not on the launcher's list of variables an app may read`, e.line ?? ln(bridge, 'env', bl)); }
+			}
 		}
 		const args = val(root, 'args'); for (const it of args?.items || []) { const fr = S(it, 'from'); if (fr !== undefined && !/^query\.word\(\s*\d+\s*\)$/.test(fr.trim())) E('args_from_unsupported', `args[].from "${fr}" is not supported`, ln(root, 'args')); }
 		// checks verify already makes with its own codes (top-level keys, timeout range, inline env, loopback host, method) are not reported twice

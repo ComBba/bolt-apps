@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseYaml } from '../lib/yamlsubset.mjs';
-import { RULES, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, paneProblem, versionProblem, layoutProblems } from '../lib/boltrules.mjs';
+import { hostProblem, RULES, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems, paneProblem, versionProblem, layoutProblems } from '../lib/boltrules.mjs';
 import { RIGHT_WIDGET_KINDS, NO_APP_DATA_KINDS, assessYaml } from '../lib/assess.mjs';
 import { get } from '../lib/yamlsubset.mjs';
 
@@ -114,4 +114,26 @@ test('check runs the script with the launcher runner environment', () => {
 	assert.ok(src.includes('...RULES.runner_env.fixed'), 'check spreads the fixed runner variables from the rules file');
 	assert.equal(RULES.runner_env.fixed.PYTHONDONTWRITEBYTECODE, '1');
 	assert.equal(versionProblem('2026-11'), null);   // the launcher reads this as 2026 with a pre-release part, so it is accepted
+});
+
+test('link hosts are parsed: every spelling of a local or private address, userinfo and single-name hosts are refused', () => {
+	const bad = ['https://localhost./x', 'https://127.1/x', 'https://0x7f.0.0.1/x', 'https://[::1]/x', 'https://2130706433/x', 'https://0177.0.0.1/x', 'https://[::ffff:127.0.0.1]/x', 'https://0.0.0.0/x', 'https://intranet/x', 'https://a.localhost/x', 'https://printer.' + 'lo' + 'cal/x'];
+	for (const u of bad) assert.equal(hostProblem(u)?.code, 'action_url_internal', u);
+	for (const u of ['https://user@example.com/x', 'https://example.com@localhost/x', 'https://{{row.host}}/x']) assert.equal(hostProblem(u)?.code, 'action_url', u);
+	for (const u of ['https://example.com/x', 'https://sub.example.org:8443/a?b=1', 'https://8.8.8.8/x']) assert.equal(hostProblem(u), null, u);
+});
+
+test('env: verify requires the value to be exactly ${env:KEY} and checks the variable named inside, whatever the key is called', async () => {
+	const { checkManifests } = await import('../lib/verify.mjs');
+	const files = (envBody) => [{ path: 'utilities/demo.yaml', kind: 'user_utility', content: Buffer.from(app('', `  parse: json\n  timeout_seconds: 20\n  env:\n${envBody}`)) }, { path: 'scripts/x.py', kind: 'script', content: Buffer.from('print(1)\n') }];
+	const c = (body) => checkManifests(files(body), {}).findings.map((f) => f.code);
+	assert.ok(c('    PGHOST: "${env:GITHUB_TOKEN}"\n').includes('env_inline_value'));   // not the same name
+	assert.ok(c('    GITHUB_TOKEN: "${env:GITHUB_TOKEN}"\n').includes('env_secret_name'));
+	assert.ok(!c('    PGHOST: "${env:PGHOST}"\n').some((x) => /env_/.test(x)));
+});
+
+test('verify: a nested script is refused (script_subfolder) until the toolkit can check nested files; pack ids are the relative path', async () => {
+	const { checkManifests } = await import('../lib/verify.mjs');
+	const f = [{ path: 'utilities/demo.yaml', kind: 'user_utility', content: Buffer.from(app()) }, { path: 'scripts/x.py', kind: 'script', content: Buffer.from('print(1)\n') }, { path: 'scripts/lib/x.py', kind: 'script', content: Buffer.from('print(2)\n') }];
+	assert.ok(checkManifests(f, {}).findings.some((x) => x.code === 'script_subfolder'));
 });

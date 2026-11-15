@@ -110,6 +110,31 @@ export function httpProblems(root) {
 	return out;
 }
 
+// ---- link hosts: parsed, not pattern-matched. Refuses userinfo, a placeholder host, and every spelling of a local or private address.
+const IPV4_PRIVATE = (a, b) => a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
+function ipv4Parts(h) {   // dotted, decimal, hex and octal spellings; null when h is not numeric
+	const parts = h.split('.'); if (parts.length < 1 || parts.length > 4 || parts.some((p) => p === '')) return null;
+	const nums = parts.map((p) => (/^0x[0-9a-f]+$/i.test(p) ? parseInt(p, 16) : /^0[0-7]+$/.test(p) ? parseInt(p, 8) : /^\d+$/.test(p) ? parseInt(p, 10) : NaN));
+	if (nums.some((n) => Number.isNaN(n))) return null;
+	let v = 0; for (let i = 0; i < nums.length - 1; i++) { if (nums[i] > 255) return null; v = v * 256 + nums[i]; }
+	const last = nums[nums.length - 1], room = 256 ** (5 - nums.length); if (last >= room) return null;
+	v = v * room + last; return [Math.floor(v / 2 ** 24) % 256, Math.floor(v / 2 ** 16) % 256, Math.floor(v / 256) % 256, v % 256];
+}
+export function hostProblem(u) {
+	let url; try { url = new URL(u.replace(/\{[^}]*\}/g, 'x')); } catch { return { code: 'action_url', message: 'is not a valid https address' }; }
+	if (url.protocol !== 'https:') return { code: 'action_url', message: 'must start with https://' };
+	if (url.username || url.password) return { code: 'action_url', message: 'must not contain a user name or password before the host (user@host)' };
+	if (/^https?:\/\/\{/i.test(u)) return { code: 'action_url', message: 'must have a literal host after https:// (a placeholder may not supply the host)' };
+	let h = url.hostname.toLowerCase().replace(/\.$/, '');
+	const bad = (why) => ({ code: 'action_url_internal', message: `host "${h}" is ${why}; the launcher refuses links to those` });
+	if (!h) return { code: 'action_url', message: 'has no host' };
+	if (h.startsWith('[')) { const v6 = h.slice(1, -1); const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(v6); if (mapped) { const q = ipv4Parts(mapped[1]); return q && IPV4_PRIVATE(q[0], q[1]) ? bad('a private address') : null; } return bad('an IPv6 address'); }
+	const q = ipv4Parts(h);
+	if (q) return IPV4_PRIVATE(q[0], q[1]) ? bad('a private or local address') : null;
+	if (h === 'localhost' || h.endsWith('.localhost') || !h.includes('.') || RULES.actions.internal_host_suffixes.some((x) => h.endsWith(x))) return bad('a local or single-name host');
+	return null;
+}
+
 // ---- 6, 12: action rules
 export function actionProblems(root) {
 	const out = [], A = RULES.actions, acts = items(get(root, 'actions')?.value);
@@ -127,13 +152,7 @@ export function actionProblems(root) {
 		const icon = g('icon'); if (icon !== undefined && !A.icons.includes(icon)) out.push({ code: 'action_icon', message: `${w}.icon "${icon}" is not one of the ${A.icons.length} names the launcher allows for footer buttons: ${A.icons.join(', ')}` });
 		if (label !== undefined && A.reserved_label_words.includes(label.trim().toLowerCase())) out.push({ code: 'action_label_reserved', level: 'warning', message: `${w}.label "${label}" is a word the launcher reserves for its own prompts; it shows "App: ${label}" instead. Use a more specific label` });
 		const u = g('url_template');
-		if (u !== undefined && kind === 'url') {
-			const m = /^https:\/\/([^/?#:{}]+)(:\d+)?/.exec(u);
-			if (/^https?:\/\//.test(u) && !m) out.push({ code: 'action_url', message: `${w}.url_template must have a literal host after https:// (a placeholder may not supply the host)` });
-			else if (m) {   // a template that is only a placeholder is allowed in the app file (it makes the app tier 3: opens any link); a literal host must be public const h = m[1].toLowerCase(); if (h === 'localhost' || !h.includes('.') || A.internal_host_suffixes.some((s) => h.endsWith(s)) || /^(10\.|127\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(h)) out.push({ code: 'action_url_internal', message: `${w}.url_template host "${h}" is a local or private address; the launcher refuses links to those` }); }
-				const h = m[1].toLowerCase(); if (h === 'localhost' || !h.includes('.') || A.internal_host_suffixes.some((x) => h.endsWith(x)) || /^(10\.|127\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(h)) out.push({ code: 'action_url_internal', message: `${w}.url_template host "${h}" is a local or private address; the launcher refuses links to those` });
-			}
-		}
+		if (u !== undefined && kind === 'url' && /^https?:\/\//i.test(u)) { const hp = hostProblem(u); if (hp) out.push({ code: hp.code, message: `${w}.url_template ${hp.message}` }); }
 	});
 	if (primary > 1) out.push({ code: 'action_primary', message: 'at most one action may be primary' });
 	return out;

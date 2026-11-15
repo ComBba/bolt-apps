@@ -59,7 +59,7 @@ test('pack --personal builds the layout Bolt installs, says what the app can do,
 
 test('personal packs refuse what Bolt would break or reject, with the fix in the words', () => {
 	const cases = [
-		['scripts nested deeper than 8 folders', (dir) => write(path.join(dir, 'scripts', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'm.py'), 'x'), /script_depth.*8 folders/s],
+		['a script folder', (dir) => write(path.join(dir, 'scripts', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'm.py'), 'x'), /script_subfolder/s],
 		['bad script name', (dir) => write(path.join(dir, 'scripts', 'a b.py'), 'x'), /script_name/],
 		['missing script', (dir) => fs.rmSync(path.join(dir, 'scripts', 'eagle.py')), /script_missing.*scripts\/eagle\.py/s],
 		['runtime Bolt does not accept', (dir) => write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE.replace('runtime: bridge', 'runtime: wasm')), /runtime_not_allowed/],
