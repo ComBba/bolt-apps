@@ -429,7 +429,8 @@ def hydrate(api, key, ep, raw, deadline):
     v = get_path(raw, path) if path else raw
     if v is None and isinstance(raw, list):
         v = raw
-    ids = [x for x in (v if isinstance(v, list) else []) if isinstance(x, (int, str)) and not isinstance(x, bool)][:min(int(h.get("limit", 20)), MAX_ROWS)]
+    ids = [x for x in (v if isinstance(v, list) else []) if isinstance(x, (int, str)) and not isinstance(x, bool)
+           and str(x) not in ("", ".", "..") and len(str(x)) <= 128 and "/" not in str(x)][:min(int(h.get("limit", 20)), MAX_ROWS)]   # an odd id costs that row, never the app
 
     def one(i):
         try:
@@ -446,7 +447,7 @@ def hydrate(api, key, ep, raw, deadline):
             r = None
         if isinstance(r, dict):
             got.append(r)
-    ex.shutdown(wait=False)
+    ex.shutdown(wait=False, cancel_futures=True)
     if ids and not got:
         raise urllib.error.URLError("no item answered")
     return got
@@ -583,7 +584,7 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         NOW_OVERRIDE[0] = fixtures.get("_now") if isinstance(fixtures.get("_now"), (int, float)) else None
         sec = find_key(app, api)[0] if api.get("key_env") else ""
         if sec:
-            fixtures = kit.redact_tree(fixtures, [sec])   # sample answers get the same treatment as live ones
+            fixtures = kit.redact_tree(fixtures, [sec], api.get("auth_param"))   # sample answers get the same treatment as live ones
         if demo == "demo-nokey":
             L.stop = ("nokey", "Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), 0)
             return L
@@ -624,7 +625,7 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
                 v = http_get(api, key, fill_path(eps[n]["path"], pvars), deadline.cap(REQ_TIMEOUT))
                 if eps[n].get("hydrate"):
                     v = hydrate(api, key, eps[n], v, deadline)
-                v = kit.redact_tree(v, [key] if key else [])   # APIs echo the key in their links and errors: strip it before anything is cached or shown
+                v = kit.redact_tree(v, [key] if key else [], api.get("auth_param"))   # APIs echo the key in their links and errors: strip it before anything is cached or shown
                 return kit.Probe(n, v is not None and unwrap(eps[n], v) is not None, v, "other")
             except Exception as e:
                 return kit.Probe(n, False, reason=cause_of(e))
