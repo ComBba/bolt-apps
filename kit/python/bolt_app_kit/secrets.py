@@ -19,8 +19,10 @@ from .probe import os_name, run
 SERVICE_PREFIX = "bolt-app-"
 _NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}\Z")
 _APP = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}\Z")
-_USERINFO = re.compile(r"(?i)(\b[a-z][a-z0-9+.-]*://)([^/\s@]+)@")
-_QUERY_KEY = re.compile(r"(?i)([?&](?:[a-z_-]*(?:key|token|secret|pass(?:word)?|auth|sig(?:nature)?)[a-z_-]*)=)[^&\s#]+")
+# Both patterns are bounded so a hostile answer cannot make them slow: the scheme is anchored (it cannot start in the middle of a run of scheme
+# characters) and at most 32 long, the user part at most 200, and the name runs around a credential word at most 40 each.
+_USERINFO = re.compile(r"(?i)(?<![A-Za-z0-9+.-])([a-z][a-z0-9+.-]{0,31}://)([^/\s@]{1,200})@")
+_QUERY_KEY = re.compile(r"(?i)([?&](?:[a-z_-]{0,40}(?:key|token|secret|pass(?:word)?|auth|sig(?:nature)?)[a-z_-]{0,40})=)[^&\s#]{1,2000}")
 MIN_REDACT = 3
 
 
@@ -131,15 +133,17 @@ def setup_hint(app_id, name, os_=None):
 
 
 def _forms(v):
-    """Every way a key is likely to appear in an answer: as it is, URL-encoded, lower and upper case, hex, and base64 (standard and URL-safe, with
-    and without padding). Not covered, and said plainly: a key split across lines, base64 of a longer string that contains it at a different
-    alignment, or a key stored as a JSON number. A key under MIN_REDACT characters is refused by get_secret as invalid."""
-    out = {v, v.lower(), v.upper(), urllib.parse.quote(v, safe=""), urllib.parse.quote_plus(v), urllib.parse.quote(v), v.encode("utf-8").hex()}
+    """Every way a key is likely to appear in an answer: as it is, URL-encoded (upper or lower case %xx), hex (either case), in any letter case,
+    and base64 (standard and URL-safe, with and without padding). Remaining limits, said plainly: a key split across lines; base64 of a longer string
+    (such as HTTP Basic "user:key") that holds the key at another alignment; HTML entities (&#x61;); colon-separated hex; a key stored as a JSON number;
+    and a value encoded twice. A key under MIN_REDACT characters is refused by get_secret as invalid."""
+    ci = {v, urllib.parse.quote(v, safe=""), urllib.parse.quote_plus(v), urllib.parse.quote(v), v.encode("utf-8").hex()}   # matched in any letter case
+    exact = set()
     for enc in (base64.b64encode, base64.urlsafe_b64encode):
         b = enc(v.encode("utf-8")).decode("ascii")
-        out.add(b)
-        out.add(b.rstrip("="))
-    return sorted((x for x in out if len(x) >= MIN_REDACT), key=len, reverse=True)
+        exact.add(b)
+        exact.add(b.rstrip("="))
+    return sorted((x for x in ci if len(x) >= MIN_REDACT), key=len, reverse=True), sorted((x for x in exact if len(x) >= MIN_REDACT), key=len, reverse=True)
 
 
 def redact(text, secrets=(), limit=None):
@@ -149,7 +153,9 @@ def redact(text, secrets=(), limit=None):
     for s in secrets:
         v = s.value if isinstance(s, Secret) else s
         if isinstance(v, str) and len(v) >= MIN_REDACT:
-            for form in _forms(v):
+            ci, exact = _forms(v)
+            t = re.sub("|".join(re.escape(f) for f in ci), "[hidden]", t, flags=re.I)
+            for form in exact:
                 t = t.replace(form, "[hidden]")
     t = _USERINFO.sub(r"\1[hidden]@", t)
     t = _QUERY_KEY.sub(r"\1[hidden]", t)
@@ -202,14 +208,21 @@ def redact_tree(value, secrets=(), auth_param=None, depth=0):
     (so a 5 MB body is one pass of substring tests). Only the literal secret, its encoded forms, the configured `auth_param` and a short list of
     well-known credential parameter names (whole names: keyword, monkey and next_page_token stay) are replaced. Walks with a stack, depth 40. Not unwrapped, and said plainly: a credential parameter inside a value that is URL-encoded twice (%253F) and one that only an unknown name marks."""
     vals = [x.value if isinstance(x, Secret) else x for x in secrets]
-    forms = sorted({f for v in vals if isinstance(v, str) and len(v) >= MIN_REDACT for f in _forms(v)}, key=len, reverse=True)
+    ci_forms, exact_forms = set(), set()
+    for v in vals:
+        if isinstance(v, str) and len(v) >= MIN_REDACT:
+            c, e = _forms(v)
+            ci_forms.update(c); exact_forms.update(e)
+    ci_rx = re.compile("|".join(re.escape(f) for f in sorted(ci_forms, key=len, reverse=True)), re.I) if ci_forms else None
+    exact_forms = sorted(exact_forms, key=len, reverse=True)
     sub = _param_sub(frozenset([auth_param.lower()]) if auth_param else frozenset())
 
     def clean(t):
-        if forms:
-            for f in forms:
-                if f in t:
-                    t = t.replace(f, "[hidden]")
+        if ci_rx is not None:
+            t = ci_rx.sub("[hidden]", t)
+        for f in exact_forms:
+            if f in t:
+                t = t.replace(f, "[hidden]")
         if "=" in t and ("?" in t or "&" in t or ";" in t or "#" in t):
             t = _PARAM.sub(sub, t)
         if "%3" in t or "%2" in t:

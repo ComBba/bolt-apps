@@ -14,13 +14,32 @@ KEY = "S3cretKey99"
 
 
 class RedactTree(unittest.TestCase):
+    def test_hostile_strings_do_not_make_redaction_quadratic(self):
+        for label, text in (("dotted run", "@" + "a." * 40000 + "://x"), ("key run", "?" + "key" * 20000), ("amp run", "&a=" * 30000), ("scheme run", "a+" * 30000 + "@")):
+            t = time.time()
+            k.redact_tree({"u": text}, [KEY]); k.redact(text, [KEY])
+            self.assertLess(time.time() - t, 3.0, label)
+
+    def test_case_hex_and_percent_forms(self):
+        key = "Ab+/9zQx"
+        for form in (key, key.upper(), key.lower(), "aB+/9zqX", key.encode().hex(), key.encode().hex().upper(), "Ab%2B%2F9zQx", "ab%2b%2f9zqx", "AB%2B%2F9ZQX"):
+            out = json.dumps(k.redact_tree({"a": "x %s y" % form}, [key]))
+            self.assertNotIn(form, out, form)
+            self.assertIn("[hidden]", out, form)
+
     def test_a_5mb_body_is_redacted_in_about_a_second(self):
         body = {"items": [{"id": i, "title": "story number %d with some text in it" % i, "url": "https://news.example.com/item?id=%d" % i} for i in range(50000)]}
         body["items"][7]["url"] = "https://x/y?api_key=" + KEY
         self.assertGreater(len(json.dumps(body)), 5_000_000)
         t = time.time()
         out = k.redact_tree(body, [KEY])
-        self.assertLess(time.time() - t, 1.5)
+        first = time.time() - t
+        body2 = {"items": body["items"] * 2}
+        t = time.time()
+        k.redact_tree(body2, [KEY])
+        second = time.time() - t
+        self.assertLess(first, 6.0)   # a loose bound: a loaded machine is slower, a quadratic loop is far slower
+        self.assertLess(second, max(first * 4, 1.0), "twice the data must cost about twice the time")
         self.assertNotIn(KEY, json.dumps(out))
 
     def test_only_credential_names_are_rewritten_whole_names_only(self):

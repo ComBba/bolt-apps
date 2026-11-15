@@ -87,7 +87,13 @@ def action_url(id, label, url_template):
     return _action(id, "url", label, url_template=url_template)
 
 
+_PROTO_IDS = frozenset(("constructor", "prototype", "__proto__", "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable", "toLocaleString", "toString", "valueOf",
+                        "__defineGetter__", "__defineSetter__", "__lookupGetter__", "__lookupSetter__"))   # the launcher looks row actions up by id
+
+
 def _action(id, kind, label, **kw):
+    if isinstance(id, str) and id in _PROTO_IDS:
+        raise KitError("action id %r is a name the launcher refuses (it is a built-in object name)" % id)
     if not isinstance(id, str) or not _ID.match(id):
         raise KitError("action id %r must match %s" % (id, _ID.pattern))
     lab = clean_text(label)
