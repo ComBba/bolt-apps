@@ -23,7 +23,7 @@ _APP = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}\Z")
 # characters) and at most 32 long, and the name runs around a credential word at most 40 each. Nothing caps a value or a user part: a cap that is
 # exceeded must hide more, never less.
 _SCHEME = re.compile(r"(?i)(?<![A-Za-z0-9+.-])[a-z][a-z0-9+.-]{0,31}://")
-_AUTH_END = re.compile(r"[/?#\s]")
+_AUTH_END = re.compile(r"[/\s]")   # a password may hold ? and #, and clients differ, so only / or whitespace ends the authority: when unsure, hide more
 _QUERY_KEY = re.compile(r"(?i)([?&](?:[a-z_-]{0,40}(?:key|token|secret|pass(?:word)?|auth|sig(?:nature)?)[a-z_-]{0,40})=)[^&\s#]{1,2000}")
 MIN_REDACT = 3
 
@@ -149,8 +149,8 @@ def _forms(v):
 
 
 def _hide_userinfo(t):
-    """Hide the user:password part of every scheme://user:password@host in t. A string scan, not a pattern: the authority runs to the first / ? # or
-    whitespace, and everything before the LAST @ in it is hidden, however long it is or how many @ it holds."""
+    """Hide the user:password part of every scheme://user:password@host in t. A string scan, not a pattern: the authority runs to the first / or
+    whitespace (a ? or # inside it can belong to the password), and everything before the LAST @ in it is hidden, however long it is or how many @ it holds."""
     out, pos = [], 0
     for m in _SCHEME.finditer(t):
         if m.start() < pos:
