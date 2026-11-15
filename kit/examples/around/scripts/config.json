@@ -1,0 +1,207 @@
+{
+  "app": {
+    "id": "around",
+    "chip": "around",
+    "title": "Around",
+    "icon": "map-pin",
+    "description": "Type a place: cafes, gyms, live bike docks, the next hours of weather and landmarks nearby, stitched by distance into one verdict.",
+    "timeout": 25
+  },
+  "api": {
+    "fixture_default": false,
+    "user_agent": "bolt-app-example/1.0 (around; github.com/SparcleHQ/bolt-apps)",
+    "deadline_s": 16,
+    "call_timeout_s": 14,
+    "max_bytes": 3000000,
+    "workers": 5,
+    "geocode_min_gap_s": 1.1
+  },
+  "hosts": [
+    "nominatim.openstreetmap.org",
+    "overpass-api.de",
+    "api.citybik.es",
+    "api.open-meteo.com",
+    "en.wikipedia.org",
+    "api.opentripmap.com"
+  ],
+  "radius_m": 800,
+  "near_m": 400,
+  "walk_m_per_min": 80,
+  "sources": {
+    "geocode": {
+      "label": "Geocoder",
+      "ttl": 2592000
+    },
+    "places": {
+      "label": "Places",
+      "ttl": 3600
+    },
+    "bikes": {
+      "label": "Bikes",
+      "ttl": 30
+    },
+    "weather": {
+      "label": "Weather",
+      "ttl": 900
+    },
+    "wiki": {
+      "label": "Wikipedia",
+      "ttl": 86400
+    }
+  },
+  "stale_max_s": 604800,
+  "categories": [
+    {
+      "id": "cafe",
+      "label": "Cafes",
+      "filter": "[\"amenity\"=\"cafe\"]",
+      "icon": "Coins"
+    },
+    {
+      "id": "gym",
+      "label": "Gyms",
+      "filter": "[\"leisure\"=\"fitness_centre\"]",
+      "icon": "Activity"
+    }
+  ],
+  "bike_networks": [
+    {
+      "id": "citi-bike-nyc",
+      "lat": 40.7143528,
+      "lon": -74.0059731
+    },
+    {
+      "id": "capital-bikeshare",
+      "lat": 38.8967584,
+      "lon": -77.0370163
+    },
+    {
+      "id": "divvy",
+      "lat": 41.8781136,
+      "lon": -87.6297982
+    },
+    {
+      "id": "blue-bikes",
+      "lat": 42.3601,
+      "lon": -71.0589
+    },
+    {
+      "id": "velib",
+      "lat": 48.856614,
+      "lon": 2.3522219
+    },
+    {
+      "id": "santander-cycles",
+      "lat": 51.5112139,
+      "lon": -0.1198244
+    },
+    {
+      "id": "bicing",
+      "lat": 41.3850639,
+      "lon": 2.1734035
+    },
+    {
+      "id": "bicimad",
+      "lat": 40.4168,
+      "lon": -3.7038
+    },
+    {
+      "id": "nextbike-berlin",
+      "lat": 52.5087,
+      "lon": 13.3563
+    },
+    {
+      "id": "bixi-toronto",
+      "lat": 43.6532,
+      "lon": -79.3832
+    },
+    {
+      "id": "metro-bike-share",
+      "lat": 34.04855,
+      "lon": -118.25905
+    }
+  ],
+  "bike_network_max_km": 40,
+  "bike_max_m": 1500,
+  "score": {
+    "weights": {
+      "weather": 35,
+      "cafes": 30,
+      "bikes": 15,
+      "landmarks": 20
+    },
+    "comfort_c": [
+      8,
+      27
+    ],
+    "rain_pct_watch": 50,
+    "cafes_full": 3,
+    "bikes_full": 3,
+    "landmarks_full": 3,
+    "verdicts": [
+      {
+        "min": 75,
+        "label": "Good for a walk and a coffee",
+        "badge": "GOOD"
+      },
+      {
+        "min": 50,
+        "label": "Fine, with a catch",
+        "badge": "OK"
+      },
+      {
+        "min": 0,
+        "label": "Maybe skip it",
+        "badge": "POOR"
+      }
+    ],
+    "off_comfort_penalty_per_c": 12
+  },
+  "charts": {
+    "weather": {
+      "title": "Temperature, next 12 hours, C",
+      "type": "line"
+    }
+  },
+  "keys": {
+    "attractions": {
+      "name": "OPENTRIPMAP_KEY",
+      "signup": "https://opentripmap.io/product",
+      "host": "api.opentripmap.com"
+    }
+  },
+  "auth_demo": [
+    {
+      "mode": "no key",
+      "service": "Open-Meteo, Wikipedia, Nominatim, CityBikes",
+      "send": "nothing",
+      "secret": null
+    },
+    {
+      "mode": "optional key",
+      "service": "any API that lifts a limit with a key (GitHub in repo-radar)",
+      "send": "header Authorization: Bearer",
+      "secret": "AROUND_OPTIONAL_KEY",
+      "optional": true
+    },
+    {
+      "mode": "required free key",
+      "service": "OpenTripMap attractions",
+      "send": "query apikey",
+      "secret": "OPENTRIPMAP_KEY"
+    },
+    {
+      "mode": "bearer",
+      "service": "a service that issues tokens",
+      "send": "header Authorization: Bearer",
+      "secret": "AROUND_BEARER_TOKEN"
+    },
+    {
+      "mode": "basic",
+      "service": "a service with a user and password",
+      "send": "header Authorization: Basic",
+      "secret": "AROUND_BASIC_LOGIN"
+    }
+  ],
+  "places_limit": 400
+}

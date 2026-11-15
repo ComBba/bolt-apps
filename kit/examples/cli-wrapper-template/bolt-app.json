@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "cli-wrapper-template",
+  "title": "CLI wrapper template",
+  "role": "Anyone building an app around a command-line tool",
+  "saves": "Remembering flags and reading the tool's output",
+  "summary": "Type =pingcheck and a host name: reachable or not, how fast, how much is lost. Copy it to wrap any command.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

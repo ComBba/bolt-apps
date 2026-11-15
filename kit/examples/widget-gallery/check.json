@@ -1,0 +1,91 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json"
+    },
+    {
+      "name": "chart: bars, no Back row",
+      "os": "macos",
+      "args": [
+        "chart"
+      ],
+      "golden": "golden/chart.json"
+    },
+    {
+      "name": "table",
+      "os": "macos",
+      "args": [
+        "table"
+      ],
+      "golden": "golden/table.json"
+    },
+    {
+      "name": "detail",
+      "os": "macos",
+      "args": [
+        "detail"
+      ],
+      "golden": "golden/detail.json"
+    },
+    {
+      "name": "json tree: a nested object in data",
+      "os": "macos",
+      "args": [
+        "tree"
+      ],
+      "golden": "golden/tree.json"
+    },
+    {
+      "name": "diff: line breaks survive",
+      "os": "macos",
+      "args": [
+        "diff"
+      ],
+      "golden": "golden/diff.json",
+      "expect": {
+        "text_present": [
+          "replicas: 3"
+        ]
+      }
+    },
+    {
+      "name": "entity preview",
+      "os": "macos",
+      "args": [
+        "preview"
+      ],
+      "golden": "golden/preview.json"
+    },
+    {
+      "name": "markdown",
+      "os": "macos",
+      "args": [
+        "markdown"
+      ],
+      "golden": "golden/markdown.json"
+    },
+    {
+      "name": "offline",
+      "os": "macos",
+      "args": [
+        "chart",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not connect"
+        ]
+      }
+    }
+  ]
+}

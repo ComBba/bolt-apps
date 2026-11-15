@@ -1,0 +1,74 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Image grid"
+        ]
+      }
+    },
+    {
+      "name": "card pane rows",
+      "os": "macos",
+      "args": [
+        "card"
+      ],
+      "golden": "golden/card.json",
+      "expect": {
+        "text_present": [
+          "Ocean"
+        ]
+      }
+    },
+    {
+      "name": "image grid rows carry inline images",
+      "os": "macos",
+      "args": [
+        "grid"
+      ],
+      "golden": "golden/grid.json",
+      "expect": {
+        "text_present": [
+          "Ocean"
+        ]
+      }
+    },
+    {
+      "name": "cards grid with images",
+      "os": "macos",
+      "args": [
+        "cardsimg"
+      ],
+      "golden": "golden/cardsimg.json",
+      "expect": {
+        "text_present": [
+          "Forest"
+        ]
+      }
+    },
+    {
+      "name": "offline preview",
+      "os": "macos",
+      "args": [
+        "card",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not connect"
+        ]
+      }
+    }
+  ]
+}

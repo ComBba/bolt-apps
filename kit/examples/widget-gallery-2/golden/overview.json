@@ -1,0 +1,79 @@
+[
+  {
+    "title": "Card",
+    "subtitle": "One title, one line, copy action",
+    "icon": "file",
+    "body": "",
+    "nav": {
+      "view": "card"
+    },
+    "actions": [],
+    "kpi_label": "Swatches",
+    "kpi_value": 6,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "colours",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Image grid",
+    "subtitle": "Thumbnails from inline images",
+    "icon": "Image",
+    "body": "",
+    "nav": {
+      "view": "grid"
+    },
+    "actions": [],
+    "kpi_label": "Thumbnails",
+    "kpi_value": 6,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "inline PNG, no network",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Cards with images",
+    "subtitle": "Grid layout, image on each card",
+    "icon": "Image",
+    "body": "",
+    "nav": {
+      "view": "cardsimg"
+    },
+    "actions": [],
+    "kpi_label": "Cards",
+    "kpi_value": 6,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "grid layout",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

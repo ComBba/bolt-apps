@@ -1,0 +1,137 @@
+[
+  {
+    "title": "example.test: Reachable",
+    "subtitle": "average 15.0 ms, loss 0%",
+    "icon": "CheckCircle2",
+    "body": "",
+    "actions": [
+      {
+        "id": "cmd",
+        "kind": "composer",
+        "label": "Copy command",
+        "insert": "ping -c 3 -t 5 example.test",
+        "target": "row"
+      }
+    ],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "UP",
+    "copy_text": "- example.test: Reachable - average 15.0 ms, loss 0%"
+  },
+  {
+    "title": "Average 15.0 ms",
+    "subtitle": "min 13.8, max 16.1",
+    "icon": "Timer",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Average",
+    "kpi_value": 15,
+    "kpi_unit": "ms",
+    "kpi_max": "",
+    "kpi_note": "min 13.8, max 16.1",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Average 15.0 ms - min 13.8, max 16.1",
+    "trend": [
+      16.1,
+      15.1,
+      13.8
+    ]
+  },
+  {
+    "title": "Loss 0%",
+    "subtitle": "3 of 3 replies",
+    "icon": "Percent",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Loss",
+    "kpi_value": 0,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "3 of 3",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Loss 0% - 3 of 3 replies"
+  },
+  {
+    "title": "Replies",
+    "subtitle": "3 replies",
+    "icon": "LineChart",
+    "body": "",
+    "nav": {
+      "view": "replies"
+    },
+    "actions": [],
+    "pane": "replies",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Raw output",
+    "subtitle": "exactly what ping printed",
+    "icon": "Terminal",
+    "body": "",
+    "nav": {
+      "view": "raw"
+    },
+    "actions": [],
+    "pane": "raw",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "The command",
+    "subtitle": "what ran on this macos",
+    "icon": "SquareTerminal",
+    "body": "",
+    "nav": {
+      "view": "command"
+    },
+    "actions": [],
+    "pane": "command",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Ping again",
+    "subtitle": "Enter to run ping again (a result is reused for 120 s)",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

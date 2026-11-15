@@ -1,0 +1,343 @@
+{
+  "script": "scripts/wrap.py",
+  "interpreter": "python3",
+  "manifest_actions": 1,
+  "kit": "scripts/bolt_app_kit.py",
+  "cases": [
+    {
+      "name": "macos: reachable, tiles and trend",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "golden": "golden/macos-overview.json",
+      "expect": {
+        "text_present": [
+          "Reachable",
+          "Average 15.0 ms"
+        ]
+      }
+    },
+    {
+      "name": "macos: replies chart rows",
+      "os": "macos",
+      "args": [
+        "replies",
+        "example.test"
+      ],
+      "expect": {
+        "text_present": [
+          "reply 0"
+        ]
+      }
+    },
+    {
+      "name": "macos: raw output pane",
+      "os": "macos",
+      "args": [
+        "raw",
+        "example.test"
+      ],
+      "expect": {
+        "text_present": [
+          "ping output"
+        ]
+      }
+    },
+    {
+      "name": "macos: the command that ran, with no shell",
+      "os": "macos",
+      "args": [
+        "command",
+        "example.test"
+      ],
+      "expect": {
+        "text_present": [
+          "ping -c 3 -t 5 example.test"
+        ]
+      }
+    },
+    {
+      "name": "linux: reachable (format-only fixture)",
+      "os": "linux",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "golden": "golden/linux-overview.json",
+      "expect": {
+        "text_present": [
+          "Reachable"
+        ]
+      }
+    },
+    {
+      "name": "count word is used",
+      "os": "macos",
+      "args": [
+        "command",
+        "example.test",
+        "7"
+      ],
+      "expect": {
+        "text_present": [
+          "ping -c 7 -t 5 example.test"
+        ]
+      }
+    },
+    {
+      "name": "100% loss is DOWN, not an error",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "stubs": {
+        "ping": {
+          "file": "fixtures/macos/loss.out",
+          "rc": 2
+        }
+      },
+      "expect": {
+        "text_present": [
+          "No reply from example.test"
+        ]
+      }
+    },
+    {
+      "name": "partial loss is LOSSY",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "stubs": {
+        "ping": {
+          "file": "fixtures/macos/partial-edited.out",
+          "rc": 0
+        }
+      },
+      "expect": {
+        "text_present": [
+          "Reachable with"
+        ]
+      }
+    },
+    {
+      "name": "unknown host (exit 68, no stdout)",
+      "os": "macos",
+      "args": [
+        "overview",
+        "nope.invalid"
+      ],
+      "stubs": {
+        "ping": {
+          "stdout": "",
+          "rc": 68
+        }
+      },
+      "expect": {
+        "text_present": [
+          "Cannot find nope.invalid"
+        ]
+      }
+    },
+    {
+      "name": "tool missing",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "stubs": {
+        "ping": {
+          "missing": true
+        }
+      },
+      "expect": {
+        "text_present": [
+          "ping is not installed"
+        ]
+      }
+    },
+    {
+      "name": "tool hangs: timed out, never cached as an answer",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "hang": [
+        "ping"
+      ],
+      "expect": {
+        "text_present": [
+          "ping timed out"
+        ],
+        "max_seconds": 15
+      }
+    },
+    {
+      "name": "tool exits with an unknown code",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "stubs": {
+        "ping": {
+          "stdout": "usage: ping [-c count] host\n",
+          "rc": 64
+        }
+      },
+      "expect": {
+        "text_present": [
+          "ping failed"
+        ]
+      }
+    },
+    {
+      "name": "hostile tool output is cleaned",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "stubs": {
+        "ping": {
+          "stdout": "@@HOSTILE@@ usage\n",
+          "rc": 64
+        }
+      },
+      "expect": {
+        "text_present": [
+          "ping failed"
+        ]
+      }
+    },
+    {
+      "name": "a second command in the host is refused",
+      "os": "macos",
+      "args": [
+        "overview",
+        "a;ls"
+      ],
+      "expect": {
+        "text_present": [
+          "Not run"
+        ],
+        "text_absent": [
+          "Reachable"
+        ]
+      }
+    },
+    {
+      "name": "a leading dash would be an option: refused",
+      "os": "macos",
+      "args": [
+        "overview",
+        "-f"
+      ],
+      "expect": {
+        "text_present": [
+          "Not run"
+        ]
+      }
+    },
+    {
+      "name": "a shell substitution is refused",
+      "os": "macos",
+      "args": [
+        "overview",
+        "$(id)"
+      ],
+      "expect": {
+        "text_present": [
+          "Not run"
+        ]
+      }
+    },
+    {
+      "name": "count out of range",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test",
+        "99"
+      ],
+      "expect": {
+        "text_present": [
+          "from 1 to 10"
+        ]
+      }
+    },
+    {
+      "name": "count not a number",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test",
+        "abc"
+      ],
+      "expect": {
+        "text_present": [
+          "from 1 to 10"
+        ]
+      }
+    },
+    {
+      "name": "no host asks for one",
+      "os": "macos",
+      "args": [],
+      "expect": {
+        "text_present": [
+          "Type a host name"
+        ]
+      }
+    },
+    {
+      "name": "windows is refused in plain words",
+      "os": "windows",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "expect": {
+        "text_present": [
+          "Not available on this system"
+        ]
+      }
+    },
+    {
+      "name": "sample mode parses fixtures.json and runs no command",
+      "os": "macos",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "fixture": true,
+      "expect": {
+        "text_present": [
+          "Sample data",
+          "Reachable"
+        ]
+      }
+    },
+    {
+      "name": "linux sample mode (format-only recording)",
+      "os": "linux",
+      "args": [
+        "overview",
+        "example.test"
+      ],
+      "fixture": true,
+      "expect": {
+        "text_present": [
+          "Sample data",
+          "Reachable"
+        ]
+      }
+    }
+  ]
+}

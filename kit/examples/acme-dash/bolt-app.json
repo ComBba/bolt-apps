@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "acme-dash",
+  "title": "Acme compliance dashboard",
+  "role": "Anyone who wants a compliance dashboard in the launcher",
+  "saves": "Opening a web dashboard and clicking through five pages",
+  "summary": "Type =acme-dash for readiness tiles, then drill into tasks, controls, risks, vendors, devices and people. Runs on sample data.",
+  "author": { "name": "Bolt Apps examples", "link": "https://github.com/SparcleHQ/bolt-apps" },
+  "tier": 3,
+  "permissions": ["runs_commands", "network", "files"],
+  "platforms": ["macos", "linux"],
+  "requires": [{ "interpreter": "python", "min_version": "3.9" }],
+  "tests": []
+}

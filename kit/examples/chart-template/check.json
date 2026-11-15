@@ -1,0 +1,70 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview dashboard",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json"
+    },
+    {
+      "name": "bars from rows: only data rows",
+      "os": "macos",
+      "args": [
+        "bars_rows"
+      ],
+      "golden": "golden/bars-rows.json",
+      "expect": {
+        "text_absent": [
+          "Back"
+        ]
+      }
+    },
+    {
+      "name": "line from rows",
+      "os": "macos",
+      "args": [
+        "line_rows"
+      ],
+      "golden": "golden/line-rows.json"
+    },
+    {
+      "name": "sparkline from rows",
+      "os": "macos",
+      "args": [
+        "spark_rows"
+      ],
+      "golden": "golden/spark-rows.json"
+    },
+    {
+      "name": "bars from a series",
+      "os": "macos",
+      "args": [
+        "bars_values"
+      ],
+      "golden": "golden/bars-values.json"
+    },
+    {
+      "name": "line from a series",
+      "os": "macos",
+      "args": [
+        "line_values"
+      ],
+      "golden": "golden/line-values.json"
+    },
+    {
+      "name": "sparkline from a series",
+      "os": "macos",
+      "args": [
+        "spark_values"
+      ],
+      "golden": "golden/spark-values.json"
+    }
+  ]
+}

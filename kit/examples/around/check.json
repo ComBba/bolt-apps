@@ -1,0 +1,272 @@
+{
+  "script": "scripts/around.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: verdict, five badges, stitched rows",
+      "os": "macos",
+      "args": [
+        "overview",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Verdict",
+          "Sources",
+          "Bike docks",
+          "updated 13 s ago"
+        ]
+      }
+    },
+    {
+      "name": "a bare place name means overview",
+      "os": "macos",
+      "args": [
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "Verdict"
+        ]
+      }
+    },
+    {
+      "name": "places: per-row panel fields",
+      "os": "macos",
+      "args": [
+        "places",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "golden": "golden/places.json",
+      "expect": {
+        "text_present": [
+          "Joe Coffee Company"
+        ]
+      }
+    },
+    {
+      "name": "bikes table",
+      "os": "macos",
+      "args": [
+        "bikes",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "W 42 St & 6 Ave"
+        ]
+      }
+    },
+    {
+      "name": "weather line chart rows",
+      "os": "macos",
+      "args": [
+        "weather",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "06:00"
+        ]
+      }
+    },
+    {
+      "name": "landmarks",
+      "os": "macos",
+      "args": [
+        "landmarks",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "Bryant Park"
+        ]
+      }
+    },
+    {
+      "name": "keys: required free key is a setup row, not an error",
+      "os": "macos",
+      "args": [
+        "keys",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "Add your free key to see attractions",
+          "would send"
+        ]
+      }
+    },
+    {
+      "name": "keys: secrets are masked everywhere",
+      "os": "macos",
+      "args": [
+        "keys",
+        "demo-secrets",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "sends: Authorization: Basic"
+        ],
+        "text_absent": [
+          "sample-secret-value",
+          "sample-password",
+          "sample-user"
+        ]
+      }
+    },
+    {
+      "name": "places down: the rest still shows",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-places-down",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "Cafes \u00b7 unavailable",
+          "Bike docks"
+        ],
+        "text_absent": [
+          "Joe Coffee Company"
+        ]
+      }
+    },
+    {
+      "name": "bikes down",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-bikes-down",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "Bike docks \u00b7 unavailable",
+          "Weather"
+        ]
+      }
+    },
+    {
+      "name": "weather down: verdict says not scored",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-weather-down",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "not scored: weather",
+          "PARTIAL"
+        ]
+      }
+    },
+    {
+      "name": "wikipedia down",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-wiki-down",
+        "Bryant",
+        "Park,",
+        "New",
+        "York"
+      ],
+      "expect": {
+        "text_present": [
+          "Landmarks \u00b7 unavailable"
+        ]
+      }
+    },
+    {
+      "name": "unknown place in sample mode",
+      "os": "macos",
+      "args": [
+        "overview",
+        "Atlantis"
+      ],
+      "expect": {
+        "text_present": [
+          "Not in the recorded sample"
+        ]
+      }
+    },
+    {
+      "name": "one letter is refused",
+      "os": "macos",
+      "args": [
+        "overview",
+        "x"
+      ],
+      "expect": {
+        "text_present": [
+          "Type at least two"
+        ]
+      }
+    },
+    {
+      "name": "no place asks for one",
+      "os": "macos",
+      "args": [],
+      "expect": {
+        "text_present": [
+          "Type a place"
+        ]
+      }
+    },
+    {
+      "name": "hostile place text is cleaned",
+      "os": "macos",
+      "args": [
+        "overview",
+        "Bryant\u202e",
+        "{{x}}"
+      ],
+      "expect": {
+        "text_present": [
+          "Not in the recorded sample"
+        ]
+      }
+    }
+  ]
+}

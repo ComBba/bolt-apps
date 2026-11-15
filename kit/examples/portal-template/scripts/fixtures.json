@@ -1,0 +1,196 @@
+{
+ "account": {
+  "data": {
+   "name": "Example Co"
+  }
+ },
+ "projects": {
+  "data": [
+   {
+    "id": "P-1",
+    "name": "Website refresh",
+    "state": "active",
+    "owner": {
+     "name": "Maya R."
+    },
+    "tags": [
+     "web",
+     "design"
+    ],
+    "progress": 70,
+    "startedAt": "2026-01-01T00:00:00Z",
+    "ticketCount": 3,
+    "description": "Sample project for the template."
+   },
+   {
+    "id": "P-2",
+    "name": "Mobile app beta",
+    "state": "active",
+    "owner": {
+     "name": "Luis G."
+    },
+    "tags": [
+     "mobile"
+    ],
+    "progress": 35,
+    "startedAt": "2026-02-01T00:00:00Z",
+    "ticketCount": 3,
+    "description": "Sample project for the template."
+   },
+   {
+    "id": "P-3",
+    "name": "Billing cleanup",
+    "state": "paused",
+    "owner": {
+     "name": "Tom W."
+    },
+    "tags": [
+     "finance"
+    ],
+    "progress": 50,
+    "startedAt": "2026-03-01T00:00:00Z",
+    "ticketCount": 3,
+    "description": "Sample project for the template."
+   },
+   {
+    "id": "P-4",
+    "name": "Docs rewrite",
+    "state": "done",
+    "owner": {
+     "name": "Maya R."
+    },
+    "tags": [
+     "docs"
+    ],
+    "progress": 100,
+    "startedAt": "2026-04-01T00:00:00Z",
+    "ticketCount": 3,
+    "description": "Sample project for the template."
+   }
+  ]
+ },
+ "tickets": {
+  "data": [
+   {
+    "id": "TK-1",
+    "summary": "Fix login redirect",
+    "state": "closed",
+    "priority": 1,
+    "projectId": "P-1",
+    "assignee": {
+     "name": "Maya R."
+    }
+   },
+   {
+    "id": "TK-2",
+    "summary": "Update pricing page",
+    "state": "in_progress",
+    "priority": 3,
+    "projectId": "P-2",
+    "assignee": {
+     "name": "Luis G."
+    }
+   },
+   {
+    "id": "TK-3",
+    "summary": "Crash on startup",
+    "state": "open",
+    "priority": 5,
+    "projectId": "P-3",
+    "assignee": {
+     "name": "Tom W."
+    }
+   },
+   {
+    "id": "TK-4",
+    "summary": "Export to CSV",
+    "state": "closed",
+    "priority": 2,
+    "projectId": "P-4",
+    "assignee": {
+     "name": "Ana S."
+    }
+   },
+   {
+    "id": "TK-5",
+    "summary": "Dark mode colors",
+    "state": "in_progress",
+    "priority": 4,
+    "projectId": "P-1",
+    "assignee": {
+     "name": "Maya R."
+    }
+   },
+   {
+    "id": "TK-6",
+    "summary": "Invoice rounding",
+    "state": "open",
+    "priority": 1,
+    "projectId": "P-2",
+    "assignee": {
+     "name": "Luis G."
+    }
+   },
+   {
+    "id": "TK-7",
+    "summary": "Missing alt text",
+    "state": "closed",
+    "priority": 3,
+    "projectId": "P-3",
+    "assignee": {
+     "name": "Tom W."
+    }
+   },
+   {
+    "id": "TK-8",
+    "summary": "Slow search",
+    "state": "in_progress",
+    "priority": 5,
+    "projectId": "P-4",
+    "assignee": {
+     "name": "Ana S."
+    }
+   },
+   {
+    "id": "TK-9",
+    "summary": "Add SSO",
+    "state": "open",
+    "priority": 2,
+    "projectId": "P-1",
+    "assignee": {
+     "name": "Maya R."
+    }
+   },
+   {
+    "id": "TK-10",
+    "summary": "Broken footer link",
+    "state": "closed",
+    "priority": 4,
+    "projectId": "P-2",
+    "assignee": {
+     "name": "Luis G."
+    }
+   },
+   {
+    "id": "TK-11",
+    "summary": "Rewrite install guide",
+    "state": "in_progress",
+    "priority": 1,
+    "projectId": "P-3",
+    "assignee": {
+     "name": "Tom W."
+    }
+   },
+   {
+    "id": "TK-12",
+    "summary": "Archive old data",
+    "state": "open",
+    "priority": 3,
+    "projectId": "P-4",
+    "assignee": {
+     "name": "Ana S."
+    }
+   }
+  ]
+ }
+}

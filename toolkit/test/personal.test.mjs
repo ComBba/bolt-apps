@@ -44,7 +44,7 @@ test('pack --personal builds the layout Bolt installs, says what the app can do,
 	assert.equal(r.status, 0, r.stderr);
 	for (const re of [/run programs on your computer/, /includes a script \(eagle\.py\)/, /ask whoever installs it to confirm/, /not Admin settings/, /approved apps, Bolt refuses/]) assert.match(r.stdout, re);
 	const v = readPack(out); assert.ok(v.ok, v.reason);
-	// Bolt rules (pack_validate.rs): every entry sits under manifests/, with a plain path and a kind Bolt installs.
+	// Bolt rules (the launcher): every entry sits under manifests/, with a plain path and a kind Bolt installs.
 	const byPath = Object.fromEntries(v.meta.entries.map((e) => [e.path, e]));
 	assert.deepEqual(Object.keys(byPath).sort(), ['manifests/scripts/eagle.py', 'manifests/utilities/eagle-info.yaml']);
 	assert.equal(byPath['manifests/utilities/eagle-info.yaml'].kind, 'user_utility');
@@ -92,10 +92,10 @@ test('--personal also packs an ordinary tier 2 app, and a local-service app says
 	assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /service on this computer \(port 8080\)/);
 });
 
-test('the repo kit example cannot be packed yet: its vendored kit is a folder and Bolt installs scripts flat', () => {
+test('the repo kit example packs: its kit is vendored flat, one file in scripts/', () => {
 	const REPO = path.resolve(HERE, '../..');
 	const r = run(REPO, 'pack', 'kit/examples/system-glance', '--personal', '--key', keyed(tmp()), '--out', path.join(tmp(), 'x.boltpack'));
-	assert.equal(r.status, 1); assert.match(r.stderr, /script_subfolder/);
+	assert.equal(r.status, 0, r.stderr + r.stdout);
 });
 
 test('gallery lint also refuses a transform app with a detect block or a loose link; a non-letter action kind is a finding, not a crash', () => {

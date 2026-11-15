@@ -1,0 +1,195 @@
+{
+  "script": "scripts/insights.py",
+  "interpreter": "python3",
+  "manifest_actions": 1,
+  "kit": "scripts/bolt_app_kit.py",
+  "cases": [
+    {
+      "name": "no path: labelled sample data, tiles and insight rules",
+      "os": "macos",
+      "args": [],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Sample data",
+          "North is 62% of the total"
+        ]
+      }
+    },
+    {
+      "name": "trend view plots one point per month",
+      "os": "macos",
+      "args": [
+        "trend"
+      ],
+      "golden": "golden/trend.json",
+      "expect": {
+        "text_present": [
+          "2026-08"
+        ]
+      }
+    },
+    {
+      "name": "breakdown view plots groups",
+      "os": "macos",
+      "args": [
+        "breakdown"
+      ],
+      "golden": "golden/breakdown.json",
+      "expect": {
+        "text_present": [
+          "North"
+        ]
+      }
+    },
+    {
+      "name": "rows view feeds the table",
+      "os": "macos",
+      "args": [
+        "rows"
+      ],
+      "expect": {
+        "text_present": [
+          "North"
+        ]
+      }
+    },
+    {
+      "name": "problems view lists skipped rows",
+      "os": "macos",
+      "args": [
+        "problems"
+      ],
+      "expect": {
+        "text_present": [
+          "Skipped rows"
+        ]
+      }
+    },
+    {
+      "name": "hostile cells are cleaned, never executed",
+      "os": "macos",
+      "args": [
+        "rows",
+        "demo-hostile"
+      ],
+      "expect": {
+        "text_present": [
+          "North"
+        ]
+      }
+    },
+    {
+      "name": "ragged rows are counted",
+      "os": "macos",
+      "args": [
+        "problems",
+        "demo-ragged"
+      ],
+      "expect": {
+        "text_present": [
+          "Uneven rows"
+        ]
+      }
+    },
+    {
+      "name": "non-numeric values are skipped, never zero",
+      "os": "macos",
+      "args": [
+        "problems",
+        "demo-nonnumeric"
+      ],
+      "expect": {
+        "text_present": [
+          "Skipped rows"
+        ]
+      }
+    },
+    {
+      "name": "no value column is said plainly",
+      "os": "macos",
+      "args": [
+        "problems",
+        "demo-novalue"
+      ],
+      "expect": {
+        "text_present": [
+          "No value column"
+        ]
+      }
+    },
+    {
+      "name": "empty file",
+      "os": "macos",
+      "args": [
+        "demo-empty"
+      ],
+      "expect": {
+        "text_present": [
+          "Nothing to show"
+        ]
+      }
+    },
+    {
+      "name": "row cap",
+      "os": "macos",
+      "args": [
+        "problems",
+        "demo-huge"
+      ],
+      "expect": {
+        "text_present": [
+          "Row cap"
+        ]
+      }
+    },
+    {
+      "name": "missing file",
+      "os": "macos",
+      "args": [
+        "/nonexistent/file.csv"
+      ],
+      "expect": {
+        "text_present": [
+          "No file at that path"
+        ]
+      }
+    },
+    {
+      "name": "a folder is refused",
+      "os": "macos",
+      "args": [
+        "/"
+      ],
+      "expect": {
+        "text_present": [
+          "That is a folder"
+        ]
+      }
+    },
+    {
+      "name": "a device is refused",
+      "os": "macos",
+      "args": [
+        "/dev/null"
+      ],
+      "expect": {
+        "text_present": [
+          "That is not a regular file"
+        ]
+      }
+    },
+    {
+      "name": "unknown demo",
+      "os": "macos",
+      "args": [
+        "demo-zzz"
+      ],
+      "expect": {
+        "text_present": [
+          "No such demo"
+        ]
+      }
+    }
+  ]
+}

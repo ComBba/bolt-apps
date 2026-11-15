@@ -49,7 +49,7 @@ repository.
 program or a script for themselves, do not tell them it is impossible and do not hand them a
 tar.gz. Build it outside `apps/` and run `bolt-apps lint <folder> --personal`, then
 `bolt-apps pack <folder> --personal`. Rules Bolt enforces on such a pack: scripts are single
-files directly in `scripts/` (no folders, no vendored `bolt_app_kit`), named with letters,
+files directly in `scripts/` (no folders; the kit is the single file `scripts/bolt_app_kit.py`), named with letters,
 digits, `.`, `_` and `-`; every `{{scripts_dir}}/<name>` in the app file must exist; `runtime`
 is `transform`, `bridge` or `http_local`; action `kind` is `url`, `composer`, `utility` or
 `run`. Write the app YAML in plain form: bare keys with the colon touching them, values on one line (quoted or plain, `\"` and `\\` the only escapes), block lists and maps indented with spaces, no anchors, aliases, tags, block scalars (`|` `>`), duplicate keys or tabs. The tools read only that form; anything else is reported as `yaml_unreadable_here` and its tier as unknown. The person installs it by dropping the `.boltpack` on the Bolt launcher or Bolt Apps
@@ -130,7 +130,8 @@ the app can do and asks the person to confirm.
 Rules a script app must follow, each one a `verify` code:
 
 - One app file per `utilities/<id>.yaml`; scripts are single files directly in `scripts/`
-  (`script_subfolder`, `script_name`). A vendored `bolt_app_kit` folder cannot be installed yet.
+  (`script_subfolder`, `script_name`). The kit ships as one file, `scripts/bolt_app_kit.py`, made by
+  `bolt-apps kit vendor --flat <folder>`; a vendored `bolt_app_kit/` folder is refused.
 - The command names the script as `{{scripts_dir}}/<name>`, bare, never in quotes
   (`command_variable_in_quotes`, `script_path_relative`, `script_missing`). Example:
   `macos: "python3 {{scripts_dir}}/eagle.py {{view}}"`.
@@ -160,6 +161,60 @@ that failed to load are listed there with the file name and Bolt's error. Run
 | `bridge.command must define` | `command_missing` |
 | `timeout_seconds must be 1..=60` | `timeout_out_of_range` |
 | `bridge.parse` | `parse_not_allowed` |
+
+## 4c. A rich app for a web API: start from the portal template
+
+If the person wants an app for a web API with a summary, tiles, lists they can drill into, a
+detail panel and a cache, do not write the YAML or the script. Copy
+[`kit/examples/portal-template`](kit/examples/portal-template) to a folder named after the new
+app's id, change data in `scripts/config.json` and `scripts/fixtures.json`, generate the YAML and
+ship it as a personal pack (section 4b). It is tier 3, so it never goes in `apps/`. The personal
+pack is the way to ship a rich app: the gallery refuses it, and Bolt shows its permissions and asks
+the person to confirm when they drop the pack on the Bolt launcher or Bolt Apps.
+
+```
+cp -R kit/examples/portal-template ~/my-app && cd ~/my-app      # the folder name is the app id
+# edit scripts/config.json, scripts/fixtures.json, bolt-app.json, README.md; rename utilities/<old>.yaml to <id>.yaml
+python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
+node <repo>/toolkit/bin/bolt-apps.mjs check . --update-golden    # read the golden/ diff once
+node <repo>/toolkit/bin/bolt-apps.mjs check .
+node <repo>/toolkit/bin/bolt-apps.mjs lint . --personal --json
+node <repo>/toolkit/bin/bolt-apps.mjs verify . --json
+node <repo>/toolkit/bin/bolt-apps.mjs keygen                      # once
+node <repo>/toolkit/bin/bolt-apps.mjs pack . --personal --version 1.0.1 --out ../my-app-1.0.1.boltpack
+```
+
+Raise `--version` on every pack: Bolt refuses a pack that is the same version or older than the
+installed one ("a pack is only replaced by a newer version"). Keep the pack outside the folder: a
+`.boltpack` left inside the app folder gets in the way, so write packs elsewhere. Repack with the same
+signing key you first used: a new keygen is a different signer and Bolt refuses with "already belongs to". The
+install prompt rates a personal app HIGH RISK: any app that runs a program (tier 3) is, and the template's Open
+button uses `{{row.open_url}}`, which adds "opens links that are not fixed https addresses". That is expected.
+
+**Before you hand it over:** lint, check, verify and pack as above, then install the pack in Bolt
+(drop it on the launcher or Bolt Apps, confirm, type `=<chip>`, press Enter on the app's run row if
+Bolt asks for the person's OK) and confirm the overview shows rows. The tools cannot draw the
+launcher, so the first run in Bolt is the proof. Say which steps you could not do.
+
+Every mention of `scripts_dir` in the app file, comments included, must be `{{scripts_dir}}/<file>`
+as its own word, or Bolt says "Bolt cannot tell exactly which files this app runs" and never runs
+it. The generated file already does this; never add a comment that names it. The launcher's rules
+with the exact error text and the fix for each are in the "Rules Bolt enforces" table at
+<https://sparcle.app/docs/extend/rich-apps/#rules>.
+
+| Edit | Do not edit |
+|---|---|
+| `scripts/config.json`: endpoints and field `map`, `stats`, `overview`, `views` (labels, tile, up to 5 fields, body, link, `children`), `api`, `cache` | `scripts/engine.py` (the same file in every app built from the template) |
+| `scripts/fixtures.json`: a sample response per endpoint, made-up data | `scripts/bolt_app_kit.py` and `bolt_app_kit.lock.json` (refresh only with `bolt-apps kit vendor --flat .`) |
+| `bolt-app.json`, `README.md`, `check.json` (one case per view you add), `golden/` | `utilities/<id>.yaml` by hand: regenerate it with `--emit-yaml` |
+
+Pitfalls: at most 8 views including the overview (use `views[].children` for a detail level, it
+reuses a view); no filter field in a row (the filter is the second word typed); scripts are flat
+single files; the YAML stays in the plain form the engine writes; `id` equals the folder name,
+`config.json` id and the yaml file name (lint refuses a mismatch); change `id` in `bolt-app.json` and delete the old
+`utilities/<template>.yaml` after emitting the new one.
+Row formats with the YAML that draws each: <https://sparcle.app/docs/extend/rich-apps/>. A full
+example: [`kit/examples/acme-dash`](kit/examples/acme-dash).
 
 ## 5. Check
 

@@ -136,17 +136,45 @@ def run(cmd, deadline=None, timeout=None, dirs=None, cwd=None, env=None, ok_rcs=
         proc = subprocess.Popen([exe] + [str(a) for a in cmd[1:]], **kw)
     except (OSError, ValueError) as e:
         return RunResult(False, None, "", reason="could not start: %s" % e.__class__.__name__)
-    try:
-        raw, _ = proc.communicate(timeout=budget)
-    except subprocess.TimeoutExpired:
+    # Read in chunks so a command that never stops printing is cut at max_bytes and killed, instead of being
+    # buffered whole before the limit is looked at.
+    chunks, total, over = [], [0], threading.Event()
+
+    def pump():
+        try:
+            while True:
+                b = proc.stdout.read1(65536) if hasattr(proc.stdout, "read1") else proc.stdout.read(65536)
+                if not b:
+                    return
+                chunks.append(b)
+                total[0] += len(b)
+                if total[0] > max_bytes:
+                    over.set()
+                    return
+        except Exception:
+            return
+
+    t = threading.Thread(target=pump, daemon=True)
+    t.start()
+    t0 = time.monotonic()
+    t.join(budget)
+    if over.is_set():
         _kill_tree(proc, osn)
         try:
-            raw, _ = proc.communicate(timeout=2)
+            proc.wait(timeout=2)
         except Exception:
-            raw = b""
-        return RunResult(False, None, (raw or b"")[:max_bytes].decode(encoding, "replace"), timed_out=True, reason="timed out")
-    if raw and len(raw) > max_bytes:
-        return RunResult(False, proc.returncode, raw[:max_bytes].decode(encoding, "replace"), reason="output too large")
+            pass
+        return RunResult(False, None, b"".join(chunks)[:max_bytes].decode(encoding, "replace"), reason="output too large")
+    if t.is_alive():
+        _kill_tree(proc, osn)
+        t.join(2)
+        return RunResult(False, None, b"".join(chunks)[:max_bytes].decode(encoding, "replace"), timed_out=True, reason="timed out")
+    try:
+        proc.wait(timeout=None if budget is None else max(0.1, budget - (time.monotonic() - t0)))
+    except subprocess.TimeoutExpired:
+        _kill_tree(proc, osn)
+        return RunResult(False, None, b"".join(chunks)[:max_bytes].decode(encoding, "replace"), timed_out=True, reason="timed out")
+    raw = b"".join(chunks)
     out = (raw or b"").decode(encoding, "replace")
     rc = proc.returncode
     if rc in ok_rcs:
