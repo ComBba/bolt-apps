@@ -12,5 +12,5 @@ from .secrets import Secret, env_file_path, get_secret, redact, redact_tree, set
 from .text import (clean_lines, clean_text, copy_ok, elide_end, elide_left, host_full, host_label, neutralise_braces,
                    safe_copy, safe_text, text)
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 KIT_NAME = "bolt_app_kit"
