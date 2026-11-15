@@ -55,7 +55,7 @@ export function lintApp(dir, opts = {}) {
 					if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
 					const r = rel ? `${rel}/${f.name}` : f.name;
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
-					else if (f.isDirectory()) E('script_subfolder', `scripts/${r} is a folder. Bolt does install nested script folders, but this toolkit matches helper files, approval hashing and the install-prompt scan by file name, so it cannot yet vouch for nested files. Keep scripts directly in scripts/ (the kit is one file: bolt-apps kit vendor --flat)`, `scripts/${r}`);
+					else if (f.isDirectory()) E('script_subfolder', `scripts/${r} is a folder. Bolt does install nested script folders, but this toolkit matches helper files, approval hashing and the install-prompt scan by file name, so it cannot yet vouch for nested files. Keep scripts directly in scripts/ (the kit is one file: ./bolt-apps kit vendor --flat)`, `scripts/${r}`);
 					else if (!f.isFile()) E('script_not_plain', `scripts/${r} is not a plain file (a folder-like, device or pipe entry). Bolt refuses it ("is not a plain file")`, `scripts/${r}`);
 					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes)', `scripts/${r}`);
 					else if (!r.split('/').every(plainName)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${r}`);
@@ -200,7 +200,7 @@ function cmdNew(args) {
 	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
 	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps'), author = flag(args, '--author', os.userInfo().username);
-	if (!id || !ID.test(id)) die(`usage: bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);
+	if (!id || !ID.test(id)) die(`usage: ./bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);
 	if (!TEMPLATES[type]) die(`unknown --type "${type}". Types: ${Object.keys(TEMPLATES).join(', ')}`);
 	const dir = path.join(root, id); if (fs.existsSync(dir)) die(`${dir} already exists`);
 	const t = TEMPLATES[type](id);
@@ -208,7 +208,7 @@ function cmdNew(args) {
 	const listing = { schema_version: 1, id, title: id, role: 'Who this is for. Replace me.', saves: 'What it saves them. Replace me.', summary: t.summary, author: { name: author }, tier: t.tier, permissions: t.perms, tests: t.tests };
 	fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify(listing, null, 2) + '\n');
 	fs.writeFileSync(path.join(dir, 'README.md'), `# ${id}\n\n${t.summary}\n\n## Who it is for\n\n## What it saves\n\n## Permissions\n\n${t.perms.map((p) => `- \`${p}\``).join('\n')}\n\n## Sample\n\nShow one real input and output.\n`);
-	console.log(`created ${dir} (${type}, tier ${t.tier})\nnext: edit it, then  bolt-apps lint ${dir}  and  bolt-apps pack ${dir}`);
+	console.log(`created ${dir} (${type}, tier ${t.tier})\nnext: edit it, then  ./bolt-apps lint ${dir}  and  ./bolt-apps pack ${dir}`);
 }
 
 // ---------- keys, tar, pack, verify ----------
@@ -269,26 +269,26 @@ const KINDS = { snippets: 'snippet', search_engines: 'search_engine', utilities:
 const INTERPRETERS = { '.py': 'python3', '.sh': 'sh' };
 function cmdPack(args) {
 	const dir = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--key' && args[args.indexOf(a) - 1] !== '--out' && args[args.indexOf(a) - 1] !== '--version' && args[args.indexOf(a) - 1] !== '--notes');
-	if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps pack <app-folder> [--key file] [--out file.boltpack] [--version 1.0.0] [--notes "text"] [--personal]');
+	if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps pack <app-folder> [--key file] [--out file.boltpack] [--version 1.0.0] [--notes "text"] [--personal]');
 	const personal = args.includes('--personal');
 	const r = lintApp(dir, { personal }), errs = r.out.filter((x) => x.level === 'error');
 	const HINT = 'The gallery takes tier 1 and 2 only. Use `pack --personal` to build a pack for your own use.';
 	if (!personal && errs.some((e) => e.code === 'tier3_not_accepted' || e.code === 'unknown_file') && (() => { const pl = lintApp(dir, { personal: true }); return pl.tier >= 3 && pl.out.every((x) => x.level !== 'error'); })()) {
-		die('this app runs programs or reaches the network (tier 3), so it cannot go to the gallery. To build a pack for your own use, add --personal:\n  bolt-apps pack ' + dir + ' --personal\n' + HINT, 1);
+		die('this app runs programs or reaches the network (tier 3), so it cannot go to the gallery. To build a pack for your own use, add --personal:\n  ./bolt-apps pack ' + dir + ' --personal\n' + HINT, 1);
 	}
 	if (errs.length) {
 		errs.forEach((e) => console.error(`  ${e.code}: ${e.message} (${e.path})`));
 		const tier3 = !personal && (errs.some((e) => e.code === 'tier3_not_accepted') || fs.existsSync(path.join(dir, 'scripts')));
-		die(`fix the findings above first (bolt-apps lint ${personal ? '--personal ' : ''}shows them)` + (tier3 ? '\n' + HINT : ''), 1);
+		die(`fix the findings above first (./bolt-apps lint ${personal ? '--personal ' : ''}shows them)` + (tier3 ? '\n' + HINT : ''), 1);
 	}
 	let packWarnings = [];
 	if (personal) { // never write a pack that verify would refuse
 		const vf = []; for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) vf.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(dir, folder, n)) });
 		const cm = checkManifests(vf, { platforms: r.app.platforms }); packWarnings = cm.findings.filter((x) => x.level === 'warning' && x.code !== 'script_mentions'); const bad = cm.findings.filter((x) => x.level === 'error');
-		if (bad.length) { bad.forEach((e) => console.error(`  ${e.code}: ${e.message} (${e.file}${e.line ? ':' + e.line : ''})\n    fix: ${e.fix}`)); die('fix the findings above first (bolt-apps verify shows them)', 1); }
+		if (bad.length) { bad.forEach((e) => console.error(`  ${e.code}: ${e.message} (${e.file}${e.line ? ':' + e.line : ''})\n    fix: ${e.fix}`)); die('fix the findings above first (./bolt-apps verify shows them)', 1); }
 	}
 	const keyFile = flag(args, '--key', DEFAULT_KEY);
-	if (!fs.existsSync(keyFile)) die(`no signing key at ${keyFile}. Make one with: bolt-apps keygen`);
+	if (!fs.existsSync(keyFile)) die(`no signing key at ${keyFile}. Make one with: ./bolt-apps keygen`);
 	const priv = crypto.createPrivateKey(rd(keyFile)), pub = rawPub(crypto.createPublicKey(priv));
 	const manifests = new Map();
 	for (const [folder, names] of Object.entries(r.files)) for (const n of names) manifests.set(`${folder}/${n}`, fs.readFileSync(path.join(dir, folder, n)));
@@ -358,7 +358,7 @@ export function readPack(file) {
 export const esc = (v) => String(v).replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 function cmdVerify(args) {
 	const json = args.includes('--json'), f = args.find((x) => !x.startsWith('--'));
-	if (!f || !fs.existsSync(f)) die('usage: bolt-apps verify <app-folder | file.boltpack> [--json]');
+	if (!f || !fs.existsSync(f)) die('usage: ./bolt-apps verify <app-folder | file.boltpack> [--json]');
 	let findings = [], confirm = null, kind;
 	if (fs.statSync(f).isDirectory()) {
 		kind = 'app';
@@ -368,7 +368,7 @@ function cmdVerify(args) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
 			const c = checkManifests(files, { platforms: r.app.platforms }); findings.push(...c.findings);
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: 'not signed yet: bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
 		}
 	} else {
 		kind = 'pack';
@@ -433,7 +433,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 	};
 	const cmdKit = (args) => {
 		const target = args.slice(1).find((x) => !x.startsWith('--'));
-		if (args[0] !== 'vendor' || !target || !fs.existsSync(path.join(target, 'check.json'))) die('usage: bolt-apps kit vendor [--flat] <app-folder with check.json>');
+		if (args[0] !== 'vendor' || !target || !fs.existsSync(path.join(target, 'check.json'))) die('usage: ./bolt-apps kit vendor [--flat] <app-folder with check.json>');
 		const { dest, lock } = vendorKit(target, { flat: args.includes('--flat') });
 		console.log(`vendored ${lock.name} ${lock.version} (sha256 ${lock.sha256.slice(0, 16)}...) into ${dest}`);
 	};

@@ -1,12 +1,12 @@
 # Places list
 **What this shows:** rows with an Open button that opens each place in OpenStreetMap, built from latitude and longitude. There is no map widget
 **Edit these files:** `scripts/config.json` (`views[0].item.url` and `fields`) and `scripts/fixtures.json` (`places` with `lat` and `lon`).
-**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/places-list --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/places-list
-node toolkit/bin/bolt-apps.mjs pack kit/examples/places-list --personal --version 1.0.1 --out ../places-list-1.0.1.boltpack
-node toolkit/bin/bolt-apps.mjs verify ../places-list-1.0.1.boltpack
+./bolt-apps lint kit/examples/places-list --personal
+./bolt-apps check kit/examples/places-list
+./bolt-apps pack kit/examples/places-list --personal --version 1.0.1 --out ../places-list-1.0.1.boltpack
+./bolt-apps verify ../places-list-1.0.1.boltpack
 ```
 
 ## Notes

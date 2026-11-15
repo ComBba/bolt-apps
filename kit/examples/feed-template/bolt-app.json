@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "feed-template",
+  "title": "Feed template",
+  "role": "Anyone building a launcher app on feeds: a list of ids, or a result keyed by date",
+  "saves": "Fetching one request per id, filling date ranges into a path and flattening a feed keyed by date by hand",
+  "summary": "Top stories fetched by id and close asteroid approaches grouped by day, from public APIs. Runs on sample data; shows hydrate, date tokens, flatten, id_field and parent_field.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

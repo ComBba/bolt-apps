@@ -1,6 +1,6 @@
 # Quick path: build a Bolt App
 
-Read this page only. It is the one place for the rules. Nothing here is verified in real Bolt yet; Windows is unproven; there is no sandbox (a personal script runs as you). Need more: [CAPABILITIES.md](CAPABILITIES.md) (what works, one snippet each), [ENGINE.md](ENGINE.md) (every config option).
+Read this page only. It is the one place for the rules. Every command is `./bolt-apps <command>`, run from the root of the clone (a short launcher for `toolkit/bin/bolt-apps.mjs`). Nothing here is verified in real Bolt yet; Windows is unproven; there is no sandbox (a personal script runs as you). Need more: [CAPABILITIES.md](CAPABILITIES.md) (what works, one snippet each), [ENGINE.md](ENGINE.md) (every config option).
 
 ## 1. Pick the template
 
@@ -17,13 +17,13 @@ Read this page only. It is the one place for the rules. Nothing here is verified
 | Several APIs joined | `repo-radar`, `around` | `scripts/config.json`, `scripts/fixtures.json`, the one script | itself |
 | A service on this computer | `local-service-template` | `utilities/localmodels.yaml` | itself |
 | An API no engine template fits | `script-template` | `scripts/config.json`, `scripts/fixtures.json`, `scripts/app.py` | itself |
-| Reshape pasted text, no script | `bolt-apps new <id> --type transform` | its yaml | [AGENTS.md](../../AGENTS.md) |
+| Reshape pasted text, no script | `./bolt-apps new <id> --type transform` | its yaml | [AGENTS.md](../../AGENTS.md) |
 
 The edit lists are `edit` in [index.json](index.json). Examples live in `kit/examples/<template>`.
 
 ## 2. Four commands
 
-Run from the root of the clone (needs Node 18+ and Python 3.9+). `./bolt-apps` is a short launcher for `toolkit/bin/bolt-apps.mjs`:
+Needs Node 18+ and Python 3.9+:
 
 ```sh run
 ./bolt-apps new portal-template my-tool --dir ~/my-apps    # copy, rename, make the sample pass

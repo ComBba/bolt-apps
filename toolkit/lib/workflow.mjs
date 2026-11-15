@@ -41,13 +41,13 @@ export const listTemplates = () => { try { return JSON.parse(fs.readFileSync(pat
 export const hasTemplate = (name) => /^[a-z0-9][a-z0-9-]*$/.test(name) && fs.existsSync(path.join(EXAMPLES, name, 'bolt-app.json'));
 export function newList() {
 	const apps = listTemplates();
-	console.log('Templates (bolt-apps new <template> <id>):\n');
+	console.log('Templates (./bolt-apps new <template> <id>):\n');
 	for (const a of apps) console.log(`  ${a.id.padEnd(24)} ${a.need || a.layout}\n  ${''.padEnd(24)} edit: ${(a.edit || []).join(', ')}`);
 	console.log(`\nStart with the one whose "need" matches. Not sure: ${DOCS}`);
 }
 export function newFromTemplate(template, id, root) {
 	const src = path.join(EXAMPLES, template);
-	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: bolt-apps new --list`);
+	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`);
 	if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) die('the id is lowercase letters, digits and hyphens, at most 64 characters, for example my-tool');
 	const dir = path.join(root, id);
 	if (fs.existsSync(dir) || (() => { try { fs.lstatSync(dir); return true; } catch { return false; } })()) die(`${q(dir)} already exists (or is a link). Choose another id, or delete it first`);
@@ -73,7 +73,7 @@ export function newFromTemplate(template, id, root) {
 		const r = bolt(['check', dir, '--update-golden']);
 		note = r.status === 0 ? 'check passes on the sample data' : `check did not pass yet:\n${r.stdout.slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).join(', ')}\n  2. bolt-apps run ${q(dir)} --sample      (see the rows) and  bolt-apps check ${q(dir)}\n  3. bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`);
 }
 
 // ---------------------------------------------------------------- run
@@ -101,7 +101,7 @@ function paneOf(root, view) {
 }
 export function runApp(args) {
 	const flags = args.filter((a) => a.startsWith('--')), rest = args.filter((a) => !a.startsWith('--'));
-	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app about as Bolt would (an approximation: the launcher is the final judge) and shows the rows. Note: it executes the app\'s own command on your computer with your real HOME and PATH; --live reads your real keychain and ~/.config/<id>/.env. Run only code you have read.');
+	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app about as Bolt would (an approximation: the launcher is the final judge) and shows the rows. Note: it executes the app\'s own command on your computer with your real HOME and PATH; --live reads your real keychain and ~/.config/<id>/.env. Run only code you have read.');
 	refuseSecrets(dir);
 	const words = rest.slice(1);
 	const b = bridgeCommand(dir, words); if (b.error) die(b.error);
@@ -134,7 +134,7 @@ const notLink = (f) => { try { if (fs.lstatSync(f).isSymbolicLink()) die(`${f} i
 const loadShip = () => { try { const j = JSON.parse(fs.readFileSync(path.join(STATE, 'ship.json'), 'utf8')); return j && typeof j === 'object' && !Array.isArray(j) ? Object.assign(Object.create(null), j) : Object.create(null); } catch { return Object.create(null); } };
 const bump = (v) => { const p = String(v).split('.').map(Number); if (p.length !== 3 || p.some((n) => !Number.isInteger(n))) return '1.0.1'; p[2] += 1; return p.join('.'); };
 export function ship(args) {
-	const dir = args.find((a) => !a.startsWith('--')); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps ship <app-folder>   (lint, check, pack, verify, with the next version picked for you)');
+	const dir = args.find((a) => !a.startsWith('--')); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps ship <app-folder>   (lint, check, pack, verify, with the next version picked for you)');
 	refuseSecrets(dir);
 	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { die(`${q(path.join(dir, 'bolt-app.json'))} is not valid JSON (${e.message}). Fix it, then run ship again`); }
 	if (!app || typeof app !== 'object' || Array.isArray(app)) die(`${q(path.join(dir, 'bolt-app.json'))} must be a JSON object with an id, title and so on, not ${app === null ? 'null' : Array.isArray(app) ? 'a list' : typeof app}. Fix it, then run ship again`);
@@ -163,7 +163,7 @@ export function doctor(args) {
 	const nodeMajor = Number(process.versions.node.split('.')[0]); chk(nodeMajor >= 18, `node ${process.versions.node}`, 'Install Node 18 or newer (https://nodejs.org).');
 	const py = spawnSync('python3', ['--version'], { encoding: 'utf8' }); const pv = /(\d+)\.(\d+)/.exec(py.stdout || py.stderr || '');
 	chk(!!pv && (Number(pv[1]) > 3 || (Number(pv[1]) === 3 && Number(pv[2]) >= 9)), `python3 ${pv ? pv[0] : 'not found'}`, 'Install Python 3.9 or newer; script apps run with python3.');
-	chk(fs.existsSync(path.join(STATE, 'key.pem')), `signing key (${q(path.join(STATE, 'key.pem'))})`, 'Run: bolt-apps keygen   (once; ship also makes it for you)');
+	chk(fs.existsSync(path.join(STATE, 'key.pem')), `signing key (${q(path.join(STATE, 'key.pem'))})`, 'Run: ./bolt-apps keygen   (once; ship also makes it for you)');
 	try { fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', `Run: mkdir -p ${q(STATE)} && chmod 700 ${q(STATE)}`); }
 	if (dir && fs.existsSync(path.join(dir, 'bolt-app.json'))) {
 		let id; try { const j = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); if (!j || typeof j !== 'object' || Array.isArray(j)) { chk(false, 'bolt-app.json is a JSON object', `Make ${q(path.join(dir, 'bolt-app.json'))} an object like { "id": "my-tool", ... } (it is ${j === null ? 'null' : 'not an object'})`); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); } id = j.id; } catch (e) { chk(false, 'bolt-app.json is valid JSON', `Fix ${path.join(dir, 'bolt-app.json')}: ${e.message}`); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); }
@@ -171,9 +171,9 @@ export function doctor(args) {
 		const env = path.join(os.homedir(), '.config', id, '.env');
 		if (fs.existsSync(env)) chk((fs.statSync(env).mode & 0o077) === 0, `~/.config/${id}/.env is private`, `Run: chmod 600 ${q(env)}`);
 		const hits = keyLooking(dir); chk(!hits.length, 'no real-looking key in the app folder', `Remove the key from ${hits.map(q).join(', ')}; keys go in the keychain or ~/.config/${id}/.env.`);
-		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: bolt-apps lint ${q(dir)} --personal   and fix each line it prints.`);
-		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: bolt-apps verify ${q(dir)}   and fix each line it prints.`); }
-	} else console.log('\n(give an app folder to also check its key file, lint and verify: bolt-apps doctor <app-folder>)');
+		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: ./bolt-apps lint ${q(dir)} --personal   and fix each line it prints.`);
+		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: ./bolt-apps verify ${q(dir)}   and fix each line it prints.`); }
+	} else console.log('\n(give an app folder to also check its key file, lint and verify: ./bolt-apps doctor <app-folder>)');
 	console.log(bad ? `\n${bad} thing(s) to fix.` : '\nAll good.');
 	process.exit(bad ? 1 : 0);
 }

@@ -1,6 +1,6 @@
 # What a Bolt App can do
 
-<!-- generated from capabilities.json by scripts/build-capabilities.mjs: edit the JSON, not this file -->
+_Generated from `capabilities.json` by `scripts/build-capabilities.mjs`: edit the JSON, not this file._
 
 One row per capability. Status is derived from the code and `schema/bolt-rules.json`. Nothing here is verified in real Bolt yet. The sandbox is not shipped: a personal script runs as you. To start, read [QUICKSTART.md](QUICKSTART.md); the limits are in its one rules table.
 
@@ -23,26 +23,27 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Drill from an overview row to a list | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | A nav arg is one plain token matching `^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$`; no slash. |
 | Back row on a drilled-in view | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | A nav row carries no actions. |
 | Drill from a row to related rows of another view | supported | [acme-dash](acme-dash) | `kit/examples/acme-dash/check.json` | The related view lists rows whose match field equals this row id. No cross-join of two endpoints. |
-| Row id from another field (id_field, parent_field) | supported | no example yet; copy the snippet | `kit/python/tests/test_portal_engine.py` | id_field names the row field used as the id (default id); parent_field is on a children entry. |
+| Row id from another field (id_field, parent_field) | supported | [feed-template](feed-template) | `kit/examples/feed-template/check.json` | id_field names the row field used as the id (default id); parent_field is on a children entry. A nav arg is one token, so an id with a space does not work. |
 | Filter a list by a typed word | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | The word filters title, subtitle, badge and the first 5 fields. It is the second word typed; there is no filter field in a row. |
 | Launcher filters rows as you type | supported | [table-template](table-template) | `kit/examples/table-template/check.json` | Set app.searchable to true; the launcher does the filtering on the rows shown. |
 | Fresh cache and a stale copy when the API fails | supported | [portal-template](portal-template) | `kit/python/tests/test_cache_rows.py` | ttl seconds a result is fresh; stale_max seconds an old copy may be shown with its age. A failed call is never cached or shown as zero. |
-| A detail pane that changes with the selected row | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Each view has its own pane through presentation.views.<id>.right_widget. |
+| A detail pane that changes with the selected row | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Each view has its own pane through `presentation.views.<id>.right_widget`. |
 | Number tiles with a meter, unit, note and badge rules | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Unit at most 4 characters; trend keeps 30 points. |
 | Footer buttons (url, composer, utility) | supported | [acme-dash](acme-dash) | `kit/examples/acme-dash/check.json` | Bolt shows at most 6 footer buttons; the kit and engine keep to 3 (Open and Copy count). Bolt keeps 40 label characters; the button shows 14. |
 | Run action: one click runs this app with a fixed query | supported | no example yet; copy the snippet | `toolkit/test/launcher-rules.test.mjs` | kind run needs a query_template of fixed text. No example yet. |
-| Footer button icon | supported | no example yet; copy the snippet | `toolkit/test/launcher-rules.test.mjs` | Icon names are lowercase and case-sensitive, from the list in schema/bolt-rules.json (actions.icons); anything else is refused. |
+| Footer button icon | supported | no example yet; copy the snippet | `toolkit/test/bolt-rules.test.mjs` | Icon names are lowercase and case-sensitive, from the list in schema/bolt-rules.json (actions.icons); anything else is refused. |
+| Open a place in Maps from a row (instead of a map pane) | supported | [places-list](places-list) | `kit/examples/places-list/check.json` | A personal app cannot draw the map pane; the row Open button opens the place in a browser. |
 | Row actions: Open and Copy from config | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Config rows carry Open (url) and Copy (copy) only; more buttons need the app file actions. |
 | Icons in config.json and the app file | supported | [portal-template](portal-template) | `kit/python/tests/test_review_engine.py` | Icon names are case-sensitive: config.json names come from kit/schema/icons.json; footer-action icons come from actions.icons. |
 | Typed input form with validation | supported | [form-template](form-template) | `kit/examples/form-template/check.json` | Types text, number, date, select, toggle. Bad input shows one "Not saved" row and saves nothing. |
 | Secret input field | partial | no example: not recommended | `toolkit/test/bolt-rules.test.mjs` | The launcher accepts type secret but the value reaches the script as a plain word and the run log is not measured. Use the keychain or a 0600 .env file. |
 | REST list endpoint | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | GET only; at most 50 rows per list; 10 s per request, 14 s together. |
-| A list of ids, then one request per id | supported | no example yet; copy the snippet | `kit/python/tests/test_round2_engine.py` | limit 1 to 50; requests run in parallel; ids that fail are dropped. |
+| A list of ids, then one request per id | supported | [feed-template](feed-template) | `kit/python/tests/test_round2_engine.py` | limit 1 to 50; requests run in parallel; ids that fail are dropped. |
 | API key sent as a query parameter | supported | [script-template](script-template) | `kit/python/tests/test_round2_engine.py` | The key is stripped from the answer before anything is cached or shown. Prefer a header when the API allows it. |
 | API key sent in a header | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | The key goes only to the host of base_url. |
 | No key at all | supported | [lookup-template](lookup-template) | `kit/examples/lookup-template/check.json` | Leave key_env out. |
-| Date tokens in a path: {today}, {today-7d}, {today+1d} | supported | no example yet; copy the snippet | `kit/python/tests/test_round2_engine.py` | Local dates, 0 to 9999 days; sample mode uses _now from fixtures.json. |
-| An object of lists keyed by date or name | supported | no example yet; copy the snippet | `kit/python/tests/test_round2_engine.py` | flatten is true or the field name that keeps the key; keys sort. |
+| Date tokens in a path: {today}, {today-7d}, {today+1d} | supported | [feed-template](feed-template) | `kit/python/tests/test_round2_engine.py` | Local dates, 0 to 9999 days; sample mode uses _now from fixtures.json. |
+| An object of lists keyed by date or name | supported | [feed-template](feed-template) | `kit/python/tests/test_round2_engine.py` | flatten is true or the field name that keeps the key; keys sort. |
 | A second host for one endpoint | supported | [lookup-template](lookup-template) | `kit/examples/lookup-template/check.json` | Full addresses must be https on the base_url host or a host in allowed_hosts. The key is never sent to a second host. |
 | Refuse an answer that lacks fields | supported | [lookup-template](lookup-template) | `kit/examples/lookup-template/check.json` | On an object endpoint; an answer without them counts as failed, never as zero. |
 | Chain endpoints: one answer feeds the next path | supported | [lookup-template](lookup-template) | `kit/examples/lookup-template/check.json` | Lookup mode only: {earlier_step.field} and {query}; values are URL-quoted. Views mode cannot call a per-id endpoint. |
@@ -154,7 +155,7 @@ presentation:
 ### Row id from another field (id_field, parent_field) (`nav.id_field`)
 
 ```
-{"id": "repo", "endpoint": "repos", "id_field": "full_name", "children": [{"view": "issues", "match": "repo", "parent_field": "full_name"}]}
+{"id": "asteroids", "endpoint": "asteroids", "id_field": "neo_reference_id", "children": [{"view": "sameday", "match": "date", "parent_field": "date"}]}
 ```
 
 ### Filter a list by a typed word (`search.filter_word`)
@@ -208,6 +209,12 @@ actions:
   - { id: open, kind: url, label: Open, icon: globe, url_template: "{{row.open_url}}" }
 ```
 
+### Open a place in Maps from a row (instead of a map pane) (`actions.maps_link`)
+
+```
+"url": "https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=17/{lat}/{lon}"
+```
+
 ### Row actions: Open and Copy from config (`actions.row`)
 
 ```
@@ -241,7 +248,7 @@ actions:
 ### A list of ids, then one request per id (`api.id_hydrate`)
 
 ```
-"top": {"path": "/topstories.json", "hydrate": {"path": "/item/{id}.json", "limit": 20}}
+"news": {"path": "https://hacker-news.firebaseio.com/v0/topstories.json", "hydrate": {"path": "https://hacker-news.firebaseio.com/v0/item/{id}.json", "limit": 8}}
 ```
 
 ### API key sent as a query parameter (`api.query_key_auth`)
@@ -265,13 +272,13 @@ actions:
 ### Date tokens in a path: {today}, {today-7d}, {today+1d} (`api.date_tokens`)
 
 ```
-"feed": {"path": "/feed?start={today-7d}&end={today}"}
+"asteroids": {"path": "/neo/rest/v1/feed?start_date={today-2d}&end_date={today}"}
 ```
 
 ### An object of lists keyed by date or name (`api.object_keyed_lists`)
 
 ```
-"feed": {"path": "/feed", "data": "objs", "flatten": "date"}
+"asteroids": {"data": "near_earth_objects", "flatten": "date"}
 ```
 
 ### A second host for one endpoint (`api.second_host`)

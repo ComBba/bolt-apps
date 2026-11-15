@@ -11,7 +11,6 @@ import { caps, placeholders, resolve, render } from '../../scripts/build-capabil
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const exists = (p) => fs.existsSync(path.join(REPO, p));
-const pending = new Set(caps.pending_examples || []);
 const index = JSON.parse(fs.readFileSync(path.join(REPO, 'kit/examples/index.json'), 'utf8'));
 
 test('every row has the fields and a known status; ids are unique', () => {
@@ -28,7 +27,7 @@ test('a supported or partial row has an existing example (or says there is none)
 	for (const r of caps.rows.filter((x) => x.status !== 'not supported')) {
 		if (r.example) assert.ok(exists(r.example), `${r.id}: example ${r.example} does not exist`);
 		else assert.ok(r.example_note, `${r.id}: no example and no example_note`);
-		for (const a of r.also || []) assert.ok(exists(`kit/examples/${a}`) || pending.has(a), `${r.id}: example ${a} does not exist`);
+		for (const a of r.also || []) assert.ok(exists(`kit/examples/${a}`), `${r.id}: example ${a} does not exist`);
 		assert.ok(r.snippet.trim().length > 3, r.id);
 	}
 	assert.ok(caps.rows.filter((r) => r.status === 'supported' && !r.example).length <= 8, 'too many supported rows without an example: add one');
@@ -99,13 +98,23 @@ test('index.json: one "verified" wording, a need for every template, and edit li
 		assert.ok(typeof a.need === 'string' && a.need.length > 10, `${a.id}: need`);
 		assert.ok(Array.isArray(a.edit) && a.edit.length, `${a.id}: edit`);
 		const dir = path.join(REPO, 'kit/examples', a.id);
-		if (!fs.existsSync(dir)) { assert.ok(pending.has(a.id), `${a.id} is listed but its folder is missing and it is not in pending_examples`); continue; }
+		assert.ok(fs.existsSync(dir), `${a.id} is listed in index.json but its folder is missing`);
 		for (const e of a.edit) assert.ok(fs.existsSync(path.join(dir, e)), `${a.id}: edit path ${e} does not exist`);
 		for (const e of a.edit_in_script || []) assert.ok(fs.existsSync(path.join(dir, e.split(':')[0])), `${a.id}: ${e}`);
 		assert.ok(a.edit.every((e) => !/[ (]/.test(e)), `${a.id}: edit holds plain paths only`);
 	}
 });
 
-test('a pending example that now exists must leave pending_examples', () => {
-	for (const id of pending) assert.ok(!exists(`kit/examples/${id}/bolt-app.json`), `${id} landed: remove it from pending_examples in capabilities.json`);
+test('a row that names keys: the cited test file mentions each key, and the example config uses each example key', () => {
+	let n = 0;
+	for (const r of caps.rows) {
+		for (const k of r.keys || []) { assert.ok(fs.readFileSync(path.join(REPO, r.test), 'utf8').includes(k), `${r.id}: ${r.test} never mentions "${k}"`); n++; }
+		for (const k of r.example_keys || []) {
+			assert.ok(r.example, `${r.id}: example_keys without an example`);
+			const dir = path.join(REPO, r.example), files = [path.join(dir, 'scripts/config.json'), ...fs.readdirSync(path.join(dir, 'utilities')).map((f) => path.join(dir, 'utilities', f))].filter((f) => fs.existsSync(f));
+			assert.ok(files.some((f) => fs.readFileSync(f, 'utf8').includes(k)), `${r.id}: ${r.example} never uses "${k}"`); n++;
+		}
+	}
+	assert.ok(n >= 10, `only ${n} keys were checked`);
+	for (const id of ['nav.id_field', 'actions.run', 'actions.icon', 'api.id_hydrate', 'api.date_tokens', 'api.object_keyed_lists']) assert.ok((caps.rows.find((r) => r.id === id).keys || []).length, `${id} must name the key its test exercises`);
 });

@@ -1,15 +1,5 @@
 {
  "schema": "capabilities-v1",
- "pending_examples": [
-  "pulse-feed",
-  "json-tree-browser",
-  "expense-tracker",
-  "pipeline-board",
-  "unit-convert",
-  "branch-explorer",
-  "places-list"
- ],
- "pending_note": "These seven examples are in a separate set that is not merged yet. Remove this list when they land; the test then requires every named example to exist.",
  "about": "One row per thing an app can do. Derived from the code and schema/bolt-rules.json. Nothing here is verified in real Bolt yet.",
  "status_words": [
   "supported",
@@ -37,7 +27,10 @@
    "snippet": "{\"kind\": \"markdown\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"subtitle\": \"{{row.subtitle}}\", \"body\": \"{{row.body}}\", \"actions\": [\"copy\"]}}",
    "test": "kit/examples/widget-gallery/check.json",
    "limit": "Body up to 16384 characters.",
-   "kind": "markdown"
+   "kind": "markdown",
+   "also": [
+    "pulse-feed"
+   ]
   },
   {
    "id": "widget.entity_preview",
@@ -50,7 +43,8 @@
    "limit": "Facts list up to 40 entries, one tile above. Config default for a detail view.",
    "kind": "entity_preview",
    "also": [
-    "acme-dash"
+    "acme-dash",
+    "pulse-feed"
    ]
   },
   {
@@ -190,7 +184,10 @@
    "example": "kit/examples/acme-dash",
    "snippet": "\"views\": [{\"id\": \"tasks\", \"endpoint\": \"tasks\"}]",
    "test": "kit/examples/acme-dash/check.json",
-   "limit": "At most {rules:views.max} views including the overview; view ids match {rules:views.name_pattern}."
+   "limit": "At most {rules:views.max} views including the overview; view ids match {rules:views.name_pattern}.",
+   "also": [
+    "pipeline-board"
+   ]
   },
   {
    "id": "nav.drill",
@@ -210,7 +207,10 @@
    "example": "kit/examples/portal-template",
    "snippet": "(automatic: the engine adds a Back row to every drilled-in view)",
    "test": "kit/examples/portal-template/check.json",
-   "limit": "A nav row carries no actions."
+   "limit": "A nav row carries no actions.",
+   "also": [
+    "branch-explorer"
+   ]
   },
   {
    "id": "nav.children",
@@ -231,11 +231,18 @@
    "group": "navigation",
    "name": "Row id from another field (id_field, parent_field)",
    "status": "supported",
-   "example": null,
-   "snippet": "{\"id\": \"repo\", \"endpoint\": \"repos\", \"id_field\": \"full_name\", \"children\": [{\"view\": \"issues\", \"match\": \"repo\", \"parent_field\": \"full_name\"}]}",
-   "test": "kit/python/tests/test_portal_engine.py",
-   "limit": "id_field names the row field used as the id (default id); parent_field is on a children entry.",
-   "example_note": "no example yet; copy the snippet"
+   "example": "kit/examples/feed-template",
+   "snippet": "{\"id\": \"asteroids\", \"endpoint\": \"asteroids\", \"id_field\": \"neo_reference_id\", \"children\": [{\"view\": \"sameday\", \"match\": \"date\", \"parent_field\": \"date\"}]}",
+   "test": "kit/examples/feed-template/check.json",
+   "limit": "id_field names the row field used as the id (default id); parent_field is on a children entry. A nav arg is one token, so an id with a space does not work.",
+   "keys": [
+    "id_field",
+    "parent_field"
+   ],
+   "example_keys": [
+    "id_field",
+    "parent_field"
+   ]
   },
   {
    "id": "search.filter_word",
@@ -245,7 +252,10 @@
    "example": "kit/examples/portal-template",
    "snippet": "=portal tickets urgent",
    "test": "kit/examples/portal-template/check.json",
-   "limit": "The word filters title, subtitle, badge and the first 5 fields. It is the second word typed; there is no filter field in a row."
+   "limit": "The word filters title, subtitle, badge and the first 5 fields. It is the second word typed; there is no filter field in a row.",
+   "also": [
+    "pulse-feed"
+   ]
   },
   {
    "id": "search.searchable",
@@ -275,7 +285,10 @@
    "example": "kit/examples/portal-template",
    "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\"}",
    "test": "kit/examples/portal-template/check.json",
-   "limit": "Each view has its own pane through presentation.views.<id>.right_widget."
+   "limit": "Each view has its own pane through `presentation.views.<id>.right_widget`.",
+   "also": [
+    "pipeline-board"
+   ]
   },
   {
    "id": "pane.tiles",
@@ -299,7 +312,11 @@
    "example": "kit/examples/acme-dash",
    "snippet": "actions:\n  - { id: copy, kind: composer, target: row, label: Copy, insert: \"{{row.copy_text}}\" }",
    "test": "kit/examples/acme-dash/check.json",
-   "limit": "Bolt shows at most {rules:actions.footer_max_bolt} footer buttons; the kit and engine keep to {rules:actions.footer_max_kit} (Open and Copy count). Bolt keeps {rules:actions.label_kept_bolt} label characters; the button shows {rules:actions.label_shown}."
+   "limit": "Bolt shows at most {rules:actions.footer_max_bolt} footer buttons; the kit and engine keep to {rules:actions.footer_max_kit} (Open and Copy count). Bolt keeps {rules:actions.label_kept_bolt} label characters; the button shows {rules:actions.label_shown}.",
+   "also": [
+    "pulse-feed",
+    "cli-wrapper-template"
+   ]
   },
   {
    "id": "actions.run",
@@ -310,7 +327,10 @@
    "snippet": "actions:\n  - { id: refresh, kind: run, label: Refresh, query_template: \"overview refresh\" }",
    "test": "toolkit/test/launcher-rules.test.mjs",
    "limit": "kind run needs a query_template of fixed text. No example yet.",
-   "example_note": "no example yet; copy the snippet"
+   "example_note": "no example yet; copy the snippet",
+   "keys": [
+    "kind: run"
+   ]
   },
   {
    "id": "actions.icon",
@@ -319,9 +339,22 @@
    "status": "supported",
    "example": null,
    "snippet": "actions:\n  - { id: open, kind: url, label: Open, icon: globe, url_template: \"{{row.open_url}}\" }",
-   "test": "toolkit/test/launcher-rules.test.mjs",
+   "test": "toolkit/test/bolt-rules.test.mjs",
    "limit": "Icon names are lowercase and case-sensitive, from the list in schema/bolt-rules.json (actions.icons); anything else is refused.",
-   "example_note": "no example yet; copy the snippet"
+   "example_note": "no example yet; copy the snippet",
+   "keys": [
+    "action_icon"
+   ]
+  },
+  {
+   "id": "actions.maps_link",
+   "group": "actions",
+   "name": "Open a place in Maps from a row (instead of a map pane)",
+   "status": "supported",
+   "example": "kit/examples/places-list",
+   "snippet": "\"url\": \"https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=17/{lat}/{lon}\"",
+   "test": "kit/examples/places-list/check.json",
+   "limit": "A personal app cannot draw the map pane; the row Open button opens the place in a browser."
   },
   {
    "id": "actions.row",
@@ -399,11 +432,16 @@
    "group": "api",
    "name": "A list of ids, then one request per id",
    "status": "supported",
-   "example": null,
-   "snippet": "\"top\": {\"path\": \"/topstories.json\", \"hydrate\": {\"path\": \"/item/{id}.json\", \"limit\": 20}}",
+   "example": "kit/examples/feed-template",
+   "snippet": "\"news\": {\"path\": \"https://hacker-news.firebaseio.com/v0/topstories.json\", \"hydrate\": {\"path\": \"https://hacker-news.firebaseio.com/v0/item/{id}.json\", \"limit\": 8}}",
    "test": "kit/python/tests/test_round2_engine.py",
    "limit": "limit 1 to {rules:rows.engine_max}; requests run in parallel; ids that fail are dropped.",
-   "example_note": "no example yet; copy the snippet",
+   "keys": [
+    "hydrate"
+   ],
+   "example_keys": [
+    "hydrate"
+   ],
    "also": [
     "pulse-feed"
    ]
@@ -443,22 +481,32 @@
    "group": "api",
    "name": "Date tokens in a path: {today}, {today-7d}, {today+1d}",
    "status": "supported",
-   "example": null,
-   "snippet": "\"feed\": {\"path\": \"/feed?start={today-7d}&end={today}\"}",
+   "example": "kit/examples/feed-template",
+   "snippet": "\"asteroids\": {\"path\": \"/neo/rest/v1/feed?start_date={today-2d}&end_date={today}\"}",
    "test": "kit/python/tests/test_round2_engine.py",
    "limit": "Local dates, 0 to 9999 days; sample mode uses _now from fixtures.json.",
-   "example_note": "no example yet; copy the snippet"
+   "keys": [
+    "{today"
+   ],
+   "example_keys": [
+    "{today"
+   ]
   },
   {
    "id": "api.object_keyed_lists",
    "group": "api",
    "name": "An object of lists keyed by date or name",
    "status": "supported",
-   "example": null,
-   "snippet": "\"feed\": {\"path\": \"/feed\", \"data\": \"objs\", \"flatten\": \"date\"}",
+   "example": "kit/examples/feed-template",
+   "snippet": "\"asteroids\": {\"data\": \"near_earth_objects\", \"flatten\": \"date\"}",
    "test": "kit/python/tests/test_round2_engine.py",
    "limit": "flatten is true or the field name that keeps the key; keys sort.",
-   "example_note": "no example yet; copy the snippet"
+   "keys": [
+    "flatten"
+   ],
+   "example_keys": [
+    "flatten"
+   ]
   },
   {
    "id": "api.second_host",

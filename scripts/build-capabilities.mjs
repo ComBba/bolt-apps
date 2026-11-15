@@ -15,7 +15,7 @@ export const resolve = (s) => String(s).replace(/\{rules:([a-z_.]+)\}/g, (_, p) 
 const cell = (s) => String(s).replace(/\|/g, '\\|').replace(/\n/g, ' ');
 
 export function render() {
-	const out = ['# What a Bolt App can do', '', '<!-- generated from capabilities.json by scripts/build-capabilities.mjs: edit the JSON, not this file -->', '',
+	const out = ['# What a Bolt App can do', '', '_Generated from `capabilities.json` by `scripts/build-capabilities.mjs`: edit the JSON, not this file._', '',
 		'One row per capability. Status is derived from the code and `schema/bolt-rules.json`. Nothing here is verified in real Bolt yet. The sandbox is not shipped: a personal script runs as you. To start, read [QUICKSTART.md](QUICKSTART.md); the limits are in its one rules table.', '',
 		'| Capability | Status | Example | Proven by | Limit |', '|---|---|---|---|---|'];
 	for (const r of caps.rows) out.push(`| ${cell(r.name)} | ${r.status} | ${r.example ? `[${path.basename(r.example)}](${path.relative('kit/examples', r.example)})` : (r.example_note || 'none')} | \`${r.test}\` | ${cell(resolve(r.limit))} |`);

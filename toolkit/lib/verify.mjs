@@ -1,4 +1,4 @@
-// bolt-apps verify: the checks Bolt runs when a pack is dropped, run offline before anything is installed.
+// ./bolt-apps verify: the checks Bolt runs when a pack is dropped, run offline before anything is installed.
 // Rules come from schema/install-rules.json (a data mirror of the launcher's install rules). The YAML is read with plain text rules, not Bolt's parser, so a pass here means "none of the
 // known ways to fail were found", and Bolt still parses the file itself. See docs/verify-rules.md.
 import fs from 'node:fs';
@@ -16,22 +16,22 @@ const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
 
 // Every code verify can emit, with the fix in plain words. A test keeps this table and the conformance cases equal.
 export const FIXES = {
-	pack_not_gzip_tar: 'The file is not a .boltpack. Build it again with: bolt-apps pack <folder> --personal',
-	bundle_missing: 'The pack has no bundle.json. Build it again with bolt-apps pack.',
-	bundle_not_json: 'bundle.json is damaged. Build the pack again with bolt-apps pack.',
-	signature_missing: 'The pack is not signed. Build it with bolt-apps pack (run bolt-apps keygen once first).',
+	pack_not_gzip_tar: 'The file is not a .boltpack. Build it again with: ./bolt-apps pack <folder> --personal',
+	bundle_missing: 'The pack has no bundle.json. Build it again with ./bolt-apps pack.',
+	bundle_not_json: 'bundle.json is damaged. Build the pack again with ./bolt-apps pack.',
+	signature_missing: 'The pack is not signed. Build it with ./bolt-apps pack (run ./bolt-apps keygen once first).',
 	signed_by_other_key: 'This pack carries no author key, so only Bolt can check it. Nothing to fix if Sparcle or your company signed it.',
-	signature_mismatch: 'bundle.json was edited after signing. Build the pack again with bolt-apps pack; never edit a pack by hand.',
-	content_hash_mismatch: 'Files inside the pack changed after signing. Change the app folder, then run bolt-apps pack again.',
-	entry_hash_mismatch: 'A file in the pack does not match its signed hash. Build the pack again with bolt-apps pack.',
+	signature_mismatch: 'bundle.json was edited after signing. Build the pack again with ./bolt-apps pack; never edit a pack by hand.',
+	content_hash_mismatch: 'Files inside the pack changed after signing. Change the app folder, then run ./bolt-apps pack again.',
+	entry_hash_mismatch: 'A file in the pack does not match its signed hash. Build the pack again with ./bolt-apps pack.',
 	bundle_schema_version: `bundle.json schema_version must be ${P.bundle_schema_version}. Build the pack with the current bolt-apps.`,
 	too_many_files: `A pack may hold at most ${P.max_entries} files. Remove files you do not need.`,
 	pack_too_large: 'The pack unpacks to more than 64 MB. Remove large files; an app is small text and scripts.',
-	entry_outside_manifests: 'Every file Bolt installs must be listed under manifests/. Build the pack with bolt-apps pack instead of by hand.',
+	entry_outside_manifests: 'Every file Bolt installs must be listed under manifests/. Build the pack with ./bolt-apps pack instead of by hand.',
 	entry_path_not_plain: 'Use only letters, digits, . _ and - in folder and file names (no spaces, no leading or trailing dot, no Windows device names such as CON or NUL, at most 128 characters per name). Rename the file.',
 	entry_kind_skipped: 'Dropping a pack on the launcher installs User Apps and scripts only. Install snippets and search engines from Bolt Apps instead.',
 	entry_kind_unknown: 'Bolt does not install this kind of file from a pack. Remove it from the app folder.',
-	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with bolt-apps pack.',
+	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with ./bolt-apps pack.',
 	script_subfolder: 'Move the script directly into scripts/. Bolt installs nested folders, but this toolkit cannot yet check them (it matches files by name); the kit is one file with kit vendor --flat.',
 	script_depth: 'Use at most 8 folder levels under scripts/.',
 	script_path: 'Remove the . or .. part from the script path.',
@@ -101,7 +101,7 @@ export const FIXES = {
 	bad_json: 'Fix the JSON in this file.',
 	permission_unknown: 'Remove or rename this permission.',
 	yaml_unreadable_here: 'Write the file in plain YAML that this tool can read: unquoted top-level keys, one value per line, no anchors, aliases, tags or block scalars (| >), no escapes other than \\" and \\\\ in double quotes, no duplicate keys. Until then the tier and permissions below are unknown, not low.',
-	pack_malformed: 'The archive is damaged or hand-made badly (bad file size or header). Build the pack again with bolt-apps pack.',
+	pack_malformed: 'The archive is damaged or hand-made badly (bad file size or header). Build the pack again with ./bolt-apps pack.',
 	views_too_many: 'Bolt allows at most 8 views including the overview, and refuses the whole file otherwise. Merge or drop views.',
 	view_name_invalid: 'A view name is lowercase, starts with a letter, uses letters, digits, _ and -, at most 24 characters, and is not constructor or prototype. Rename it.',
 	view_arg_missing: 'Add presentation.view_arg naming the arg whose value selects the view (for example view_arg: view).',
@@ -117,7 +117,7 @@ export const FIXES = {
 	run_action_template: 'Give the run action a fixed query_template with no {{ }} (for example refresh), or remove the action.',
 	script_too_large: 'Bolt hashes a script only up to 2 MB and will not run an app that names a larger file. Keep scripts small; put big data outside the app.',
 	helper_not_hashed: 'Name the file in the command (for example python3 {{scripts_dir}}/engine.py {{scripts_dir}}/config.json). Bolt\'s approval hash covers only the manifest and the scripts named as {{scripts_dir}}/<file>, so an unnamed helper can change without asking again.',
-	pack_duplicate_entry: 'The archive lists the same file name twice. Build the pack again with bolt-apps pack.',
+	pack_duplicate_entry: 'The archive lists the same file name twice. Build the pack again with ./bolt-apps pack.',
 };
 const fixFor = (code) => FIXES[code] || 'See the message.';
 const mk = (level, code, message, file, line) => ({ level, code, message, file, ...(line ? { line } : {}), fix: fixFor(code) });

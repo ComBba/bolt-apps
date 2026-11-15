@@ -1,12 +1,12 @@
 # Unit convert
 **What this shows:** a typed input form (a number and two selects) that answers with a result row and a detail pane (result, formula, reverse, kind), plus the same amount in the other units. No network.
 **Edit these files:** `scripts/config.json` (the unit table, defaults, temperature formulas) and `scripts/app.py` (`convert`, `build`, `emit_yaml`).
-**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/unit-convert --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/unit-convert
-node toolkit/bin/bolt-apps.mjs pack kit/examples/unit-convert --personal --version 1.0.1 --out ../unit-convert-1.0.1.boltpack
-node toolkit/bin/bolt-apps.mjs verify ../unit-convert-1.0.1.boltpack
+./bolt-apps lint kit/examples/unit-convert --personal
+./bolt-apps check kit/examples/unit-convert
+./bolt-apps pack kit/examples/unit-convert --personal --version 1.0.1 --out ../unit-convert-1.0.1.boltpack
+./bolt-apps verify ../unit-convert-1.0.1.boltpack
 ```
 
 ## Notes

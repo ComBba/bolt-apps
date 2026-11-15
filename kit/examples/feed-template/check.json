@@ -1,0 +1,79 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: two tiles",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Top stories",
+          "Asteroids this week",
+          "Sample data"
+        ],
+        "text_absent": [
+          "unknown"
+        ]
+      }
+    },
+    {
+      "name": "news: each id was fetched into a row (hydrate)",
+      "os": "macos",
+      "args": [
+        "news"
+      ],
+      "golden": "golden/news.json",
+      "expect": {
+        "text_present": [
+          "Sample story one",
+          "120 points by alice"
+        ],
+        "text_absent": [
+          "unknown"
+        ]
+      }
+    },
+    {
+      "name": "asteroids: a feed keyed by date becomes one list with the day in a field (flatten)",
+      "os": "macos",
+      "args": [
+        "asteroids"
+      ],
+      "golden": "golden/asteroids.json",
+      "expect": {
+        "text_present": [
+          "2026 AA",
+          "2026-11-13",
+          "1250000"
+        ],
+        "text_absent": [
+          "unknown"
+        ]
+      }
+    },
+    {
+      "name": "asteroids: a detail by id_field (neo_reference_id), with a drill to the same day (parent_field)",
+      "os": "macos",
+      "args": [
+        "asteroids",
+        "3002"
+      ],
+      "golden": "golden/asteroids-detail.json",
+      "expect": {
+        "text_present": [
+          "2026 CC"
+        ],
+        "text_absent": [
+          "unknown"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "app": {
+    "id": "feed-template",
+    "chip": "feed",
+    "title": "Feed template",
+    "icon": "globe",
+    "description": "Template: a news feed from a list of ids, and a feed keyed by date, from public APIs. Sample data until you set api.fixture_default to false.",
+    "service": "Feed",
+    "searchable": true,
+    "timeout": 25
+  },
+  "api": {
+    "base_url": "https://api.nasa.gov",
+    "key_env": "NASA_API_KEY",
+    "env_file": "~/.config/feed-template/.env",
+    "auth_in": "query",
+    "auth_param": "api_key",
+    "allowed_hosts": [
+      "hacker-news.firebaseio.com"
+    ],
+    "user_agent": "bolt-app-example/1.0 (feed-template)",
+    "fixture_default": false,
+    "fixture_file": "fixtures.json",
+    "fixture_banner": true
+  },
+  "cache": {
+    "ttl": 300,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "news": {
+      "path": "https://hacker-news.firebaseio.com/v0/topstories.json",
+      "hydrate": {
+        "path": "https://hacker-news.firebaseio.com/v0/item/{id}.json",
+        "limit": 8
+      }
+    },
+    "asteroids": {
+      "path": "/neo/rest/v1/feed?start_date={today-2d}&end_date={today}",
+      "data": "near_earth_objects",
+      "flatten": "date",
+      "map": {
+        "title": "name",
+        "miss_km": "close_approach_data.0.miss_distance.kilometers"
+      }
+    }
+  },
+  "stats": {
+    "news_n": {
+      "endpoint": "news"
+    },
+    "asteroids_n": {
+      "endpoint": "asteroids"
+    }
+  },
+  "overview": {
+    "rows": [
+      {
+        "title": "Top stories",
+        "subtitle": "{news_n} stories, each fetched by id",
+        "icon": "globe",
+        "view": "news",
+        "tile": {
+          "label": "Stories",
+          "value": "news_n",
+          "note": "ids hydrated one request each"
+        }
+      },
+      {
+        "title": "Asteroids this week",
+        "subtitle": "{asteroids_n} close approaches, grouped by day",
+        "icon": "globe",
+        "view": "asteroids",
+        "tile": {
+          "label": "Approaches",
+          "value": "asteroids_n",
+          "note": "today minus 2 days to today"
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "news",
+      "title": "Top stories",
+      "icon": "globe",
+      "endpoint": "news",
+      "empty": "No stories",
+      "item": {
+        "title": "{title}",
+        "subtitle": "{score} points by {by}",
+        "icon": "globe",
+        "url": "https://news.ycombinator.com/item?id={id}",
+        "body": "## {title}\n\n{score} points, posted by {by}.",
+        "fields": [
+          {
+            "label": "Points",
+            "value": "{score}"
+          },
+          {
+            "label": "By",
+            "value": "{by}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "asteroids",
+      "title": "Asteroids",
+      "icon": "globe",
+      "endpoint": "asteroids",
+      "id_field": "neo_reference_id",
+      "empty": "No approaches",
+      "children": [
+        {
+          "view": "sameday",
+          "match": "date",
+          "parent_field": "date"
+        }
+      ],
+      "no_children": "No other approaches that day",
+      "item": {
+        "title": "{title}",
+        "subtitle": "{date} · misses by {miss_km|round} km",
+        "icon": "globe",
+        "body": "## {title}\n\nPasses on {date}.",
+        "fields": [
+          {
+            "label": "Day",
+            "value": "{date}"
+          },
+          {
+            "label": "Miss distance km",
+            "value": "{miss_km|round}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sameday",
+      "title": "Same day",
+      "icon": "globe",
+      "endpoint": "asteroids",
+      "empty": "None",
+      "item": {
+        "title": "{title}",
+        "subtitle": "{date}",
+        "icon": "globe"
+      }
+    }
+  ]
+}

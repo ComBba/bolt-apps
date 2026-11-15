@@ -151,3 +151,10 @@ test('every shell block marked "sh run" runs in a fresh copy of the repo', { tim
 		fs.rmSync(tmp, { recursive: true, force: true });
 	}
 });
+
+test('QUICKSTART.md and CAPABILITIES.md hold no raw HTML outside code (the website injects them into a page)', () => {
+	for (const f of ['kit/examples/QUICKSTART.md', 'kit/examples/CAPABILITIES.md']) {
+		const bare = read(f).replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]*`/g, '');
+		for (const [re, what] of [[/<\s*[A-Za-z!\/?]/, 'an HTML tag or comment'], [/\bon[a-z]+\s*=/i, 'an event handler'], [/(javascript|vbscript)\s*:|\]\(\s*data\s*:/i, 'a script-like URL'], [/&#?\w+;/, 'an HTML entity']]) assert.ok(!re.test(bare), `${f} holds ${what}`);
+	}
+});

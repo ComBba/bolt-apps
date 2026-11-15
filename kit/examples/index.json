@@ -538,6 +538,35 @@
       ]
     },
     {
+      "id": "feed-template",
+      "need": "a feed from a list of ids or a result keyed by date, with a date range in the path",
+      "layout": "overview tiles, a story list fetched by id, a list of daily close approaches with a drill to the same day",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "hydrate: ids then one request per id",
+        "date tokens in a path",
+        "flatten: an object of lists keyed by date",
+        "id_field",
+        "parent_field",
+        "key as a query parameter",
+        "second host in allowed_hosts"
+      ],
+      "sources": [
+        "Hacker News API (no key)",
+        "NASA NeoWs (free key)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/feed-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
       "id": "pulse-feed",
       "need": "a trending feed where a topic word merges more public sources, with open, copy and narrow buttons",
       "layout": "trending overview with a tile row, a topic word that merges two sources in parallel, a preview pane per story",

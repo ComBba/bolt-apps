@@ -1,0 +1,75 @@
+[
+  {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Top stories",
+    "subtitle": "3 stories, each fetched by id",
+    "icon": "globe",
+    "body": "",
+    "nav": {
+      "view": "news"
+    },
+    "actions": [],
+    "kpi_label": "Stories",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "ids hydrated one request each",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Asteroids this week",
+    "subtitle": "4 close approaches, grouped by day",
+    "icon": "globe",
+    "body": "",
+    "nav": {
+      "view": "asteroids"
+    },
+    "actions": [],
+    "kpi_label": "Approaches",
+    "kpi_value": 4,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "today minus 2 days to today",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

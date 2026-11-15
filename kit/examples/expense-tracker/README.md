@@ -1,12 +1,12 @@
 # Expense tracker
 **What this shows:** summary tiles with a budget meter, a category list that drills into its expenses, a detail pane per expense and a bar chart per day
 **Edit these files:** `scripts/config.json` (`stats`, `overview`, `views`) and `scripts/fixtures.json` (`expenses`, `categories`, `daily`).
-**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/expense-tracker --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/expense-tracker
-node toolkit/bin/bolt-apps.mjs pack kit/examples/expense-tracker --personal --version 1.0.1 --out ../expense-tracker-1.0.1.boltpack
-node toolkit/bin/bolt-apps.mjs verify ../expense-tracker-1.0.1.boltpack
+./bolt-apps lint kit/examples/expense-tracker --personal
+./bolt-apps check kit/examples/expense-tracker
+./bolt-apps pack kit/examples/expense-tracker --personal --version 1.0.1 --out ../expense-tracker-1.0.1.boltpack
+./bolt-apps verify ../expense-tracker-1.0.1.boltpack
 ```
 
 ## Notes
