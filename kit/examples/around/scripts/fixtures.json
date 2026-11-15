@@ -1,0 +1,2983 @@
+{
+ "_note": "All answers are real, recorded 2026-11-15 (trimmed): Nominatim, Overpass (it took 34 s under load that day), CityBikes, Open-Meteo, Wikipedia. attractions_sample is NOT recorded: it is a hand-written sample in the OpenTripMap shape for a key-set demo.",
+ "_now": 1794742303,
+ "places_is_sample": false,
+ "attractions_sample": [
+  {
+   "name": "SAMPLE Landmark One",
+   "dist": 150.0,
+   "kinds": "architecture,historic"
+  },
+  {
+   "name": "SAMPLE Landmark Two",
+   "dist": 320.0,
+   "kinds": "museums"
+  }
+ ],
+ "places": {
+  "bryant park, new york": {
+   "geocode": [
+    {
+     "lat": "40.7537509",
+     "lon": "-73.9835428",
+     "display_name": "Bryant Park, Manhattan Community Board 5, Manhattan, New York County, New York, 10018, United States",
+     "name": "Bryant Park",
+     "type": "park"
+    }
+   ],
+   "places": {
+    "elements": [
+     {
+      "type": "node",
+      "id": 662894338,
+      "lat": 40.7522171,
+      "lon": -73.9911323,
+      "tags": {
+       "name": "Best Bagel & Coffee",
+       "opening_hours": "Mo-Fr 06:00-16:00; Sa-Su 07:00-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 663070723,
+      "lat": 40.757084,
+      "lon": -73.977893,
+      "tags": {
+       "name": "Toasties",
+       "opening_hours": "Mo-Fr 06:00-19:00; Sa 08:00-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 883181314,
+      "lat": 40.7491,
+      "lon": -73.983903,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 883235940,
+      "lat": 40.7481846,
+      "lon": -73.985687,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Fr 06:30-18:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1292790745,
+      "lat": 40.7504996,
+      "lon": -73.9791604,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "05:00-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1426250385,
+      "lat": 40.7566623,
+      "lon": -73.9858678,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "24/7",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1427265079,
+      "lat": 40.7539377,
+      "lon": -73.9768745,
+      "tags": {
+       "name": "The Beer Bar Cafe Centro",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1427265082,
+      "lat": 40.7543596,
+      "lon": -73.9763714,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1427273332,
+      "lat": 40.7529578,
+      "lon": -73.9752216,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1427285902,
+      "lat": 40.7520527,
+      "lon": -73.9759313,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1427286079,
+      "lat": 40.750611,
+      "lon": -73.9768239,
+      "tags": {
+       "name": "Zucker's Bagels & Smoked Fish",
+       "opening_hours": "Mo-Fr 07:00-17:30, Sa-Su 07:00-14:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1427286257,
+      "lat": 40.7519302,
+      "lon": -73.978195,
+      "tags": {
+       "name": "Central Cafe",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1428036328,
+      "lat": 40.7528897,
+      "lon": -73.9811056,
+      "tags": {
+       "name": "Andaz",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1428036650,
+      "lat": 40.7545385,
+      "lon": -73.9840441,
+      "tags": {
+       "name": "Wafels and Dinges",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1428427548,
+      "lat": 40.7538901,
+      "lon": -73.9787699,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1428427554,
+      "lat": 40.7570782,
+      "lon": -73.9759556,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1706038616,
+      "lat": 40.7557338,
+      "lon": -73.9824831,
+      "tags": {
+       "name": "Gregory Coffee",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1802885415,
+      "lat": 40.7562302,
+      "lon": -73.9750931,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 1899033653,
+      "lat": 40.7580159,
+      "lon": -73.9889989,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2178743034,
+      "lat": 40.757236,
+      "lon": -73.9891169,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2588151826,
+      "lat": 40.7532069,
+      "lon": -73.9806932,
+      "tags": {
+       "name": "Pan d'oro",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2610440250,
+      "lat": 40.7608044,
+      "lon": -73.9837222,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2611782760,
+      "lat": 40.75555,
+      "lon": -73.9840554,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Fr 06:00-21:00; Sa 07:30-19:00; Su 08:00-16:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2703449328,
+      "lat": 40.7483213,
+      "lon": -73.9891195,
+      "tags": {
+       "name": "Golf & Body",
+       "leisure": "fitness_centre"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2709629969,
+      "lat": 40.7547832,
+      "lon": -73.9913539,
+      "tags": {
+       "name": "Grace Cafe",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2709702562,
+      "lat": 40.7509797,
+      "lon": -73.9871486,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2715512001,
+      "lat": 40.7503295,
+      "lon": -73.9770276,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2716012089,
+      "lat": 40.7563907,
+      "lon": -73.9782057,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Fr 06:00-22:00; Sa 07:00-22:00; Su 07:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2717223265,
+      "lat": 40.7551278,
+      "lon": -73.9890582,
+      "tags": {
+       "name": "CoCo Fresh Tea & Juice",
+       "brand": "CoCo",
+       "opening_hours": "Mo-Su 12:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 2717323719,
+      "lat": 40.7602955,
+      "lon": -73.9845027,
+      "tags": {
+       "name": "Gong Cha",
+       "brand": "Gong Cha",
+       "opening_hours": "Su-We 11:00-22:30; Th-Sa 11:00-23:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 3273820747,
+      "lat": 40.7557629,
+      "lon": -73.9905528,
+      "tags": {
+       "name": "Kiss My Slice",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 3451116498,
+      "lat": 40.7504317,
+      "lon": -73.9897503,
+      "tags": {
+       "name": "Moka & Co",
+       "brand": "Moka & Co",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 3577542666,
+      "lat": 40.7531885,
+      "lon": -73.9797511,
+      "tags": {
+       "name": "Bluestone Lane",
+       "brand": "Bluestone Lane",
+       "opening_hours": "Mo-Th 06:30-18:00; Fr 06:30-17:00; Sa-Su 07:00-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 3733142431,
+      "lat": 40.7530185,
+      "lon": -73.9772838,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 3792513846,
+      "lat": 40.7510046,
+      "lon": -73.9765387,
+      "tags": {
+       "name": "FIKA Grand Central",
+       "opening_hours": "Mo-Fr 07:00-19:00; Sa 08:00-17:00; Su 09:00-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 3821171656,
+      "lat": 40.7536535,
+      "lon": -73.984378,
+      "tags": {
+       "name": "Southwest Porch",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4213578591,
+      "lat": 40.7593488,
+      "lon": -73.9885067,
+      "tags": {
+       "name": "Carve Caf\u00e9 & Pizza",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4394357390,
+      "lat": 40.7532402,
+      "lon": -73.9845838,
+      "tags": {
+       "name": "Le Pain Quotidien",
+       "brand": "Le Pain Quotidien",
+       "opening_hours": "Mo-Fr 06:00-21:00; Sa-Su 07:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4441702689,
+      "lat": 40.7480793,
+      "lon": -73.9892846,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Th 05:30-22:00; Fr 05:30-22:30; Sa 06:00-21:30; Su 06:30-21:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4557782565,
+      "lat": 40.752013,
+      "lon": -73.975055,
+      "tags": {
+       "name": "Bagel Market",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4661316591,
+      "lat": 40.7572001,
+      "lon": -73.983437,
+      "tags": {
+       "name": "Cook Eatery",
+       "opening_hours": "24/7",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4691611733,
+      "lat": 40.7546713,
+      "lon": -73.9745591,
+      "tags": {
+       "name": "Financier",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4711391870,
+      "lat": 40.7526386,
+      "lon": -73.9845169,
+      "tags": {
+       "name": "Mangia Organic",
+       "opening_hours": "Mo-Fr 07:00-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4760672500,
+      "lat": 40.7545627,
+      "lon": -73.9839414,
+      "tags": {
+       "name": "Breads Bakery",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4762031974,
+      "lat": 40.7534774,
+      "lon": -73.9842882,
+      "tags": {
+       "name": "Joe Coffee Company",
+       "opening_hours": "Mo-Fr 08:00-20:00; Sa,Su 09:00-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4846658821,
+      "lat": 40.7520894,
+      "lon": -73.9900673,
+      "tags": {
+       "name": "The Bread Factory Cafe",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4847502523,
+      "lat": 40.7472688,
+      "lon": -73.9841528,
+      "tags": {
+       "name": "Captain's Cafe",
+       "opening_hours": "Mo-Su 06:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 4875126273,
+      "lat": 40.7469708,
+      "lon": -73.9853055,
+      "tags": {
+       "name": "Ginseng Museum Cafe",
+       "opening_hours": "Su-We 17:00-02:00; Th 17:00-03:00; Fr-Sa 17:00-04:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5167135150,
+      "lat": 40.7538513,
+      "lon": -73.9854117,
+      "tags": {
+       "name": "Blink Fitness",
+       "brand": "Blink Fitness",
+       "leisure": "fitness_centre"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5190720806,
+      "lat": 40.7485816,
+      "lon": -73.9863247,
+      "tags": {
+       "name": "Kawande Martin Cafe",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5328483492,
+      "lat": 40.7538023,
+      "lon": -73.9851089,
+      "tags": {
+       "name": "L\u2019Adresse American Bistro",
+       "opening_hours": "Mo-Sa 09:00-21:00; Su 09:00-15:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5371757186,
+      "lat": 40.7515194,
+      "lon": -73.9845758,
+      "tags": {
+       "name": "EPIC Hybrid Training",
+       "opening_hours": "Mo-Fr 06:30-21:00; Sa 09:00-24:00; Su 09:00-23:30",
+       "leisure": "fitness_centre"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5425572212,
+      "lat": 40.755117,
+      "lon": -73.9909801,
+      "tags": {
+       "name": "Corvo Coffee",
+       "opening_hours": "Mo-Fr 06:00-19:00; Sa, Su 07:00-16:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5433333128,
+      "lat": 40.7564172,
+      "lon": -73.9802703,
+      "tags": {
+       "name": "Pav\u00e9",
+       "opening_hours": "Mo-Fr 07:00-16:00, Su 09:00-15:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5528676228,
+      "lat": 40.7579702,
+      "lon": -73.9838946,
+      "tags": {
+       "name": "Margon Restaurant",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5578984004,
+      "lat": 40.7530461,
+      "lon": -73.9840983,
+      "tags": {
+       "name": "Blue Bottle Coffee",
+       "brand": "Blue Bottle Coffee",
+       "opening_hours": "Mo-Fr 06:30-19:00; Sa-Su 07:00-19:00; Jan 01 off; Nov Th[4] off; Dec 25 off",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5664788646,
+      "lat": 40.7542367,
+      "lon": -73.9889033,
+      "tags": {
+       "name": "Caf\u00e9 Grumpy",
+       "brand": "Caf\u00e9 Grumpy",
+       "opening_hours": "Mo-Fr 07:00-20:00; Sa, Su 08:00-19:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5664814202,
+      "lat": 40.7521444,
+      "lon": -73.9757163,
+      "tags": {
+       "name": "Caf\u00e9 Grumpy",
+       "brand": "Caf\u00e9 Grumpy",
+       "opening_hours": "Mo-Fr 06:00-20:00; Sa, Su 07:00-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5716116193,
+      "lat": 40.7521248,
+      "lon": -73.9780805,
+      "tags": {
+       "name": "Blue Bottle Coffee",
+       "brand": "Blue Bottle Coffee",
+       "opening_hours": "Mo-Fr 07:00-19:00; Sa, Su 09:00-18:00; Jan 01 off; Nov Th[4] off; Dec 25 off",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5771831853,
+      "lat": 40.7524881,
+      "lon": -73.9880033,
+      "tags": {
+       "name": "Bluestone Lane",
+       "brand": "Bluestone Lane",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5806583254,
+      "lat": 40.7512755,
+      "lon": -73.9793045,
+      "tags": {
+       "name": "Taylor St. Baristas",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5812464935,
+      "lat": 40.7521357,
+      "lon": -73.9915345,
+      "tags": {
+       "name": "Madman Espresso",
+       "opening_hours": "Mo-Fr 07:30-18:00; Sa, Su 08:30-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5985763486,
+      "lat": 40.758148,
+      "lon": -73.9824848,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Fr 05:30-21:00; Sa-Su 07:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 5985838985,
+      "lat": 40.7596521,
+      "lon": -73.9852254,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Th 05:30-00:00; Fr-Sa 05:30-02:00; Su 05:30-01:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6006320286,
+      "lat": 40.7544586,
+      "lon": -73.9764655,
+      "tags": {
+       "name": "Moka Matcha",
+       "brand": "Moka Matcha",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6008970685,
+      "lat": 40.7606732,
+      "lon": -73.985793,
+      "tags": {
+       "name": "Masseria Caffe & Bakery",
+       "opening_hours": "Tu-Fr 07:00-20:00; Sa 08:00-20:00; Su 08:00-16:00; Mo 07:00-19:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6030389800,
+      "lat": 40.7572238,
+      "lon": -73.9807255,
+      "tags": {
+       "name": "Robusta Espresso Bar",
+       "opening_hours": "Mo-Fr 09:00-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6067214134,
+      "lat": 40.7541518,
+      "lon": -73.9861387,
+      "tags": {
+       "name": "Le Caf\u00e9 Coffee",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6104250725,
+      "lat": 40.7535315,
+      "lon": -73.9874051,
+      "tags": {
+       "name": "Heytea",
+       "brand": "Heytea",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6228150877,
+      "lat": 40.748044,
+      "lon": -73.9873353,
+      "tags": {
+       "name": "caff\u00e9 bene",
+       "brand": "caff\u00e9 bene",
+       "opening_hours": "09:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6231238816,
+      "lat": 40.7473548,
+      "lon": -73.9862282,
+      "tags": {
+       "name": "Paris Baguette",
+       "brand": "Paris Baguette",
+       "opening_hours": "Su-Th 07:00-22:00; Fr, Sa 07:00-23:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6259767847,
+      "lat": 40.7474567,
+      "lon": -73.9865203,
+      "tags": {
+       "name": "Gong Cha",
+       "brand": "Gong Cha",
+       "opening_hours": "10:30-21:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6441649386,
+      "lat": 40.758854,
+      "lon": -73.9883847,
+      "tags": {
+       "name": "Sugar Factory",
+       "opening_hours": "Mo-Su 11:00-00:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6507019906,
+      "lat": 40.7518367,
+      "lon": -73.9902569,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6566684054,
+      "lat": 40.7531459,
+      "lon": -73.9851227,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "05:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6612404175,
+      "lat": 40.7541498,
+      "lon": -73.9787021,
+      "tags": {
+       "name": "Le Pain Quotidien",
+       "brand": "Le Pain Quotidien",
+       "opening_hours": "Mo-Fr 07:00-19:00, Sa-Su 08:00-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6612404178,
+      "lat": 40.7555697,
+      "lon": -73.9802192,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Fr 05:30-21:30, Sa-Su 06:00-22:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6615272821,
+      "lat": 40.7578879,
+      "lon": -73.9831141,
+      "tags": {
+       "name": "For five coffee roasters",
+       "opening_hours": "Mo-Fr 07:00-19:00; Sa-Su 08:00-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6615272822,
+      "lat": 40.7570592,
+      "lon": -73.9811663,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 6615272823,
+      "lat": 40.756182,
+      "lon": -73.9810387,
+      "tags": {
+       "name": "Manhattan",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 7093921924,
+      "lat": 40.757792,
+      "lon": -73.9796085,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 7093921939,
+      "lat": 40.7565007,
+      "lon": -73.9778114,
+      "tags": {
+       "name": "Cafe Alice",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 7093921940,
+      "lat": 40.7566373,
+      "lon": -73.9801013,
+      "tags": {
+       "leisure": "fitness_centre"
+      }
+     },
+     {
+      "type": "node",
+      "id": 7093921948,
+      "lat": 40.7568104,
+      "lon": -73.9811459,
+      "tags": {
+       "name": "Caf\u00e9 Cello",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 7093921956,
+      "lat": 40.7588628,
+      "lon": -73.9789097,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 7159624185,
+      "lat": 40.7482318,
+      "lon": -73.9883698,
+      "tags": {
+       "name": "Mixue",
+       "brand": "Mixue Ice Cream & Tea",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 7368466282,
+      "lat": 40.7482654,
+      "lon": -73.9884306,
+      "tags": {
+       "name": "Biao Sugar",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8551468898,
+      "lat": 40.7529752,
+      "lon": -73.9747483,
+      "tags": {
+       "name": "Ground Central",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8551468902,
+      "lat": 40.7522546,
+      "lon": -73.9752551,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8669140491,
+      "lat": 40.7526793,
+      "lon": -73.992874,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Fr 05:30-19:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8669227466,
+      "lat": 40.7534341,
+      "lon": -73.9928127,
+      "tags": {
+       "name": "Essen",
+       "opening_hours": "Mo-Fr 06:00-18:00; Sa,Su 07:00-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8670146200,
+      "lat": 40.7579172,
+      "lon": -73.9890503,
+      "tags": {
+       "name": "The Times Eatery",
+       "opening_hours": "Mo-Fr 07:00-15:00; Sa, Su 08:00-16:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8791888444,
+      "lat": 40.7476872,
+      "lon": -73.9864866,
+      "tags": {
+       "name": "Grace Street",
+       "opening_hours": "Su-Th 11:00-23:00; Fr, Sa 11:00-23:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8872982362,
+      "lat": 40.7538538,
+      "lon": -73.9868085,
+      "tags": {
+       "name": "Cook",
+       "opening_hours": "Mo-Fr 06:00-22:00; Sa 07:00-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8872982377,
+      "lat": 40.7543258,
+      "lon": -73.9871718,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 8996587943,
+      "lat": 40.7486986,
+      "lon": -73.9778705,
+      "tags": {
+       "name": "Lucid Cafe",
+       "opening_hours": "Mo-Fr 07:00-15:00; Sa-Su 08:00-15:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 9035676817,
+      "lat": 40.7476635,
+      "lon": -73.9864189,
+      "tags": {
+       "name": "Tea Makers",
+       "opening_hours": "Su-We 11:00-21:00; Th-Sa 11:00-22:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 9228265907,
+      "lat": 40.7507114,
+      "lon": -73.9868695,
+      "tags": {
+       "name": "Brasserie Toast Cafe",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 9644541103,
+      "lat": 40.7479431,
+      "lon": -73.987102,
+      "tags": {
+       "name": "Machi machi",
+       "brand": "machi machi",
+       "opening_hours": "Su-Th 11:00-22:00; Fr, Sa 11:00-23:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 9658251141,
+      "lat": 40.7525226,
+      "lon": -73.9924763,
+      "tags": {
+       "name": "Liberty Bagels Midtown",
+       "opening_hours": "Mo-Fr 06:00-17:00; Sa-Su 07:00-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 9784352417,
+      "lat": 40.759942,
+      "lon": -73.9816372,
+      "tags": {
+       "name": "Le Caffe Coffee",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 9784361517,
+      "lat": 40.7575756,
+      "lon": -73.9790831,
+      "tags": {
+       "name": "Maman",
+       "opening_hours": "Mo-Fr 07:30-18:00; Sa-Su 08:00-18:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 9807086556,
+      "lat": 40.7470102,
+      "lon": -73.9807532,
+      "tags": {
+       "name": "Aromati",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 10616783226,
+      "lat": 40.7518188,
+      "lon": -73.9815906,
+      "tags": {
+       "name": "The Library Caf\u00e9 by Amy's Bread",
+       "opening_hours": "Mo-Sa 10:30-16:30; PH off",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 10828734042,
+      "lat": 40.748382,
+      "lon": -73.9878429,
+      "tags": {
+       "name": "Early Edition Espresso Bar",
+       "opening_hours": "Mo-Su 06:30-22:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 10844530005,
+      "lat": 40.7515977,
+      "lon": -73.9806682,
+      "tags": {
+       "name": "Gregory\u2019s",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11048022206,
+      "lat": 40.75534,
+      "lon": -73.9909383,
+      "tags": {
+       "name": "Berlina Caf\u00e9",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11051498568,
+      "lat": 40.7597557,
+      "lon": -73.9881821,
+      "tags": {
+       "name": "Jack's All Day",
+       "opening_hours": "Tu-Su 16:30-23:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11157794983,
+      "lat": 40.7517217,
+      "lon": -73.987791,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11157819678,
+      "lat": 40.7578118,
+      "lon": -73.9758282,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11242273442,
+      "lat": 40.7571733,
+      "lon": -73.9814382,
+      "tags": {
+       "name": "Orangetheory Fitness",
+       "brand": "Orangetheory Fitness",
+       "leisure": "fitness_centre"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11308423815,
+      "lat": 40.7498599,
+      "lon": -73.9874941,
+      "tags": {
+       "name": "Capital One Caf\u00e9",
+       "opening_hours": "Mo-Fr 07:30-19:00; Sa, Su 09:00-18:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11399352938,
+      "lat": 40.7525257,
+      "lon": -73.9897468,
+      "tags": {
+       "name": "Song Tea",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11399352946,
+      "lat": 40.7536834,
+      "lon": -73.9888962,
+      "tags": {
+       "name": "Chocolate Dip",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11399352953,
+      "lat": 40.754545,
+      "lon": -73.9882746,
+      "tags": {
+       "name": "Frame Gourmet Eatery",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11399352960,
+      "lat": 40.7542503,
+      "lon": -73.9878848,
+      "tags": {
+       "name": "Gregorys Coffee",
+       "brand": "Gregorys Coffee",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11399352963,
+      "lat": 40.7536851,
+      "lon": -73.9884107,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11399352965,
+      "lat": 40.7532206,
+      "lon": -73.9887428,
+      "tags": {
+       "name": "Caf\u00e9 Hestia",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11418235696,
+      "lat": 40.7539389,
+      "lon": -73.9887119,
+      "tags": {
+       "name": "Italian Trattoria",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11505171169,
+      "lat": 40.7537445,
+      "lon": -73.982553,
+      "tags": {
+       "name": "Bryant Park Caf\u00e9",
+       "opening_hours": "Mo-Su 11:00-23:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11536106180,
+      "lat": 40.754069,
+      "lon": -73.9849241,
+      "tags": {
+       "name": "Cafe Zaiya",
+       "opening_hours": "Mo-Sa 11:00-19:00; Su 11:00-18:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11704876920,
+      "lat": 40.7525798,
+      "lon": -73.9744452,
+      "tags": {
+       "name": "Madman Espresso",
+       "opening_hours": "Mo,Fr 07:00-15:00; Tu-Th 07:00-16:00; Sa 08:00-14:00; Su 09:00-14:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11762033170,
+      "lat": 40.7538905,
+      "lon": -73.9850776,
+      "tags": {
+       "name": "Zucker's Bagels & Smoked Fish",
+       "opening_hours": "06:30-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11860537157,
+      "lat": 40.7479234,
+      "lon": -73.987814,
+      "tags": {
+       "name": "Nana's Green Tea",
+       "opening_hours": "Fr-Su 11:00-21:00, Mo-Th 11:00-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11872590937,
+      "lat": 40.7548345,
+      "lon": -73.9864878,
+      "tags": {
+       "name": "Paris Baguette",
+       "brand": "Paris Baguette",
+       "opening_hours": "Mo, We-Su 06:00-00:00; Tu 07:00-22:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11872686042,
+      "lat": 40.7546747,
+      "lon": -73.9854692,
+      "tags": {
+       "name": "Equinox",
+       "brand": "Equinox",
+       "leisure": "fitness_centre"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11872851264,
+      "lat": 40.7545541,
+      "lon": -73.9830108,
+      "tags": {
+       "name": "Joe & The Juice",
+       "brand": "Joe & The Juice",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11895286667,
+      "lat": 40.7551309,
+      "lon": -73.9923795,
+      "tags": {
+       "name": "Culture Espresso",
+       "opening_hours": "Mo-Fr 07:00-19:00; Sa-Su 08:00-19:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 11968161061,
+      "lat": 40.7538327,
+      "lon": -73.9925095,
+      "tags": {
+       "name": "Vanilla Gorilla Cafe",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12102851138,
+      "lat": 40.7514912,
+      "lon": -73.9862834,
+      "tags": {
+       "name": "Paris Baguette",
+       "brand": "Paris Baguette",
+       "opening_hours": "Mo-Su 06:00-23:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12122432674,
+      "lat": 40.755991,
+      "lon": -73.9904415,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Su 05:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12246616257,
+      "lat": 40.7585572,
+      "lon": -73.9865632,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12288613872,
+      "lat": 40.7494227,
+      "lon": -73.9799574,
+      "tags": {
+       "name": "Bj\u00f6rk Cafe",
+       "opening_hours": "Mo 11:00-17:00, Tu-Sa 11:00-20:00, Su 11:00-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12412959742,
+      "lat": 40.7507303,
+      "lon": -73.9767376,
+      "tags": {
+       "name": "Le Pain Quotidien",
+       "brand": "Le Pain Quotidien",
+       "opening_hours": "Mo-Fr 06:30-18:00, Sa-Su 07:30-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12469063673,
+      "lat": 40.7531442,
+      "lon": -73.974998,
+      "tags": {
+       "name": "Angelina Bakery Grand Central",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12469112391,
+      "lat": 40.7500475,
+      "lon": -73.9860309,
+      "tags": {
+       "name": "Angelina Bakery & Pizza",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12646644778,
+      "lat": 40.7562138,
+      "lon": -73.9797686,
+      "tags": {
+       "name": "Matto Espresso",
+       "brand": "Matto Espresso",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12855947326,
+      "lat": 40.7533789,
+      "lon": -73.9744178,
+      "tags": {
+       "name": "Tiger Sugar",
+       "brand": "Tiger Sugar",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12917458445,
+      "lat": 40.7546617,
+      "lon": -73.977442,
+      "tags": {
+       "name": "Black Fox",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12917458455,
+      "lat": 40.7567436,
+      "lon": -73.982279,
+      "tags": {
+       "name": "Ground Central",
+       "opening_hours": "Mo-Fr 06:30-18:00; Sa,Su 08:00-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12917521996,
+      "lat": 40.7568873,
+      "lon": -73.98349,
+      "tags": {
+       "name": "Gumption Coffee",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12917521999,
+      "lat": 40.7575283,
+      "lon": -73.98419,
+      "tags": {
+       "name": "T45",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12917522701,
+      "lat": 40.757443,
+      "lon": -73.9846875,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 12918215846,
+      "lat": 40.7558924,
+      "lon": -73.9783736,
+      "tags": {
+       "name": "Macchiato",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13064239934,
+      "lat": 40.7534146,
+      "lon": -73.9780533,
+      "tags": {
+       "name": "The Clock",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13368606981,
+      "lat": 40.7517893,
+      "lon": -73.9751114,
+      "tags": {
+       "name": "WatchHouse",
+       "brand": "WatchHouse",
+       "opening_hours": "Mo-Fr 07:00-18:00; Sa-Su 08:00-17:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13416351451,
+      "lat": 40.7509044,
+      "lon": -73.9752338,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "Mo-Su 05:00-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13510354134,
+      "lat": 40.7472671,
+      "lon": -73.9851526,
+      "tags": {
+       "name": "Xing Fu Tang",
+       "brand": "Xing Fu Tang",
+       "opening_hours": "Mo-Th 12:00-22:30;Fr 12:00-23:30;Sa-Su 11:00-22:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13763544692,
+      "lat": 40.7530803,
+      "lon": -73.9822414,
+      "tags": {
+       "name": "The Libary Caf\u00e9 by Amys Bread",
+       "opening_hours": "Mo-Sa 10:00-16:30",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13918879573,
+      "lat": 40.7591763,
+      "lon": -73.984248,
+      "tags": {
+       "name": "Central Perk",
+       "opening_hours": "08:00-23:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13930134963,
+      "lat": 40.7529135,
+      "lon": -73.9810755,
+      "tags": {
+       "name": "Starbucks",
+       "brand": "Starbucks",
+       "opening_hours": "05:00-20:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 13958820932,
+      "lat": 40.7518533,
+      "lon": -73.9910829,
+      "tags": {
+       "name": "Planet Fitness",
+       "brand": "Planet Fitness",
+       "opening_hours": "Mo-Fr 05:00-23:00; Sa-Su 07:00-19:00",
+       "leisure": "fitness_centre"
+      }
+     },
+     {
+      "type": "node",
+      "id": 14126280403,
+      "lat": 40.7526377,
+      "lon": -73.9926679,
+      "tags": {
+       "name": "Hawa Smoothies & Bubble Tea",
+       "opening_hours": "Mo-Fr 07:30-19:00; Sa 09:00-18:30; Su 09:00-18:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 14159734143,
+      "lat": 40.7540605,
+      "lon": -73.9818348,
+      "tags": {
+       "name": "Le Botaniste",
+       "opening_hours": "Mo-Su 11:00-21:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "node",
+      "id": 14236091101,
+      "lat": 40.747523,
+      "lon": -73.9854594,
+      "tags": {
+       "name": "Prince Tea House",
+       "opening_hours": "Su-We 11:30-23:00; Th 11:30-00:00; Fr-Sa 11:30-01:00",
+       "amenity": "cafe"
+      }
+     },
+     {
+      "type": "way",
+      "id": 702073570,
+      "center": {
+       "lat": 40.7534772,
+       "lon": -73.9842892
+      },
+      "tags": {
+       "name": "JoeCoffee",
+       "amenity": "cafe"
+      }
+     }
+    ]
+   },
+   "bikes": {
+    "network": {
+     "id": "citi-bike-nyc",
+     "name": "Citi Bike",
+     "stations": [
+      {
+       "name": "W 56 St & 8 Ave",
+       "latitude": 40.765959181657976,
+       "longitude": -73.98313522338867,
+       "timestamp": "2026-11-15T11:31:31.258084+00:00Z",
+       "free_bikes": 9,
+       "empty_slots": 36,
+       "ebikes": 4
+      },
+      {
+       "name": "W 47 St & 6 Ave",
+       "latitude": 40.758154,
+       "longitude": -73.981957,
+       "timestamp": "2026-11-15T11:31:31.101747+00:00Z",
+       "free_bikes": 49,
+       "empty_slots": 16,
+       "ebikes": 46
+      },
+      {
+       "name": "W 42 St & 6 Ave",
+       "latitude": 40.75492,
+       "longitude": -73.98455,
+       "timestamp": "2026-11-15T11:31:30.950937+00:00Z",
+       "free_bikes": 22,
+       "empty_slots": 27,
+       "ebikes": 8
+      },
+      {
+       "name": "Broadway & W 51 St",
+       "latitude": 40.76228826,
+       "longitude": -73.98336183,
+       "timestamp": "2026-11-15T11:31:31.064503+00:00Z",
+       "free_bikes": 40,
+       "empty_slots": 34,
+       "ebikes": 38
+      },
+      {
+       "name": "W 45 St & 8 Ave",
+       "latitude": 40.75929124,
+       "longitude": -73.98859651,
+       "timestamp": "2026-11-15T11:31:31.563892+00:00Z",
+       "free_bikes": 24,
+       "empty_slots": 34,
+       "ebikes": 11
+      },
+      {
+       "name": "E 35 St & Madison Ave",
+       "latitude": 40.74848023448579,
+       "longitude": -73.98255586624146,
+       "timestamp": "2026-11-15T11:31:31.562572+00:00Z",
+       "free_bikes": 9,
+       "empty_slots": 38,
+       "ebikes": 5
+      },
+      {
+       "name": "E 45 St & 3 Ave",
+       "latitude": 40.75255434,
+       "longitude": -73.97282625,
+       "timestamp": "2026-11-15T11:31:30.950235+00:00Z",
+       "free_bikes": 23,
+       "empty_slots": 20,
+       "ebikes": 16
+      },
+      {
+       "name": "1 Ave & E 42 St",
+       "latitude": 40.7487575,
+       "longitude": -73.970127,
+       "timestamp": "2026-11-15T11:31:31.194320+00:00Z",
+       "free_bikes": 16,
+       "empty_slots": 45,
+       "ebikes": 7
+      },
+      {
+       "name": "E 43 St & 2 Ave",
+       "latitude": 40.75022392,
+       "longitude": -73.97121414,
+       "timestamp": "2026-11-15T11:31:30.954493+00:00Z",
+       "free_bikes": 3,
+       "empty_slots": 46,
+       "ebikes": 2
+      },
+      {
+       "name": "2 Ave & E 29 St",
+       "latitude": 40.741723510974715,
+       "longitude": -73.97809267044067,
+       "timestamp": "2026-11-15T11:31:31.261931+00:00Z",
+       "free_bikes": 39,
+       "empty_slots": 13,
+       "ebikes": 32
+      },
+      {
+       "name": "8 Ave & W 27 St",
+       "latitude": 40.747968,
+       "longitude": -73.996637,
+       "timestamp": "2026-11-15T11:31:30.949784+00:00Z",
+       "free_bikes": 34,
+       "empty_slots": 14,
+       "ebikes": 8
+      },
+      {
+       "name": "Lexington Ave & E 29 St",
+       "latitude": 40.74311555376486,
+       "longitude": -73.98215353488922,
+       "timestamp": "2026-11-15T11:31:31.362465+00:00Z",
+       "free_bikes": 10,
+       "empty_slots": 37,
+       "ebikes": 5
+      },
+      {
+       "name": "W 55 St & 6 Ave",
+       "latitude": 40.763189,
+       "longitude": -73.978434,
+       "timestamp": "2026-11-15T11:31:31.559985+00:00Z",
+       "free_bikes": 27,
+       "empty_slots": 49,
+       "ebikes": 24
+      },
+      {
+       "name": "E 56 St & 3 Ave",
+       "latitude": 40.75934501,
+       "longitude": -73.96759673,
+       "timestamp": "2026-11-15T11:31:31.195222+00:00Z",
+       "free_bikes": 38,
+       "empty_slots": 40,
+       "ebikes": 32
+      },
+      {
+       "name": "Broadway & W 53 St",
+       "latitude": 40.76344058,
+       "longitude": -73.98268129,
+       "timestamp": "2026-11-15T11:31:31.219094+00:00Z",
+       "free_bikes": 5,
+       "empty_slots": 77,
+       "ebikes": 5
+      },
+      {
+       "name": "8 Ave & W 52 St",
+       "latitude": 40.76370739,
+       "longitude": -73.9851615,
+       "timestamp": "2026-11-15T11:31:31.095984+00:00Z",
+       "free_bikes": 19,
+       "empty_slots": 6,
+       "ebikes": 4
+      },
+      {
+       "name": "E 40 St & Park Ave",
+       "latitude": 40.750756,
+       "longitude": -73.978326,
+       "timestamp": "2026-11-15T11:31:31.261802+00:00Z",
+       "free_bikes": 70,
+       "empty_slots": 52,
+       "ebikes": 67
+      },
+      {
+       "name": "E 24 St & Park Ave S",
+       "latitude": 40.74096374,
+       "longitude": -73.98602213,
+       "timestamp": "2026-11-15T11:31:31.193713+00:00Z",
+       "free_bikes": 10,
+       "empty_slots": 64,
+       "ebikes": 2
+      },
+      {
+       "name": "8 Ave & W 38 St",
+       "latitude": 40.75461,
+       "longitude": -73.99177,
+       "timestamp": "2026-11-15T11:31:30.950696+00:00Z",
+       "free_bikes": 28,
+       "empty_slots": 32,
+       "ebikes": 17
+      },
+      {
+       "name": "6 Ave & W 45 St",
+       "latitude": 40.756951,
+       "longitude": -73.982631,
+       "timestamp": "2026-11-15T11:31:31.264505+00:00Z",
+       "free_bikes": 42,
+       "empty_slots": 21,
+       "ebikes": 38
+      },
+      {
+       "name": "W 52 St & 5 Ave",
+       "latitude": 40.75992262,
+       "longitude": -73.97648516,
+       "timestamp": "2026-11-15T11:31:31.196505+00:00Z",
+       "free_bikes": 10,
+       "empty_slots": 50,
+       "ebikes": 7
+      },
+      {
+       "name": "E 47 St & 1 Ave",
+       "latitude": 40.75206862,
+       "longitude": -73.96784384,
+       "timestamp": "2026-11-15T11:31:31.160021+00:00Z",
+       "free_bikes": 51,
+       "empty_slots": 18,
+       "ebikes": 27
+      },
+      {
+       "name": "E 58 St & Madison Ave",
+       "latitude": 40.76302594280519,
+       "longitude": -73.97209525108337,
+       "timestamp": "2026-11-15T11:31:31.263785+00:00Z",
+       "free_bikes": 35,
+       "empty_slots": 27,
+       "ebikes": 30
+      },
+      {
+       "name": "Broadway & W 29 St",
+       "latitude": 40.7462009,
+       "longitude": -73.98855723,
+       "timestamp": "2026-11-15T11:31:30.954340+00:00Z",
+       "free_bikes": 63,
+       "empty_slots": 26,
+       "ebikes": 52
+      },
+      {
+       "name": "E 48 St & 5 Ave",
+       "latitude": 40.75724567911726,
+       "longitude": -73.97805914282799,
+       "timestamp": "2026-11-15T11:31:31.096149+00:00Z",
+       "free_bikes": 34,
+       "empty_slots": 28,
+       "ebikes": 32
+      },
+      {
+       "name": "W 56 St & 6 Ave",
+       "latitude": 40.76340613,
+       "longitude": -73.97722479,
+       "timestamp": "2026-11-15T11:31:31.561994+00:00Z",
+       "free_bikes": 15,
+       "empty_slots": 36,
+       "ebikes": 12
+      },
+      {
+       "name": "W 35 St & 9 Ave",
+       "latitude": 40.75414519263519,
+       "longitude": -73.9960889518261,
+       "timestamp": "2026-11-15T11:31:30.951554+00:00Z",
+       "free_bikes": 12,
+       "empty_slots": 15,
+       "ebikes": 4
+      },
+      {
+       "name": "W 50 St & 9 Ave",
+       "latitude": 40.763604677958625,
+       "longitude": -73.98917958140373,
+       "timestamp": "2026-11-15T11:31:31.354996+00:00Z",
+       "free_bikes": 6,
+       "empty_slots": 8,
+       "ebikes": 4
+      },
+      {
+       "name": "W 36 St & 9 Ave",
+       "latitude": 40.75462324029105,
+       "longitude": -73.99516761302948,
+       "timestamp": "2026-11-15T11:31:30.953816+00:00Z",
+       "free_bikes": 9,
+       "empty_slots": 31,
+       "ebikes": 7
+      },
+      {
+       "name": "E 33 St & 1 Ave",
+       "latitude": 40.74322681432173,
+       "longitude": -73.97449783980846,
+       "timestamp": "2026-11-15T11:31:31.163910+00:00Z",
+       "free_bikes": 47,
+       "empty_slots": 30,
+       "ebikes": 38
+      },
+      {
+       "name": "E 33 St & Park Ave",
+       "latitude": 40.74652543,
+       "longitude": -73.98214281,
+       "timestamp": "2026-11-15T11:31:31.560961+00:00Z",
+       "free_bikes": 1,
+       "empty_slots": 63,
+       "ebikes": 1
+      },
+      {
+       "name": "W 39 St & 9 Ave",
+       "latitude": 40.75645824,
+       "longitude": -73.99372222,
+       "timestamp": "2026-11-15T11:31:31.063676+00:00Z",
+       "free_bikes": 14,
+       "empty_slots": 27,
+       "ebikes": 6
+      },
+      {
+       "name": "Broadway & W 48 St",
+       "latitude": 40.76017739537783,
+       "longitude": -73.98486793041229,
+       "timestamp": "2026-11-15T11:31:31.563676+00:00Z",
+       "free_bikes": 65,
+       "empty_slots": 32,
+       "ebikes": 64
+      },
+      {
+       "name": "9 Ave & W 33 St",
+       "latitude": 40.752568,
+       "longitude": -73.996765,
+       "timestamp": "2026-11-15T11:31:31.163353+00:00Z",
+       "free_bikes": 15,
+       "empty_slots": 73,
+       "ebikes": 14
+      },
+      {
+       "name": "Park Ave & E 42 St",
+       "latitude": 40.751873,
+       "longitude": -73.977706,
+       "timestamp": "2026-11-15T11:31:30.953270+00:00Z",
+       "free_bikes": 38,
+       "empty_slots": 45,
+       "ebikes": 28
+      },
+      {
+       "name": "W 27 St & 7 Ave",
+       "latitude": 40.74665,
+       "longitude": -73.99392,
+       "timestamp": "2026-11-15T11:31:31.101219+00:00Z",
+       "free_bikes": 34,
+       "empty_slots": 40,
+       "ebikes": 32
+      },
+      {
+       "name": "E 44 St & 2 Ave",
+       "latitude": 40.75118387463277,
+       "longitude": -73.97138714790344,
+       "timestamp": "2026-11-15T11:31:31.264129+00:00Z",
+       "free_bikes": 7,
+       "empty_slots": 27,
+       "ebikes": 5
+      },
+      {
+       "name": "7 Ave & W 55 St",
+       "latitude": 40.764126,
+       "longitude": -73.980973,
+       "timestamp": "2026-11-15T11:31:31.195963+00:00Z",
+       "free_bikes": 18,
+       "empty_slots": 45,
+       "ebikes": 14
+      },
+      {
+       "name": "Hudson Blvd W & W 36 St",
+       "latitude": 40.75676475086503,
+       "longitude": -73.99971440439913,
+       "timestamp": "2026-11-15T11:31:31.160339+00:00Z",
+       "free_bikes": 11,
+       "empty_slots": 29,
+       "ebikes": 2
+      },
+      {
+       "name": "Broadway & W 36 St",
+       "latitude": 40.751226078125995,
+       "longitude": -73.98772201748262,
+       "timestamp": "2026-11-15T11:31:30.950555+00:00Z",
+       "free_bikes": 11,
+       "empty_slots": 45,
+       "ebikes": 10
+      },
+      {
+       "name": "W 50 St & 10 Ave",
+       "latitude": 40.764734200065185,
+       "longitude": -73.99194359779358,
+       "timestamp": "2026-11-15T11:31:31.100422+00:00Z",
+       "free_bikes": 22,
+       "empty_slots": 28,
+       "ebikes": 14
+      },
+      {
+       "name": "E 33 St & 5 Ave",
+       "latitude": 40.74765947,
+       "longitude": -73.98490707,
+       "timestamp": "2026-11-15T11:31:31.264337+00:00Z",
+       "free_bikes": 15,
+       "empty_slots": 41,
+       "ebikes": 12
+      },
+      {
+       "name": "E 43 St & Madison Ave",
+       "latitude": 40.75354681867074,
+       "longitude": -73.97896572947502,
+       "timestamp": "2026-11-15T11:31:31.452774+00:00Z",
+       "free_bikes": 21,
+       "empty_slots": 30,
+       "ebikes": 19
+      },
+      {
+       "name": "W 36 St & 7 Ave",
+       "latitude": 40.752149,
+       "longitude": -73.989539,
+       "timestamp": "2026-11-15T11:31:31.164005+00:00Z",
+       "free_bikes": 21,
+       "empty_slots": 16,
+       "ebikes": 20
+      },
+      {
+       "name": "E 53 St & 3 Ave",
+       "latitude": 40.75763227739443,
+       "longitude": -73.96930575370789,
+       "timestamp": "2026-11-15T11:31:31.096133+00:00Z",
+       "free_bikes": 6,
+       "empty_slots": 33,
+       "ebikes": 4
+      },
+      {
+       "name": "Madison Ave & E 26 St",
+       "latitude": 40.742684734875695,
+       "longitude": -73.98671329021454,
+       "timestamp": "2026-11-15T11:31:31.561451+00:00Z",
+       "free_bikes": 13,
+       "empty_slots": 61,
+       "ebikes": 11
+      },
+      {
+       "name": "W 31 St & 7 Ave",
+       "latitude": 40.749156,
+       "longitude": -73.9916,
+       "timestamp": "2026-11-15T11:31:31.263958+00:00Z",
+       "free_bikes": 32,
+       "empty_slots": 44,
+       "ebikes": 19
+      },
+      {
+       "name": "8 Ave & W 33 St",
+       "latitude": 40.75156757136795,
+       "longitude": -73.99376901480953,
+       "timestamp": "2026-11-15T11:31:31.558475+00:00Z",
+       "free_bikes": 14,
+       "empty_slots": 75,
+       "ebikes": 1
+      },
+      {
+       "name": "E 48 St & 3 Ave",
+       "latitude": 40.7546011026,
+       "longitude": -73.971878855,
+       "timestamp": "2026-11-15T11:31:31.101556+00:00Z",
+       "free_bikes": 35,
+       "empty_slots": 40,
+       "ebikes": 17
+      },
+      {
+       "name": "W 47 St & 10 Ave",
+       "latitude": 40.76269882,
+       "longitude": -73.99301222,
+       "timestamp": "2026-11-15T11:31:30.954295+00:00Z",
+       "free_bikes": 31,
+       "empty_slots": 6,
+       "ebikes": 20
+      },
+      {
+       "name": "1 Ave & E 38 St",
+       "latitude": 40.746202,
+       "longitude": -73.971822,
+       "timestamp": "2026-11-15T11:31:31.562825+00:00Z",
+       "free_bikes": 31,
+       "empty_slots": 6,
+       "ebikes": 25
+      },
+      {
+       "name": "W 37 St & 5 Ave",
+       "latitude": 40.75038009,
+       "longitude": -73.98338988,
+       "timestamp": "2026-11-15T11:31:31.101172+00:00Z",
+       "free_bikes": 29,
+       "empty_slots": 31,
+       "ebikes": 25
+      },
+      {
+       "name": "Lexington Ave & E 36 St",
+       "latitude": 40.747573958954796,
+       "longitude": -73.9788007736206,
+       "timestamp": "2026-11-15T11:31:31.062810+00:00Z",
+       "free_bikes": 11,
+       "empty_slots": 12,
+       "ebikes": 7
+      },
+      {
+       "name": "W 40 St & 7 Ave",
+       "latitude": 40.754818,
+       "longitude": -73.988154,
+       "timestamp": "2026-11-15T11:31:31.160356+00:00Z",
+       "free_bikes": 0,
+       "empty_slots": 40,
+       "ebikes": 0
+      },
+      {
+       "name": "8 Ave & W 31 St",
+       "latitude": 40.7505853470215,
+       "longitude": -73.9946848154068,
+       "timestamp": "2026-11-15T11:31:31.559557+00:00Z",
+       "free_bikes": 48,
+       "empty_slots": 43,
+       "ebikes": 28
+      },
+      {
+       "name": "W 51 St & 6 Ave",
+       "latitude": 40.7606597,
+       "longitude": -73.98042047,
+       "timestamp": "2026-11-15T11:31:31.096066+00:00Z",
+       "free_bikes": 59,
+       "empty_slots": 21,
+       "ebikes": 42
+      },
+      {
+       "name": "7 Ave & Central Park S",
+       "latitude": 40.7667405590595,
+       "longitude": -73.9790689945221,
+       "timestamp": "2026-11-15T11:31:31.261503+00:00Z",
+       "free_bikes": 21,
+       "empty_slots": 57,
+       "ebikes": 21
+      },
+      {
+       "name": "W 54 St & 9 Ave",
+       "latitude": 40.76604,
+       "longitude": -73.98737,
+       "timestamp": "2026-11-15T11:31:31.098706+00:00Z",
+       "free_bikes": 11,
+       "empty_slots": 27,
+       "ebikes": 7
+      },
+      {
+       "name": "W 25 St & 6 Ave",
+       "latitude": 40.74395411,
+       "longitude": -73.99144871,
+       "timestamp": "2026-11-15T11:31:31.614906+00:00Z",
+       "free_bikes": 0,
+       "empty_slots": 3,
+       "ebikes": 0
+      },
+      {
+       "name": "W 54 St & 6 Ave",
+       "latitude": 40.761865,
+       "longitude": -73.977242,
+       "timestamp": "2026-11-15T11:31:31.362657+00:00Z",
+       "free_bikes": 35,
+       "empty_slots": 27,
+       "ebikes": 34
+      },
+      {
+       "name": "6 Ave & W 33 St",
+       "latitude": 40.74901271,
+       "longitude": -73.98848395,
+       "timestamp": "2026-11-15T11:31:30.952056+00:00Z",
+       "free_bikes": 33,
+       "empty_slots": 43,
+       "ebikes": 13
+      },
+      {
+       "name": "E 44 St & Lexington Ave",
+       "latitude": 40.752643,
+       "longitude": -73.974996,
+       "timestamp": "2026-11-15T11:31:31.060690+00:00Z",
+       "free_bikes": 22,
+       "empty_slots": 25,
+       "ebikes": 16
+      },
+      {
+       "name": "E 30 St & Park Ave S",
+       "latitude": 40.74444921,
+       "longitude": -73.98303529,
+       "timestamp": "2026-11-15T11:31:31.220288+00:00Z",
+       "free_bikes": 10,
+       "empty_slots": 52,
+       "ebikes": 1
+      },
+      {
+       "name": "E 47 St & Park Ave",
+       "latitude": 40.75510267,
+       "longitude": -73.97498696,
+       "timestamp": "2026-11-15T11:31:30.952010+00:00Z",
+       "free_bikes": 34,
+       "empty_slots": 44,
+       "ebikes": 29
+      },
+      {
+       "name": "E 46 St & Madison Ave",
+       "latitude": 40.755393,
+       "longitude": -73.977601,
+       "timestamp": "2026-11-15T11:31:31.196626+00:00Z",
+       "free_bikes": 10,
+       "empty_slots": 39,
+       "ebikes": 7
+      },
+      {
+       "name": "E 32 St & Park Ave",
+       "latitude": 40.7457121,
+       "longitude": -73.98194829,
+       "timestamp": "2026-11-15T11:31:31.558001+00:00Z",
+       "free_bikes": 2,
+       "empty_slots": 52,
+       "ebikes": 2
+      },
+      {
+       "name": "W 41 St & 8 Ave",
+       "latitude": 40.75640548,
+       "longitude": -73.9900262,
+       "timestamp": "2026-11-15T11:31:30.951072+00:00Z",
+       "free_bikes": 87,
+       "empty_slots": 8,
+       "ebikes": 69
+      },
+      {
+       "name": "E 40 St & 5 Ave",
+       "latitude": 40.752062307,
+       "longitude": -73.9816324043,
+       "timestamp": "2026-11-15T11:31:31.560688+00:00Z",
+       "free_bikes": 11,
+       "empty_slots": 81,
+       "ebikes": 11
+      },
+      {
+       "name": "W 43 St & 10 Ave",
+       "latitude": 40.76009437,
+       "longitude": -73.99461843,
+       "timestamp": "2026-11-15T11:31:31.160037+00:00Z",
+       "free_bikes": 15,
+       "empty_slots": 100,
+       "ebikes": 1
+      },
+      {
+       "name": "Park Ave & E 41 St",
+       "latitude": 40.751581,
+       "longitude": -73.97791,
+       "timestamp": "2026-11-15T11:31:31.195114+00:00Z",
+       "free_bikes": 79,
+       "empty_slots": 26,
+       "ebikes": 75
+      },
+      {
+       "name": "2 Ave & E 31 St",
+       "latitude": 40.74299,
+       "longitude": -73.97711,
+       "timestamp": "2026-11-15T11:31:31.062584+00:00Z",
+       "free_bikes": 26,
+       "empty_slots": 52,
+       "ebikes": 22
+      },
+      {
+       "name": "Broadway & W 38 St",
+       "latitude": 40.7529728216068,
+       "longitude": -73.98734897375107,
+       "timestamp": "2026-11-15T11:31:31.161146+00:00Z",
+       "free_bikes": 23,
+       "empty_slots": 43,
+       "ebikes": 18
+      },
+      {
+       "name": "W 44 St & 9 Ave",
+       "latitude": 40.759632169100534,
+       "longitude": -73.99155429633757,
+       "timestamp": "2026-11-15T11:31:31.095699+00:00Z",
+       "free_bikes": 6,
+       "empty_slots": 19,
+       "ebikes": 3
+      },
+      {
+       "name": "W 37 St & 10 Ave",
+       "latitude": 40.75660359,
+       "longitude": -73.9979009,
+       "timestamp": "2026-11-15T11:31:30.950405+00:00Z",
+       "free_bikes": 26,
+       "empty_slots": 8,
+       "ebikes": 23
+      },
+      {
+       "name": "Broadway & W 58 St",
+       "latitude": 40.76695317,
+       "longitude": -73.98169333,
+       "timestamp": "2026-11-15T11:31:31.063850+00:00Z",
+       "free_bikes": 4,
+       "empty_slots": 72,
+       "ebikes": 3
+      },
+      {
+       "name": "11 Ave & W 41 St",
+       "latitude": 40.76030096,
+       "longitude": -73.99884222,
+       "timestamp": "2026-11-15T11:31:31.196446+00:00Z",
+       "free_bikes": 47,
+       "empty_slots": 5,
+       "ebikes": 36
+      },
+      {
+       "name": "E 47 St & 2 Ave",
+       "latitude": 40.75323098,
+       "longitude": -73.97032517,
+       "timestamp": "2026-11-15T11:31:31.195192+00:00Z",
+       "free_bikes": 22,
+       "empty_slots": 76,
+       "ebikes": 11
+      },
+      {
+       "name": "W 42 St & 8 Ave",
+       "latitude": 40.7575699,
+       "longitude": -73.99098507,
+       "timestamp": "2026-11-15T11:31:31.197306+00:00Z",
+       "free_bikes": 36,
+       "empty_slots": 1,
+       "ebikes": 27
+      },
+      {
+       "name": "W 44 St & 5 Ave",
+       "latitude": 40.75500254,
+       "longitude": -73.98014437,
+       "timestamp": "2026-11-15T11:31:31.194304+00:00Z",
+       "free_bikes": 67,
+       "empty_slots": 0,
+       "ebikes": 67
+      },
+      {
+       "name": "W 43 St & 6 Ave",
+       "latitude": 40.75527307,
+       "longitude": -73.98316936,
+       "timestamp": "2026-11-15T11:31:31.451966+00:00Z",
+       "free_bikes": 43,
+       "empty_slots": 17,
+       "ebikes": 34
+      },
+      {
+       "name": "8 Ave & W 49 St",
+       "latitude": 40.76171227910671,
+       "longitude": -73.98655101656914,
+       "timestamp": "2026-11-15T11:31:30.951302+00:00Z",
+       "free_bikes": 53,
+       "empty_slots": 7,
+       "ebikes": 30
+      },
+      {
+       "name": "Madison Ave & E 51 St",
+       "latitude": 40.75863,
+       "longitude": -73.97513,
+       "timestamp": "2026-11-15T11:31:31.160055+00:00Z",
+       "free_bikes": 5,
+       "empty_slots": 33,
+       "ebikes": 4
+      },
+      {
+       "name": "W 24 St & 7 Ave",
+       "latitude": 40.74487634,
+       "longitude": -73.99529885,
+       "timestamp": "2026-11-15T11:31:31.257641+00:00Z",
+       "free_bikes": 35,
+       "empty_slots": 38,
+       "ebikes": 15
+      },
+      {
+       "name": "E 53 St & Lexington Ave",
+       "latitude": 40.75828065,
+       "longitude": -73.97069431,
+       "timestamp": "2026-11-15T11:31:31.098847+00:00Z",
+       "free_bikes": 1,
+       "empty_slots": 56,
+       "ebikes": 1
+      },
+      {
+       "name": "E 56 St & Madison Ave",
+       "latitude": 40.761573,
+       "longitude": -73.972628,
+       "timestamp": "2026-11-15T11:31:31.445214+00:00Z",
+       "free_bikes": 15,
+       "empty_slots": 17,
+       "ebikes": 14
+      },
+      {
+       "name": "Lexington Ave & E 26 St",
+       "latitude": 40.741459,
+       "longitude": -73.983293,
+       "timestamp": "2026-11-15T11:31:31.443942+00:00Z",
+       "free_bikes": 24,
+       "empty_slots": 47,
+       "ebikes": 13
+      },
+      {
+       "name": "W 34 St & Hudson Blvd E",
+       "latitude": 40.75516719072139,
+       "longitude": -74.00059908628464,
+       "timestamp": "2026-11-15T11:31:31.262526+00:00Z",
+       "free_bikes": 32,
+       "empty_slots": 24,
+       "ebikes": 9
+      },
+      {
+       "name": "W 48 St & Rockefeller Plaza",
+       "latitude": 40.75776935448309,
+       "longitude": -73.97929430007935,
+       "timestamp": "2026-11-15T11:31:30.949709+00:00Z",
+       "free_bikes": 41,
+       "empty_slots": 15,
+       "ebikes": 39
+      },
+      {
+       "name": "W 35 St & 8 Ave",
+       "latitude": 40.752762088742045,
+       "longitude": -73.99280458705107,
+       "timestamp": "2026-11-15T11:31:31.219723+00:00Z",
+       "free_bikes": 18,
+       "empty_slots": 24,
+       "ebikes": 11
+      },
+      {
+       "name": "Central Park S & 6 Ave",
+       "latitude": 40.76590936,
+       "longitude": -73.97634151,
+       "timestamp": "2026-11-15T11:31:31.362282+00:00Z",
+       "free_bikes": 16,
+       "empty_slots": 56,
+       "ebikes": 12
+      },
+      {
+       "name": "W 33 St & 10 Ave",
+       "latitude": 40.753773368360385,
+       "longitude": -73.99937599897385,
+       "timestamp": "2026-11-15T11:31:31.163958+00:00Z",
+       "free_bikes": 6,
+       "empty_slots": 51,
+       "ebikes": 3
+      },
+      {
+       "name": "E 39 St & Lexington Ave",
+       "latitude": 40.749498546025194,
+       "longitude": -73.97729203113158,
+       "timestamp": "2026-11-15T11:31:31.559347+00:00Z",
+       "free_bikes": 31,
+       "empty_slots": 29,
+       "ebikes": 8
+      },
+      {
+       "name": "W 51 St & Rockefeller Plaza",
+       "latitude": 40.75973805251143,
+       "longitude": -73.97811613976955,
+       "timestamp": "2026-11-15T11:31:31.195914+00:00Z",
+       "free_bikes": 37,
+       "empty_slots": 13,
+       "ebikes": 27
+      },
+      {
+       "name": "1 Ave & E 44 St",
+       "latitude": 40.75001986,
+       "longitude": -73.96905301,
+       "timestamp": "2026-11-15T11:31:31.101319+00:00Z",
+       "free_bikes": 50,
+       "empty_slots": 36,
+       "ebikes": 11
+      },
+      {
+       "name": "W 49 St & 8 Ave",
+       "latitude": 40.76227205,
+       "longitude": -73.98788205,
+       "timestamp": "2026-11-15T11:31:30.954783+00:00Z",
+       "free_bikes": 30,
+       "empty_slots": 29,
+       "ebikes": 22
+      },
+      {
+       "name": "Broadway & W 37 St",
+       "latitude": 40.75172632,
+       "longitude": -73.98753523,
+       "timestamp": "2026-11-15T11:31:31.163660+00:00Z",
+       "free_bikes": 18,
+       "empty_slots": 35,
+       "ebikes": 15
+      },
+      {
+       "name": "W 42 St & Dyer Ave",
+       "latitude": 40.75898481399634,
+       "longitude": -73.99379968643188,
+       "timestamp": "2026-11-15T11:31:30.953618+00:00Z",
+       "free_bikes": 3,
+       "empty_slots": 28,
+       "ebikes": 0
+      },
+      {
+       "name": "Park Ave & E 40 St",
+       "latitude": 40.75112,
+       "longitude": -73.97851,
+       "timestamp": "2026-11-15T11:31:31.560979+00:00Z",
+       "free_bikes": 43,
+       "empty_slots": 29,
+       "ebikes": 41
+      },
+      {
+       "name": "W 47 St & 9 Ave",
+       "latitude": 40.76153045158114,
+       "longitude": -73.99007007479668,
+       "timestamp": "2026-11-15T11:31:31.262028+00:00Z",
+       "free_bikes": 33,
+       "empty_slots": 16,
+       "ebikes": 28
+      },
+      {
+       "name": "W 30 St & 8 Ave",
+       "latitude": 40.74964702898657,
+       "longitude": -73.99506707345266,
+       "timestamp": "2026-11-15T11:31:31.159860+00:00Z",
+       "free_bikes": 40,
+       "empty_slots": 21,
+       "ebikes": 26
+      },
+      {
+       "name": "W 26 St & 8 Ave",
+       "latitude": 40.74734825,
+       "longitude": -73.99723551,
+       "timestamp": "2026-11-15T11:31:31.196897+00:00Z",
+       "free_bikes": 34,
+       "empty_slots": 29,
+       "ebikes": 4
+      },
+      {
+       "name": "W 27 St & 6 Ave",
+       "latitude": 40.74526,
+       "longitude": -73.99062,
+       "timestamp": "2026-11-15T11:31:31.064688+00:00Z",
+       "free_bikes": 63,
+       "empty_slots": 2,
+       "ebikes": 56
+      },
+      {
+       "name": "E 26 St & 3 Ave",
+       "latitude": 40.74069317733043,
+       "longitude": -73.98160636425018,
+       "timestamp": "2026-11-15T11:31:31.192994+00:00Z",
+       "free_bikes": 29,
+       "empty_slots": 7,
+       "ebikes": 14
+      },
+      {
+       "name": "E 27 St & Park Ave S",
+       "latitude": 40.74275179648995,
+       "longitude": -73.9847157150507,
+       "timestamp": "2026-11-15T11:31:31.564868+00:00Z",
+       "free_bikes": 9,
+       "empty_slots": 57,
+       "ebikes": 2
+      },
+      {
+       "name": "6 Ave & W 34 St",
+       "latitude": 40.74964,
+       "longitude": -73.98805,
+       "timestamp": "2026-11-15T11:31:31.219212+00:00Z",
+       "free_bikes": 5,
+       "empty_slots": 60,
+       "ebikes": 3
+      },
+      {
+       "name": "E 31 St & 3 Ave",
+       "latitude": 40.74394314,
+       "longitude": -73.97966069,
+       "timestamp": "2026-11-15T11:31:31.096435+00:00Z",
+       "free_bikes": 20,
+       "empty_slots": 41,
+       "ebikes": 18
+      },
+      {
+       "name": "E 39 St & 2 Ave",
+       "latitude": 40.748033194287665,
+       "longitude": -73.973827958107,
+       "timestamp": "2026-11-15T11:31:31.063588+00:00Z",
+       "free_bikes": 22,
+       "empty_slots": 14,
+       "ebikes": 16
+      },
+      {
+       "name": "10 Ave & W 34 St",
+       "latitude": 40.75476986284269,
+       "longitude": -73.99914588449698,
+       "timestamp": "2026-11-15T11:31:30.952832+00:00Z",
+       "free_bikes": 1,
+       "empty_slots": 28,
+       "ebikes": 1
+      },
+      {
+       "name": "5 Ave & E 30 St",
+       "latitude": 40.7459849,
+       "longitude": -73.98629487,
+       "timestamp": "2026-11-15T11:31:31.196661+00:00Z",
+       "free_bikes": 35,
+       "empty_slots": 19,
+       "ebikes": 32
+      },
+      {
+       "name": "FDR Drive & E 35 St",
+       "latitude": 40.744219,
+       "longitude": -73.97121214,
+       "timestamp": "2026-11-15T11:31:31.615091+00:00Z",
+       "free_bikes": 40,
+       "empty_slots": 73,
+       "ebikes": 13
+      },
+      {
+       "name": "W 44 St & 11 Ave",
+       "latitude": 40.762009,
+       "longitude": -73.996975,
+       "timestamp": "2026-11-15T11:31:31.062711+00:00Z",
+       "free_bikes": 25,
+       "empty_slots": 51,
+       "ebikes": 16
+      },
+      {
+       "name": "W 37 St & Broadway",
+       "latitude": 40.75227093837409,
+       "longitude": -73.98770570755005,
+       "timestamp": "2026-11-15T11:31:31.453232+00:00Z",
+       "free_bikes": 67,
+       "empty_slots": 11,
+       "ebikes": 58
+      },
+      {
+       "name": "Central Park S & Grand Army Plaza",
+       "latitude": 40.764555,
+       "longitude": -73.973473,
+       "timestamp": "2026-11-15T11:31:31.096082+00:00Z",
+       "free_bikes": 57,
+       "empty_slots": 25,
+       "ebikes": 49
+      },
+      {
+       "name": "E 50 St & Park Ave",
+       "latitude": 40.757334,
+       "longitude": -73.974235,
+       "timestamp": "2026-11-15T11:31:31.096116+00:00Z",
+       "free_bikes": 4,
+       "empty_slots": 29,
+       "ebikes": 1
+      },
+      {
+       "name": "8 Ave & W 55 St",
+       "latitude": 40.765591,
+       "longitude": -73.983846,
+       "timestamp": "2026-11-15T11:31:31.362482+00:00Z",
+       "free_bikes": 39,
+       "empty_slots": 29,
+       "ebikes": 29
+      },
+      {
+       "name": "W 29 St & 9 Ave",
+       "latitude": 40.7500727,
+       "longitude": -73.99839279,
+       "timestamp": "2026-11-15T11:31:30.949218+00:00Z",
+       "free_bikes": 11,
+       "empty_slots": 32,
+       "ebikes": 5
+      },
+      {
+       "name": "W 52 St & 6 Ave",
+       "latitude": 40.76132983124814,
+       "longitude": -73.97982001304626,
+       "timestamp": "2026-11-15T11:31:31.197026+00:00Z",
+       "free_bikes": 48,
+       "empty_slots": 9,
+       "ebikes": 41
+      },
+      {
+       "name": "Broadway & W 25 St",
+       "latitude": 40.74286877312112,
+       "longitude": -73.98918628692627,
+       "timestamp": "2026-11-15T11:31:31.064717+00:00Z",
+       "free_bikes": 72,
+       "empty_slots": 34,
+       "ebikes": 67
+      }
+     ]
+    }
+   },
+   "weather": {
+    "latitude": 40.762505,
+    "longitude": -73.975105,
+    "generationtime_ms": 0.27620792388916016,
+    "utc_offset_seconds": -18000,
+    "timezone": "America/New_York",
+    "timezone_abbreviation": "GMT-5",
+    "elevation": 28.0,
+    "current_units": {
+     "time": "iso8601",
+     "interval": "seconds",
+     "temperature_2m": "\u00b0C",
+     "apparent_temperature": "\u00b0C",
+     "wind_speed_10m": "km/h",
+     "weather_code": "wmo code",
+     "precipitation": "mm"
+    },
+    "current": {
+     "time": "2026-11-15T06:30",
+     "interval": 900,
+     "temperature_2m": 3.4,
+     "apparent_temperature": -0.1,
+     "wind_speed_10m": 10.3,
+     "weather_code": 0,
+     "precipitation": 0.0
+    },
+    "hourly_units": {
+     "time": "iso8601",
+     "temperature_2m": "\u00b0C",
+     "precipitation_probability": "%"
+    },
+    "hourly": {
+     "time": [
+      "2026-11-15T00:00",
+      "2026-11-15T01:00",
+      "2026-11-15T02:00",
+      "2026-11-15T03:00",
+      "2026-11-15T04:00",
+      "2026-11-15T05:00",
+      "2026-11-15T06:00",
+      "2026-11-15T07:00",
+      "2026-11-15T08:00",
+      "2026-11-15T09:00",
+      "2026-11-15T10:00",
+      "2026-11-15T11:00",
+      "2026-11-15T12:00",
+      "2026-11-15T13:00",
+      "2026-11-15T14:00",
+      "2026-11-15T15:00",
+      "2026-11-15T16:00",
+      "2026-11-15T17:00",
+      "2026-11-15T18:00",
+      "2026-11-15T19:00",
+      "2026-11-15T20:00",
+      "2026-11-15T21:00",
+      "2026-11-15T22:00",
+      "2026-11-15T23:00"
+     ],
+     "temperature_2m": [
+      5.1,
+      5.0,
+      4.6,
+      4.3,
+      4.4,
+      4.1,
+      3.6,
+      3.3,
+      4.9,
+      6.2,
+      7.2,
+      7.8,
+      8.2,
+      8.3,
+      8.3,
+      7.8,
+      6.9,
+      6.0,
+      4.7,
+      4.0,
+      3.5,
+      3.1,
+      2.9,
+      2.4
+     ],
+     "precipitation_probability": [
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    }
+   },
+   "wiki": {
+    "batchcomplete": true,
+    "query": {
+     "geosearch": [
+      {
+       "pageid": 1191363,
+       "ns": 0,
+       "title": "Exhibition of the Industry of All Nations",
+       "lat": 40.7538,
+       "lon": -73.9836,
+       "dist": 7.3,
+       "primary": true
+      },
+      {
+       "pageid": 970606,
+       "ns": 0,
+       "title": "Bryant Park",
+       "lat": 40.75388888888889,
+       "lon": -73.98388888888888,
+       "dist": 32.9,
+       "primary": true
+      },
+      {
+       "pageid": 8000800,
+       "ns": 0,
+       "title": "New York Crystal Palace",
+       "lat": 40.75361111111111,
+       "lon": -73.98388888888888,
+       "dist": 33,
+       "primary": true
+      },
+      {
+       "pageid": 43353671,
+       "ns": 0,
+       "title": "Statue of William E. Dodge",
+       "lat": 40.75409,
+       "lon": -73.9833,
+       "dist": 42.9,
+       "primary": true
+      },
+      {
+       "pageid": 43156328,
+       "ns": 0,
+       "title": "Bust of Johann Wolfgang von Goethe (New York City)",
+       "lat": 40.75338888888889,
+       "lon": -73.98380555555556,
+       "dist": 45.9,
+       "primary": true
+      },
+      {
+       "pageid": 43122228,
+       "ns": 0,
+       "title": "Statue of Gertrude Stein",
+       "lat": 40.753351,
+       "lon": -73.983174,
+       "dist": 54.2,
+       "primary": true
+      }
+     ]
+    }
+   }
+  }
+ }
+}

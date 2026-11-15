@@ -1,5 +1,5 @@
 {
-  "$comment": "Conformance cases for `bolt-apps verify` (YAML and script layout level). Each case edits the base app and names the finding codes verify must report. `bolt_error_contains` is the text Bolt's own parser (loader::parse_str_for_pack / contract::validate) puts in the load error shown under Settings, Desktop App, User Apps, so a bolt-native test can run the same cases through the real parser: the expected result there is Err containing that text, or Ok when expect is empty.",
+  "$comment": "Conformance cases for `bolt-apps verify` (YAML and script layout level). Each case edits the base app and names the finding codes verify must report. `bolt_error_contains` is the text Bolt's own parser puts in the load error shown under Settings, Desktop App, User Apps, so a launcher-side test can run the same cases through the real parser: the expected result there is Err containing that text, or Ok when expect is empty.",
   "base": {
     "utilities/eagle-info.yaml": "schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: \"Eagle info\"\nemits: Generic\nargs:\n  - { name: view, from: \"query.word(0)\", default: overview }\nbridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n",
     "scripts/eagle.py": "print('{}')\n"

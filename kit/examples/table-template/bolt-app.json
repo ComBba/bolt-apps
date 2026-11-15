@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "table-template",
+  "title": "Table template",
+  "role": "Anyone building a list that needs sorting and totals",
+  "saves": "Finding the table column options",
+  "summary": "Type =orders for a sortable table with totals and number formats. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

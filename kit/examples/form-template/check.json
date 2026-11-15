@@ -1,0 +1,151 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "cases": [
+    {
+      "name": "valid submit: row is saved and shown, newest first, seeds below",
+      "os": "macos",
+      "args": [
+        "42.5",
+        "Travel",
+        "2026-02-01",
+        "Taxi to airport",
+        "true"
+      ],
+      "golden": "golden/saved.json",
+      "expect": {
+        "text_present": [
+          "Travel \u00b7 42.50",
+          "Team lunch"
+        ]
+      }
+    },
+    {
+      "name": "empty description and a default toggle",
+      "os": "macos",
+      "args": [
+        "5",
+        "Office",
+        "2026-02-01",
+        "",
+        ""
+      ],
+      "golden": "golden/defaults.json"
+    },
+    {
+      "name": "amount is not a number",
+      "os": "macos",
+      "args": [
+        "abc",
+        "Meals",
+        "2026-02-01",
+        "x",
+        "true"
+      ],
+      "expect": {
+        "text_present": [
+          "Amount must be a number",
+          "Not saved"
+        ]
+      }
+    },
+    {
+      "name": "amount is required",
+      "os": "macos",
+      "args": [
+        "",
+        "Meals",
+        "2026-02-01",
+        "x",
+        "true"
+      ],
+      "expect": {
+        "text_present": [
+          "Amount is required"
+        ]
+      }
+    },
+    {
+      "name": "amount below the minimum",
+      "os": "macos",
+      "args": [
+        "-3",
+        "Meals",
+        "2026-02-01",
+        "x",
+        "true"
+      ],
+      "expect": {
+        "text_present": [
+          "at least 0"
+        ]
+      }
+    },
+    {
+      "name": "category not in the list",
+      "os": "macos",
+      "args": [
+        "5",
+        "Gifts",
+        "2026-02-01",
+        "x",
+        "true"
+      ],
+      "expect": {
+        "text_present": [
+          "must be one of"
+        ]
+      }
+    },
+    {
+      "name": "date in the wrong shape",
+      "os": "macos",
+      "args": [
+        "5",
+        "Meals",
+        "01/02/2026",
+        "x",
+        "true"
+      ],
+      "expect": {
+        "text_present": [
+          "must look like"
+        ]
+      }
+    },
+    {
+      "name": "description over max_length",
+      "os": "macos",
+      "args": [
+        "5",
+        "Meals",
+        "2026-02-01",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "true"
+      ],
+      "expect": {
+        "text_present": [
+          "longer than 120"
+        ]
+      }
+    },
+    {
+      "name": "braces and control characters in text are neutralised",
+      "os": "macos",
+      "args": [
+        "5",
+        "Meals",
+        "2026-02-01",
+        "{{x}} a\u202eb\u200bc",
+        "true"
+      ],
+      "expect": {
+        "text_absent": [
+          "{{"
+        ]
+      }
+    }
+  ]
+}

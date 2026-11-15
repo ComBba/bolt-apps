@@ -1,0 +1,54 @@
+{
+ "swatches": {
+  "data": [
+   {
+    "id": "1",
+    "name": "Ocean",
+    "note": "Generated colour swatch 1, SAMPLE DATA",
+    "hex": "#1e64aa",
+    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAH0lEQVR4nGOQS1lFFcQwatCoQaMGjRo0atCoQQNvEAAXI6MfhahJYgAAAABJRU5ErkJggg==",
+    "uses": 3
+   },
+   {
+    "id": "2",
+    "name": "Forest",
+    "note": "Generated colour swatch 2, SAMPLE DATA",
+    "hex": "#288250",
+    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAH0lEQVR4nGPQaAqgCmIYNWjUoFGDRg0aNWjUoIE3CADrlDKfOjStxgAAAABJRU5ErkJggg==",
+    "uses": 5
+   },
+   {
+    "id": "3",
+    "name": "Sand",
+    "note": "Generated colour swatch 3, SAMPLE DATA",
+    "hex": "#d6be8c",
+    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAH0lEQVR4nGO4tq+HKohh1KBRg0YNGjVo1KBRgwbeIAAC2sg9yHxTSwAAAABJRU5ErkJggg==",
+    "uses": 7
+   },
+   {
+    "id": "4",
+    "name": "Rust",
+    "note": "Generated colour swatch 4, SAMPLE DATA",
+    "hex": "#aa4628",
+    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAH0lEQVR4nGNY5aZBFcQwatCoQaMGjRo0atCoQQNvEABxu3Yft0/NhwAAAABJRU5ErkJggg==",
+    "uses": 9
+   },
+   {
+    "id": "5",
+    "name": "Slate",
+    "note": "Generated colour swatch 5, SAMPLE DATA",
+    "hex": "#5a6473",
+    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAH0lEQVR4nGOISimmCmIYNWjUoFGDRg0aNWjUoIE3CACbLK5f0PGK6wAAAABJRU5ErkJggg==",
+    "uses": 11
+   },
+   {
+    "id": "6",
+    "name": "Plum",
+    "note": "Generated colour swatch 6, SAMPLE DATA",
+    "hex": "#6e3c78",
+    "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAIAAABvFaqvAAAAH0lEQVR4nGPIs6mgCmIYNWjUoFGDRg0aNWjUoIE3CAA5L4yfL2RJBwAAAABJRU5ErkJggg==",
+    "uses": 13
+   }
+  ]
+ }
+}

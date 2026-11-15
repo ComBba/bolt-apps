@@ -1,5 +1,5 @@
 // What a User App can do, recomputed from its YAML the way Bolt does at install
-// (bolt-native src-tauri/src/user_utilities/pack_validate.rs: assess_utility, assess_pack).
+// (the launcher: assess_utility, assess_pack).
 // The YAML is read by a strict subset reader (yamlsubset.mjs, no dependencies): a file outside that subset is
 // "unknown" (tier 3), never a lower tier. This mirrors Bolt's tier and permission rules but is not Bolt's parser;
 // Bolt parses the file again at install.
@@ -25,11 +25,40 @@ function treeRefs(n, out = new Set()) {
 	else if (n.t === 'l') for (const i of n.items) treeRefs(i, out);
 	return out;
 }
+// The launcher's rule for the scripts folder (the launcher, plain_script_refs and
+// script_names_in_template): EVERY mention of "scripts_dir" in the file text, any case, comments included, must sit
+// inside a YAML key or value and be exactly the placeholder {{scripts_dir}} followed by /<plain file name> as its own
+// shell word (no quotes around it, no spaces inside the braces, no `..`, no name starting with a dot). Otherwise Bolt
+// cannot say which files the app runs and never runs it. This mirrors that rule from its source; Bolt parses again at install.
+const SEG = '[A-Za-z0-9_][A-Za-z0-9._-]*(?<!\\.)';
+function treeStrings(n, out = []) {
+	if (!n) return out;
+	if (n.t === 's') out.push(n.v);
+	else if (n.t === 'm') for (const e of n.entries) { out.push(String(e.key)); treeStrings(e.value, out); }
+	else if (n.t === 'l') for (const i of n.items) treeStrings(i, out);
+	return out;
+}
+export function scriptsDirProblem(yaml, root) {
+	const mentions = (yaml.toLowerCase().match(/scripts_dir/g) || []).length;
+	if (!mentions) return null;
+	let seen = 0, bad = false;
+	for (const s of treeStrings(root)) {
+		const n = (s.toLowerCase().match(/scripts_dir/g) || []).length;
+		if (!n) continue;
+		seen += n;
+		if (/['"]\{\{scripts_dir|\{\{scripts_dir\}(?!\})/.test(s)) continue;   // a quote round it or a lone brace: command_variable_in_quotes / command_placeholder_malformed already say so
+		const exact = (s.match(/\{\{scripts_dir\}\}/g) || []).length;
+		const words = (s.match(new RegExp(`(?:^|\\s)\\{\\{scripts_dir\\}\\}/${SEG}(?:/${SEG})*(?=\\s|$)`, 'g')) || []).length;
+		if (exact !== n || words !== n) bad = true;
+	}
+	if (!bad && seen === mentions) return null;
+	return { code: 'scripts_dir_form', message: 'Bolt cannot resolve every mention of the scripts folder to one file each, so it would not run this app. Every mention of scripts_dir in the file, comments included, must be a value holding {{scripts_dir}}/<file name> as its own word, with no quotes, no spaces inside the braces and no sub-folder tricks. Remove it from comments and write nothing else with scripts_dir.' };
+}
 // Why this reader cannot interpret the file ([] when it can). Anything listed here is reported as unknown, never low.
 export function unreadable(yaml) { try { parseYaml(yaml); return []; } catch (e) { if (e instanceof Unreadable) return [e.message]; throw e; } }
 // Returns { tier, permissions, reasons, runtime, id, problems, refs, unknown, tree } for one utilities/*.yaml.
 // When the file is outside the readable subset, unknown is true and tier is 3 (the highest), so nothing reads low.
-export function assessYaml(yaml, name = 'the app') {
+export function assessYaml(yaml, name = 'the app', opts = {}) {
 	const problems = [], reasons = [], perms = new Set();
 	let root; try { root = parseYaml(yaml); } catch (e) {
 		if (!(e instanceof Unreadable)) throw e;
@@ -59,8 +88,85 @@ export function assessYaml(yaml, name = 'the app') {
 		else if (kind === 'utility') perms.add(`routes_to_app:${str(get(it, 'target_chip')?.value) || ''}`);
 		else { tier = 3; perms.add(`action:${kind}`); problems.push({ code: 'action_not_allowed', message: `action kind "${kind}" is not one Bolt accepts (${ALLOWED_ACTION_KIND.join(', ')}). Bolt would refuse the whole pack.` }); }
 	}
+	const sd = scriptsDirProblem(yaml, root); if (sd) problems.push(sd);
+	problems.push(...launcherRules(root, opts));
 	return { id, runtime, tier, permissions: [...perms].sort(), reasons, problems, refs: treeRefs(root), unknown: false, tree: root };
 }
+
+// ---- more launcher rules, each mirrored from the launcher source (read, not guessed) ----
+export const MAX_VIEWS = 8;                                   // the launcher MAX_VIEWS, checked by the launcher
+const VIEW_NAME = /^[a-z][a-z0-9_-]{0,23}$/;                  // the launcher name_re
+export const NAV_ARG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/; // the launcher NAV_ARG_RE
+export const isNavToken = (s) => typeof s === 'string' && NAV_ARG_RE.test(s) && !s.includes('..'); // the launcher isNavArg
+export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid']; // the launcher
+const RIGHT_WIDGET_MODES = ['selected_row', 'list_data'];     // the launcher
+export const NO_APP_DATA_KINDS = ['image', 'color', 'weather', 'date', 'calc']; // the launcher NO_APP_DATA
+const BIND_NONE = ['map', 'image', 'calc', 'color', 'weather', 'date']; // the launcher BIND_NONE: these panes read nothing from bind
+const CHART_TYPES = ['line', 'bar', 'sparkline'];             // the launcher
+const OS3 = ['macos', 'linux', 'windows'];
+// The launcher: a double-quoted YAML string can spell the placeholder with escapes the text check cannot see, so Bolt
+// refuses to pin the app down at all. The regex is the launcher's own, applied to the whole file text (comments too).
+const ESCAPE_RE = /\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|[\r\n\u0085\u2028\u2029])/;
+export function escapeProblem(text) {
+	return ESCAPE_RE.test(text) ? { level: 'error', code: 'yaml_escape', message: 'the file uses character escapes (such as \\x or \\u, or a backslash before a line break). Bolt says "it uses character escapes that can hide what it runs" and will not run the app. Write the character itself, or rephrase the text' } : null;
+}
+// The rules on a parsed app file. Each entry is { level, code, message }.
+export function launcherRules(root, opts = {}) {
+	const out = [], E = (code, message) => out.push({ level: 'error', code, message }), W = (code, message) => out.push({ level: 'warning', code, message });
+	const pres = get(root, 'presentation')?.value, views = get(pres, 'views')?.value, viewArg = str(get(pres, 'view_arg')?.value);
+	const strict = Number(str(get(root, 'schema_version')?.value)) >= 2;   // the launcher doc: bind problems are errors from schema_version 2
+	const hasViews = views && views.t === 'm';
+	// the launcher validate_views
+	if (!hasViews) { if (viewArg !== undefined && viewArg !== '') E('view_arg_without_views', 'presentation.view_arg is set but presentation.views is missing. Add the views, or remove view_arg'); }
+	else {
+		if (viewArg === undefined || viewArg === '') E('view_arg_missing', 'presentation.view_arg is required when presentation.views is present. Name the arg whose value selects the view');
+		else {
+			const arg = (get(root, 'args')?.value?.items || []).find((a) => str(get(a, 'name')?.value) === viewArg);
+			if (!arg) E('view_arg_unknown', `presentation.view_arg "${viewArg}" is not a declared arg`);
+			else if (!/^query\.word\(\s*\d+\s*\)$/.test((str(get(arg, 'from')?.value) ?? '').trim())) E('view_arg_not_query_word', `presentation.view_arg "${viewArg}" must name an arg bound with from: "query.word(N)", but its from is ${JSON.stringify(str(get(arg, 'from')?.value) ?? null)}. Bolt puts the view name into that query word; any other binding gives it nowhere to go and the views never show`);
+			else {
+				// A nav row runs "<lead words> <view> [arg]". Every word before the view word needs a default that is a plain nav token
+				// (a letter, digit or _ first, then letters, digits, _ . -, at most 64, no ".."): a default such as "-" there kills every drill
+				// and Back row. Words after the view word are never rebuilt, so "-" is fine for them.
+				const idx = Number(/^query\.word\(\s*(\d+)\s*\)$/.exec((str(get(arg, 'from')?.value) ?? '').trim())?.[1]);
+				const all = get(root, 'args')?.value?.items || [];
+				for (let i = 0; i < idx; i++) {
+					const holder = all.find((a) => a !== arg && new RegExp(`^query\\.word\\(\\s*${i}\\s*\\)$`).test((str(get(a, 'from')?.value) ?? '').trim()));
+					const d = holder ? str(get(holder, 'default')?.value) : undefined;
+					if (d === undefined || !/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/.test(d) || d.includes('..')) {
+						E('view_arg_lead_default', `the view is read from query.word(${idx}), so query.word(${i}) needs an arg with a default that is a plain word (letters, digits, _ . -, not starting with - or .)${holder ? `, but "${d ?? ''}" is not one` : ''}. Without it every drill and Back row in this app does nothing`);
+						break;
+					}
+				}
+			}
+		}
+		if (views.entries.length > MAX_VIEWS) E('views_too_many', `presentation.views has ${views.entries.length} entries (the overview counts as one), at most ${MAX_VIEWS} are allowed. Bolt refuses the whole app file`);
+		for (const v of views.entries) if (!VIEW_NAME.test(v.key) || v.key === 'constructor' || v.key === 'prototype') E('view_name_invalid', `presentation.views name "${v.key}" must match ^[a-z][a-z0-9_-]{0,23}$ and not be constructor or prototype`);
+	}
+	// the launcher validate_right_widget, on presentation.right_widget and each view's right_widget
+	const rws = [['presentation.right_widget', get(pres, 'right_widget')?.value], ...(hasViews ? views.entries.map((v) => [`presentation.views.${v.key}.right_widget`, get(v.value, 'right_widget')?.value]) : [])];
+	for (const [p, rw] of rws) {
+		if (!rw || rw.t !== 'm') continue;
+		const kind = str(get(rw, 'kind')?.value), mode = str(get(rw, 'mode')?.value), bind = get(rw, 'bind')?.value;
+		if (kind !== undefined && !RIGHT_WIDGET_KINDS.includes(kind)) E('right_widget_kind_invalid', `${p}.kind "${kind}" is not one of ${RIGHT_WIDGET_KINDS.join(', ')}`);
+		if (mode !== undefined && !RIGHT_WIDGET_MODES.includes(mode)) E('right_widget_kind_invalid', `${p}.mode "${mode}" is not one of ${RIGHT_WIDGET_MODES.join(', ')}`);
+		if (NO_APP_DATA_KINDS.includes(kind)) W('right_widget_no_data', `${p}.kind "${kind}" passes validation but Bolt shows "This app asks for a ${kind} pane, which cannot show app data" instead of your rows. Use table, detail, cards or chart${kind === 'image' ? ' (image_grid for pictures)' : ''}`);
+		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
+		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
+		if (kind === 'chart' && bind && bind.t === 'm') { const t = str(get(bind, 'type')?.value); if (t !== undefined && !CHART_TYPES.includes(t)) bad('right_widget_bind_unread', `${p}.bind.type must be one of ${CHART_TYPES.join(', ')}, got "${t}"`); }
+	}
+	// a manifest `run` action: the footer button is disabled when the template is empty or has {{ (the launcher)
+	for (const it of get(root, 'actions')?.value?.items || []) if (it.t === 'm' && str(get(it, 'kind')?.value) === 'run') { const t = str(get(it, 'query_template')?.value) ?? ''; if (!t.trim() || t.includes('{{')) W('run_action_template', `action "${str(get(it, 'id')?.value) ?? '?'}" is kind run, whose query_template must be fixed text with no {{ }}; otherwise the button does nothing`); }
+	// no command for a platform: the app has nothing to run there. A warning, since an app may be single-platform on purpose.
+	if (str(get(root, 'runtime')?.value) === 'bridge') {
+		const cm = get(get(root, 'bridge')?.value, 'command')?.value;
+		if (cm && cm.t === 'm' && cm.entries.length) for (const o of OS3) if (!cm.entries.some((e) => e.key === o) && (!Array.isArray(opts.platforms) || opts.platforms.includes(o))) W('command_os_missing', `bridge.command has no ${o} entry, so the app has nothing to run on ${o}${Array.isArray(opts.platforms) ? '' : '. Add one, or list only the systems it supports in "platforms" in bolt-app.json'}`);
+	}
+	return out;
+}
+// Codes assessYaml can return as problems: verify takes these from checkManifests, so the folder view drops lint's copy.
+export const ASSESS_CODES = new Set(['scripts_dir_form', 'runtime_not_allowed', 'action_not_allowed', 'views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template']);
+export const MAX_HASHED_FILE_BYTES = 2 * 1024 * 1024;         // the launcher MAX_HASHED_FILE_BYTES
 const WORDS = [
 	[/^runs_commands$/, 'run programs on your computer'], [/^network:localhost:(\d+)$/, 'talk to a service on this computer (port $1)'],
 	[/^opens_links:(.+)$/, 'open links to $1'], [/^opens_any_link$/, 'open links to addresses it does not fix in advance'],
@@ -69,7 +175,7 @@ const WORDS = [
 	[/^routes_to_app:(.*)$/, 'hand your input to another app ($1)'], [/^reads_clipboard$/, 'read your clipboard'],
 ];
 export const plainPermission = (p) => { for (const [re, t] of WORDS) if (re.test(p)) return p.replace(re, t); return p; };
-// The permission ids a gallery listing may carry (bolt-common app_listing.rs KNOWN_PERMISSIONS).
+// The permission ids a gallery listing may carry (the launcher KNOWN_PERMISSIONS).
 export function listingPermissions(perms) {
 	const out = new Set();
 	for (const p of perms) {
@@ -80,7 +186,59 @@ export function listingPermissions(perms) {
 	}
 	return [...out].sort();
 }
-// A script or app file name Bolt accepts inside a pack (pack_validate.rs is_plain_entry_path).
+// A script or app file name Bolt accepts inside a pack (the launcher is_plain_entry_path).
 export function plainName(n) {
 	return n.length > 0 && n.length <= 128 && /^[A-Za-z0-9._-]+$/.test(n) && !n.startsWith('.') && !n.endsWith('.') && !/^(con|prn|aux|nul|conin\$|conout\$|(com|lpt)[1-9])$/i.test(n.split('.')[0].trimEnd());
+}
+
+// A file in scripts/ that no app file runs still counts as used when a used script names it: a .py module imported by a used .py script, or a .json data file named in a quoted string by a used .py or .json file
+// for example config.json holding "fixture_file": "fixtures.json". Only named files count: a data file nothing names
+// is still reported as unused. `read(name)` returns the file's text.
+export function dataFilesUsed(used, names, read) {
+	const out = new Set(used);
+	for (let again = true; again;) {
+		again = false;
+		// a .py module counts as used when a used .py script imports it (import bolt_app_kit, from bolt_app_kit import ...)
+		for (const holder of [...out].filter((n) => n.endsWith('.py'))) {
+			let text = ''; try { text = String(read(holder)); } catch { continue; }
+			for (const n of names) {
+				const m = /^(.+)\.py$/.exec(n);
+				if (m && !out.has(n) && new RegExp(`^\\s*(import|from)\\s+${m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|\\.|,|$)`, 'm').test(text)) { out.add(n); again = true; }
+			}
+		}
+		for (const holder of [...out].filter((n) => n.endsWith('.json') || n.endsWith('.py'))) {
+			let text = ''; try { text = String(read(holder)); } catch { continue; }
+			for (const n of names) if (n.endsWith('.json') && !out.has(n) && (text.includes(JSON.stringify(n)) || text.includes(`'${n}'`))) { out.add(n); again = true; }
+		}
+	}
+	return out;
+}
+
+// The install prompt's "Mentions" list: a quick text search Bolt runs over the manifest and every script it names
+// (the launcher scan_scripts). Mirrored here so an author sees the same findings
+// before the person installing does. A courtesy, never a boundary. `files` is [{ name, text }].
+const SCAN_RULES = [
+	["Bolt's app data folder", /app\.[a-z0-9-]+\.bolt|bolt-startup\.log|local-api\.key|user-utils[/\\]/i],
+	['the .ssh folder', /(^|[^A-Za-z0-9])\.ssh([/\\\s"']|$)/],
+	['credential folders or files (.aws, .gnupg, .kube, .npmrc, .git-credentials, private keys)', /(^|[^A-Za-z0-9])\.(aws|gnupg|kube|npmrc|git-credentials|netrc)\b|\bid_(rsa|ed25519|ecdsa)\b/i],
+	['the system keychain or the security command', /(^|[\s;&|(`"'\[,])security\s+(find|add|delete|dump|import|export|unlock)[a-z-]*|\bkeychain\b|\bsecret-tool\b|\bcmdkey\b/i],
+	['osascript', /\bosascript\b/],
+	['open (starts other programs or documents)', /(^|[;&|`(\s'"\[,])open\s+(-[A-Za-z]+\b|["'/~$])|["']open["']\s*,/],
+	['recursive forced delete', /\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-r\s+-f|-f\s+-r)\b/],
+	['a browser profile folder', /Google[/\\]Chrome|BraveSoftware|Firefox[/\\]Profiles|\.mozilla|Microsoft Edge[/\\]|\.config[/\\](google-chrome|chromium|microsoft-edge)|Login Data\b/i],
+	['the clipboard', /\b(pbpaste|pbcopy|xclip|xsel|wl-paste|Get-Clipboard)\b/i],
+	['system account files', /\/etc\/(passwd|shadow|sudoers)\b/],
+	['the Windows registry', /\breg(\.exe)?\s+(add|query|delete|export)\b|HKEY_/i],
+];
+export function scanMentions(files) {
+	const out = new Set();
+	for (const { name, text } of files) {
+		for (const [what, re] of SCAN_RULES) if (re.test(text)) out.add(`${what} (in ${name})`);
+		for (const m of text.matchAll(/https?:\/\/[^\s"']+/g)) if (/[@\\]/.test(m[0])) out.add(`a web address with a user name or a backslash in it (in ${name})`);
+		for (const line of text.split('\n').filter((l) => /\b(curl|wget)\b/.test(l))) {
+			const auths = [...line.matchAll(/https?:\/\/([^/\\\s"'?#]+)/g)].map((m) => m[1]);
+			if (!auths.length || auths.some((a) => /[$`{%<*]/.test(a))) out.add(`curl or wget with an address not written out here (in ${name})`);
+		}
+	}
+	return [...out].sort();
 }

@@ -1,0 +1,317 @@
+{
+ "app": {
+  "id": "chart-template",
+  "chip": "charts",
+  "title": "Chart template",
+  "icon": "line-chart",
+  "description": "Line, bar and sparkline charts from rows or from a number series, plus a cards-only dashboard. Sample data.",
+  "service": "Chart template"
+ },
+ "api": {
+  "base_url": "https://api.example.com",
+  "key_env": "CHART_API_KEY",
+  "fixture_default": true,
+  "fixture_file": "fixtures.json",
+  "fixture_banner": false
+ },
+ "cache": {
+  "ttl": 45,
+  "stale_max": 86400
+ },
+ "endpoints": {
+  "weekly": {
+   "path": "/v1/deploys"
+  },
+  "series": {
+   "path": "/v1/series",
+   "map": {
+    "title": "name"
+   }
+  }
+ },
+ "stats": {
+  "deploys_total": {
+   "endpoint": "weekly",
+   "field_sum": "count"
+  },
+  "deploys_peak": {
+   "endpoint": "weekly",
+   "field_max": "count"
+  },
+  "series_total": {
+   "endpoint": "series"
+  }
+ },
+ "overview": {
+  "widget": {
+   "kind": "cards",
+   "mode": "list_data",
+   "bind": {
+    "layout": "tiles",
+    "title": "{{row.kpi_label}}",
+    "value": "{{row.kpi_value}}",
+    "unit": "{{row.kpi_unit}}",
+    "delta": "{{row.delta}}",
+    "delta_label": "{{row.since}}",
+    "max": "{{row.kpi_max}}",
+    "trend": "{{row.trend}}",
+    "subtitle": "{{row.kpi_note}}",
+    "badge": "{{row.kpi_badge}}",
+    "footer": "{{row.kpi_foot}}"
+   }
+  },
+  "rows": [
+   {
+    "title": "Dashboard: deploys",
+    "subtitle": "{deploys_total} this week, peak {deploys_peak}",
+    "icon": "gauge",
+    "view": "bars_rows",
+    "tile": {
+     "label": "Deploys",
+     "value": "deploys_total",
+     "note": "this week",
+     "badge": "WEEK"
+    },
+    "extra": {
+     "delta": "+23",
+     "since": "Fri vs Thu"
+    },
+    "trend": [
+     42,
+     58,
+     51,
+     73,
+     96,
+     61,
+     47
+    ]
+   },
+   {
+    "title": "Dashboard: p95 latency",
+    "subtitle": "last 12 samples",
+    "icon": "clock",
+    "view": "line_values",
+    "tile": {
+     "label": "API latency",
+     "value": 171,
+     "unit": "ms",
+     "note": "latest sample"
+    },
+    "trend": [
+     182,
+     175,
+     190,
+     171,
+     168,
+     160,
+     150,
+     171,
+     168,
+     175,
+     182,
+     190
+    ]
+   },
+   {
+    "title": "Bars from rows",
+    "subtitle": "one row per bar: x and y",
+    "icon": "line-chart",
+    "view": "bars_rows",
+    "tile": {
+     "label": "Peak day",
+     "value": "deploys_peak",
+     "note": "deploys"
+    }
+   },
+   {
+    "title": "Line from rows",
+    "subtitle": "line spans min to max",
+    "icon": "line-chart",
+    "view": "line_rows",
+    "tile": {
+     "label": "Total",
+     "value": "deploys_total",
+     "note": "deploys"
+    }
+   },
+   {
+    "title": "Sparkline from rows",
+    "subtitle": "no axes",
+    "icon": "line-chart",
+    "view": "spark_rows",
+    "tile": {
+     "label": "Total",
+     "value": "deploys_total",
+     "note": "deploys"
+    }
+   },
+   {
+    "title": "Bars from a series",
+    "subtitle": "one row, many points: bind.values",
+    "icon": "line-chart",
+    "view": "bars_values",
+    "tile": {
+     "label": "Series",
+     "value": "series_total",
+     "note": "select one"
+    }
+   },
+   {
+    "title": "Line from a series",
+    "subtitle": "bind.values",
+    "icon": "line-chart",
+    "view": "line_values",
+    "tile": {
+     "label": "Series",
+     "value": "series_total",
+     "note": "select one"
+    }
+   },
+   {
+    "title": "Sparkline from a series",
+    "subtitle": "bind.values",
+    "icon": "line-chart",
+    "view": "spark_values",
+    "tile": {
+     "label": "Series",
+     "value": "series_total",
+     "note": "select one"
+    }
+   }
+  ]
+ },
+ "views": [
+  {
+   "id": "bars_rows",
+   "title": "Bars (rows)",
+   "icon": "line-chart",
+   "endpoint": "weekly",
+   "item": {
+    "title": "{day} \u00b7 {count}",
+    "subtitle": "deploys per day",
+    "extra": {
+     "label": "{day}",
+     "value": "{count}"
+    }
+   },
+   "widget": {
+    "kind": "chart",
+    "mode": "list_data",
+    "bind": {
+     "type": "bar",
+     "x": "label",
+     "y": "value",
+     "label": "label"
+    }
+   }
+  },
+  {
+   "id": "line_rows",
+   "title": "Line (rows)",
+   "icon": "line-chart",
+   "endpoint": "weekly",
+   "item": {
+    "title": "{day} \u00b7 {count}",
+    "subtitle": "deploys per day",
+    "extra": {
+     "label": "{day}",
+     "value": "{count}"
+    }
+   },
+   "widget": {
+    "kind": "chart",
+    "mode": "list_data",
+    "bind": {
+     "type": "line",
+     "x": "label",
+     "y": "value",
+     "label": "label"
+    }
+   }
+  },
+  {
+   "id": "spark_rows",
+   "title": "Sparkline (rows)",
+   "icon": "line-chart",
+   "endpoint": "weekly",
+   "item": {
+    "title": "{day} \u00b7 {count}",
+    "subtitle": "deploys per day",
+    "extra": {
+     "label": "{day}",
+     "value": "{count}"
+    }
+   },
+   "widget": {
+    "kind": "chart",
+    "mode": "list_data",
+    "bind": {
+     "type": "sparkline",
+     "x": "label",
+     "y": "value",
+     "label": "label"
+    }
+   }
+  },
+  {
+   "id": "bars_values",
+   "title": "Bars (series)",
+   "icon": "line-chart",
+   "endpoint": "series",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{unit} \u00b7 {points|count} points",
+    "trend_field": "points"
+   },
+   "widget": {
+    "kind": "chart",
+    "mode": "selected_row",
+    "bind": {
+     "type": "bar",
+     "values": "trend",
+     "label": "series"
+    }
+   }
+  },
+  {
+   "id": "line_values",
+   "title": "Line (series)",
+   "icon": "line-chart",
+   "endpoint": "series",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{unit} \u00b7 {points|count} points",
+    "trend_field": "points"
+   },
+   "widget": {
+    "kind": "chart",
+    "mode": "selected_row",
+    "bind": {
+     "type": "line",
+     "values": "trend",
+     "label": "series"
+    }
+   }
+  },
+  {
+   "id": "spark_values",
+   "title": "Sparkline (series)",
+   "icon": "line-chart",
+   "endpoint": "series",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{unit} \u00b7 {points|count} points",
+    "trend_field": "points"
+   },
+   "widget": {
+    "kind": "chart",
+    "mode": "selected_row",
+    "bind": {
+     "type": "sparkline",
+     "values": "trend",
+     "label": "series"
+    }
+   }
+  }
+ ]
+}

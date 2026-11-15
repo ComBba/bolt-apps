@@ -3,7 +3,7 @@ import re
 import unicodedata
 
 _DROP_CATS = frozenset(("Cs", "Co", "Cn", "Cf", "Cc"))
-# Blank-filler letters the launcher also treats as hidden (user-app-actions.ts HIDDEN_CHARS), plus Braille blank.
+# Blank-filler letters the launcher also treats as hidden (its hidden-character list), plus Braille blank.
 _FILLERS = frozenset("ᅟᅠㅤﾠ⠀͏")
 _MAX_MARKS = 2
 _WS = re.compile(r"\s+")

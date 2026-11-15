@@ -1,0 +1,245 @@
+{
+  "script": "scripts/radar.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "cases": [
+    {
+      "name": "overview: verdict, source badges, rows",
+      "os": "macos",
+      "args": [
+        "overview",
+        "expressjs/express"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Safe to adopt",
+          "Sources",
+          "Vulnerabilities"
+        ]
+      }
+    },
+    {
+      "name": "a bare owner/repo means overview",
+      "os": "macos",
+      "args": [
+        "expressjs/express"
+      ],
+      "expect": {
+        "text_present": [
+          "Sources"
+        ]
+      }
+    },
+    {
+      "name": "since view diffs against the saved copy",
+      "os": "macos",
+      "args": [
+        "since",
+        "expressjs/express"
+      ],
+      "golden": "golden/since.json",
+      "expect": {
+        "text_present": [
+          "All changes",
+          "latest release"
+        ]
+      }
+    },
+    {
+      "name": "releases view with a diff pane",
+      "os": "macos",
+      "args": [
+        "releases",
+        "expressjs/express"
+      ],
+      "expect": {
+        "text_present": [
+          "v5.3.0"
+        ]
+      }
+    },
+    {
+      "name": "vulns view lists advisories",
+      "os": "macos",
+      "args": [
+        "vulns",
+        "expressjs/express"
+      ],
+      "expect": {
+        "text_present": [
+          "GHSA"
+        ]
+      }
+    },
+    {
+      "name": "downloads view plots 30 days",
+      "os": "macos",
+      "args": [
+        "downloads",
+        "expressjs/express"
+      ],
+      "expect": {
+        "text_present": [
+          "2026-11"
+        ]
+      }
+    },
+    {
+      "name": "discussion view",
+      "os": "macos",
+      "args": [
+        "discussion",
+        "expressjs/express"
+      ],
+      "expect": {
+        "text_present": [
+          "points"
+        ]
+      }
+    },
+    {
+      "name": "compare two repos",
+      "os": "macos",
+      "args": [
+        "fastify/fastify",
+        "vs",
+        "expressjs/express"
+      ],
+      "golden": "golden/compare.json",
+      "expect": {
+        "text_present": [
+          "leads on health",
+          "Side by side"
+        ]
+      }
+    },
+    {
+      "name": "compare table",
+      "os": "macos",
+      "args": [
+        "compare",
+        "fastify/fastify",
+        "vs",
+        "expressjs/express"
+      ],
+      "expect": {
+        "text_present": [
+          "Downloads per week"
+        ]
+      }
+    },
+    {
+      "name": "one source down: others still show",
+      "os": "macos",
+      "args": [
+        "overview",
+        "expressjs/express",
+        "demo-osv-down"
+      ],
+      "expect": {
+        "text_present": [
+          "Vulnerabilities \u00b7 unavailable",
+          "Safe to adopt"
+        ],
+        "text_absent": [
+          "0 open"
+        ]
+      }
+    },
+    {
+      "name": "rate limited: optional token row, no error",
+      "os": "macos",
+      "args": [
+        "overview",
+        "expressjs/express",
+        "demo-github-limit"
+      ],
+      "expect": {
+        "text_present": [
+          "GitHub allows few requests without a token"
+        ]
+      }
+    },
+    {
+      "name": "repo without an npm package",
+      "os": "macos",
+      "args": [
+        "overview",
+        "expressjs/express",
+        "demo-npm-none"
+      ],
+      "expect": {
+        "text_present": [
+          "Downloads \u00b7 not available"
+        ]
+      }
+    },
+    {
+      "name": "unknown repo in sample mode",
+      "os": "macos",
+      "args": [
+        "overview",
+        "nobody/nothing"
+      ],
+      "expect": {
+        "text_present": [
+          "Not in the recorded sample"
+        ]
+      }
+    },
+    {
+      "name": "not owner/repo is refused",
+      "os": "macos",
+      "args": [
+        "overview",
+        "not-a-repo"
+      ],
+      "expect": {
+        "text_present": [
+          "Not run"
+        ]
+      }
+    },
+    {
+      "name": "shell characters are refused",
+      "os": "macos",
+      "args": [
+        "overview",
+        "a/b;ls"
+      ],
+      "expect": {
+        "text_present": [
+          "Not run"
+        ]
+      }
+    },
+    {
+      "name": "three repos refused",
+      "os": "macos",
+      "args": [
+        "overview",
+        "a/b",
+        "vs",
+        "c/d",
+        "e/f"
+      ],
+      "expect": {
+        "text_present": [
+          "Not run"
+        ]
+      }
+    },
+    {
+      "name": "no query asks for one",
+      "os": "macos",
+      "args": [],
+      "expect": {
+        "text_present": [
+          "Type owner/repo"
+        ]
+      }
+    }
+  ]
+}

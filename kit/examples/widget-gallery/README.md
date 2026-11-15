@@ -1,0 +1,45 @@
+# widget-gallery
+
+## What this teaches
+Which right-hand panes a personal app can draw and the exact `bind` keys each needs. Open `=widget-gallery` and press Enter on each row: tiles with trend and change, a bar chart, a sortable table with totals, a detail list, a JSON tree, a line diff, an entity preview with a meter tile, and markdown.
+
+## Copy this to build
+Any app that shows data in a chart, table, tree, diff or detail pane. Pick the view closest to yours, copy its `views[]` entry and its fixture.
+
+## Edit only these fields
+`scripts/config.json`: `endpoints` (path and `map`), each view's `item.extra` (the row fields the pane reads), `widget.bind`. `scripts/fixtures.json`: one raw response per endpoint. Then `python3 scripts/engine.py --emit-yaml > utilities/widget-gallery.yaml` and run check. Every option is in `../ENGINE.md`.
+
+## Pane contract (read from the launcher source)
+| kind | mode | bind keys | row fields it reads |
+|---|---|---|---|
+| cards (tiles) | list_data | title, value, unit, delta, delta_label, max, trend, subtitle, badge, footer, layout | the tile fields, `trend` |
+| chart | list_data | type (line, bar, sparkline), x, y, values, label, color, unit | numeric field named by y |
+| table | list_data | columns (field, label, align, total, format, unit), sort, totals_label | one field per column |
+| detail | selected_row | title, subtitle, fields (label, value, copy) | any |
+| json_tree | selected_row | source | `data` (an object) |
+| diff | selected_row | left, right, leftLabel, rightLabel | text with line breaks |
+| entity_preview | selected_row | title, subtitle, image_url, tiles_above, fields (label, value, kind, tone), body, actions | tile and `f1..f5` |
+| markdown | selected_row | title, subtitle, body, actions | markdown text |
+
+A chart or table plots every row, so those views carry no Back or refresh rows.
+
+## Not available to a personal app
+Bolt shows a plain message instead of the pane for these kinds, because they read their own state and ignore the app's data:
+
+| kind | what Bolt says |
+|---|---|
+| image | This app asks for an image pane, which cannot show app data. Use image_grid for pictures. |
+| color, weather, date, calc | This app asks for a (kind) pane, which cannot show app data. Use table, detail, cards or chart. |
+
+Source: the launcher's own pane code. `card` and `image_grid` are in `../widget-gallery-2`. `map` draws the launcher's own state, reads no bind keys and cannot show app data: use an Open in Maps url action instead.
+
+## Commands
+Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+See `../ENGINE.md` for every option. Install: drop the `.boltpack` on the Bolt launcher.
+```
+node toolkit/bin/bolt-apps.mjs lint kit/examples/widget-gallery --personal
+node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery
+node toolkit/bin/bolt-apps.mjs pack kit/examples/widget-gallery --personal --version 1.0.1 --out ../widget-gallery-1.0.1.boltpack
+```
+
+The card pane, the image grid and image cards are in `../widget-gallery-2` (this gallery already uses the launcher limit of 8 views).

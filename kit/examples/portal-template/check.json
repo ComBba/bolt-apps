@@ -1,0 +1,156 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "cases": [
+    {
+      "name": "overview: a summary tile, two drills, one link",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Example Co \u00b7 Summary",
+          "Sample data",
+          "4 of 12 closed"
+        ],
+        "text_absent": [
+          "unknown"
+        ]
+      }
+    },
+    {
+      "name": "level two: a list that drills down",
+      "os": "macos",
+      "args": [
+        "projects"
+      ],
+      "golden": "golden/projects.json"
+    },
+    {
+      "name": "level three: detail with the project's tickets",
+      "os": "macos",
+      "args": [
+        "projects",
+        "P-1"
+      ],
+      "golden": "golden/projects-P-1.json",
+      "expect": {
+        "text_present": [
+          "Back to projects",
+          "Add SSO",
+          "Dark mode colors"
+        ],
+        "text_absent": [
+          "Crash on startup"
+        ]
+      }
+    },
+    {
+      "name": "detail refresh keeps the item",
+      "os": "macos",
+      "args": [
+        "projects",
+        "refresh.P-1"
+      ],
+      "expect": {
+        "text_present": [
+          "Website refresh"
+        ]
+      }
+    },
+    {
+      "name": "a list with a filter word",
+      "os": "macos",
+      "args": [
+        "tickets",
+        "open"
+      ],
+      "golden": "golden/tickets-open.json",
+      "expect": {
+        "text_present": [
+          "4 of 12 match",
+          "Crash on startup"
+        ],
+        "text_absent": [
+          "Fix login redirect"
+        ]
+      }
+    },
+    {
+      "name": "filter with no match",
+      "os": "macos",
+      "args": [
+        "tickets",
+        "zzz"
+      ],
+      "expect": {
+        "text_present": [
+          "0 of 12 match",
+          "No matching rows"
+        ]
+      }
+    },
+    {
+      "name": "offline, nothing cached: one retry row",
+      "os": "macos",
+      "args": [
+        "tickets",
+        "demo-offline"
+      ],
+      "golden": "golden/offline.json",
+      "expect": {
+        "text_present": [
+          "Could not connect to Example Service",
+          "Enter to retry"
+        ]
+      }
+    },
+    {
+      "name": "offline, old copy: stale banner and the data",
+      "os": "macos",
+      "args": [
+        "tickets",
+        "demo-stale"
+      ],
+      "golden": "golden/stale.json",
+      "expect": {
+        "text_present": [
+          "Showing data from 3.0 h ago",
+          "STALE",
+          "Crash on startup"
+        ]
+      }
+    },
+    {
+      "name": "key rejected",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-auth"
+      ],
+      "expect": {
+        "text_present": [
+          "rejected the API key"
+        ]
+      }
+    },
+    {
+      "name": "no key: says where to put it",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-nokey"
+      ],
+      "expect": {
+        "text_present": [
+          "Add your Example Service API key",
+          "add-generic-password"
+        ]
+      }
+    }
+  ]
+}

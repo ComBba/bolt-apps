@@ -1,5 +1,5 @@
 {
-  "source": "bolt-pwa src/lib/components/ui/utilityIconMap.ts (UTILITY_ICON_MAP)",
+  "source": "the launcher's utility icon map (UTILITY_ICON_MAP)",
   "source_sha256": "4a53fba485be87fa8cb5d985c06585c776824b42e05a5c21d9da82c7f5581143",
   "icons": [
     "Activity",

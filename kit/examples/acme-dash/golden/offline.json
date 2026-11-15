@@ -1,0 +1,40 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the overview",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Could not connect to Acme Compliance",
+    "subtitle": "Enter to retry, or try again later",
+    "icon": "AlertCircle",
+    "body": "",
+    "nav": {
+      "view": "tasks",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "tasks",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "OFFLINE",
+    "copy_text": ""
+  }
+]

@@ -1,0 +1,81 @@
+{
+  "app": {
+    "id": "portal-template",
+    "chip": "portal",
+    "title": "Example portal",
+    "icon": "globe",
+    "description": "Template: tiles, drill down and back, a detail panel, cache with stale fallback. Change config.json to point it at your API.",
+    "service": "Example Service"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "EXAMPLE_API_KEY",
+    "env_file": "~/.config/portal-template/.env",
+    "auth_header": "Authorization",
+    "auth_prefix": "Bearer ",
+    "fixture_default": true,
+    "fixture_file": "fixtures.json",
+    "fixture_banner": true
+  },
+  "cache": { "ttl": 45, "stale_max": 86400 },
+  "endpoints": {
+    "account": { "path": "/v1/account", "kind": "object" },
+    "projects": { "path": "/v1/projects", "map": { "title": "name", "status": "state", "lead": "owner.name" } },
+    "tickets": { "path": "/v1/tickets", "map": { "title": "summary", "status": "state", "assignee_name": "assignee.name", "project_id": "projectId" } }
+  },
+  "stats": {
+    "projects_total": { "endpoint": "projects" },
+    "projects_active": { "endpoint": "projects", "where": { "status": ["active"] } },
+    "tickets_total": { "endpoint": "tickets" },
+    "tickets_open": { "endpoint": "tickets", "where": { "status": ["open"] } },
+    "tickets_closed": { "endpoint": "tickets", "where": { "status": ["closed"] } },
+    "closed_pct": { "pct": ["tickets_closed", "tickets_total"] }
+  },
+  "overview": {
+    "rows": [
+      {
+        "title": "{account.name} · Summary", "subtitle": "{tickets_open} open tickets · {projects_active} active projects", "icon": "globe",
+        "body": "A summary row has no `view`, so it does not drill. Its tile shows in the right panel.",
+        "tile": { "label": "Tickets closed", "value": "closed_pct", "max": 100, "unit": "%", "note": "closed / all", "foot": "{tickets_closed} of {tickets_total} closed",
+                  "badge": [{ "if": "closed_pct>=70", "badge": "ON TRACK" }, { "if": "closed_pct>=40", "badge": "IN PROGRESS" }, { "badge": "BEHIND" }] }
+      },
+      {
+        "title": "Open tickets", "subtitle": "{tickets_open} waiting to start. Enter filters the list", "icon": "list", "view": "tickets", "arg": "open",
+        "tile": { "label": "Open tickets", "value": "tickets_open", "max": "tickets_total", "note": "of all tickets", "badge": [{ "if": "tickets_open>0", "badge": "ACTION" }, { "badge": "CLEAR" }] }
+      },
+      {
+        "title": "Projects · {projects_total}", "subtitle": "{projects_active} active. Enter lists them, then their tickets", "icon": "Layers", "view": "projects",
+        "tile": { "label": "Active projects", "value": "projects_active", "max": "projects_total", "note": "projects", "badge": [{ "if": "projects_active==projects_total", "badge": "OK" }, { "badge": "MIXED" }] }
+      },
+      {
+        "title": "Documentation", "subtitle": "example.com/docs. Enter opens the page", "icon": "book", "url": "https://example.com/docs"
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "projects", "title": "Projects", "icon": "Layers", "endpoint": "projects", "empty": "No projects",
+      "sort": [{ "field": "status", "order": ["active", "paused", "done"] }, { "field": "title" }],
+      "children": [{ "view": "tickets", "match": "project_id" }],
+      "no_children": "No tickets in this project",
+      "item": {
+        "title": "{title}", "subtitle": "{status|human} · lead {lead} · {ticketCount} tickets", "icon": "Layers",
+        "url": "https://app.example.com/projects/{id}",
+        "body": "## {title}\n\n{description}\n\nEnter lists the tickets in this project.",
+        "tile": { "label": "Progress", "value": "progress", "max": 100, "unit": "%", "note": "of planned work", "badge": [{ "if": "status==active", "badge": "ACTIVE" }, { "if": "status==paused", "badge": "PAUSED" }, { "badge": "DONE" }] },
+        "fields": [{ "label": "Status", "value": "{status|human}" }, { "label": "Lead", "value": "{lead}" }, { "label": "Tags", "value": "{tags|join}", "kind": "chips" }, { "label": "Started", "value": "{started|day}" }]
+      }
+    },
+    {
+      "id": "tickets", "title": "Tickets", "icon": "list", "endpoint": "tickets", "empty": "No tickets",
+      "sort": [{ "field": "status", "order": ["open", "in_progress", "closed"] }, { "field": "priority", "desc": true }],
+      "item": {
+        "title": "{title}", "subtitle": "{status|human} · {assignee_name} · priority {priority}", "icon": "list",
+        "url": "https://app.example.com/tickets/{id}",
+        "body": "## {title}\n\nTicket {id} in project {project_id}.",
+        "tile": { "label": "Priority", "value": "priority", "max": 5, "note": "1 low, 5 urgent", "badge": [{ "if": "status==closed", "badge": "CLOSED" }, { "if": "priority>=4", "badge": "URGENT" }, { "if": "status==in_progress", "badge": "IN PROGRESS" }, { "badge": "OPEN" }] },
+        "fields": [{ "label": "Status", "value": "{status|human}" }, { "label": "Assignee", "value": "{assignee_name}" }, { "label": "Project", "value": "{project_id}" }, { "label": "Priority", "value": "{priority}" }]
+      }
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+[
+  {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Example Co · Summary",
+    "subtitle": "4 open tickets · 2 active projects",
+    "icon": "globe",
+    "body": "A summary row has no `view`, so it does not drill. Its tile shows in the right panel.",
+    "actions": [],
+    "kpi_label": "Tickets closed",
+    "kpi_value": 33,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "closed / all",
+    "kpi_foot": "4 of 12 closed",
+    "kpi_badge": "BEHIND",
+    "copy_text": "- Example Co Summary - 4 open tickets 2 active projects",
+    "open_url": ""
+  },
+  {
+    "title": "Open tickets",
+    "subtitle": "4 waiting to start. Enter filters the list",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "tickets",
+      "arg": "open"
+    },
+    "actions": [],
+    "kpi_label": "Open tickets",
+    "kpi_value": 4,
+    "kpi_unit": "",
+    "kpi_max": 12,
+    "kpi_note": "of all tickets",
+    "kpi_foot": "",
+    "kpi_badge": "ACTION",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Projects · 4",
+    "subtitle": "2 active. Enter lists them, then their tickets",
+    "icon": "Layers",
+    "body": "",
+    "nav": {
+      "view": "projects"
+    },
+    "actions": [],
+    "kpi_label": "Active projects",
+    "kpi_value": 2,
+    "kpi_unit": "",
+    "kpi_max": 4,
+    "kpi_note": "projects",
+    "kpi_foot": "",
+    "kpi_badge": "MIXED",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Documentation",
+    "subtitle": "example.com/docs. Enter opens the page",
+    "icon": "book",
+    "body": "",
+    "actions": [],
+    "url": "https://example.com/docs",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Documentation - example.com/docs. Enter opens the page",
+    "open_url": "https://example.com/docs"
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

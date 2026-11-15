@@ -1,0 +1,244 @@
+{
+ "deploys": {
+  "data": [
+   {
+    "day": "Mon",
+    "count": 42
+   },
+   {
+    "day": "Tue",
+    "count": 58
+   },
+   {
+    "day": "Wed",
+    "count": 51
+   },
+   {
+    "day": "Thu",
+    "count": 73
+   },
+   {
+    "day": "Fri",
+    "count": 96
+   },
+   {
+    "day": "Sat",
+    "count": 61
+   },
+   {
+    "day": "Sun",
+    "count": 47
+   }
+  ]
+ },
+ "services": {
+  "data": [
+   {
+    "name": "api-gateway",
+    "lang": "Go",
+    "state": "up",
+    "commits": 124,
+    "prs": 2,
+    "version": "2.14.0",
+    "region": "us-east-1",
+    "replicas": 6,
+    "uptime": "23d 4h",
+    "cpu": "31%",
+    "memory": "1.8 GB / 4 GB",
+    "endpoint": "https://api.example.com",
+    "owner": "platform-team"
+   },
+   {
+    "name": "web-frontend",
+    "lang": "TS",
+    "state": "up",
+    "commits": 301,
+    "prs": 0,
+    "version": "5.2.1",
+    "region": "us-east-1",
+    "replicas": 4,
+    "uptime": "9d 2h",
+    "cpu": "18%",
+    "memory": "0.9 GB / 2 GB",
+    "endpoint": "https://www.example.com",
+    "owner": "web-team"
+   },
+   {
+    "name": "worker-queue",
+    "lang": "Rust",
+    "state": "degraded",
+    "commits": 57,
+    "prs": 11,
+    "version": "0.9.4",
+    "region": "eu-west-2",
+    "replicas": 3,
+    "uptime": "2d 7h",
+    "cpu": "74%",
+    "memory": "3.1 GB / 4 GB",
+    "endpoint": "https://queue.example.com",
+    "owner": "platform-team"
+   },
+   {
+    "name": "billing-svc",
+    "lang": "Go",
+    "state": "up",
+    "commits": 88,
+    "prs": 1,
+    "version": "1.7.0",
+    "region": "us-east-1",
+    "replicas": 2,
+    "uptime": "40d 1h",
+    "cpu": "12%",
+    "memory": "0.6 GB / 2 GB",
+    "endpoint": "https://billing.example.com",
+    "owner": "finance-eng"
+   },
+   {
+    "name": "search-index",
+    "lang": "Rust",
+    "state": "down",
+    "commits": 203,
+    "prs": 42,
+    "version": "3.0.0",
+    "region": "eu-west-2",
+    "replicas": 0,
+    "uptime": "0m",
+    "cpu": "0%",
+    "memory": "0 GB / 8 GB",
+    "endpoint": "https://search.example.com",
+    "owner": "search-team"
+   }
+  ]
+ },
+ "responses": {
+  "data": [
+   {
+    "id": "r1",
+    "label": "GET /api/user/42",
+    "status": "200 OK \u00b7 84ms",
+    "payload": {
+     "user": {
+      "id": 42,
+      "name": "Ada Example",
+      "active": true,
+      "roles": [
+       "admin",
+       "owner"
+      ],
+      "profile": {
+       "email": "ada@example.com",
+       "tz": "Europe/London",
+       "verified": true
+      }
+     },
+     "session": {
+      "expires_in": 3600,
+      "scopes": [
+       "read",
+       "write"
+      ]
+     },
+     "meta": {
+      "request_id": "req_8f3",
+      "cached": false,
+      "region": "eu-west-2"
+     }
+    }
+   },
+   {
+    "id": "r2",
+    "label": "GET /api/orders?limit=2",
+    "status": "200 OK \u00b7 61ms",
+    "payload": {
+     "orders": [
+      {
+       "id": "ORD-1",
+       "total": 42.5,
+       "paid": true
+      },
+      {
+       "id": "ORD-2",
+       "total": 19.0,
+       "paid": false
+      }
+     ],
+     "next": null
+    }
+   }
+  ]
+ },
+ "configs": {
+  "data": [
+   {
+    "id": "c1",
+    "name": "prod vs staging",
+    "note": "config drift",
+    "left": "region: us-east-1\nreplicas: 3\nimage: api:1.2.0\ntls: false\nlog_level: info\ntimeout: 30",
+    "right": "region: us-east-1\nreplicas: 5\nimage: api:1.3.1\ntls: true\nlog_level: info\ntimeout: 60\nretries: 3"
+   }
+  ]
+ },
+ "notes": {
+  "data": [
+   {
+    "id": "n1",
+    "name": "Release notes 2.14",
+    "sub": "short summary",
+    "text": "## What changed\n\n- Faster **startup**\n- New `--dry-run` flag\n- Fixed a crash when the cache is empty\n\n## Upgrade\n\nRun the installer again. No data migration is needed."
+   },
+   {
+    "id": "n2",
+    "name": "Runbook: restart worker",
+    "sub": "on call",
+    "text": "## Steps\n\n1. Check the queue depth\n2. Restart the worker\n3. Confirm the depth falls\n\nEscalate to platform-team if it does not."
+   }
+  ]
+ },
+ "customers": {
+  "data": [
+   {
+    "id": "cu1",
+    "name": "Globex Ltd",
+    "plan": "Business",
+    "seats": 120,
+    "used": 96,
+    "owner": "Maya R.",
+    "region": "EU",
+    "tags": [
+     "priority",
+     "annual"
+    ],
+    "site": "https://globex.example.com",
+    "summary": "Renews in March. Wants SSO."
+   },
+   {
+    "id": "cu2",
+    "name": "Initech",
+    "plan": "Team",
+    "seats": 40,
+    "used": 12,
+    "owner": "Luis G.",
+    "region": "US",
+    "tags": [
+     "trial"
+    ],
+    "site": "https://initech.example.com",
+    "summary": "Trial ends in 9 days."
+   },
+   {
+    "id": "cu3",
+    "name": "Umbrella Co",
+    "plan": "Enterprise",
+    "seats": 900,
+    "used": 871,
+    "owner": "Tom W.",
+    "region": "US",
+    "tags": [
+     "priority"
+    ],
+    "site": "https://umbrella.example.com",
+    "summary": "Near seat limit."
+   }
+  ]
+ }
+}

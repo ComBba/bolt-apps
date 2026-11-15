@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/SparcleHQ/bolt-apps/kit/schema/row.schema.json",
   "title": "Bolt App row contract",
-  "description": "What a User App script prints to stdout (parse: json): an array of rows. Language neutral: any implementation that emits this passes. Mirrors what the launcher accepts (bolt-pwa utility-rows.ts mapBridgeRows, user-app-actions.ts sanitizeRowActions, userAppNav.ts sanitizeRowNav, kpiTile.ts). The kit is stricter than the launcher where the launcher silently drops or hides things (labels over 14 characters, a tile without a number).",
+  "description": "What a User App script prints to stdout (parse: json): an array of rows. Language neutral: any implementation that emits this passes. Mirrors what the launcher accepts (its row mapping, action, nav and tile checks). The kit is stricter than the launcher where the launcher silently drops or hides things (labels over 14 characters, a tile without a number).",
   "type": "array",
   "maxItems": 200,
   "items": {
@@ -416,6 +416,18 @@
         "kpi_badge": {
           "type": "string",
           "maxLength": 24
+        },
+        "data": {
+          "description": "A JSON object for a json_tree pane (bind source: data). At most 20000 characters when serialized.",
+          "type": "object"
+        },
+        "trend": {
+          "description": "Numbers for a tile sparkline ({{row.trend}}).",
+          "type": "array",
+          "maxItems": 60,
+          "items": {
+            "type": "number"
+          }
         }
       },
       "additionalProperties": {

@@ -18,7 +18,7 @@ const read = (f) => fs.readFileSync(path.join(REPO, f), 'utf8');
 const CASES = JSON.parse(read('conformance/verify-cases.json'));
 const write = (f, c) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, c); };
 const SUBCOMMANDS = ['new', 'lint', 'check', 'keygen', 'pack', 'verify', 'kit'];
-const FLAGS = { new: ['--type', '--dir', '--author'], lint: ['--json', '--personal'], check: ['--json', '--os', '--case', '--update-golden'], keygen: ['--out'], pack: ['--key', '--out', '--version', '--notes', '--personal'], verify: ['--json'], kit: [] };
+const FLAGS = { new: ['--type', '--dir', '--author'], lint: ['--json', '--personal'], check: ['--json', '--os', '--case', '--update-golden'], keygen: ['--out'], pack: ['--key', '--out', '--version', '--notes', '--personal'], verify: ['--json'], kit: ['--flat'] };
 
 // Every command line inside a fenced block of the guide.
 function commandLines() {

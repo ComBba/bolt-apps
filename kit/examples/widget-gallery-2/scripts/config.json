@@ -1,0 +1,173 @@
+{
+ "app": {
+  "id": "widget-gallery-2",
+  "chip": "gallery2",
+  "title": "Widget gallery 2",
+  "icon": "image",
+  "description": "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images.",
+  "service": "Widget gallery",
+  "searchable": false
+ },
+ "api": {
+  "base_url": "https://api.example.com",
+  "key_env": "GALLERY2_API_KEY",
+  "env_file": "~/.config/widget-gallery-2/.env",
+  "fixture_default": true,
+  "fixture_file": "fixtures.json",
+  "fixture_banner": false
+ },
+ "cache": {
+  "ttl": 45,
+  "stale_max": 86400
+ },
+ "endpoints": {
+  "swatches": {
+   "path": "/v1/swatches",
+   "map": {
+    "title": "name"
+   }
+  }
+ },
+ "stats": {
+  "swatches_total": {
+   "endpoint": "swatches"
+  }
+ },
+ "overview": {
+  "widget": {
+   "kind": "cards",
+   "mode": "list_data",
+   "bind": {
+    "layout": "tiles",
+    "title": "{{row.kpi_label}}",
+    "value": "{{row.kpi_value}}",
+    "unit": "{{row.kpi_unit}}",
+    "delta": "{{row.delta}}",
+    "delta_label": "{{row.since}}",
+    "max": "{{row.kpi_max}}",
+    "trend": "{{row.trend}}",
+    "subtitle": "{{row.kpi_note}}",
+    "badge": "{{row.kpi_badge}}",
+    "footer": "{{row.kpi_foot}}"
+   }
+  },
+  "rows": [
+   {
+    "title": "Card",
+    "subtitle": "One title, one line, copy action",
+    "icon": "file",
+    "view": "card",
+    "tile": {
+     "label": "Swatches",
+     "value": "swatches_total",
+     "note": "colours"
+    }
+   },
+   {
+    "title": "Image grid",
+    "subtitle": "Thumbnails from inline images",
+    "icon": "Image",
+    "view": "grid",
+    "tile": {
+     "label": "Thumbnails",
+     "value": "swatches_total",
+     "note": "inline PNG, no network"
+    }
+   },
+   {
+    "title": "Cards with images",
+    "subtitle": "Grid layout, image on each card",
+    "icon": "Image",
+    "view": "cardsimg",
+    "tile": {
+     "label": "Cards",
+     "value": "swatches_total",
+     "note": "grid layout"
+    }
+   }
+  ]
+ },
+ "views": [
+  {
+   "id": "card",
+   "title": "Card",
+   "icon": "file",
+   "endpoint": "swatches",
+   "item": {
+    "title": "{title} {hex}",
+    "subtitle": "{note}",
+    "extra": {
+     "name": "{title}",
+     "note": "{note}",
+     "hex": "{hex}",
+     "src": "{src}"
+    }
+   },
+   "widget": {
+    "kind": "card",
+    "mode": "selected_row",
+    "bind": {
+     "title": "{{row.name}}",
+     "subtitle": "{{row.note}}",
+     "actions": [
+      "copy"
+     ]
+    }
+   }
+  },
+  {
+   "id": "grid",
+   "title": "Image grid",
+   "icon": "Image",
+   "endpoint": "swatches",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{hex}",
+    "extra": {
+     "name": "{title}",
+     "note": "{note}",
+     "hex": "{hex}",
+     "src": "{src}"
+    }
+   },
+   "widget": {
+    "kind": "image_grid",
+    "mode": "list_data",
+    "bind": {
+     "src": "{{row.src}}",
+     "caption": "{{row.name}}",
+     "alt": "{{row.name}} swatch",
+     "columns": 3
+    }
+   }
+  },
+  {
+   "id": "cardsimg",
+   "title": "Cards with images",
+   "icon": "Image",
+   "endpoint": "swatches",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{hex}",
+    "extra": {
+     "name": "{title}",
+     "note": "{note}",
+     "hex": "{hex}",
+     "src": "{src}",
+     "uses": "{uses}"
+    }
+   },
+   "widget": {
+    "kind": "cards",
+    "mode": "list_data",
+    "bind": {
+     "layout": "grid",
+     "title": "{{row.name}}",
+     "subtitle": "{{row.hex}}",
+     "image": "{{row.src}}",
+     "footer": "{{row.uses}} uses"
+    }
+   }
+  }
+ ]
+}

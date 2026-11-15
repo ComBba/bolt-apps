@@ -1,0 +1,59 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "1 diff",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "prod vs staging",
+    "subtitle": "config drift",
+    "icon": "git-commit",
+    "body": "",
+    "actions": [],
+    "pane": "diff",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- prod vs staging - config drift",
+    "left": "region: us-east-1\nreplicas: 3\nimage: api:1.2.0\ntls: false\nlog_level: info\ntimeout: 30",
+    "right": "region: us-east-1\nreplicas: 5\nimage: api:1.3.1\ntls: true\nlog_level: info\ntimeout: 60\nretries: 3",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "diff",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "diff",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

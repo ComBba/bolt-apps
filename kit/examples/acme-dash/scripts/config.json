@@ -1,0 +1,199 @@
+{
+  "app": {
+    "id": "acme-dash",
+    "chip": "acme-dash",
+    "title": "Acme · Compliance Dashboard",
+    "icon": "shield-check",
+    "description": "Compliance posture as tiles, with drill down into tasks, controls, risks and more. Fictional Acme Co data.",
+    "service": "Acme Compliance"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "ACME_API_KEY",
+    "env_file": "~/.config/acme-dash/.env",
+    "auth_header": "X-API-Key",
+    "fixture_default": true,
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": { "ttl": 45, "stale_max": 86400 },
+  "endpoints": {
+    "organization": { "path": "/v1/organization", "kind": "object" },
+    "trust": { "path": "/v1/trust-portal", "kind": "object" },
+    "tasks": { "path": "/v1/tasks", "map": { "title": "name", "status": "state", "owner": "assignee.name", "due": "dueDate", "control_id": "controlId" } },
+    "policies": { "path": "/v1/policies", "map": { "title": "name", "status": "state", "dept": "department", "changed": "updatedAt", "review_in": "reviewInDays" } },
+    "controls": { "path": "/v1/controls", "map": { "title": "name", "visibility": "trust.visibility", "owner_name": "owner.name", "task_count": "taskCount" } },
+    "risks": { "path": "/v1/risks", "map": { "title": "name", "status": "state" } },
+    "vendors": { "path": "/v1/vendors", "map": { "title": "name", "status": "state", "site": "website" } },
+    "devices": { "path": "/v1/devices", "map": { "title": "hostname", "os": "osVersion", "seen_days": "lastSeenDaysAgo", "encrypted": "diskEncrypted" } },
+    "people": { "path": "/v1/people", "map": { "title": "name", "dept": "department", "login_days": "lastLoginDaysAgo" } }
+  },
+  "stats": {
+    "tasks_total": { "endpoint": "tasks" },
+    "tasks_done": { "endpoint": "tasks", "where": { "status": ["done"] } },
+    "tasks_progress": { "endpoint": "tasks", "where": { "status": ["in_progress"] } },
+    "tasks_todo": { "endpoint": "tasks", "where": { "status": ["not_started"] } },
+    "ready": { "pct": ["tasks_done", "tasks_total"] },
+    "next_up": { "endpoint": "tasks", "where": { "priority": ["urgent"], "status": { "not": ["done"] } } },
+    "policies_total": { "endpoint": "policies" },
+    "policies_published": { "endpoint": "policies", "where": { "status": ["published"] } },
+    "policies_draft": { "endpoint": "policies", "where": { "status": ["draft"] } },
+    "controls_total": { "endpoint": "controls" },
+    "controls_linked": { "endpoint": "controls", "where": { "task_count": { "gte": 1 } } },
+    "controls_portal": { "endpoint": "controls", "where": { "visibility": ["portal"] } },
+    "risks_total": { "endpoint": "risks" },
+    "risks_high": { "endpoint": "risks", "where": { "impact": ["major", "severe"] } },
+    "risks_closed": { "endpoint": "risks", "where": { "status": ["closed"] } },
+    "risks_pending": { "endpoint": "risks", "where": { "status": ["pending"] } },
+    "vendors_total": { "endpoint": "vendors" },
+    "vendors_assessed": { "endpoint": "vendors", "where": { "status": ["assessed"] } },
+    "vendors_sub": { "endpoint": "vendors", "where": { "isSubProcessor": [true] } },
+    "vendors_by_category": { "endpoint": "vendors", "group": "category" },
+    "devices_total": { "endpoint": "devices" },
+    "devices_encrypted": { "endpoint": "devices", "where": { "encrypted": [true] } },
+    "devices_by_platform": { "endpoint": "devices", "group": "platform" },
+    "people_total": { "endpoint": "people" },
+    "people_active": { "endpoint": "people", "where": { "active": [true] } },
+    "people_by_role": { "endpoint": "people", "group": "role" }
+  },
+  "overview": {
+    "rows": [
+      {
+        "title": "{organization.name} · Compliance posture",
+        "subtitle": "{organization.frameworks|dots} · readiness {ready}%",
+        "icon": "shield-check",
+        "body": "Frameworks: **{organization.frameworks|join}**. Source: the Acme compliance API, read-only.",
+        "tile": { "label": "Readiness", "value": "ready", "max": 100, "unit": "%", "note": "tasks done / applicable", "foot": "{tasks_done} of {tasks_total} tasks done",
+                  "badge": [{ "if": "ready>=80", "badge": "ON TRACK" }, { "if": "ready>=40", "badge": "IN PROGRESS" }, { "badge": "AT RISK" }] }
+      },
+      {
+        "title": "Next up", "subtitle": "{next_up} things to do", "icon": "list", "view": "tasks", "arg": "urgent",
+        "body": "Urgent tasks that are not done yet. Enter shows them.",
+        "tile": { "label": "Open actions", "value": "next_up", "unit": "", "note": "urgent tasks not done", "badge": [{ "if": "next_up>0", "badge": "ACTION" }, { "badge": "CLEAR" }] }
+      },
+      {
+        "title": "Tasks · {tasks_done} of {tasks_total} done", "subtitle": "{tasks_progress} in progress · {tasks_todo} not started", "icon": "list", "view": "tasks",
+        "tile": { "label": "Tasks done", "value": "tasks_done", "max": "tasks_total", "note": "of applicable tasks", "foot": "{tasks_progress} in progress",
+                  "badge": [{ "if": "tasks_progress>0", "badge": "IN PROGRESS" }, { "badge": "OK" }] }
+      },
+      {
+        "title": "Policies · {policies_published} of {policies_total} published", "subtitle": "{policies_published} published, {policies_draft} draft", "icon": "FileText", "view": "policies",
+        "tile": { "label": "Published", "value": "policies_published", "max": "policies_total", "note": "policies", "foot": "{policies_published} published, {policies_draft} draft",
+                  "badge": [{ "if": "policies_draft==0", "badge": "OK" }, { "badge": "IN PROGRESS" }] }
+      },
+      {
+        "title": "Controls · {controls_total}", "subtitle": "{controls_linked} with linked tasks · {controls_portal} on the trust portal", "icon": "Layers", "view": "controls",
+        "tile": { "label": "Controls with tasks", "value": "controls_linked", "max": "controls_total", "note": "controls that have linked tasks", "foot": "{controls_portal} on the trust portal",
+                  "badge": [{ "if": "controls_linked==controls_total", "badge": "OK" }, { "badge": "GAPS" }] }
+      },
+      {
+        "title": "Risks · {risks_total}", "subtitle": "{risks_high} high impact · {risks_closed} closed, {risks_pending} pending", "icon": "shield-alert", "view": "risks",
+        "tile": { "label": "High impact risks", "value": "risks_high", "max": "risks_total", "note": "major or severe", "foot": "{risks_pending} pending treatment",
+                  "badge": [{ "if": "risks_high>0", "badge": "ATTENTION" }, { "badge": "OK" }] }
+      },
+      {
+        "title": "Vendors · {vendors_total}", "subtitle": "{vendors_assessed} assessed · {vendors_sub} sub-processors", "icon": "building-2", "view": "vendors",
+        "tile": { "label": "Assessed", "value": "vendors_assessed", "max": "vendors_total", "note": "vendors", "foot": "{vendors_by_category}",
+                  "badge": [{ "if": "vendors_assessed==vendors_total", "badge": "OK" }, { "badge": "IN PROGRESS" }] }
+      },
+      {
+        "title": "Devices · {devices_total}", "subtitle": "{devices_encrypted} of {devices_total} disk encrypted", "icon": "cpu", "view": "devices",
+        "tile": { "label": "Disk encrypted", "value": "devices_encrypted", "max": "devices_total", "note": "devices", "foot": "{devices_by_platform}",
+                  "badge": [{ "if": "devices_encrypted==devices_total", "badge": "OK" }, { "badge": "ATTENTION" }] }
+      },
+      {
+        "title": "People · {people_total}", "subtitle": "{people_by_role}", "icon": "id-card", "view": "people",
+        "tile": { "label": "Active people", "value": "people_active", "max": "people_total", "note": "{people_active} of {people_total} active", "foot": "last login recorded",
+                  "badge": [{ "if": "people_active==people_total", "badge": "OK" }, { "badge": "ATTENTION" }] }
+      },
+      {
+        "title": "Trust portal · {trust.mode}", "subtitle": "trust.example.com/{trust.slug}", "icon": "globe", "url": "https://trust.example.com/{trust.slug}", "only_if": "trust.live",
+        "tile": { "label": "Trust portal", "value": "trust.live", "max": 1, "note": "trust.example.com/{trust.slug}", "foot": "{controls_portal} controls shown", "badge": "LIVE" }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "tasks", "title": "Tasks", "icon": "list", "endpoint": "tasks", "empty": "No tasks",
+      "sort": [{ "field": "status", "order": ["in_progress", "not_started", "done"] }, { "field": "title" }],
+      "item": {
+        "title": "{title}", "subtitle": "{status|human} · {owner} · due {due|day}", "icon": "list",
+        "url": "https://app.example.com/acme/tasks/{id}",
+        "body": "## {title}\n\n{description}\n\nTask {id}, linked to control {control_id}.",
+        "tile": { "label": "Progress", "value": "progress", "max": 100, "unit": "%", "note": "of the work", "foot": "created for {control_id}",
+                  "badge": [{ "if": "priority==urgent", "badge": "URGENT" }, { "if": "status==done", "badge": "DONE" }, { "if": "status==in_progress", "badge": "IN PROGRESS" }, { "badge": "TO DO" }] },
+        "fields": [{ "label": "Status", "value": "{status|human}" }, { "label": "Owner", "value": "{owner}" }, { "label": "Due", "value": "{due|day}" }, { "label": "Control", "value": "{control_id}" }, { "label": "Priority", "value": "{priority|human}" }]
+      }
+    },
+    {
+      "id": "policies", "title": "Policies", "icon": "FileText", "endpoint": "policies", "empty": "No policies",
+      "sort": [{ "field": "status", "order": ["draft", "published"] }, { "field": "review_in" }],
+      "item": {
+        "title": "{title}", "subtitle": "{status|human} · {cadence} review · {dept}", "icon": "FileText",
+        "url": "https://app.example.com/acme/policies/{id}",
+        "body": "## {title}\n\n{description}",
+        "tile": { "label": "Days to review", "value": "review_in", "unit": "d", "note": "negative means overdue", "foot": "changed {changed|day}",
+                  "badge": [{ "if": "review_in<0", "badge": "OVERDUE" }, { "if": "status==draft", "badge": "DRAFT" }, { "badge": "PUBLISHED" }] },
+        "fields": [{ "label": "Status", "value": "{status|human}" }, { "label": "Cadence", "value": "{cadence|human}" }, { "label": "Dept", "value": "{dept}" }, { "label": "Changed", "value": "{changed|day}" }]
+      }
+    },
+    {
+      "id": "controls", "title": "Controls", "icon": "Layers", "endpoint": "controls", "empty": "No controls",
+      "sort": [{ "field": "title" }],
+      "children": [{ "view": "tasks", "match": "control_id" }],
+      "no_children": "No linked tasks",
+      "item": {
+        "title": "{title}", "subtitle": "{task_count} linked tasks · {visibility|human} · owner {owner_name}", "icon": "Layers",
+        "url": "https://app.example.com/acme/controls/{id}",
+        "body": "## {title}\n\n{description}\n\nEnter lists the tasks linked to this control.",
+        "tile": { "label": "Linked tasks", "value": "task_count", "note": "tasks behind this control", "badge": [{ "if": "visibility==portal", "badge": "PORTAL" }, { "badge": "INTERNAL" }] },
+        "fields": [{ "label": "Frameworks", "value": "{frameworks|join}", "kind": "chips" }, { "label": "Portal", "value": "{visibility|human}" }, { "label": "Owner", "value": "{owner_name}" }]
+      }
+    },
+    {
+      "id": "risks", "title": "Risks", "icon": "shield-alert", "endpoint": "risks", "empty": "No risks",
+      "sort": [{ "field": "status", "order": ["pending", "closed"] }, { "field": "residual", "desc": true }],
+      "item": {
+        "title": "{title}", "subtitle": "{status|human} · {impact} impact · {likelihood}", "icon": "shield-alert",
+        "url": "https://app.example.com/acme/risks/{id}",
+        "body": "## {title}\n\n{description}",
+        "tile": { "label": "Residual score", "value": "residual", "max": 25, "note": "likelihood x impact, 1 to 25", "foot": "treatment: {treatment}",
+                  "badge": [{ "if": "residual>=15", "badge": "HIGH" }, { "if": "status==pending", "badge": "PENDING" }, { "badge": "CLOSED" }] },
+        "fields": [{ "label": "Treat", "value": "{treatment|human}" }, { "label": "Impact", "value": "{impact|human}" }, { "label": "Likely", "value": "{likelihood|human}" }, { "label": "Resid", "value": "{residual}" }, { "label": "Area", "value": "{area|human}" }]
+      }
+    },
+    {
+      "id": "vendors", "title": "Vendors", "icon": "building-2", "endpoint": "vendors", "empty": "No vendors",
+      "sort": [{ "field": "residual", "desc": true }, { "field": "title" }],
+      "item": {
+        "title": "{title}", "subtitle": "{status|human} · {category|human}", "icon": "building-2",
+        "url": "{site}",
+        "body": "## {title}\n\n{description}",
+        "tile": { "label": "Residual score", "value": "residual", "max": 25, "note": "likelihood x impact, 1 to 25", "badge": [{ "if": "residual>=10", "badge": "REVIEW" }, { "badge": "OK" }] },
+        "fields": [{ "label": "Assess", "value": "{status|human}" }, { "label": "Area", "value": "{category|human}" }, { "label": "Sub", "value": "{isSubProcessor|yes}" }, { "label": "Site", "value": "{site}" }]
+      }
+    },
+    {
+      "id": "devices", "title": "Devices", "icon": "cpu", "endpoint": "devices", "empty": "No devices reporting",
+      "sort": [{ "field": "seen_days", "desc": true }, { "field": "title" }],
+      "item": {
+        "title": "{title}", "subtitle": "{platform|human} · {user} · disk encrypted {encrypted|yes}", "icon": "cpu",
+        "url": "https://app.example.com/acme/devices/{id}",
+        "body": "## {title}\n\n{os}, used by {user}.",
+        "tile": { "label": "Last seen", "value": "seen_days", "unit": "d", "note": "days since check-in", "badge": [{ "if": "encrypted==False", "badge": "ATTENTION" }, { "badge": "OK" }] },
+        "fields": [{ "label": "System", "value": "{platform|human}" }, { "label": "Disk", "value": "{encrypted|yes}" }, { "label": "Seen", "value": "{seen_days} d ago" }, { "label": "OS", "value": "{os}" }, { "label": "User", "value": "{user}" }]
+      }
+    },
+    {
+      "id": "people", "title": "People", "icon": "id-card", "endpoint": "people", "empty": "No people",
+      "sort": [{ "field": "title" }],
+      "item": {
+        "title": "{title}", "subtitle": "{role|human} · {dept}", "icon": "id-card",
+        "url": "https://app.example.com/acme/people/{id}",
+        "body": "## {title}\n\n{role|human} in {dept}. Email {email}.",
+        "tile": { "label": "Last login", "value": "login_days", "unit": "d", "note": "days ago", "badge": [{ "if": "login_days>3", "badge": "STALE" }, { "badge": "ACTIVE" }] },
+        "fields": [{ "label": "Role", "value": "{role|human}" }, { "label": "Dept", "value": "{dept}" }, { "label": "Active", "value": "{active|yes}" }, { "label": "Login", "value": "{login_days} d ago" }]
+      }
+    }
+  ]
+}

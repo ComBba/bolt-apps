@@ -1,0 +1,208 @@
+[
+  {
+    "title": "Acme Co · Compliance posture",
+    "subtitle": "SOC 2 · ISO 27001 · readiness 82%",
+    "icon": "shield-check",
+    "body": "Frameworks: **SOC 2, ISO 27001**. Source: the Acme compliance API, read-only.",
+    "actions": [],
+    "kpi_label": "Readiness",
+    "kpi_value": 82,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "tasks done / applicable",
+    "kpi_foot": "41 of 50 tasks done",
+    "kpi_badge": "ON TRACK",
+    "copy_text": "- Acme Co Compliance posture - SOC 2 ISO 27001 readiness 82%",
+    "open_url": ""
+  },
+  {
+    "title": "Next up",
+    "subtitle": "4 things to do",
+    "icon": "list",
+    "body": "Urgent tasks that are not done yet. Enter shows them.",
+    "nav": {
+      "view": "tasks",
+      "arg": "urgent"
+    },
+    "actions": [],
+    "kpi_label": "Open actions",
+    "kpi_value": 4,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "urgent tasks not done",
+    "kpi_foot": "",
+    "kpi_badge": "ACTION",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Tasks · 41 of 50 done",
+    "subtitle": "7 in progress · 2 not started",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "tasks"
+    },
+    "actions": [],
+    "kpi_label": "Tasks done",
+    "kpi_value": 41,
+    "kpi_unit": "",
+    "kpi_max": 50,
+    "kpi_note": "of applicable tasks",
+    "kpi_foot": "7 in progress",
+    "kpi_badge": "IN PROGRESS",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Policies · 22 of 24 published",
+    "subtitle": "22 published, 2 draft",
+    "icon": "FileText",
+    "body": "",
+    "nav": {
+      "view": "policies"
+    },
+    "actions": [],
+    "kpi_label": "Published",
+    "kpi_value": 22,
+    "kpi_unit": "",
+    "kpi_max": 24,
+    "kpi_note": "policies",
+    "kpi_foot": "22 published, 2 draft",
+    "kpi_badge": "IN PROGRESS",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Controls · 44",
+    "subtitle": "44 with linked tasks · 38 on the trust portal",
+    "icon": "Layers",
+    "body": "",
+    "nav": {
+      "view": "controls"
+    },
+    "actions": [],
+    "kpi_label": "Controls with tasks",
+    "kpi_value": 44,
+    "kpi_unit": "",
+    "kpi_max": 44,
+    "kpi_note": "controls that have linked tasks",
+    "kpi_foot": "38 on the trust portal",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Risks · 11",
+    "subtitle": "2 high impact · 10 closed, 1 pending",
+    "icon": "shield-alert",
+    "body": "",
+    "nav": {
+      "view": "risks"
+    },
+    "actions": [],
+    "kpi_label": "High impact risks",
+    "kpi_value": 2,
+    "kpi_unit": "",
+    "kpi_max": 11,
+    "kpi_note": "major or severe",
+    "kpi_foot": "1 pending treatment",
+    "kpi_badge": "ATTENTION",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Vendors · 11",
+    "subtitle": "11 assessed · 0 sub-processors",
+    "icon": "building-2",
+    "body": "",
+    "nav": {
+      "view": "vendors"
+    },
+    "actions": [],
+    "kpi_label": "Assessed",
+    "kpi_value": 11,
+    "kpi_unit": "",
+    "kpi_max": 11,
+    "kpi_note": "vendors",
+    "kpi_foot": "7 software as a service, 3 infrastructure, 1 finance",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Devices · 6",
+    "subtitle": "6 of 6 disk encrypted",
+    "icon": "cpu",
+    "body": "",
+    "nav": {
+      "view": "devices"
+    },
+    "actions": [],
+    "kpi_label": "Disk encrypted",
+    "kpi_value": 6,
+    "kpi_unit": "",
+    "kpi_max": 6,
+    "kpi_note": "devices",
+    "kpi_foot": "4 darwin, 2 windows",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "People · 8",
+    "subtitle": "6 employee, 1 admin, 1 owner",
+    "icon": "id-card",
+    "body": "",
+    "nav": {
+      "view": "people"
+    },
+    "actions": [],
+    "kpi_label": "Active people",
+    "kpi_value": 8,
+    "kpi_unit": "",
+    "kpi_max": 8,
+    "kpi_note": "8 of 8 active",
+    "kpi_foot": "last login recorded",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Trust portal · on",
+    "subtitle": "trust.example.com/acme-demo",
+    "icon": "globe",
+    "body": "",
+    "actions": [],
+    "url": "https://trust.example.com/acme-demo",
+    "kpi_label": "Trust portal",
+    "kpi_value": 1,
+    "kpi_unit": "",
+    "kpi_max": 1,
+    "kpi_note": "trust.example.com/acme-demo",
+    "kpi_foot": "38 controls shown",
+    "kpi_badge": "LIVE",
+    "copy_text": "- Trust portal on - trust.example.com/acme-demo",
+    "open_url": "https://trust.example.com/acme-demo"
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

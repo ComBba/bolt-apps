@@ -1,0 +1,101 @@
+{
+  "app": {
+    "id": "repo-radar",
+    "chip": "radar",
+    "title": "Repo radar",
+    "icon": "activity",
+    "description": "Type owner/repo: one verdict from GitHub, npm, OSV and Hacker News, fetched in parallel. Compare two with: a/b vs c/d.",
+    "timeout": 25
+  },
+  "api": {
+    "fixture_default": true,
+    "user_agent": "bolt-app-example/1.0 (repo-radar; github.com/SparcleHQ/bolt-apps)",
+    "deadline_s": 13,
+    "call_timeout_s": 8,
+    "max_bytes": 2000000,
+    "workers": 8
+  },
+  "hosts": [
+    "api.github.com",
+    "registry.npmjs.org",
+    "api.npmjs.org",
+    "api.osv.dev",
+    "hn.algolia.com"
+  ],
+  "secret": {
+    "name": "GITHUB_TOKEN"
+  },
+  "sources": {
+    "github": {
+      "label": "GitHub",
+      "ttl": 600
+    },
+    "npm": {
+      "label": "npm",
+      "ttl": 3600
+    },
+    "osv": {
+      "label": "OSV",
+      "ttl": 21600
+    },
+    "hn": {
+      "label": "HN",
+      "ttl": 1800
+    }
+  },
+  "stale_max_s": 604800,
+  "snapshot_min_age_s": 3600,
+  "weights": {
+    "maintenance": 30,
+    "security": 30,
+    "adoption": 20,
+    "momentum": 20
+  },
+  "scoring": {
+    "push_days_full": 30,
+    "push_days_zero": 365,
+    "release_days_full": 60,
+    "release_days_zero": 540,
+    "capped_score": 20,
+    "vuln_penalty": {
+      "CRITICAL": 50,
+      "HIGH": 35,
+      "MODERATE": 15,
+      "MEDIUM": 15,
+      "LOW": 5,
+      "UNKNOWN": 15
+    },
+    "downloads_full": 1000000,
+    "stars_full": 10000,
+    "momentum_gain_per_pct": 2.5
+  },
+  "verdict": [
+    {
+      "min": 80,
+      "label": "Safe to adopt",
+      "badge": "ADOPT"
+    },
+    {
+      "min": 60,
+      "label": "Adopt with care",
+      "badge": "CARE"
+    },
+    {
+      "min": 0,
+      "label": "Look closer first",
+      "badge": "RISK"
+    }
+  ],
+  "charts": {
+    "downloads": {
+      "title": "Daily npm downloads, last 30 days",
+      "type": "line"
+    }
+  },
+  "link_hosts": [
+    "github.com",
+    "news.ycombinator.com",
+    "www.npmjs.com",
+    "osv.dev"
+  ]
+}

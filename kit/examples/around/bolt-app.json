@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "around",
+  "title": "Around",
+  "role": "Anyone checking a place before heading out",
+  "saves": "Opening a map, a weather app, a bike app and a search",
+  "summary": "Type =around and a place: cafes, live bike docks, hourly weather and landmarks in one verdict. Copy it to stitch disjoint APIs on coordinates.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

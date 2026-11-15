@@ -43,9 +43,30 @@
           "additionalProperties": false,
           "required": ["kind"],
           "properties": {
-            "kind": { "enum": ["card", "map", "image", "calc", "color", "weather", "date", "markdown", "entity_preview", "chart", "table", "cards", "detail", "json_tree", "diff", "image_grid"] },
+            "kind": {
+              "description": "Which pane the launcher draws on the right. Personal apps must not use image, color, weather, date or calc (Bolt shows \"cannot show app data\"); map reads the launcher's own state and takes no bind keys. Chart types are line, bar and sparkline. Source: the launcher ALLOWED_RIGHT_WIDGET_KIND and the launcher.",
+              "enum": ["card", "map", "image", "calc", "color", "weather", "date", "markdown", "entity_preview", "chart", "table", "cards", "detail", "json_tree", "diff", "image_grid"],
+              "oneOf": [
+              { "const": "card", "description": "A single card from bind: title, subtitle, actions." },
+              { "const": "map", "description": "The launcher's own map state: it reads nothing from bind, so any bind key is refused (an error from schema_version 2). It cannot show your rows. For a place, add a url action that opens it in Maps (Open in Maps link)." },
+              { "const": "image", "description": "Bolt shows \"This app asks for a image pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart (image_grid for pictures). A personal app should not use it (the launcher NO_APP_DATA)." },
+              { "const": "calc", "description": "Bolt shows \"This app asks for a calc pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
+              { "const": "color", "description": "Bolt shows \"This app asks for a color pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
+              { "const": "weather", "description": "Bolt shows \"This app asks for a weather pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
+              { "const": "date", "description": "Bolt shows \"This app asks for a date pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
+              { "const": "markdown", "description": "Markdown body from bind: title, subtitle, body, actions." },
+              { "const": "entity_preview", "description": "Rich detail card: media, title, subtitle, label and value facts, optional body and tiles_above." },
+              { "const": "chart", "description": "A chart of the rows. bind.type is one of line, bar or sparkline; any other value is refused (an error from schema_version 2)." },
+              { "const": "table", "description": "A table of the rows, with columns, sort and totals." },
+              { "const": "cards", "description": "Cards or tiles from the rows (layout grid or tiles)." },
+              { "const": "detail", "description": "A label and value detail of the selected row." },
+              { "const": "json_tree", "description": "A collapsible JSON tree from bind.source." },
+              { "const": "diff", "description": "A text diff from bind.left and bind.right." },
+              { "const": "image_grid", "description": "A grid of pictures from bind.src (1 to 8 columns)." }
+              ]
+            },
             "mode": { "enum": ["selected_row", "list_data"] },
-            "bind": {}
+            "bind": { "description": "Keys the chosen pane reads. chart: type (line, bar or sparkline), x, y, values, label, unit, color. The map, image, calc, color, weather and date panes read nothing, so any key is refused from schema_version 2." }
           }
         }
       }
@@ -205,14 +226,14 @@
         "parse": { "enum": ["json", "lines", "raw"] },
         "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 60 },
         "env": {
-          "description": "Each key is a variable the app may read (the env_passthrough list) and its value is exactly that variable: \"NAME\": \"${env:NAME}\". A gallery app cannot forward a variable under another name. Mirrors env_destination_refusal in bolt-native contract.rs.",
+          "description": "Each key is a variable the app may read (the env_passthrough list) and its value is exactly that variable: \"NAME\": \"${env:NAME}\". A gallery app cannot forward a variable under another name. Mirrors env_destination_refusal in the launcher.",
           "type": "object",
           "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$", "not": { "anyOf": [ { "enum": ["PATH", "HOME", "USER", "LOGNAME", "TMPDIR", "SHELL", "IFS", "NODE_OPTIONS", "NODE_PATH", "PYTHONPATH", "PYTHONSTARTUP", "PYTHONHOME", "PYTHONINSPECT", "PYTHONUSERBASE", "PERL5OPT", "PERL5LIB", "RUBYOPT", "RUBYLIB", "BASH_ENV", "ENV", "GIT_SSH_COMMAND", "GIT_EXTERNAL_DIFF", "GIT_PAGER", "GIT_ASKPASS", "EDITOR", "VISUAL", "PAGER", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH", "GCONV_PATH", "SSLKEYLOGFILE", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "COMSPEC", "PATHEXT", "OPENSSL_CONF", "OPENSSL_MODULES"] }, { "pattern": "^(LD_|DYLD_|BOLT_|ANTHROPIC_|OPENAI_|GIT_CONFIG|GIT_TRACE)" } ] } },
           "properties": { "GH_HOST": { "const": "${env:GH_HOST}" }, "GH_REPO": { "const": "${env:GH_REPO}" }, "GITLAB_HOST": { "const": "${env:GITLAB_HOST}" }, "DOCKER_CONTEXT": { "const": "${env:DOCKER_CONTEXT}" }, "DOCKER_TLS_VERIFY": { "const": "${env:DOCKER_TLS_VERIFY}" }, "AWS_PROFILE": { "const": "${env:AWS_PROFILE}" }, "AWS_REGION": { "const": "${env:AWS_REGION}" }, "AWS_DEFAULT_REGION": { "const": "${env:AWS_DEFAULT_REGION}" }, "AWS_CA_BUNDLE": { "const": "${env:AWS_CA_BUNDLE}" }, "AWS_ENDPOINT_URL": { "const": "${env:AWS_ENDPOINT_URL}" }, "CLOUDSDK_CORE_PROJECT": { "const": "${env:CLOUDSDK_CORE_PROJECT}" }, "OKTA_CLIENT_ORGURL": { "const": "${env:OKTA_CLIENT_ORGURL}" }, "SF_TARGET_ORG": { "const": "${env:SF_TARGET_ORG}" }, "SF_ORG_INSTANCE_URL": { "const": "${env:SF_ORG_INSTANCE_URL}" }, "TWILIO_ACCOUNT_SID": { "const": "${env:TWILIO_ACCOUNT_SID}" }, "TWILIO_REGION": { "const": "${env:TWILIO_REGION}" }, "TWILIO_EDGE": { "const": "${env:TWILIO_EDGE}" }, "VERCEL_ORG_ID": { "const": "${env:VERCEL_ORG_ID}" }, "VERCEL_PROJECT_ID": { "const": "${env:VERCEL_PROJECT_ID}" }, "PGHOST": { "const": "${env:PGHOST}" }, "PGPORT": { "const": "${env:PGPORT}" }, "PGUSER": { "const": "${env:PGUSER}" }, "PGDATABASE": { "const": "${env:PGDATABASE}" }, "PGSERVICE": { "const": "${env:PGSERVICE}" }, "PGSSLMODE": { "const": "${env:PGSSLMODE}" } },
           "additionalProperties": false
         },
         "env_passthrough": {
-          "description": "Environment variables the command reads. Commands start with an empty environment plus a fixed set Bolt chooses; an app may add only these names (hosts, regions, profiles, config paths, public identifiers). Credentials, loader and interpreter settings, proxies and Bolt settings are never forwarded to a gallery app. Mirrors BENIGN_PASSTHROUGH_NAMES in bolt-native contract.rs and bolt-pwa check.ts; keep all three in step.",
+          "description": "Environment variables the command reads. Commands start with an empty environment plus a fixed set Bolt chooses; an app may add only these names (hosts, regions, profiles, config paths, public identifiers). Credentials, loader and interpreter settings, proxies and Bolt settings are never forwarded to a gallery app. Mirrors BENIGN_PASSTHROUGH_NAMES in the launcher and the launcher; keep all three in step.",
           "type": "array",
           "maxItems": 16,
           "uniqueItems": true,

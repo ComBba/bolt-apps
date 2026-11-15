@@ -31,7 +31,8 @@ function appFromCase(c) {
 	for (const [f, t] of Object.entries(files)) write(path.join(dir, f), t);
 	return { d, dir };
 }
-const codes = (j) => [...new Set(j.findings.map((x) => x.code))].filter((x) => x in FIXES).sort();
+// command_os_missing (a warning) is left out: the conformance apps have one OS command on purpose; launcher-rules.test.mjs covers it
+const codes = (j) => [...new Set(j.findings.map((x) => x.code))].filter((x) => x in FIXES && x !== 'command_os_missing').sort();
 
 for (const c of CASES.cases) {
 	test(`verify (folder): ${c.name}`, () => {
@@ -112,7 +113,8 @@ test('a good pack: verify says valid and prints what Bolt will show; --json is s
 test('every code verify can emit has a case, and every fix is plain words', () => {
 	const lintLevel = ['app_file_name', 'unknown_file', 'listing_unreadable', 'field_missing', 'empty_app', 'bad_json', 'permission_unknown']; // covered in personal.test.mjs and the lint tests
 	const sizeLevel = ['too_many_files', 'pack_too_large', 'yaml_unreadable_here', 'pack_malformed', 'pack_duplicate_entry']; // the last three are covered in hostile.test.mjs; // would need a 64 MB or 1025-file pack; checked by reading shape only
-	const missing = Object.keys(FIXES).filter((c) => !covered.has(c) && !lintLevel.includes(c) && !sizeLevel.includes(c));
+	const launcherLevel = ['views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'yaml_escape', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template', 'script_too_large', 'helper_not_hashed']; // each has a failing and a passing test in launcher-rules.test.mjs
+	const missing = Object.keys(FIXES).filter((c) => !covered.has(c) && !lintLevel.includes(c) && !sizeLevel.includes(c) && !launcherLevel.includes(c));
 	assert.deepEqual(missing, []);
 	for (const [c, f] of Object.entries(FIXES)) { assert.ok(f.length > 10, c); assert.ok(!f.includes(String.fromCharCode(0x2014)), c); }
 });

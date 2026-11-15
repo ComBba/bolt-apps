@@ -1,0 +1,74 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "2 markdown",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Release notes 2.14",
+    "subtitle": "short summary",
+    "icon": "FileText",
+    "body": "## What changed\n\n- Faster **startup**\n- New `--dry-run` flag\n- Fixed a crash when the cache is empty\n\n## Upgrade\n\nRun the installer again. No data migration is needed.",
+    "actions": [],
+    "pane": "markdown",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Release notes 2.14 - short summary",
+    "open_url": ""
+  },
+  {
+    "title": "Runbook: restart worker",
+    "subtitle": "on call",
+    "icon": "FileText",
+    "body": "## Steps\n\n1. Check the queue depth\n2. Restart the worker\n3. Confirm the depth falls\n\nEscalate to platform-team if it does not.",
+    "actions": [],
+    "pane": "markdown",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Runbook: restart worker - on call",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "markdown",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "markdown",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

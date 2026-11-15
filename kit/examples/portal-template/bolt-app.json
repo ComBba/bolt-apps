@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "portal-template",
+  "title": "Portal template",
+  "role": "Anyone building a launcher app on top of a web API",
+  "saves": "Writing the rows, the cache, the error handling and the drill down by hand",
+  "summary": "Copy this folder, edit config.json and fixtures.json, and get tiles, drill down with Back, a detail panel, a cache and error rows. Runs on sample data.",
+  "author": { "name": "Bolt Apps examples", "link": "https://github.com/SparcleHQ/bolt-apps" },
+  "tier": 3,
+  "permissions": ["runs_commands", "network", "files"],
+  "platforms": ["macos", "linux"],
+  "requires": [{ "interpreter": "python", "min_version": "3.9" }],
+  "tests": []
+}

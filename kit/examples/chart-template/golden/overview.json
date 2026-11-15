@@ -1,0 +1,17 @@
+[
+  {
+    "title": "This app is not set up correctly",
+    "subtitle": "config.json: icon 'gauge' is not in the launcher icon map (see kit/schema/icons.json)",
+    "icon": "AlertCircle",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

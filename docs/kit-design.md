@@ -27,7 +27,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 
 ## 2. The row contract (language neutral)
 
-`kit/schema/row.schema.json` is a JSON Schema for what a script prints: an array of rows (at most 200). It mirrors what the launcher accepts, from `bolt-pwa` `utility-rows.ts` (`mapBridgeRows`), `user-app-actions.ts` (`sanitizeRowActions`), `userAppNav.ts` (`sanitizeRowNav`) and `kpiTile.ts`. It is stricter than the launcher where the launcher silently drops or hides things.
+`kit/schema/row.schema.json` is a JSON Schema for what a script prints: an array of rows (at most 200). It mirrors what the launcher accepts: its row mapper, its row-action sanitizer, its row-nav sanitizer and its tile reader. It is stricter than the launcher where the launcher silently drops or hides things.
 
 | Part | Fields | Rule |
 |---|---|---|
@@ -38,7 +38,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 | Nav | `{"back": true}` or `{"view": token, "arg": token}` | Tokens match the launcher's `NAV_ARG_RE`. A nav row carries no actions. |
 | Icon | one of the launcher's icon names | See below. |
 
-**Icons are generated, not typed.** The launcher resolves icon names in `bolt-pwa/src/lib/components/ui/utilityIconMap.ts` (`UTILITY_ICON_MAP`). `kit/schema/gen-icons.mjs <that file>` writes `kit/schema/icons.json`, the enum in `row.schema.json` and `kit/python/bolt_app_kit/icons_data.py`. `--check` exits 1 on drift. The Node tests assert that the three generated files agree, and run `--check` against the launcher source when that checkout is present. An unknown icon makes the launcher fall back to a generic plug, so the kit rejects it at build time.
+**Icons are generated, not typed.** The launcher resolves icon names in its icon map. `kit/schema/gen-icons.mjs <the launcher's icon map file>` writes `kit/schema/icons.json`, the enum in `row.schema.json` and `kit/python/bolt_app_kit/icons_data.py`. `--check` exits 1 on drift. The Node tests assert that the three generated files agree, and run `--check` against the launcher source when that checkout is present. An unknown icon makes the launcher fall back to a generic plug, so the kit rejects it at build time.
 
 ## 3. The Python library: `bolt_app_kit`
 
@@ -70,10 +70,10 @@ Pure standard library, Python 3.9+, no environment-driven behaviour. CI tests 3.
 
 ## 4. Cross-platform apps
 
-### Facts (verified in Bolt's source)
+### Facts (as Bolt behaves)
 
-- The manifest takes a command per OS: `bridge.command.macos | linux | windows`, each optional, at least one required (`bolt-native` `contract.rs`, `BridgeCommand` and `validate_bridge`). The installed `sysx.yaml` and `posturex.yaml` use `python3` on macOS and Linux and `python` on Windows.
-- The manifest has no `platforms` or `requires` field. `requires` is explicitly refused for a User App (`contract.rs` rejects it), and unknown fields are denied.
+- The manifest takes a command per OS: `bridge.command.macos | linux | windows`, each optional, at least one required (the launcher's manifest contract and bridge validation). The installed `sysx.yaml` and `posturex.yaml` use `python3` on macOS and Linux and `python` on Windows.
+- The manifest has no `platforms` or `requires` field. `requires` is explicitly refused for a User App (the launcher rejects it), and unknown fields are denied.
 - Nothing declares or checks the interpreter: a missing `python3` shows up as a failed command at run time.
 
 ### Authoring shapes
@@ -92,7 +92,7 @@ An author can ship either, with the same row contract:
 "requires": [{ "interpreter": "python", "min_version": "3.9" }]
 ```
 
-`requires[].interpreter` is one of `python`, `node`, `sh`, `powershell`; `platforms` is optional per entry. **Bolt does not read these yet.** Using them (hide the app on an unsupported OS with a plain reason, check the interpreter at install, record `platforms` in the pack manifest) needs a runtime change in `bolt-native` `contract.rs` and the launcher. That is a proposal for the runtime. Until then they are documentation that the toolkit validates, and the script protects itself with `unsupported_row`.
+`requires[].interpreter` is one of `python`, `node`, `sh`, `powershell`; `platforms` is optional per entry. **Bolt does not read these yet.** Using them (hide the app on an unsupported OS with a plain reason, check the interpreter at install, record `platforms` in the pack manifest) needs a change in the launcher's manifest contract and its UI. That is a proposal for the runtime. Until then they are documentation that the toolkit validates, and the script protects itself with `unsupported_row`.
 
 ### The real problem is the interpreter
 
@@ -154,11 +154,13 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 `bolt-apps kit vendor <app>` copies the kit (`*.py` and the schema) into the app's `scripts/bolt_app_kit/` and writes `scripts/bolt_app_kit.lock.json`: `{ "name", "version", "sha256" }`, where the hash covers the path and content of every file in the kit directory. Python puts the script's own directory on `sys.path`, so `import bolt_app_kit` just works with no install.
 
-**The signature would cover the kit** if the vendored files could go inside a pack, but they cannot yet: Bolt installs every script into one flat `scripts/` folder (`pack_install.rs` `safe_script_name` keeps only the file name), so `import bolt_app_kit` would fail after install. `bolt-apps pack --personal` refuses a folder under `scripts/` (`script_subfolder`). **Divergence guard:** `check` fails `kit_modified` if the vendored files differ from the lock (edited by hand), `kit_diverged` if the lock claims this toolkit's version but the files differ from it, and warns `kit_outdated` if the app is pinned to an older version.
+**Flat mode (single file).** Bolt installs every script into one flat `scripts/` folder (the pack installer keeps only the file name of each script), so a vendored package folder cannot be installed and `bolt-apps pack --personal` refuses it (`script_subfolder`). `bolt-apps kit vendor --flat <app>` therefore writes the whole kit as ONE file, `scripts/bolt_app_kit.py`, and points `check.json` `kit` at it (and removes an older folder build). The file embeds the kit's own module sources and builds the package `bolt_app_kit` in memory on import, so the code that runs is the kit's, unchanged; `import bolt_app_kit` works with no install. The lock (`name`, `version`, `flat: true`, `sha256` of the file) is `bolt_app_kit.lock.json` beside `check.json`: author side, never packed. The pack signature then covers the kit like any script. `check` sets `sys.dont_write_bytecode` so no `__pycache__` appears next to the scripts.
 
-`bolt-apps pack --personal` packs a single-file-script app for your own use (all per-OS commands in one app file, one signature). `platforms` is not recorded in the pack, and a kit app needs Bolt to install script folders first. The gallery still takes tier 1 and 2 only.
+**Divergence guard (both modes):** `check` fails `kit_modified` if the vendored files differ from the lock (edited by hand; in flat mode also a `bolt_app_kit/` folder beside the file, which Python would import instead), `kit_diverged` if the lock claims this toolkit's version but the files differ from a fresh build, and `kit_outdated` if the app is pinned to an older version.
 
-**Bundled apps in `bolt-native`.** The sample apps that ship inside the desktop bundle could consume the kit later the same way: a sync script copies the pinned kit into their `scripts/` and a guard test fails when the copy differs from its lock. Not part of this task; no `bolt-native` file is touched.
+`bolt-apps pack --personal` packs a single-file-script app for your own use (all per-OS commands in one app file, one signature). `platforms` is not recorded in the pack. A kit app packs when the kit is vendored flat (`kit vendor --flat`). `verify` and `lint` count a script as used when an app file runs it, when a used `.py` script imports it, or when a used `.json` file names it in a quoted string (for example `config.json` naming `fixtures.json`); a script nothing uses is still `script_unused`. The gallery still takes tier 1 and 2 only.
+
+**Apps bundled with the desktop app.** The sample apps that ship inside the desktop bundle could consume the kit later the same way: a sync script copies the pinned kit into their `scripts/` and a guard test fails when the copy differs from its lock. Not part of this task; no launcher file is touched.
 
 ## 7. Versioning and upgrades
 

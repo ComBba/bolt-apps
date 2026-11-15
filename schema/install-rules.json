@@ -1,5 +1,5 @@
 {
-  "$comment": "The install rules Bolt enforces on a pack-installed User App, as plain data. Source of truth is bolt-native src-tauri/src/user_utilities (contract.rs, pack_validate.rs, pack_install.rs) and bolt-common bolt-manifest-verify, as read on 2026-11-01. `bolt-apps verify` reads this file. A bolt-native test should assert every list here equals the matching Rust constant and run conformance/verify-cases.json through the real parser; see docs/verify-rules.md.",
+  "$comment": "The install rules Bolt enforces on a pack-installed User App, as plain data. `bolt-apps verify` reads this file; see docs/verify-rules.md.",
   "bolt_rules_version": 1,
   "pack": {
     "bundle_schema_version": 1,

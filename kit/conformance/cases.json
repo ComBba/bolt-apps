@@ -306,10 +306,10 @@
  "elide_left": [
   [
    [
-    "/Users/a/Documents/file.txt",
+    "/srv/a/docs/file.txt",
     12
    ],
-   "…ts/file.txt"
+   "…cs/file.txt"
   ],
   [
    [
@@ -361,9 +361,9 @@
   ],
   [
    [
-    "10.0.0.1"
+    "203.0.113.7"
    ],
-   "10.0.0.1"
+   "203.0.113.7"
   ],
   [
    [

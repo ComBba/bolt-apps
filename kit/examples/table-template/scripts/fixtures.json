@@ -1,0 +1,174 @@
+{
+ "orders": {
+  "data": [
+   {
+    "id": "ORD-001",
+    "customer": "Globex Ltd",
+    "product": "Router",
+    "region": "North",
+    "qty": 1,
+    "amount": 15.0,
+    "placed": "2026-01-01",
+    "status": "paid"
+   },
+   {
+    "id": "ORD-002",
+    "customer": "Initech",
+    "product": "Switch",
+    "region": "South",
+    "qty": 4,
+    "amount": 70.5,
+    "placed": "2026-02-06",
+    "status": "paid"
+   },
+   {
+    "id": "ORD-003",
+    "customer": "Umbrella Co",
+    "product": "Cable",
+    "region": "East",
+    "qty": 7,
+    "amount": 126.0,
+    "placed": "2026-03-11",
+    "status": "pending"
+   },
+   {
+    "id": "ORD-004",
+    "customer": "Hooli",
+    "product": "Dock",
+    "region": "West",
+    "qty": 1,
+    "amount": 46.5,
+    "placed": "2026-04-16",
+    "status": "refunded"
+   },
+   {
+    "id": "ORD-005",
+    "customer": "Stark Inc",
+    "product": "Sensor",
+    "region": "North",
+    "qty": 4,
+    "amount": 102.0,
+    "placed": "2026-05-21",
+    "status": "paid"
+   },
+   {
+    "id": "ORD-006",
+    "customer": "Globex Ltd",
+    "product": "Router",
+    "region": "South",
+    "qty": 7,
+    "amount": 22.5,
+    "placed": "2026-06-26",
+    "status": "paid"
+   },
+   {
+    "id": "ORD-007",
+    "customer": "Initech",
+    "product": "Switch",
+    "region": "East",
+    "qty": 1,
+    "amount": 78.0,
+    "placed": "2026-07-04",
+    "status": "pending"
+   },
+   {
+    "id": "ORD-008",
+    "customer": "Umbrella Co",
+    "product": "Cable",
+    "region": "West",
+    "qty": 4,
+    "amount": 133.5,
+    "placed": "2026-08-09",
+    "status": "refunded"
+   },
+   {
+    "id": "ORD-009",
+    "customer": "Hooli",
+    "product": "Dock",
+    "region": "North",
+    "qty": 7,
+    "amount": 54.0,
+    "placed": "2026-09-14",
+    "status": "paid"
+   },
+   {
+    "id": "ORD-010",
+    "customer": "Stark Inc",
+    "product": "Sensor",
+    "region": "South",
+    "qty": 1,
+    "amount": 109.5,
+    "placed": "2026-01-19",
+    "status": "paid"
+   },
+   {
+    "id": "ORD-011",
+    "customer": "Globex Ltd",
+    "product": "Router",
+    "region": "East",
+    "qty": 4,
+    "amount": 30.0,
+    "placed": "2026-02-24",
+    "status": "pending"
+   },
+   {
+    "id": "ORD-012",
+    "customer": "Initech",
+    "product": "Switch",
+    "region": "West",
+    "qty": 7,
+    "amount": 85.5,
+    "placed": "2026-03-02",
+    "status": "refunded"
+   },
+   {
+    "id": "ORD-013",
+    "customer": "Umbrella Co",
+    "product": "Cable",
+    "region": "North",
+    "qty": 1,
+    "amount": 141.0,
+    "placed": "2026-04-07",
+    "status": "paid"
+   },
+   {
+    "id": "ORD-014",
+    "customer": "Hooli",
+    "product": "Dock",
+    "region": "South",
+    "qty": 4,
+    "amount": 61.5,
+    "placed": "2026-05-12",
+    "status": "paid"
+   }
+  ]
+ },
+ "shares": {
+  "data": [
+   {
+    "id": "r0",
+    "region": "East",
+    "amount": 234.0,
+    "share": 21.8
+   },
+   {
+    "id": "r1",
+    "region": "North",
+    "amount": 312.0,
+    "share": 29.0
+   },
+   {
+    "id": "r2",
+    "region": "South",
+    "amount": 264.0,
+    "share": 24.5
+   },
+   {
+    "id": "r3",
+    "region": "West",
+    "amount": 265.5,
+    "share": 24.7
+   }
+  ]
+ }
+}

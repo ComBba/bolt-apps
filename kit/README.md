@@ -5,6 +5,7 @@ Write the data and the wiring; the kit does the formatting, the row structure an
 - `python/bolt_app_kit/`: the Python library (standard library only, 3.9+).
 - `schema/row.schema.json`: the language-neutral row contract. `schema/gen-icons.mjs` generates the icon list from the launcher source.
 - `conformance/cases.json`: inputs and expected outputs any implementation must pass.
+- `examples/portal-template/`: the copy-and-edit template for an app that shows a web API (config.json, fixtures, a generic engine). `examples/acme-dash/` is the public example built from it.
 - `examples/system-glance/`: a small app built with the kit, with fixtures and goldens for `bolt-apps check`.
 
 Design and limits: [docs/kit-design.md](../docs/kit-design.md). Tool: [toolkit/README.md](../toolkit/README.md).

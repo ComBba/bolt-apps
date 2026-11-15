@@ -1,0 +1,33 @@
+# A http_local app: one GET to a service on this computer. No script, no shell, no network egress.
+schema_version: 1
+runtime: http_local
+id: local-service-template
+chip: localmodels
+title: "Local service template"
+icon: box
+description: "Lists what a local service reports. This one reads the model list of an Ollama server on 127.0.0.1:11434."
+placeholder_examples: ["Enter to list models"]
+emits: Generic
+http:
+  port: 11434
+  host: 127.0.0.1
+  request: { method: GET, path: "/api/tags" }
+  parse: json
+  rows_path: models
+  timeout_seconds: 5
+presentation:
+  widget: list
+  title_field: name
+  subtitle_field: modified_at
+  right_widget:
+    kind: detail
+    mode: selected_row
+    bind:
+      title: "{{row.name}}"
+      subtitle: "{{row.model}}"
+      fields:
+        - { label: Size in bytes, value: "{{row.size}}" }
+        - { label: Modified, value: "{{row.modified_at}}" }
+        - { label: Digest, value: "{{row.digest}}", copy: true }
+actions:
+  - { id: copy, kind: composer, target: row, label: Copy name, insert: "{{row.name}}" }

@@ -1,0 +1,117 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "2 json tree",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "GET /api/user/42",
+    "subtitle": "200 OK · 84ms",
+    "icon": "binary",
+    "body": "",
+    "actions": [],
+    "pane": "tree",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- GET /api/user/42 - 200 OK 84ms",
+    "data": {
+      "user": {
+        "id": 42,
+        "name": "Ada Example",
+        "active": true,
+        "roles": [
+          "admin",
+          "owner"
+        ],
+        "profile": {
+          "email": "ada@example.com",
+          "tz": "Europe/London",
+          "verified": true
+        }
+      },
+      "session": {
+        "expires_in": 3600,
+        "scopes": [
+          "read",
+          "write"
+        ]
+      },
+      "meta": {
+        "request_id": "req_8f3",
+        "cached": false,
+        "region": "eu-west-2"
+      }
+    },
+    "open_url": ""
+  },
+  {
+    "title": "GET /api/orders?limit=2",
+    "subtitle": "200 OK · 61ms",
+    "icon": "binary",
+    "body": "",
+    "actions": [],
+    "pane": "tree",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- GET /api/orders?limit=2 - 200 OK 61ms",
+    "data": {
+      "orders": [
+        {
+          "id": "ORD-1",
+          "total": 42.5,
+          "paid": true
+        },
+        {
+          "id": "ORD-2",
+          "total": 19,
+          "paid": false
+        }
+      ],
+      "next": null
+    },
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "tree",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "tree",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

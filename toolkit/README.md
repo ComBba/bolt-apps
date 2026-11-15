@@ -21,7 +21,7 @@ node toolkit/bin/bolt-apps.mjs lint apps/my-app --personal
 node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
 ```
 
-`pack --personal` recomputes what the app can do from its files and prints it in plain words, then Bolt shows the same facts and asks whoever installs it to confirm, because the pack is signed only by you. On a device whose company policy allows only approved apps, Bolt refuses it. Scripts install into one flat `scripts/` folder, so each script must be one file: a folder such as a vendored `bolt_app_kit` is refused (`script_subfolder`) until Bolt installs scripts in subfolders. `check.json`, `fixtures/` and `golden/` stay on your machine and are not packed.
+`pack --personal` recomputes what the app can do from its files and prints it in plain words, then Bolt shows the same facts and asks whoever installs it to confirm, because the pack is signed only by you. On a device whose company policy allows only approved apps, Bolt refuses it. Scripts install into one flat `scripts/` folder, so each script must be one file: a folder such as a package build of `bolt_app_kit` is refused (`script_subfolder`), so vendor the kit as one file with `kit vendor --flat`. `check.json`, `fixtures/` and `golden/` stay on your machine and are not packed.
 
 ## Commands
 
@@ -33,7 +33,7 @@ node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
 | `verify <app-folder or file.boltpack> [--json]` | The checks Bolt runs at install, offline: each problem has a stable `code`, the file, the line and the fix; then an estimate of what Bolt will show (tier, permissions, files); Bolt checks again at install. Exit 1 on any error. |
 | `pack <app> [--key f] [--out f] [--version v] [--notes t] [--personal]` | Runs `lint`, then builds a `.boltpack` in Bolt's format and signs it. `--personal` allows tier 3 and script apps for your own use (not for the gallery). |
 | `check <app> [--json] [--os macos\|linux\|windows] [--case text] [--update-golden]` | For a **script app** (a folder with `check.json`): runs the script in a clean subprocess (empty environment, temp HOME, stub commands from recorded output), validates every output against the row contract, enforces the numeric-tile, footer and label rules, a hung-command time limit, hostile text and golden snapshots. For snippets, search engines and transforms it is not published yet: it runs the tests through Bolt's own engines, and Bolt runs the same tests when you add the app. See [docs/kit-design.md](../docs/kit-design.md). |
-| `kit vendor <app>` | Copies the pinned Python kit (`bolt_app_kit`) into the app's `scripts/` and writes a lock file (name, version, sha256). `check` fails if the copy is edited by hand. |
+| `kit vendor [--flat] <app>` | Copies the pinned Python kit (`bolt_app_kit`) into the app. `--flat` writes it as one file, `scripts/bolt_app_kit.py`, with the lock beside `check.json`, so the app can be packed with `--personal`; the plain form copies a package folder (check only, not packable). `check` fails if the copy is edited by hand. |
 
 ## The authoring kit
 
@@ -41,6 +41,7 @@ node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
 
 ```
 node toolkit/bin/bolt-apps.mjs kit vendor kit/examples/system-glance
+node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/acme-dash   # one file, packable
 node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance
 node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance --os linux
 ```
@@ -50,7 +51,7 @@ node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance --os linux
 ## What this toolkit does not do
 
 - It does not run your tests. `lint` checks their shape; Bolt runs them.
-- Without `--personal` it packs tier 1 and tier 2 content only (snippets, search engines, `runtime: transform` User Apps), which is all the gallery accepts. With `--personal` it also packs tier 3 and script apps for your own use. A kit app (a vendored `bolt_app_kit` folder under `scripts/`) still cannot be packed: Bolt installs scripts flat.
+- Without `--personal` it packs tier 1 and tier 2 content only (snippets, search engines, `runtime: transform` User Apps), which is all the gallery accepts. With `--personal` it also packs tier 3 and script apps for your own use. A kit app packs once the kit is vendored flat (`kit vendor --flat`); a package-folder kit cannot be packed because Bolt installs scripts flat.
 - It does not install. Install is Bolt's job, on purpose: Bolt re-verifies every pack itself and never trusts this tool.
 
 ## Format
