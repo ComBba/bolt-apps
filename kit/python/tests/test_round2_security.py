@@ -50,6 +50,18 @@ class RedactTree(unittest.TestCase):
         self.assertIn("state=1", k.redact_tree({"u": cases[3]}, [KEY])["u"])
         self.assertIn("next=https://h/p", k.redact_tree({"u": cases[0]}, [KEY])["u"])
 
+    def test_encoded_values_that_contain_equals_signs(self):
+        for c in ("https://a/x?next=https%3A%2F%2Fh%2Fp%3Ftoken%3DZq81x7LmP%3D%3D%26z%3D1", "https://a/x?r=https%3A%2F%2Fh%2Fp%3Ftoken%3DabcDEF%3D%3D",
+                  "https://a/x?r=https%3A%2F%2Fh%2Fp%3Fsig%3DZq81x7LmP%3Dtail%3Dmore", "https://a/x?r=h%3Ftoken%3Dabc%3D%3D%26ok%3D1"):
+            got = k.redact_tree({"u": c}, [KEY])["u"]
+            for secret in ("Zq81x7LmP", "abcDEF", "abc%3D", "tail", "more"):
+                self.assertNotIn(secret, got, c)
+        self.assertIn("%26z%3D1", k.redact_tree({"u": "https://a/x?next=https%3A%2F%2Fh%2Fp%3Ftoken%3DZq81x7LmP%3D%3D%26z%3D1"}, [KEY])["u"])
+        self.assertIn("ok%3D1", k.redact_tree({"u": "https://a/x?r=h%3Ftoken%3Dabc%3D%3D%26ok%3D1"}, [KEY])["u"])
+        for benign in ("https://a/x?r=h%3Fkeyword%3Dfoo%3D%3D%26author%3Dbob", ):
+            self.assertEqual(k.redact_tree({"u": benign}, [KEY])["u"], benign)
+        self.assertNotIn("Zq81x7LmP", k.redact_tree({"u": "https://a/x?token=Zq81x7LmP=="}, [KEY])["u"])
+
     def test_the_configured_auth_param_is_covered(self):
         self.assertIn("appid=[hidden]", k.redact_tree({"u": "https://x/y?appid=abcdef&n=1"}, [KEY], "appid")["u"])
         self.assertIn("n=1", k.redact_tree({"u": "https://x/y?appid=abcdef&n=1"}, [KEY], "appid")["u"])

@@ -173,21 +173,23 @@ _PARAM = re.compile(r"([?&;#])([A-Za-z0-9_.\-]{1,64})=([^&;?#\s\"']+)")
 _PARAM_ENC = re.compile(r"(%3[Ff]|%26|%3[Bb]|%23)([A-Za-z0-9_.\-]{1,64})(%3[Dd])((?:(?!%26|%3[Ff]|%3[Bb]|%23|&|;|\?|#)[^\s\"'])+)")
 
 
+def _is_cred(raw, extra=frozenset()):
+    """Does the parameter NAME carry a credential? Decided from the name alone: no value is parsed, so an `=` in a value cannot confuse it."""
+    name = raw.lower()
+    if name in extra:
+        return True
+    if name in _BENIGN_NAMES:
+        return False
+    return "apikey" in name or any(seg in _CRED_SEGMENTS for seg in re.split(r"[_.\-]", re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", raw).lower()))
+
+
 def _param_sub(extra):
     def one(m):
-        raw = m.group(2)
-        name = raw.lower()
-        if name in extra:
-            hide = True
-        elif name in _BENIGN_NAMES:
-            hide = False
-        else:
-            hide = "apikey" in name or any(seg in _CRED_SEGMENTS for seg in re.split(r"[_.\-]", re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", raw).lower()))
-        return "%s%s=[hidden]" % (m.group(1), m.group(2)) if hide else m.group(0)
+        return "%s%s=[hidden]" % (m.group(1), m.group(2)) if _is_cred(m.group(2), extra) else m.group(0)
 
     def enc(m):
-        r = one(re.match(r"(.)(.*)=(.*)", "&%s=%s" % (m.group(2), m.group(4)), re.S))
-        return m.group(0) if r.endswith("=[hidden]") is False else "%s%s%s[hidden]" % (m.group(1), m.group(2), m.group(3))
+        # the whole rest of an encoded value (up to the next encoded delimiter) is the credential, including any = or %3D padding inside it
+        return "%s%s%s[hidden]" % (m.group(1), m.group(2), m.group(3)) if _is_cred(m.group(2), extra) else m.group(0)
     one.enc = enc
     return one
 
