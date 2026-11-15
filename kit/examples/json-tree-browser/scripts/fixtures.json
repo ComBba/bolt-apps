@@ -1,0 +1,43 @@
+{
+  "documents": {
+    "data": [
+      {
+        "name": "Order 1042",
+        "kind": "API response",
+        "payload": {
+          "id": 1042,
+          "status": "shipped",
+          "customer": { "name": "Ada Example", "tier": "gold", "address": { "city": "Springfield", "country": "US" } },
+          "items": [
+            { "sku": "A-100", "qty": 2, "price": 9.5 },
+            { "sku": "B-220", "qty": 1, "price": 24 }
+          ],
+          "totals": { "subtotal": 43, "shipping": 4.5, "paid": true }
+        }
+      },
+      {
+        "name": "Service settings",
+        "kind": "config file",
+        "payload": {
+          "service": "report-builder",
+          "port": 8080,
+          "features": { "export_pdf": true, "dark_mode": false, "beta": ["search", "share"] },
+          "limits": { "rows": 5000, "timeout_s": 30 },
+          "owners": ["team-red", "team-blue"]
+        }
+      },
+      {
+        "name": "Package manifest",
+        "kind": "package file",
+        "payload": {
+          "name": "sample-lib",
+          "version": "2.4.1",
+          "license": "MIT",
+          "scripts": { "build": "make", "test": "make check" },
+          "dependencies": { "alpha": "^1.2.0", "beta": "~3.0.1" },
+          "keywords": ["sample", "tree", "demo"]
+        }
+      }
+    ]
+  }
+}

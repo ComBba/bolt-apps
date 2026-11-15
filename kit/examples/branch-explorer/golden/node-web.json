@@ -1,0 +1,108 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to branch",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Web team",
+    "subtitle": "branch · Pages and forms.",
+    "icon": "GitMerge",
+    "body": "## Web team\n\nPages and forms.",
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Web team - branch Pages and forms.",
+    "open_url": "",
+    "f1": "branch",
+    "f2": "2",
+    "f3": "company/engineering/web"
+  },
+  {
+    "title": "Search page",
+    "subtitle": "leaf · Owner: Mira.",
+    "icon": "GitMerge",
+    "body": "## Search page\n\nOwner: Mira.",
+    "nav": {
+      "view": "node",
+      "arg": "web-a"
+    },
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "leaf",
+    "f2": "3",
+    "f3": "company/engineering/web/search"
+  },
+  {
+    "title": "Settings page",
+    "subtitle": "leaf · Owner: Omar.",
+    "icon": "GitMerge",
+    "body": "## Settings page\n\nOwner: Omar.",
+    "nav": {
+      "view": "node",
+      "arg": "web-b"
+    },
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "leaf",
+    "f2": "3",
+    "f3": "company/engineering/web/settings"
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "node",
+      "arg": "refresh.web"
+    },
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

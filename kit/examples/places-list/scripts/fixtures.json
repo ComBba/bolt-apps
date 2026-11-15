@@ -1,0 +1,56 @@
+{
+  "places": {
+    "data": [
+      {
+        "id": "p1",
+        "name": "Riverside Cafe",
+        "kind": "cafe",
+        "km": 0.4,
+        "lat": 51.5014,
+        "lon": -0.1419,
+        "open_now": "yes",
+        "note": "Window seats and a river view."
+      },
+      {
+        "id": "p2",
+        "name": "Old Market Bakery",
+        "kind": "bakery",
+        "km": 0.9,
+        "lat": 51.5055,
+        "lon": -0.0754,
+        "open_now": "yes",
+        "note": "Opens at dawn."
+      },
+      {
+        "id": "p3",
+        "name": "Quiet Corner Books",
+        "kind": "bookshop",
+        "km": 1.3,
+        "lat": 51.5226,
+        "lon": -0.1271,
+        "open_now": "no",
+        "note": "Closed on Sundays."
+      },
+      {
+        "id": "p4",
+        "name": "Lantern Park",
+        "kind": "park",
+        "km": 1.8,
+        "lat": 51.5073,
+        "lon": -0.1657,
+        "open_now": "yes",
+        "note": "Paths, a pond and benches."
+      },
+      {
+        "id": "p5",
+        "name": "Harbour Lights Bistro",
+        "kind": "restaurant",
+        "km": 2.6,
+        "lat": 51.5033,
+        "lon": -0.1195,
+        "open_now": "no",
+        "note": "Dinner only."
+      }
+    ]
+  }
+}

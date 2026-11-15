@@ -1,0 +1,78 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "2 changes",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Run 303",
+    "subtitle": "login form, line 12",
+    "icon": "file",
+    "body": "",
+    "actions": [],
+    "pane": "changes",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Run 303 - login form, line 12",
+    "left": "import { Form } from './form'\nexport function Login() {\nreturn <Form fields={fields} />\n}",
+    "right": "import { Form } from './form'\nimport { fields } from './fields'\nexport function Login() {\nreturn <Form fields={fields} />\n}",
+    "open_url": ""
+  },
+  {
+    "title": "Run 305",
+    "subtitle": "readme intro",
+    "icon": "file",
+    "body": "",
+    "actions": [],
+    "pane": "changes",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Run 305 - readme intro",
+    "left": "# Sample app\nA small demo.\nRun it with make.",
+    "right": "# Sample app\nA small demo with a search box.\nRun it with make run.\nSee the docs folder.",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "changes",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "changes",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

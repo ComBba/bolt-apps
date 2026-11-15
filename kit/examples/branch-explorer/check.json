@@ -1,0 +1,83 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: a tile and a start row",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Start at the root"
+        ]
+      }
+    },
+    {
+      "name": "root shows two branches",
+      "os": "macos",
+      "args": [
+        "node",
+        "root"
+      ],
+      "golden": "golden/node-root.json",
+      "expect": {
+        "text_present": [
+          "Engineering",
+          "Operations",
+          "Company"
+        ]
+      }
+    },
+    {
+      "name": "two levels down",
+      "os": "macos",
+      "args": [
+        "node",
+        "web"
+      ],
+      "golden": "golden/node-web.json",
+      "expect": {
+        "text_present": [
+          "Web team",
+          "Search page",
+          "Settings page"
+        ],
+        "text_absent": [
+          "Operations"
+        ]
+      }
+    },
+    {
+      "name": "a leaf says nothing is below",
+      "os": "macos",
+      "args": [
+        "node",
+        "web-a"
+      ],
+      "expect": {
+        "text_present": [
+          "A leaf: nothing below"
+        ]
+      }
+    },
+    {
+      "name": "offline with nothing cached",
+      "os": "macos",
+      "args": [
+        "node",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not connect"
+        ]
+      }
+    }
+  ]
+}

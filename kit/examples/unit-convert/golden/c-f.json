@@ -1,0 +1,40 @@
+[
+  {
+    "title": "100 C = 212 F",
+    "subtitle": "F = C x 9 / 5 + 32",
+    "icon": "arrow-left-right",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "RESULT",
+    "copy_text": "100 C 212 F",
+    "conv_result": "212 F",
+    "conv_formula": "F = C x 9 / 5 + 32",
+    "conv_reverse": "1 F = -17.2222 C",
+    "conv_kind": "temperature"
+  },
+  {
+    "title": "100 C = 373.15 K",
+    "subtitle": "K = C + 273.15",
+    "icon": "arrow-left-right",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "100 C 373.15 K",
+    "conv_result": "373.15 K",
+    "conv_formula": "K = C + 273.15",
+    "conv_reverse": "1 K = -272.15 C",
+    "conv_kind": "temperature"
+  }
+]

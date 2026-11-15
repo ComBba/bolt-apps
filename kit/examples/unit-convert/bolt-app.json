@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "id": "unit-convert",
+  "title": "Unit convert",
+  "role": "Anyone who converts a number from one unit to another",
+  "saves": "Building a typed form and a result pane",
+  "summary": "Fill a form (amount, from, to) and get the result with its formula and the same amount in the other units of that kind. Works offline.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

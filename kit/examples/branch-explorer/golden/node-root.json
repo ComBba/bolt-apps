@@ -1,0 +1,108 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to branch",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Company",
+    "subtitle": "branch · The top of the tree.",
+    "icon": "GitMerge",
+    "body": "## Company\n\nThe top of the tree.",
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Company - branch The top of the tree.",
+    "open_url": "",
+    "f1": "branch",
+    "f2": "0",
+    "f3": "company"
+  },
+  {
+    "title": "Engineering",
+    "subtitle": "branch · Builds the product.",
+    "icon": "GitMerge",
+    "body": "## Engineering\n\nBuilds the product.",
+    "nav": {
+      "view": "node",
+      "arg": "eng"
+    },
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "branch",
+    "f2": "1",
+    "f3": "company/engineering"
+  },
+  {
+    "title": "Operations",
+    "subtitle": "branch · Keeps it running.",
+    "icon": "GitMerge",
+    "body": "## Operations\n\nKeeps it running.",
+    "nav": {
+      "view": "node",
+      "arg": "ops"
+    },
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "branch",
+    "f2": "1",
+    "f3": "company/operations"
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "node",
+      "arg": "refresh.root"
+    },
+    "actions": [],
+    "pane": "node",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

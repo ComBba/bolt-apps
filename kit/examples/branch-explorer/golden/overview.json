@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Start at the root",
+    "subtitle": "Enter goes into the first branch",
+    "icon": "GitMerge",
+    "body": "",
+    "nav": {
+      "view": "node",
+      "arg": "root"
+    },
+    "actions": [],
+    "kpi_label": "Nodes",
+    "kpi_value": 10,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "in the whole tree",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

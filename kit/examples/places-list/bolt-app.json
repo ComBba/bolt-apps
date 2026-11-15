@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "places-list",
+  "title": "Places list",
+  "role": "Anyone listing places from an API",
+  "saves": "Building map links by hand",
+  "summary": "Type =places for places sorted by distance; press Open on a row to see it on an online map.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

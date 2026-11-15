@@ -1,0 +1,37 @@
+{
+  "app": {
+    "id": "pulse-feed",
+    "chip": "pulse",
+    "title": "Pulse",
+    "icon": "trending-up",
+    "service": "Hacker News",
+    "timeout": 20,
+    "description": "Trending Hacker News stories, or type a topic word to merge the front page with a search. Tiles, a preview pane per story, Open post, Copy quote and Narrow."
+  },
+  "api": {
+    "user_agent": "bolt-app-example/1.0 (pulse-feed)",
+    "call_timeout_s": 6,
+    "deadline_s": 14,
+    "max_bytes": 1000000,
+    "workers": 8,
+    "fixture_default": false
+  },
+  "hosts": [
+    "hacker-news.firebaseio.com",
+    "hn.algolia.com"
+  ],
+  "sources": {
+    "firebase": "https://hacker-news.firebaseio.com/v0",
+    "algolia": "https://hn.algolia.com/api/v1/search"
+  },
+  "limits": {
+    "trending": 30,
+    "scan": 60,
+    "search": 20,
+    "rows": 40
+  },
+  "cache": {
+    "ttl": 120,
+    "stale_max": 86400
+  }
+}

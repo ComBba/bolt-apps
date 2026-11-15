@@ -1,0 +1,230 @@
+{
+  "script": "scripts/app.py",
+  "interpreter": "python3",
+  "manifest_actions": 1,
+  "kit": "scripts/bolt_app_kit.py",
+  "cases": [
+    {
+      "name": "length: km to mi with the formula",
+      "os": "macos",
+      "args": [
+        "5",
+        "km",
+        "mi"
+      ],
+      "golden": "golden/km-mi.json",
+      "expect": {
+        "text_present": [
+          "5 km = 3.10686 mi",
+          "multiply by 0.621371",
+          "5 km = 5000 m"
+        ]
+      }
+    },
+    {
+      "name": "temperature goes through its own formula",
+      "os": "macos",
+      "args": [
+        "100",
+        "C",
+        "F"
+      ],
+      "golden": "golden/c-f.json",
+      "expect": {
+        "text_present": [
+          "100 C = 212 F",
+          "F = C x 9 / 5 + 32",
+          "100 C = 373.15 K"
+        ]
+      }
+    },
+    {
+      "name": "mass",
+      "os": "macos",
+      "args": [
+        "2.5",
+        "kg",
+        "lb"
+      ],
+      "expect": {
+        "text_present": [
+          "2.5 kg = 5.51156 lb"
+        ]
+      }
+    },
+    {
+      "name": "negative and a small result",
+      "os": "macos",
+      "args": [
+        "-40",
+        "C",
+        "F"
+      ],
+      "expect": {
+        "text_present": [
+          "-40 C = -40 F"
+        ]
+      }
+    },
+    {
+      "name": "units of different kinds",
+      "os": "macos",
+      "args": [
+        "5",
+        "km",
+        "kg"
+      ],
+      "expect": {
+        "text_present": [
+          "Not converted",
+          "pick two of the same kind"
+        ]
+      }
+    },
+    {
+      "name": "not a number",
+      "os": "macos",
+      "args": [
+        "abc",
+        "km",
+        "mi"
+      ],
+      "expect": {
+        "text_present": [
+          "Not converted",
+          "must be a number"
+        ]
+      }
+    },
+    {
+      "name": "hostile text is cleaned",
+      "os": "macos",
+      "args": [
+        "5",
+        "{{x}}",
+        "mi"
+      ],
+      "expect": {
+        "text_present": [
+          "pick units from the lists"
+        ]
+      }
+    },
+    {
+      "name": "no values",
+      "os": "macos",
+      "args": [],
+      "expect": {
+        "text_present": [
+          "Fill the form"
+        ]
+      }
+    },
+    {
+      "name": "a tiny value is written in full",
+      "os": "macos",
+      "args": [
+        "1e-12",
+        "m",
+        "km"
+      ],
+      "expect": {
+        "text_present": [
+          "0.000000000001 m = 0.000000000000001 km"
+        ],
+        "text_absent": [
+          "0. "
+        ]
+      }
+    },
+    {
+      "name": "a value below 1e-15 stays scientific and exact",
+      "os": "macos",
+      "args": [
+        "1e-300",
+        "m",
+        "km"
+      ],
+      "expect": {
+        "text_present": [
+          "1e-300 m = 1e-303 km"
+        ]
+      }
+    },
+    {
+      "name": "a huge amount is refused",
+      "os": "macos",
+      "args": [
+        "1e300",
+        "km",
+        "mm"
+      ],
+      "expect": {
+        "text_present": [
+          "Not converted",
+          "too large"
+        ]
+      }
+    },
+    {
+      "name": "an overflowing amount is refused",
+      "os": "macos",
+      "args": [
+        "1e999",
+        "km",
+        "mm"
+      ],
+      "expect": {
+        "text_present": [
+          "Not converted",
+          "too large"
+        ],
+        "text_absent": [
+          "inf"
+        ]
+      }
+    },
+    {
+      "name": "a big result is clean scientific",
+      "os": "macos",
+      "args": [
+        "1e15",
+        "km",
+        "mm"
+      ],
+      "expect": {
+        "text_present": [
+          "1e+15 km = 1e+21 mm"
+        ]
+      }
+    },
+    {
+      "name": "below absolute zero in Celsius",
+      "os": "macos",
+      "args": [
+        "-300",
+        "C",
+        "K"
+      ],
+      "expect": {
+        "text_present": [
+          "below absolute zero"
+        ]
+      }
+    },
+    {
+      "name": "below absolute zero in Kelvin",
+      "os": "macos",
+      "args": [
+        "-1",
+        "K",
+        "C"
+      ],
+      "expect": {
+        "text_present": [
+          "below absolute zero"
+        ]
+      }
+    }
+  ]
+}

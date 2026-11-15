@@ -1,0 +1,79 @@
+[
+  {
+    "title": "Stages",
+    "subtitle": "runs grouped by stage. Enter opens the stages",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "stages"
+    },
+    "actions": [],
+    "kpi_label": "Runs",
+    "kpi_value": 6,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "across all stages",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Passed",
+    "subtitle": "Enter opens every run",
+    "icon": "git-commit",
+    "body": "",
+    "nav": {
+      "view": "runs"
+    },
+    "actions": [],
+    "kpi_label": "Passed",
+    "kpi_value": 2,
+    "kpi_unit": "",
+    "kpi_max": 6,
+    "kpi_note": "of all runs",
+    "kpi_foot": "",
+    "kpi_badge": "FAILURES",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "What changed",
+    "subtitle": "a line diff per run. Enter opens it",
+    "icon": "file",
+    "body": "",
+    "nav": {
+      "view": "changes"
+    },
+    "actions": [],
+    "kpi_label": "Failed",
+    "kpi_value": 1,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "need a look",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

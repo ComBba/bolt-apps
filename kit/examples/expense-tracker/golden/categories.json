@@ -1,0 +1,136 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "4 categories",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Travel · 292",
+    "subtitle": "3 expenses · budget 300",
+    "icon": "PieChart",
+    "body": "",
+    "nav": {
+      "view": "categories",
+      "arg": "travel"
+    },
+    "actions": [],
+    "pane": "categories",
+    "kpi_label": "Used",
+    "kpi_value": 292,
+    "kpi_unit": "USD",
+    "kpi_max": 300,
+    "kpi_note": "of this category budget",
+    "kpi_foot": "",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "291.5",
+    "f2": "300",
+    "f3": "3"
+  },
+  {
+    "title": "Office · 109",
+    "subtitle": "3 expenses · budget 150",
+    "icon": "PieChart",
+    "body": "",
+    "nav": {
+      "view": "categories",
+      "arg": "office"
+    },
+    "actions": [],
+    "pane": "categories",
+    "kpi_label": "Used",
+    "kpi_value": 109,
+    "kpi_unit": "USD",
+    "kpi_max": 150,
+    "kpi_note": "of this category budget",
+    "kpi_foot": "",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "109.05",
+    "f2": "150",
+    "f3": "3"
+  },
+  {
+    "title": "Food · 103",
+    "subtitle": "4 expenses · budget 400",
+    "icon": "PieChart",
+    "body": "",
+    "nav": {
+      "view": "categories",
+      "arg": "food"
+    },
+    "actions": [],
+    "pane": "categories",
+    "kpi_label": "Used",
+    "kpi_value": 103,
+    "kpi_unit": "USD",
+    "kpi_max": 400,
+    "kpi_note": "of this category budget",
+    "kpi_foot": "",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "102.6",
+    "f2": "400",
+    "f3": "4"
+  },
+  {
+    "title": "Software · 41",
+    "subtitle": "2 expenses · budget 120",
+    "icon": "PieChart",
+    "body": "",
+    "nav": {
+      "view": "categories",
+      "arg": "software"
+    },
+    "actions": [],
+    "pane": "categories",
+    "kpi_label": "Used",
+    "kpi_value": 41,
+    "kpi_unit": "USD",
+    "kpi_max": 120,
+    "kpi_note": "of this category budget",
+    "kpi_foot": "",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "41",
+    "f2": "120",
+    "f3": "2"
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "categories",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "categories",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

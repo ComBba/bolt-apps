@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "expense-tracker",
+  "title": "Expense tracker",
+  "role": "Anyone tracking spending from an API or a export",
+  "saves": "Building totals, a category drill and a chart by hand",
+  "summary": "Type =spend for spending tiles against a budget, drill into categories, see every expense and a daily bar chart.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

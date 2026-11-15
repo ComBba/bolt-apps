@@ -1,0 +1,66 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: one tile and a drill",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Documents"
+        ]
+      }
+    },
+    {
+      "name": "the documents list",
+      "os": "macos",
+      "args": [
+        "docs"
+      ],
+      "golden": "golden/docs.json",
+      "expect": {
+        "text_present": [
+          "Order 1042",
+          "Service settings",
+          "Package manifest"
+        ]
+      }
+    },
+    {
+      "name": "offline with nothing cached",
+      "os": "macos",
+      "args": [
+        "docs",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not connect"
+        ]
+      }
+    },
+    {
+      "name": "filter word",
+      "os": "macos",
+      "args": [
+        "docs",
+        "package"
+      ],
+      "expect": {
+        "text_present": [
+          "Package manifest"
+        ],
+        "text_absent": [
+          "Order 1042"
+        ]
+      }
+    }
+  ]
+}

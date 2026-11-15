@@ -1,0 +1,952 @@
+[
+  {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no network. Unset BOLT_APP_FIXTURE for the live APIs",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Trending: 30 stories",
+    "subtitle": "the Hacker News front page, by rank. Type a word after =pulse to search",
+    "icon": "TrendingUp",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Stories",
+    "kpi_value": 30,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "front page",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "A small database that fits in a single file",
+    "subtitle": "412 points, 138 comments, 3 h ago",
+    "icon": "trending-up",
+    "body": "412 points, 138 comments, posted 3 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "database"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91000",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"A small database that fits in a single file\" - lightdb on Hacker News, https://example.com/post/91000",
+    "open_url": "https://example.com/post/91000",
+    "story_source": "HN front page",
+    "story_author": "lightdb",
+    "story_age": "3 h",
+    "story_score": 412
+  },
+  {
+    "title": "Why our team moved back to a monolith",
+    "subtitle": "388 points, 211 comments, 5 h ago",
+    "icon": "trending-up",
+    "body": "388 points, 211 comments, posted 5 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "monolith"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91001",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Why our team moved back to a monolith\" - mira_k on Hacker News, https://example.com/post/91001",
+    "open_url": "https://example.com/post/91001",
+    "story_source": "HN front page",
+    "story_author": "mira_k",
+    "story_age": "5 h",
+    "story_score": 388
+  },
+  {
+    "title": "Show: a keyboard-driven launcher written in Rust",
+    "subtitle": "301 points, 97 comments, 2 h ago",
+    "icon": "trending-up",
+    "body": "301 points, 97 comments, posted 2 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "keyboard"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91002",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Show: a keyboard-driven launcher written in Rust\" - omar on Hacker News, https://example.com/post/91002",
+    "open_url": "https://example.com/post/91002",
+    "story_source": "HN front page",
+    "story_author": "omar",
+    "story_age": "2 h",
+    "story_score": 301
+  },
+  {
+    "title": "Ask: how do you keep a personal wiki up to date?",
+    "subtitle": "240 points, 154 comments, 7 h ago",
+    "icon": "trending-up",
+    "body": "240 points, 154 comments, posted 7 h ago.\n\nLink: news.ycombinator.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "personal"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://news.ycombinator.com/item?id=91003",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Ask: how do you keep a personal wiki up to date?\" - sana on Hacker News, https://news.ycombinator.com/item?id=91003",
+    "open_url": "https://news.ycombinator.com/item?id=91003",
+    "story_source": "HN front page",
+    "story_author": "sana",
+    "story_age": "7 h",
+    "story_score": 240
+  },
+  {
+    "title": "The history of the humble progress bar",
+    "subtitle": "219 points, 41 comments, 9 h ago",
+    "icon": "trending-up",
+    "body": "219 points, 41 comments, posted 9 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "progress"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91004",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"The history of the humble progress bar\" - tom_w on Hacker News, https://example.com/post/91004",
+    "open_url": "https://example.com/post/91004",
+    "story_source": "HN front page",
+    "story_author": "tom_w",
+    "story_age": "9 h",
+    "story_score": 219
+  },
+  {
+    "title": "Rust 2.0 release notes",
+    "subtitle": "530 points, 260 comments, 60 min ago",
+    "icon": "trending-up",
+    "body": "530 points, 260 comments, posted 60 min ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "release"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91005",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Rust 2.0 release notes\" - li on Hacker News, https://example.com/post/91005",
+    "open_url": "https://example.com/post/91005",
+    "story_source": "HN front page",
+    "story_author": "li",
+    "story_age": "60 min",
+    "story_score": 530
+  },
+  {
+    "title": "Notes on writing a tiny Rust parser",
+    "subtitle": "187 points, 63 comments, 11 h ago",
+    "icon": "trending-up",
+    "body": "187 points, 63 comments, posted 11 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "writing"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91006",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Notes on writing a tiny Rust parser\" - ada on Hacker News, https://example.com/post/91006",
+    "open_url": "https://example.com/post/91006",
+    "story_source": "HN front page",
+    "story_author": "ada",
+    "story_age": "11 h",
+    "story_score": 187
+  },
+  {
+    "title": "A visual guide to how browsers render pages",
+    "subtitle": "176 points, 29 comments, 14 h ago",
+    "icon": "trending-up",
+    "body": "176 points, 29 comments, posted 14 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "browsers"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91007",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"A visual guide to how browsers render pages\" - pixel on Hacker News, https://example.com/post/91007",
+    "open_url": "https://example.com/post/91007",
+    "story_source": "HN front page",
+    "story_author": "pixel",
+    "story_age": "14 h",
+    "story_score": 176
+  },
+  {
+    "title": "Open source maps tiles for everyone",
+    "subtitle": "163 points, 52 comments, 6 h ago",
+    "icon": "trending-up",
+    "body": "163 points, 52 comments, posted 6 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "everyone"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91008",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Open source maps tiles for everyone\" - geo on Hacker News, https://example.com/post/91008",
+    "open_url": "https://example.com/post/91008",
+    "story_source": "HN front page",
+    "story_author": "geo",
+    "story_age": "6 h",
+    "story_score": 163
+  },
+  {
+    "title": "Show: tracking my sleep with a spreadsheet",
+    "subtitle": "150 points, 88 comments, 8 h ago",
+    "icon": "trending-up",
+    "body": "150 points, 88 comments, posted 8 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "spreadsheet"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91009",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Show: tracking my sleep with a spreadsheet\" - nina on Hacker News, https://example.com/post/91009",
+    "open_url": "https://example.com/post/91009",
+    "story_source": "HN front page",
+    "story_author": "nina",
+    "story_age": "8 h",
+    "story_score": 150
+  },
+  {
+    "title": "What I learned running a small server for ten years",
+    "subtitle": "144 points, 120 comments, 16 h ago",
+    "icon": "trending-up",
+    "body": "144 points, 120 comments, posted 16 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "learned"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91010",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"What I learned running a small server for ten years\" - ops_fan on Hacker News, https://example.com/post/91010",
+    "open_url": "https://example.com/post/91010",
+    "story_source": "HN front page",
+    "story_author": "ops_fan",
+    "story_age": "16 h",
+    "story_score": 144
+  },
+  {
+    "title": "Fast approximate search without a vector database",
+    "subtitle": "139 points, 35 comments, 4 h ago",
+    "icon": "trending-up",
+    "body": "139 points, 35 comments, posted 4 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "approximate"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91011",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Fast approximate search without a vector database\" - indexer on Hacker News, https://example.com/post/91011",
+    "open_url": "https://example.com/post/91011",
+    "story_source": "HN front page",
+    "story_author": "indexer",
+    "story_age": "4 h",
+    "story_score": 139
+  },
+  {
+    "title": "A gentle introduction to type systems",
+    "subtitle": "131 points, 47 comments, 18 h ago",
+    "icon": "trending-up",
+    "body": "131 points, 47 comments, posted 18 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "introduction"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91012",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"A gentle introduction to type systems\" - typed on Hacker News, https://example.com/post/91012",
+    "open_url": "https://example.com/post/91012",
+    "story_source": "HN front page",
+    "story_author": "typed",
+    "story_age": "18 h",
+    "story_score": 131
+  },
+  {
+    "title": "Photographing the night sky with a phone",
+    "subtitle": "120 points, 22 comments, 20 h ago",
+    "icon": "trending-up",
+    "body": "120 points, 22 comments, posted 20 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "photographing"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91013",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Photographing the night sky with a phone\" - astro on Hacker News, https://example.com/post/91013",
+    "open_url": "https://example.com/post/91013",
+    "story_source": "HN front page",
+    "story_author": "astro",
+    "story_age": "20 h",
+    "story_score": 120
+  },
+  {
+    "title": "Python packaging, explained one step at a time",
+    "subtitle": "118 points, 76 comments, 10 h ago",
+    "icon": "trending-up",
+    "body": "118 points, 76 comments, posted 10 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "packaging"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91014",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Python packaging, explained one step at a time\" - pyfan on Hacker News, https://example.com/post/91014",
+    "open_url": "https://example.com/post/91014",
+    "story_source": "HN front page",
+    "story_author": "pyfan",
+    "story_age": "10 h",
+    "story_score": 118
+  },
+  {
+    "title": "The case for boring technology",
+    "subtitle": "112 points, 98 comments, 12 h ago",
+    "icon": "trending-up",
+    "body": "112 points, 98 comments, posted 12 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "technology"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91015",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"The case for boring technology\" - stable on Hacker News, https://example.com/post/91015",
+    "open_url": "https://example.com/post/91015",
+    "story_source": "HN front page",
+    "story_author": "stable",
+    "story_age": "12 h",
+    "story_score": 112
+  },
+  {
+    "title": "How a tiny team shipped weekly for a year",
+    "subtitle": "109 points, 61 comments, 13 h ago",
+    "icon": "trending-up",
+    "body": "109 points, 61 comments, posted 13 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "shipped"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91016",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"How a tiny team shipped weekly for a year\" - weekly on Hacker News, https://example.com/post/91016",
+    "open_url": "https://example.com/post/91016",
+    "story_source": "HN front page",
+    "story_author": "weekly",
+    "story_age": "13 h",
+    "story_score": 109
+  },
+  {
+    "title": "Show: an offline-first notes app",
+    "subtitle": "101 points, 30 comments, 15 h ago",
+    "icon": "trending-up",
+    "body": "101 points, 30 comments, posted 15 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "offline"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91017",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Show: an offline-first notes app\" - offline on Hacker News, https://example.com/post/91017",
+    "open_url": "https://example.com/post/91017",
+    "story_source": "HN front page",
+    "story_author": "offline",
+    "story_age": "15 h",
+    "story_score": 101
+  },
+  {
+    "title": "Is the command line getting friendlier?",
+    "subtitle": "97 points, 84 comments, 17 h ago",
+    "icon": "trending-up",
+    "body": "97 points, 84 comments, posted 17 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "friendlier"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91018",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Is the command line getting friendlier?\" - shell on Hacker News, https://example.com/post/91018",
+    "open_url": "https://example.com/post/91018",
+    "story_source": "HN front page",
+    "story_author": "shell",
+    "story_age": "17 h",
+    "story_score": 97
+  },
+  {
+    "title": "Building accessible forms, a checklist",
+    "subtitle": "93 points, 19 comments, 19 h ago",
+    "icon": "trending-up",
+    "body": "93 points, 19 comments, posted 19 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "accessible"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91019",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Building accessible forms, a checklist\" - a11y on Hacker News, https://example.com/post/91019",
+    "open_url": "https://example.com/post/91019",
+    "story_source": "HN front page",
+    "story_author": "a11y",
+    "story_age": "19 h",
+    "story_score": 93
+  },
+  {
+    "title": "A short history of the spreadsheet",
+    "subtitle": "88 points, 27 comments, 21 h ago",
+    "icon": "trending-up",
+    "body": "88 points, 27 comments, posted 21 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "spreadsheet"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91020",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"A short history of the spreadsheet\" - cells on Hacker News, https://example.com/post/91020",
+    "open_url": "https://example.com/post/91020",
+    "story_source": "HN front page",
+    "story_author": "cells",
+    "story_age": "21 h",
+    "story_score": 88
+  },
+  {
+    "title": "Rust for web developers: first impressions",
+    "subtitle": "85 points, 44 comments, 22 h ago",
+    "icon": "trending-up",
+    "body": "85 points, 44 comments, posted 22 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "impressions"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91021",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Rust for web developers: first impressions\" - webdev on Hacker News, https://example.com/post/91021",
+    "open_url": "https://example.com/post/91021",
+    "story_source": "HN front page",
+    "story_author": "webdev",
+    "story_age": "22 h",
+    "story_score": 85
+  },
+  {
+    "title": "Ask: what is your favourite small tool?",
+    "subtitle": "80 points, 140 comments, 23 h ago",
+    "icon": "trending-up",
+    "body": "80 points, 140 comments, posted 23 h ago.\n\nLink: news.ycombinator.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "favourite"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://news.ycombinator.com/item?id=91022",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Ask: what is your favourite small tool?\" - toolbox on Hacker News, https://news.ycombinator.com/item?id=91022",
+    "open_url": "https://news.ycombinator.com/item?id=91022",
+    "story_source": "HN front page",
+    "story_author": "toolbox",
+    "story_age": "23 h",
+    "story_score": 80
+  },
+  {
+    "title": "The quiet joy of a fast build",
+    "subtitle": "77 points, 33 comments, 24 h ago",
+    "icon": "trending-up",
+    "body": "77 points, 33 comments, posted 24 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "quiet"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91023",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"The quiet joy of a fast build\" - builder on Hacker News, https://example.com/post/91023",
+    "open_url": "https://example.com/post/91023",
+    "story_source": "HN front page",
+    "story_author": "builder",
+    "story_age": "24 h",
+    "story_score": 77
+  },
+  {
+    "title": "Learning to read a flame graph",
+    "subtitle": "74 points, 25 comments, 26 h ago",
+    "icon": "trending-up",
+    "body": "74 points, 25 comments, posted 26 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "learning"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91024",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Learning to read a flame graph\" - perf on Hacker News, https://example.com/post/91024",
+    "open_url": "https://example.com/post/91024",
+    "story_source": "HN front page",
+    "story_author": "perf",
+    "story_age": "26 h",
+    "story_score": 74
+  },
+  {
+    "title": "Making a font from scratch",
+    "subtitle": "70 points, 18 comments, 28 h ago",
+    "icon": "trending-up",
+    "body": "70 points, 18 comments, posted 28 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "scratch"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91025",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Making a font from scratch\" - glyph on Hacker News, https://example.com/post/91025",
+    "open_url": "https://example.com/post/91025",
+    "story_source": "HN front page",
+    "story_author": "glyph",
+    "story_age": "28 h",
+    "story_score": 70
+  },
+  {
+    "title": "Why dates are hard",
+    "subtitle": "66 points, 71 comments, 30 h ago",
+    "icon": "trending-up",
+    "body": "66 points, 71 comments, posted 30 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "dates"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91026",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Why dates are hard\" - calendar on Hacker News, https://example.com/post/91026",
+    "open_url": "https://example.com/post/91026",
+    "story_source": "HN front page",
+    "story_author": "calendar",
+    "story_age": "30 h",
+    "story_score": 66
+  },
+  {
+    "title": "Show: a terminal weather widget",
+    "subtitle": "62 points, 14 comments, 32 h ago",
+    "icon": "trending-up",
+    "body": "62 points, 14 comments, posted 32 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "terminal"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91027",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Show: a terminal weather widget\" - forecast on Hacker News, https://example.com/post/91027",
+    "open_url": "https://example.com/post/91027",
+    "story_source": "HN front page",
+    "story_author": "forecast",
+    "story_age": "32 h",
+    "story_score": 62
+  },
+  {
+    "title": "Practical notes on SQLite in production",
+    "subtitle": "58 points, 39 comments, 34 h ago",
+    "icon": "trending-up",
+    "body": "58 points, 39 comments, posted 34 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "production"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91028",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Practical notes on SQLite in production\" - sqlfan on Hacker News, https://example.com/post/91028",
+    "open_url": "https://example.com/post/91028",
+    "story_source": "HN front page",
+    "story_author": "sqlfan",
+    "story_age": "34 h",
+    "story_score": 58
+  },
+  {
+    "title": "Small habits that make code reviews kinder",
+    "subtitle": "55 points, 28 comments, 36 h ago",
+    "icon": "trending-up",
+    "body": "55 points, 28 comments, posted 36 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "reviews"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/91029",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Small habits that make code reviews kinder\" - review on Hacker News, https://example.com/post/91029",
+    "open_url": "https://example.com/post/91029",
+    "story_source": "HN front page",
+    "story_author": "review",
+    "story_age": "36 h",
+    "story_score": 55
+  },
+  {
+    "title": "Check again",
+    "subtitle": "Enter to fetch fresh data past the cache",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

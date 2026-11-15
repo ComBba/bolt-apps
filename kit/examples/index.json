@@ -428,6 +428,233 @@
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/script-template",
       "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "pulse-feed",
+      "need": "a trending feed where a topic word merges more public sources, with open, copy and narrow buttons",
+      "layout": "trending overview with a tile row, a topic word that merges two sources in parallel, a preview pane per story",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/app.py",
+      "template": "script-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "hydrate: ids then one request per item in parallel",
+        "two sources merged by id",
+        "partial result row",
+        "tile row then rows",
+        "open-link arrow (url)",
+        "Open post, Copy quote and Narrow (utility chain) footer buttons",
+        "safety note in the markdown body",
+        "fresh and old cache",
+        "sample mode with a fixed clock"
+      ],
+      "sources": [
+        "Hacker News Firebase API (free, no key)",
+        "Hacker News Algolia search API (free, no key)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json",
+        "scripts/app.py (n_firebase, n_algolia, story_row, emit_yaml)"
+      ],
+      "snippets": [
+        "scripts/app.py: hydrate() and gather()",
+        "scripts/app.py: story_row() with kit.action_chain",
+        "scripts/app.py: emit_yaml() entity_preview bind"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/pulse-feed",
+      "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "json-tree-browser",
+      "need": "show any JSON response as an expandable tree",
+      "layout": "a list of JSON documents, one collapsible tree per row",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "json_tree"
+      ],
+      "techniques": [
+        "json_tree pane",
+        "data_field",
+        "fixture mode"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json"
+      ],
+      "snippets": [
+        "scripts/config.json: views[0].item.data_field",
+        "scripts/config.json: views[0].widget json_tree"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/json-tree-browser",
+      "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "expense-tracker",
+      "need": "a spending summary with totals, a category drill and a chart",
+      "layout": "spending tiles with a budget meter, categories that drill to expenses, a daily bar chart",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview",
+        "chart"
+      ],
+      "techniques": [
+        "field_sum and field_max stats",
+        "badge rules",
+        "drill with children",
+        "bar chart",
+        "tile sparkline"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json"
+      ],
+      "snippets": [
+        "scripts/config.json: stats field_sum",
+        "scripts/config.json: views[0].children",
+        "scripts/config.json: chart widget bind"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/expense-tracker",
+      "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "pipeline-board",
+      "need": "rows grouped by stage with a detail pane and a before and after diff",
+      "layout": "runs grouped by stage, a detail pane per run and a diff pane",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview",
+        "diff"
+      ],
+      "techniques": [
+        "grouped list with children",
+        "custom sort order",
+        "diff pane from multiline fields"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json"
+      ],
+      "snippets": [
+        "scripts/config.json: stages view children",
+        "scripts/config.json: diff widget bind with left and right"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/pipeline-board",
+      "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "unit-convert",
+      "need": "a typed form whose answer is a result detail",
+      "layout": "form (number and two selects), a result row and a detail pane, the same amount in other units",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/app.py",
+      "template": "form-template",
+      "backing": "no network",
+      "widgets": [
+        "detail"
+      ],
+      "techniques": [
+        "inputs form in the app file",
+        "input checked again in the script",
+        "detail pane",
+        "Copy to composer",
+        "offline"
+      ],
+      "sources": [
+        "none: a unit table in config.json"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/app.py (convert, build, emit_yaml)"
+      ],
+      "snippets": [
+        "scripts/app.py: emit_yaml() inputs and submit",
+        "scripts/app.py: convert()"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/unit-convert",
+      "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "branch-explorer",
+      "need": "browse a tree level by level",
+      "layout": "a tree walked one level at a time with Back",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "self-referencing children",
+        "root arg",
+        "Back row",
+        "leaf message"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json"
+      ],
+      "snippets": [
+        "scripts/config.json: views[0].children pointing at the same view",
+        "scripts/config.json: overview row arg"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/branch-explorer",
+      "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "places-list",
+      "need": "a list of places where each row opens in a map",
+      "layout": "rows with an Open-in-map link, no map widget",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "url template from fields",
+        "https only link",
+        "sort by number"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json"
+      ],
+      "snippets": [
+        "scripts/config.json: views[0].item.url template"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/places-list",
+      "verified": "not yet verified in real Bolt"
     }
   ],
   "coverage": {
@@ -438,7 +665,13 @@
       "chart-template",
       "table-template",
       "repo-radar",
-      "around"
+      "around",
+      "pulse-feed",
+      "json-tree-browser",
+      "expense-tracker",
+      "pipeline-board",
+      "branch-explorer",
+      "places-list"
     ],
     "local file": [
       "form-template",
@@ -453,6 +686,9 @@
     ],
     "MCP server": [
       "no native path: workaround script documented in ENGINE.md (tested against a stand-in server only)"
+    ],
+    "no network": [
+      "unit-convert"
     ]
   },
   "what_backs_your_app": [

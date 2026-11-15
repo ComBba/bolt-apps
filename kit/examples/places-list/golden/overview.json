@@ -1,0 +1,41 @@
+[
+  {
+    "title": "Nearby places",
+    "subtitle": "Enter opens the list. Open shows one in a map",
+    "icon": "MapPin",
+    "body": "",
+    "nav": {
+      "view": "places"
+    },
+    "actions": [],
+    "kpi_label": "Open now",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": 5,
+    "kpi_note": "of the places",
+    "kpi_foot": "",
+    "kpi_badge": "SOME OPEN",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

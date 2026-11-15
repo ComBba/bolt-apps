@@ -1,0 +1,87 @@
+[
+  {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no network. Unset BOLT_APP_FIXTURE for the live APIs",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Topic zzzz: 0 stories",
+    "subtitle": "front page and search merged. The Narrow button on a story goes deeper",
+    "icon": "TrendingUp",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Stories",
+    "kpi_value": 0,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "topic zzzz",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Back to trending",
+    "subtitle": "the front page without a topic",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "view": "overview"
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "No story matches zzzz",
+    "subtitle": "Try a shorter word. Enter to go back to trending",
+    "icon": "Search",
+    "body": "",
+    "nav": {
+      "view": "overview"
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Check again",
+    "subtitle": "Enter to fetch fresh data past the cache",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "topic",
+      "arg": "refresh.zzzz"
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]
