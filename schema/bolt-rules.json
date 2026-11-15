@@ -560,18 +560,36 @@
    "prototype",
    "__proto__",
    "hasOwnProperty",
+   "isPrototypeOf",
+   "propertyIsEnumerable",
+   "toLocaleString",
    "toString",
-   "valueOf"
+   "valueOf",
+   "__defineGetter__",
+   "__defineSetter__",
+   "__lookupGetter__",
+   "__lookupSetter__"
   ],
   "internal_host_suffixes": [
+   ".localhost",
    ".local",
+   ".internal",
    ".lan",
-   ".internal"
+   ".home.arpa",
+   ".localdomain",
+   ".corp",
+   ".home",
+   ".intranet",
+   ".private"
   ],
   "footer_max_bolt": 6,
   "footer_max_kit": 3,
   "label_kept_bolt": 40,
-  "label_shown": 14
+  "label_shown": 14,
+  "manifest_only_keys": [
+   "flow",
+   "confirm"
+  ]
  },
  "http_local": {
   "reserved_ports": [
@@ -597,7 +615,8 @@
    "json",
    "lines",
    "raw"
-  ]
+  ],
+  "header_name_pattern": "^[A-Za-z0-9-]+$"
  },
  "bridge": {
   "interpreters": [
@@ -612,7 +631,10 @@
    "lines",
    "raw"
   ],
-  "output_cap_bytes": 4194304
+  "output_cap_bytes": 4194304,
+  "cwd": [
+   "home"
+  ]
  },
  "pack": {
   "script_max_depth": 8,
@@ -837,6 +859,28 @@
     "confirm"
    ],
    "required": []
+  },
+  "dispatch.choices[]": {
+   "all": [
+    "id",
+    "label",
+    "hint",
+    "args"
+   ],
+   "required": [
+    "id",
+    "label"
+   ]
   }
+ },
+ "inputs": {
+  "types": [
+   "text",
+   "number",
+   "date",
+   "select",
+   "toggle",
+   "secret"
+  ]
  }
 }

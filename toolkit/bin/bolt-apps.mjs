@@ -17,7 +17,7 @@ import { get, str } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems } from '../lib/boltrules.mjs';
-import { newList, newFromTemplate, listTemplates, runApp, ship, doctor } from '../lib/workflow.mjs';
+import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor } from '../lib/workflow.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
@@ -197,7 +197,7 @@ const prefixOf = (id) => { let k = id.replace(/[^a-z0-9]/g, '').slice(0, 12); re
 function flag(args, name, dflt) { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : dflt; }
 function cmdNew(args) {
 	if (args[0] === '--list' || args[0] === 'list') return newList();
-	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && listTemplates().some((a) => a.id === args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
+	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
 	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps'), author = flag(args, '--author', os.userInfo().username);
 	if (!id || !ID.test(id)) die(`usage: bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);

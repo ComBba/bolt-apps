@@ -38,6 +38,7 @@ const refuseSecrets = (dir) => { const h = keyLooking(dir); if (h.length) die(`$
 
 // ---------------------------------------------------------------- new <template> <id>  and  new --list
 export const listTemplates = () => { try { return JSON.parse(fs.readFileSync(path.join(EXAMPLES, 'index.json'), 'utf8')).apps; } catch { return []; } };
+export const hasTemplate = (name) => /^[a-z0-9][a-z0-9-]*$/.test(name) && fs.existsSync(path.join(EXAMPLES, name, 'bolt-app.json'));
 export function newList() {
 	const apps = listTemplates();
 	console.log('Templates (bolt-apps new <template> <id>):\n');
@@ -49,9 +50,10 @@ export function newFromTemplate(template, id, root) {
 	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: bolt-apps new --list`);
 	if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) die('the id is lowercase letters, digits and hyphens, at most 64 characters, for example my-tool');
 	const dir = path.join(root, id);
-	if (fs.existsSync(dir)) die(`${dir} already exists. Choose another id, or delete it first`);
+	if (fs.existsSync(dir) || (() => { try { fs.lstatSync(dir); return true; } catch { return false; } })()) die(`${q(dir)} already exists (or is a link). Choose another id, or delete it first`);
 	fs.cpSync(src, dir, { recursive: true, filter: (f) => !/__pycache__|\.boltpack$|[\\/]golden([\\/]|$)/.test(f) });
 	const chip = id.replace(/[^a-z0-9]/g, '').slice(0, 20) || id.slice(0, 20);
+	fs.rmSync(path.join(dir, 'golden'), { recursive: true, force: true });   // the template's goldens belong to the template; check --update-golden writes new ones
 	const title = id.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 	const edit = (f, fn) => { const p = path.join(dir, f); if (fs.existsSync(p)) fs.writeFileSync(p, fn(fs.readFileSync(p, 'utf8'))); };
 	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; return JSON.stringify(j, null, 2) + '\n'; });
@@ -78,8 +80,8 @@ export function newFromTemplate(template, id, root) {
 function bridgeCommand(dir0, words) {
 	const dir = path.resolve(dir0);
 	const ud = path.join(dir, 'utilities');
-	const y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); if (!y) die(`${ud} has no app file`);
-	const root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8'));
+	let y; try { y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); } catch { die(`${q(ud)} is missing. An app folder has utilities/<id>.yaml`); } if (!y) die(`${q(ud)} has no app file`);
+	let root; try { root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')); } catch (e) { die(`${q(path.join(ud, y))} cannot be read as an app file (${String(e.message).slice(0, 120)}). Fix the YAML, or regenerate it from config.json`); }
 	const osKey = process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux';
 	const tpl = str(get(get(get(root, 'bridge')?.value, 'command')?.value, osKey)?.value);
 	if (!tpl) return { root, error: `the app file has no bridge command for ${osKey}` };
@@ -89,7 +91,7 @@ function bridgeCommand(dir0, words) {
 		if (m) vars[str(get(a, 'name')?.value)] = words[Number(m[1])] ?? String(str(get(a, 'default')?.value) ?? '-');
 	}
 	// split the command into words first, then fill each word: a folder with spaces in its path stays one word, and a query word can never add words
-	const argv = tpl.split(/\s+/).filter(Boolean).map((w) => w.replace(/\{\{scripts_dir\}\}/g, path.join(dir, 'scripts')).replace(/\{\{(\w+)\}\}/g, (_, n) => vars[n] ?? '-'));
+	const argv = tpl.split(/\s+/).filter(Boolean).map((w) => w.replace(/\{\{scripts_dir\}\}/g, path.join(dir, 'scripts')).replace(/\{\{\s*(\w+)\s*(?:\|\s*default:\s*([^}]*?)\s*)?\}\}/g, (_, n, d) => vars[n] ?? d ?? '-'));
 	return { root, argv };
 }
 function paneOf(root, view) {
@@ -99,11 +101,11 @@ function paneOf(root, view) {
 }
 export function runApp(args) {
 	const flags = args.filter((a) => a.startsWith('--')), rest = args.filter((a) => !a.startsWith('--'));
-	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app as Bolt would and shows the rows. Note: it executes the app\'s own command on your computer with your real HOME and PATH; --live reads your real keychain and ~/.config/<id>/.env. Run only code you have read.');
+	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app about as Bolt would (an approximation: the launcher is the final judge) and shows the rows. Note: it executes the app\'s own command on your computer with your real HOME and PATH; --live reads your real keychain and ~/.config/<id>/.env. Run only code you have read.');
 	refuseSecrets(dir);
 	const words = rest.slice(1);
 	const b = bridgeCommand(dir, words); if (b.error) die(b.error);
-	const env = { PATH: process.env.PATH, HOME: os.homedir(), LANG: process.env.LANG || 'en_US.UTF-8', BOLT_APP_DEBUG: '1' };
+	const env = { PATH: process.env.PATH, HOME: os.homedir(), USER: os.userInfo().username, LOGNAME: os.userInfo().username, LANG: process.env.LANG || 'en_US.UTF-8', PYTHONNOUSERSITE: '1', PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', BOLT_APP_DEBUG: '1' };   // an approximation of the launcher's runner environment: the launcher is the final judge
 	if (flags.includes('--sample')) env.BOLT_APP_FIXTURE = '1'; else if (flags.includes('--live')) env.BOLT_APP_FIXTURE = '0';
 	const r = spawnSync(b.argv[0], b.argv.slice(1), { env, cwd: path.join(dir, 'scripts'), encoding: 'utf8', input: '', timeout: 30000 });
 	if (r.error || r.status !== 0) die(`the script failed (exit ${r.status}). ${r.stderr ? 'Its error output:\n' + r.stderr.trim().split('\n').slice(-12).join('\n') : (r.error ? String(r.error.message) : '')}\n  Command: ${b.argv.map(q).join(' ')}`);
@@ -129,24 +131,25 @@ export function runApp(args) {
 
 // ---------------------------------------------------------------- ship
 const notLink = (f) => { try { if (fs.lstatSync(f).isSymbolicLink()) die(`${f} is a link, which is not followed. Replace it with a real file or folder you own`); } catch (e) { if (e.code !== 'ENOENT') throw e; } };
-const loadShip = () => { try { return JSON.parse(fs.readFileSync(path.join(STATE, 'ship.json'), 'utf8')); } catch { return {}; } };
+const loadShip = () => { try { const j = JSON.parse(fs.readFileSync(path.join(STATE, 'ship.json'), 'utf8')); return j && typeof j === 'object' && !Array.isArray(j) ? Object.assign(Object.create(null), j) : Object.create(null); } catch { return Object.create(null); } };
 const bump = (v) => { const p = String(v).split('.').map(Number); if (p.length !== 3 || p.some((n) => !Number.isInteger(n))) return '1.0.1'; p[2] += 1; return p.join('.'); };
 export function ship(args) {
 	const dir = args.find((a) => !a.startsWith('--')); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps ship <app-folder>   (lint, check, pack, verify, with the next version picked for you)');
 	refuseSecrets(dir);
 	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { die(`${path.join(dir, 'bolt-app.json')} is not valid JSON (${e.message}). Fix it, then run ship again`); }
+	if (typeof app.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(app.id)) die(`bolt-app.json needs an "id" of lowercase letters, digits and hyphens (got ${JSON.stringify(app.id ?? null)})`);
 	const step = (name, r) => { if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
 	step('lint --personal', bolt(['lint', dir, '--personal']));
 	if (fs.existsSync(path.join(dir, 'check.json'))) step('check', bolt(['check', dir]));
 	notLink(STATE); notLink(path.join(STATE, 'key.pem')); notLink(path.join(STATE, 'ship.json')); notLink(path.join(STATE, 'packs'));
 	const key = path.join(STATE, 'key.pem');
 	if (!fs.existsSync(key)) { const k = bolt(['keygen']); if (k.status !== 0) die(`could not make your signing key: ${k.stderr || k.stdout}`); console.log('ok made your signing key in ~/.bolt-apps/key.pem (keep it private, never share it)'); }
-	const state = loadShip(), version = state[app.id] ? bump(state[app.id]) : '1.0.0';
+	const state = loadShip(), version = typeof state[app.id] === 'string' ? bump(state[app.id]) : '1.0.0';
 	fs.mkdirSync(path.join(STATE, 'packs'), { recursive: true, mode: 0o700 });
 	const out = path.join(STATE, 'packs', `${app.id}-${version}.boltpack`);
 	step(`pack ${version}`, bolt(['pack', dir, '--personal', '--version', version, '--out', out]));
 	step('verify', bolt(['verify', out]));
-	state[app.id] = version; fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(state, null, 2) + '\n');
+	state[app.id] = version; fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(Object.fromEntries(Object.entries(state)), null, 2) + '\n');
 	const chip = (() => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || app.id; } catch { return app.id; } })();
 	console.log(`\nShipped ${app.id} ${version}: ${out}\nInstall: drop that file on the Bolt launcher (or Bolt Apps), read the prompt, approve it, then type =${chip}.\nThis app runs as you: only install code you have read. Next time run ship again and the version rises by itself.`);
 }
@@ -159,13 +162,14 @@ export function doctor(args) {
 	const nodeMajor = Number(process.versions.node.split('.')[0]); chk(nodeMajor >= 18, `node ${process.versions.node}`, 'Install Node 18 or newer (https://nodejs.org).');
 	const py = spawnSync('python3', ['--version'], { encoding: 'utf8' }); const pv = /(\d+)\.(\d+)/.exec(py.stdout || py.stderr || '');
 	chk(!!pv && (Number(pv[1]) > 3 || (Number(pv[1]) === 3 && Number(pv[2]) >= 9)), `python3 ${pv ? pv[0] : 'not found'}`, 'Install Python 3.9 or newer; script apps run with python3.');
-	chk(fs.existsSync(path.join(STATE, 'key.pem')), 'signing key (~/.bolt-apps/key.pem)', 'Run: bolt-apps keygen   (once; ship also makes it for you)');
-	try { fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', `Run: mkdir -p ${STATE} && chmod 700 ${STATE}`); }
+	chk(fs.existsSync(path.join(STATE, 'key.pem')), `signing key (${q(path.join(STATE, 'key.pem'))})`, 'Run: bolt-apps keygen   (once; ship also makes it for you)');
+	try { fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', `Run: mkdir -p ${q(STATE)} && chmod 700 ${q(STATE)}`); }
 	if (dir && fs.existsSync(path.join(dir, 'bolt-app.json'))) {
 		let id; try { id = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')).id; } catch (e) { chk(false, 'bolt-app.json is valid JSON', `Fix ${path.join(dir, 'bolt-app.json')}: ${e.message}`); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); }
+		if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) { chk(false, 'bolt-app.json has an id', 'Add "id": "my-tool" (lowercase letters, digits, hyphens) to bolt-app.json.'); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); }
 		const env = path.join(os.homedir(), '.config', id, '.env');
-		if (fs.existsSync(env)) chk((fs.statSync(env).mode & 0o077) === 0, `~/.config/${id}/.env is private`, `Run: chmod 600 ${env}`);
-		const hits = keyLooking(dir); chk(!hits.length, 'no real-looking key in the app folder', `Remove the key from ${hits.join(', ')}; keys go in the keychain or ~/.config/${id}/.env.`);
+		if (fs.existsSync(env)) chk((fs.statSync(env).mode & 0o077) === 0, `~/.config/${id}/.env is private`, `Run: chmod 600 ${q(env)}`);
+		const hits = keyLooking(dir); chk(!hits.length, 'no real-looking key in the app folder', `Remove the key from ${hits.map(q).join(', ')}; keys go in the keychain or ~/.config/${id}/.env.`);
 		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: bolt-apps lint ${q(dir)} --personal   and fix each line it prints.`);
 		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: bolt-apps verify ${q(dir)}   and fix each line it prints.`); }
 	} else console.log('\n(give an app folder to also check its key file, lint and verify: bolt-apps doctor <app-folder>)');

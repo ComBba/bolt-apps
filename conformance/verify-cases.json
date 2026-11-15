@@ -1,5 +1,5 @@
 {
-  "$comment": "Conformance cases for `bolt-apps verify` (YAML and script layout level). Each case edits the base app and names the finding codes verify must report. `bolt_error_contains` is the text Bolt's own parser puts in the load error shown under Settings, Desktop App, User Apps, so a launcher-side test can run the same cases through the real parser: the expected result there is Err containing that text, or Ok when expect is empty.",
+  "$comment": "Conformance cases for `bolt-apps verify` (YAML and script layout level). Each case edits the base app and names the finding codes verify must report. `bolt_error_contains` is the text Bolt's own parser puts in the load error shown under Settings, Desktop App, User Apps, so a launcher-side test can run the same cases through the real parser: the expected result there is Err containing that text, or Ok when expect is empty. Cases without bolt_error_contains are checked by the toolkit only (the launcher text is not recorded yet).",
   "base": {
     "utilities/eagle-info.yaml": "schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: \"Eagle info\"\nemits: Generic\nargs:\n  - { name: view, from: \"query.word(0)\", default: overview }\nbridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n",
     "scripts/eagle.py": "print('{}')\n"
@@ -655,7 +655,7 @@
       ]
     },
     {
-      "name": "script nested deeper than 8 folders",
+      "name": "script nested deeper than 8 folders (refused as a subfolder; the launcher refuses it as too deep)",
       "add": {
         "scripts/a/b/c/d/e/f/g/h/i/x.py": "x\n"
       },
@@ -745,6 +745,233 @@
       },
       "expect": [
         "action_url"
+      ]
+    },
+    {
+      "name": "public IPv6 link is allowed",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: u, kind: url, label: Open, url_template: \"https://[2001:4860:4860::8888]/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": []
+    },
+    {
+      "name": "IPv6 unique-local link",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: u, kind: url, label: Open, url_template: \"https://[fd00::1]/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_internal"
+      ]
+    },
+    {
+      "name": "link on another port is a warning",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: u, kind: url, label: Open, url_template: \"https://example.com:8443/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_port"
+      ]
+    },
+    {
+      "name": "link host that ends in .home.arpa",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: u, kind: url, label: Open, url_template: \"https://nas.home.arpa/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_internal"
+      ]
+    },
+    {
+      "name": "flow on an action (admin only)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: a, kind: composer, label: Copy, insert: x, flow: {} }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_admin_only"
+      ]
+    },
+    {
+      "name": "run action with a primary flag",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: r, kind: run, label: Go, query_template: refresh, primary: true }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_field"
+      ]
+    },
+    {
+      "name": "utility action with an insert",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: n, kind: utility, label: Go, target_chip: x, insert: y }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_field"
+      ]
+    },
+    {
+      "name": "target_chip on a composer",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: c, kind: composer, label: Copy, insert: x, target_chip: y }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_field"
+      ]
+    },
+    {
+      "name": "query_template on a url action",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: u, kind: url, label: Open, url_template: \"https://example.com/x\", query_template: z }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_field"
+      ]
+    },
+    {
+      "name": "run action id that is a built-in object name",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: isPrototypeOf, kind: run, label: Go, query_template: refresh }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_id"
+      ]
+    },
+    {
+      "name": "a composer action may use any id",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: toString, kind: composer, label: Copy, insert: x }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": []
+    },
+    {
+      "name": "cwd other than home",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  parse: json\n",
+            "  parse: json\n  cwd: /tmp\n"
+          ]
+        ]
+      },
+      "expect": [
+        "bridge_cwd"
+      ]
+    },
+    {
+      "name": "the same variable passed twice",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  parse: json\n",
+            "  parse: json\n  env_passthrough: [PGHOST, PGHOST]\n"
+          ]
+        ]
+      },
+      "expect": [
+        "env_passthrough_duplicate"
+      ]
+    },
+    {
+      "name": "input with an unknown type",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "inputs:\n  - { name: q, type: colour, label: Q }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "input_type"
+      ]
+    },
+    {
+      "name": "cards pane with layout tiles and no value",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  title_field: title\n",
+            "  title_field: title\n  right_widget:\n    kind: cards\n    mode: list_data\n    bind:\n      layout: tiles\n      title: x\n"
+          ]
+        ]
+      },
+      "expect": [
+        "right_widget_bind_unread"
+      ]
+    },
+    {
+      "name": "http header name with an underscore",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: http_local"
+          ],
+          [
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "http:\n  port: 8080\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\n  headers:\n    X_Bad: y\n"
+          ]
+        ]
+      },
+      "remove": [
+        "scripts/eagle.py"
+      ],
+      "expect": [
+        "http_header"
       ]
     }
   ]

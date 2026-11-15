@@ -60,7 +60,7 @@ test('env: secret-looking names, the benign list, exact ${env:NAME} values and t
 	assert.deepEqual(e('  env_passthrough: [MY_SETTING]\n'), ['env_not_allowed']);
 	assert.deepEqual(e('  env:\n    PGHOST: "${env:PGHOST}"\n'), []);
 	assert.ok(e('  env:\n    PGHOST: literal\n').includes('env_inline_value'));
-	assert.deepEqual(e(`  env_passthrough: [${Array.from({ length: 17 }, () => 'PGHOST').join(', ')}]\n`), ['env_passthrough_max']);
+	assert.deepEqual(e(`  env_passthrough: [${RULES.env.benign_passthrough.slice(0, 17).join(', ')}]\n`), ['env_passthrough_max']);
 });
 
 test('http_local: Bolt reserved ports, port 0, host and method', () => {
@@ -74,7 +74,8 @@ test('http_local: Bolt reserved ports, port 0, host and method', () => {
 test('actions: ids, kinds, needed fields, run template, icon allowlist, reserved labels, internal hosts', () => {
 	const a = (body) => codes(actionProblems(root(app(`actions:\n${body}\n`))));
 	assert.deepEqual(a('  - { id: copy, kind: composer, label: Copy, insert: "{{row.copy_text}}" }'), []);
-	assert.deepEqual(a('  - { id: constructor, kind: composer, label: Copy, insert: x }'), ['action_id']);
+	assert.deepEqual(a('  - { id: constructor, kind: run, label: Copy, query_template: go }'), ['action_id']);
+	assert.deepEqual(a('  - { id: constructor, kind: composer, label: Copy, insert: x }'), []);   // a plain manifest action may use any id
 	assert.deepEqual(a('  - { id: u, kind: url, label: Open }'), ['action_field']);
 	assert.deepEqual(a('  - { id: r, kind: run, label: Go, query_template: "x {{view}}" }'), ['run_action_template']);
 	assert.deepEqual(a('  - { id: c, kind: composer, label: Copy, insert: x, icon: skull }'), ['action_icon']);
@@ -120,7 +121,7 @@ test('link hosts are parsed: every spelling of a local or private address, useri
 	const bad = ['https://localhost./x', 'https://127.1/x', 'https://0x7f.0.0.1/x', 'https://[::1]/x', 'https://2130706433/x', 'https://0177.0.0.1/x', 'https://[::ffff:127.0.0.1]/x', 'https://0.0.0.0/x', 'https://intranet/x', 'https://a.localhost/x', 'https://printer.' + 'lo' + 'cal/x'];
 	for (const u of bad) assert.equal(hostProblem(u)?.code, 'action_url_internal', u);
 	for (const u of ['https://user@example.com/x', 'https://example.com@localhost/x', 'https://{{row.host}}/x']) assert.equal(hostProblem(u)?.code, 'action_url', u);
-	for (const u of ['https://example.com/x', 'https://sub.example.org:8443/a?b=1', 'https://8.8.8.8/x']) assert.equal(hostProblem(u), null, u);
+	for (const u of ['https://example.com/x', 'https://8.8.8.8/x']) assert.equal(hostProblem(u), null, u);
 });
 
 test('env: verify requires the value to be exactly ${env:KEY} and checks the variable named inside, whatever the key is called', async () => {
@@ -136,4 +137,18 @@ test('verify: a nested script is refused (script_subfolder) until the toolkit ca
 	const { checkManifests } = await import('../lib/verify.mjs');
 	const f = [{ path: 'utilities/demo.yaml', kind: 'user_utility', content: Buffer.from(app()) }, { path: 'scripts/x.py', kind: 'script', content: Buffer.from('print(1)\n') }, { path: 'scripts/lib/x.py', kind: 'script', content: Buffer.from('print(2)\n') }];
 	assert.ok(checkManifests(f, {}).findings.some((x) => x.code === 'script_subfolder'));
+});
+
+test('false errors are gone: lowercase http method, public IPv6 links, pre-release labels, plain composer ids', () => {
+	const h = (m) => `schema_version: 1\nruntime: http_local\nid: d\nchip: d\ntitle: D\nemits: Generic\nhttp:\n  port: 8080\n  request: { method: ${m}, path: /x }\n  parse: json\n  timeout_seconds: 5\npresentation:\n  widget: list\n`;
+	assert.deepEqual(codes(httpProblems(root(h('get')))), []);
+	assert.deepEqual(codes(httpProblems(root(h('DELETE')))), ['http_method_not_allowed']);
+	assert.equal(hostProblem('https://[2001:4860:4860::8888]/x'), null);
+	assert.equal(versionProblem('1.0.0-weird label!'), null);   // the launcher does not validate pre-release labels
+	assert.deepEqual(codes(actionProblems(root(app('actions:\n  - { id: toString, kind: composer, label: Copy, insert: x }\n')))), []);
+	assert.deepEqual(codes(actionProblems(root(app('actions:\n  - { id: __lookupGetter__, kind: run, label: Go, query_template: go }\n')))), ['action_id']);
+});
+
+test('layout: a file and a folder that differ only in letter case clash', () => {
+	assert.deepEqual(codes(layoutProblems(['Lib', 'lib/x.py'])), ['script_file_folder']);
 });

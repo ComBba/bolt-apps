@@ -55,6 +55,12 @@ export const FIXES = {
 	action_icon: 'Use one of the 37 footer icon names the message lists.',
 	action_label_reserved: 'Use a label that is not one of the launcher\'s reserved words.',
 	action_url: 'Write a literal host after https://.',
+	action_url_port: 'Use the https default port, or declare the site in bolt-app.json permissions as opens_links:host:port.',
+	action_admin_only: 'Remove flow and confirm: they are for admin-provisioned apps.',
+	input_type: 'Use text, number, date, select, toggle or secret.',
+	bridge_cwd: 'Use home, or leave cwd out.',
+	env_passthrough_duplicate: 'List each name once.',
+	http_header: 'Use a letters, digits and - header name, and ${env:NAME} only for a benign-list name.',
 	action_url_internal: 'Link to a public address, not a local or private one.',
 	view_arg_index: 'Bind the view to an earlier query word (0 to 8).',
 	script_name: 'Use only letters, digits, . _ and - in script names, with no leading or trailing dot. Rename the script.',
@@ -146,7 +152,7 @@ export function commandProblem(os, cmd) {
 // files: [{ path: 'utilities/x.yaml' | 'scripts/x.py', kind, content: Buffer }]
 export function checkManifests(files, opts = {}) {
 	const findings = [], apps = [], add = (...a) => findings.push(mk(...a));
-	const scripts = new Map(files.filter((f) => f.kind === 'script').map((f) => [path.basename(f.path), f.content]));
+	const scripts = new Map(files.filter((f) => f.kind === 'script').map((f) => [f.path.replace(/^scripts\//, ''), f.content]));   // keyed by the path under scripts/, so two files with one name cannot shadow each other
 	const used = new Set();
 	let unknownAssess = false;
 	for (const lp of layoutProblems([...files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, ''))])) add('error', lp.code, lp.message, 'scripts');
