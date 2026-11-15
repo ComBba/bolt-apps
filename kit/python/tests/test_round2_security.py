@@ -20,6 +20,21 @@ class RedactTree(unittest.TestCase):
             k.redact_tree({"u": text}, [KEY]); k.redact(text, [KEY])
             self.assertLess(time.time() - t, 3.0, label)
 
+    def test_long_credentials_are_hidden_whole(self):
+        secret = "Zq81x7LmP" * 600
+        got = k.redact_tree({"u": "https://a/x?token=%s&z=1" % secret}, [KEY])["u"]
+        self.assertNotIn("Zq81x7LmP", got); self.assertIn("z=1", got)
+        got = k.redact_tree({"u": "https://user:%s@host.example/path" % secret}, [KEY])["u"]
+        self.assertNotIn("Zq81x7LmP", got); self.assertIn("host.example/path", got)
+        got = k.redact("fetch https://u:%s@h.example/x failed" % secret, [KEY])
+        self.assertNotIn("Zq81x7LmP", got); self.assertIn("h.example/x failed", got)
+
+    def test_userinfo_with_several_at_signs(self):
+        got = k.redact_tree({"u": "https://me@corp:pa@ss@wd@host.example/p?q=a@b"}, [KEY])["u"]
+        self.assertEqual(got, "https://[hidden]@host.example/p?q=a@b")
+        self.assertEqual(k.redact_tree({"u": "see https://example.com/a@b here"}, [KEY])["u"], "see https://example.com/a@b here")
+        self.assertEqual(k.redact_tree({"u": "mail me@host.example"}, [KEY])["u"], "mail me@host.example")
+
     def test_case_hex_and_percent_forms(self):
         key = "Ab+/9zQx"
         for form in (key, key.upper(), key.lower(), "aB+/9zqX", key.encode().hex(), key.encode().hex().upper(), "Ab%2B%2F9zQx", "ab%2b%2f9zqx", "AB%2B%2F9ZQX"):

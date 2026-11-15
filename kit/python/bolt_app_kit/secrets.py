@@ -20,8 +20,10 @@ SERVICE_PREFIX = "bolt-app-"
 _NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}\Z")
 _APP = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}\Z")
 # Both patterns are bounded so a hostile answer cannot make them slow: the scheme is anchored (it cannot start in the middle of a run of scheme
-# characters) and at most 32 long, the user part at most 200, and the name runs around a credential word at most 40 each.
-_USERINFO = re.compile(r"(?i)(?<![A-Za-z0-9+.-])([a-z][a-z0-9+.-]{0,31}://)([^/\s@]{1,200})@")
+# characters) and at most 32 long, and the name runs around a credential word at most 40 each. Nothing caps a value or a user part: a cap that is
+# exceeded must hide more, never less.
+_SCHEME = re.compile(r"(?i)(?<![A-Za-z0-9+.-])[a-z][a-z0-9+.-]{0,31}://")
+_AUTH_END = re.compile(r"[/?#\s]")
 _QUERY_KEY = re.compile(r"(?i)([?&](?:[a-z_-]{0,40}(?:key|token|secret|pass(?:word)?|auth|sig(?:nature)?)[a-z_-]{0,40})=)[^&\s#]{1,2000}")
 MIN_REDACT = 3
 
@@ -146,6 +148,23 @@ def _forms(v):
     return sorted((x for x in ci if len(x) >= MIN_REDACT), key=len, reverse=True), sorted((x for x in exact if len(x) >= MIN_REDACT), key=len, reverse=True)
 
 
+def _hide_userinfo(t):
+    """Hide the user:password part of every scheme://user:password@host in t. A string scan, not a pattern: the authority runs to the first / ? # or
+    whitespace, and everything before the LAST @ in it is hidden, however long it is or how many @ it holds."""
+    out, pos = [], 0
+    for m in _SCHEME.finditer(t):
+        if m.start() < pos:
+            continue
+        a = m.end()
+        e = _AUTH_END.search(t, a)
+        e = e.start() if e else len(t)
+        at = t.rfind("@", a, e)
+        if at >= 0:
+            out.append(t[pos:a]); out.append("[hidden]"); pos = at
+    out.append(t[pos:])
+    return "".join(out)
+
+
 def redact(text, secrets=(), limit=None):
     """Text that is safe to show: each secret value (in the forms _forms lists), any user:password@ in a web address, and key-like query values
     (?api_key=..., ?token=...) are replaced. `secrets` is a list of values or Secret objects. This is the looser pattern, meant for error text."""
@@ -157,7 +176,7 @@ def redact(text, secrets=(), limit=None):
             t = re.sub("|".join(re.escape(f) for f in ci), "[hidden]", t, flags=re.I)
             for form in exact:
                 t = t.replace(form, "[hidden]")
-    t = _USERINFO.sub(r"\1[hidden]@", t)
+    t = _hide_userinfo(t)
     t = _QUERY_KEY.sub(r"\1[hidden]", t)
     return t if limit is None else t[:limit]
 
@@ -228,7 +247,7 @@ def redact_tree(value, secrets=(), auth_param=None, depth=0):
         if "%3" in t or "%2" in t:
             t = _PARAM_ENC.sub(sub.enc, t)
         if "://" in t and "@" in t:
-            t = _USERINFO.sub(r"\1[hidden]@", t)
+            t = _hide_userinfo(t)
         return t
 
     def walk(node, d):
