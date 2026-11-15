@@ -5,39 +5,665 @@
     "scripts/eagle.py": "print('{}')\n"
   },
   "cases": [
-    { "name": "the base app is clean", "expect": [] },
-    { "name": "variable inside double quotes", "edit": { "utilities/eagle-info.yaml": [["python3 {{scripts_dir}}/eagle.py {{view}}", "python3 \\\"{{scripts_dir}}/eagle.py\\\" {{view}}"]] }, "expect": ["command_variable_in_quotes"], "bolt_error_contains": "inside double quotes" },
-    { "name": "variable inside single quotes", "edit": { "utilities/eagle-info.yaml": [["\"python3 {{scripts_dir}}/eagle.py {{view}}\"", "\"python3 '{{scripts_dir}}/eagle.py' {{view}}\""]] }, "expect": ["command_variable_in_quotes"], "bolt_error_contains": "inside single quotes" },
-    { "name": "one closing brace", "edit": { "utilities/eagle-info.yaml": [["{{scripts_dir}}/eagle.py", "{{scripts_dir}/eagle.py"]] }, "expect": ["command_placeholder_malformed", "script_unused"], "bolt_error_contains": "malformed variable placeholder" },
-    { "name": "unterminated placeholder", "edit": { "utilities/eagle-info.yaml": [["{{view}}\"", "{{view\""]] }, "expect": ["command_placeholder_malformed"], "bolt_error_contains": "unterminated" },
-    { "name": "pipe in the command", "edit": { "utilities/eagle-info.yaml": [["eagle.py {{view}}\"", "eagle.py {{view}} | head\""]] }, "expect": ["command_shell_operator"], "bolt_error_contains": "forbidden shell metachar" },
-    { "name": "and-and in the command", "edit": { "utilities/eagle-info.yaml": [["eagle.py {{view}}\"", "eagle.py && echo hi\""]] }, "expect": ["command_shell_operator"], "bolt_error_contains": "forbidden shell metachar" },
-    { "name": "unbalanced quote", "edit": { "utilities/eagle-info.yaml": [["eagle.py {{view}}\"", "eagle.py 'x\""]] }, "expect": ["command_not_argv"], "bolt_error_contains": "not argv-splittable" },
-    { "name": "no command for any OS", "edit": { "utilities/eagle-info.yaml": [["    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n", ""]] }, "expect": ["command_missing", "script_unused"], "bolt_error_contains": "bridge.command must define" },
-    { "name": "relative script path", "edit": { "utilities/eagle-info.yaml": [["{{scripts_dir}}/eagle.py", "scripts/eagle.py"]] }, "expect": ["script_path_relative", "script_unused"] },
-    { "name": "script run directly without a shebang", "edit": { "utilities/eagle-info.yaml": [["python3 {{scripts_dir}}/eagle.py", "{{scripts_dir}}/eagle.py"]] }, "expect": ["script_no_shebang"] },
-    { "name": "script named in the app is not in the pack", "remove": ["scripts/eagle.py"], "expect": ["script_missing"] },
-    { "name": "script no app runs", "add": { "scripts/extra.py": "x\n" }, "expect": ["script_unused"] },
-    { "name": "script in a folder", "add": { "scripts/lib/util.py": "x\n" }, "expect": ["script_subfolder"] },
-    { "name": "script with a space in its name", "add": { "scripts/a b.py": "x\n" }, "expect": ["script_name"] },
-    { "name": "parse mode not accepted", "edit": { "utilities/eagle-info.yaml": [["parse: json", "parse: xml"]] }, "expect": ["parse_not_allowed"], "bolt_error_contains": "bridge.parse" },
-    { "name": "timeout too long", "edit": { "utilities/eagle-info.yaml": [["timeout_seconds: 20", "timeout_seconds: 300"]] }, "expect": ["timeout_out_of_range"], "bolt_error_contains": "timeout_seconds must be 1..=60" },
-    { "name": "inline env value", "edit": { "utilities/eagle-info.yaml": [["  parse: json", "  env:\n    EAGLE_KEY: abc123\n  parse: json"]] }, "expect": ["env_inline_value"], "bolt_error_contains": "bridge.env" },
-    { "name": "unknown top-level key", "edit": { "utilities/eagle-info.yaml": [["emits: Generic", "emits: Generic\nversion: 2"]] }, "expect": ["yaml_key_unknown"], "bolt_error_contains": "unknown field" },
-    { "name": "admin-only key", "edit": { "utilities/eagle-info.yaml": [["emits: Generic", "emits: Generic\nscopes: [read]"]] }, "expect": ["yaml_admin_only_key"], "bolt_error_contains": "admin-only field" },
-    { "name": "missing required key", "edit": { "utilities/eagle-info.yaml": [["chip: eagle\n", ""]] }, "expect": ["yaml_key_missing"], "bolt_error_contains": "missing field" },
-    { "name": "schema_version 9", "edit": { "utilities/eagle-info.yaml": [["schema_version: 1", "schema_version: 9"]] }, "expect": ["schema_version_unsupported"], "bolt_error_contains": "schema_version must be" },
-    { "name": "runtime Bolt does not know", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: shell"]] }, "expect": ["runtime_not_allowed"], "bolt_error_contains": "runtime must be one of" },
-    { "name": "id with capitals", "edit": { "utilities/eagle-info.yaml": [["id: eagle-info", "id: Eagle_Info"]] }, "expect": ["id_invalid"], "bolt_error_contains": "id must be lowercase-kebab" },
-    { "name": "chip with a space", "edit": { "utilities/eagle-info.yaml": [["chip: eagle", "chip: \"my eagle\""]] }, "expect": ["chip_invalid"], "bolt_error_contains": "chip must be lowercase-kebab" },
-    { "name": "empty title", "edit": { "utilities/eagle-info.yaml": [["title: \"Eagle info\"", "title: \"\""]] }, "expect": ["title_empty"], "bolt_error_contains": "title must be non-empty" },
-    { "name": "emits a kind Bolt does not know", "edit": { "utilities/eagle-info.yaml": [["emits: Generic", "emits: Bird"]] }, "expect": ["emits_not_allowed"], "bolt_error_contains": "emits" },
-    { "name": "widget not accepted", "edit": { "utilities/eagle-info.yaml": [["widget: list", "widget: chart"]] }, "expect": ["widget_not_allowed"], "bolt_error_contains": "presentation.widget" },
-    { "name": "bridge runtime without a bridge block", "edit": { "utilities/eagle-info.yaml": [["bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n", ""]] }, "expect": ["block_missing", "script_unused"], "bolt_error_contains": "requires a `bridge` block" },
-    { "name": "transform runtime with a bridge block", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: transform"]] }, "expect": ["block_missing", "block_not_allowed"], "bolt_error_contains": "transform" },
-    { "name": "args from something other than query.word", "edit": { "utilities/eagle-info.yaml": [["query.word(0)", "clipboard"]] }, "expect": ["args_from_unsupported"], "bolt_error_contains": "unsupported" },
-    { "name": "http_local to a remote host", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: http_local"], ["bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n", "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"]] }, "remove": ["scripts/eagle.py"], "expect": ["http_host_not_loopback"], "bolt_error_contains": "not a loopback address" },
-    { "name": "http_local with a bad method and path", "edit": { "utilities/eagle-info.yaml": [["runtime: bridge", "runtime: http_local"], ["bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n", "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n"]] }, "remove": ["scripts/eagle.py"], "expect": ["http_method_not_allowed", "http_path_invalid"], "bolt_error_contains": "http.request" },
-    { "name": "action kind Bolt does not know", "edit": { "utilities/eagle-info.yaml": [["presentation:", "actions:\n  - { id: a, kind: shell, label: A }\npresentation:"]] }, "expect": ["action_not_allowed"], "bolt_error_contains": "action" }
+    {
+      "name": "the base app is clean",
+      "expect": []
+    },
+    {
+      "name": "variable inside double quotes",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "python3 {{scripts_dir}}/eagle.py {{view}}",
+            "python3 \\\"{{scripts_dir}}/eagle.py\\\" {{view}}"
+          ]
+        ]
+      },
+      "expect": [
+        "command_variable_in_quotes"
+      ],
+      "bolt_error_contains": "inside double quotes"
+    },
+    {
+      "name": "variable inside single quotes",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "\"python3 {{scripts_dir}}/eagle.py {{view}}\"",
+            "\"python3 '{{scripts_dir}}/eagle.py' {{view}}\""
+          ]
+        ]
+      },
+      "expect": [
+        "command_variable_in_quotes"
+      ],
+      "bolt_error_contains": "inside single quotes"
+    },
+    {
+      "name": "one closing brace",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "{{scripts_dir}}/eagle.py",
+            "{{scripts_dir}/eagle.py"
+          ]
+        ]
+      },
+      "expect": [
+        "command_placeholder_malformed",
+        "script_unused"
+      ],
+      "bolt_error_contains": "malformed variable placeholder"
+    },
+    {
+      "name": "unterminated placeholder",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "{{view}}\"",
+            "{{view\""
+          ]
+        ]
+      },
+      "expect": [
+        "command_placeholder_malformed"
+      ],
+      "bolt_error_contains": "unterminated"
+    },
+    {
+      "name": "pipe in the command",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "eagle.py {{view}}\"",
+            "eagle.py {{view}} | head\""
+          ]
+        ]
+      },
+      "expect": [
+        "command_shell_operator"
+      ],
+      "bolt_error_contains": "forbidden shell metachar"
+    },
+    {
+      "name": "and-and in the command",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "eagle.py {{view}}\"",
+            "eagle.py && echo hi\""
+          ]
+        ]
+      },
+      "expect": [
+        "command_shell_operator"
+      ],
+      "bolt_error_contains": "forbidden shell metachar"
+    },
+    {
+      "name": "unbalanced quote",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "eagle.py {{view}}\"",
+            "eagle.py 'x\""
+          ]
+        ]
+      },
+      "expect": [
+        "command_not_argv"
+      ],
+      "bolt_error_contains": "not argv-splittable"
+    },
+    {
+      "name": "no command for any OS",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n",
+            ""
+          ]
+        ]
+      },
+      "expect": [
+        "command_missing",
+        "script_unused"
+      ],
+      "bolt_error_contains": "bridge.command must define"
+    },
+    {
+      "name": "relative script path",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "{{scripts_dir}}/eagle.py",
+            "scripts/eagle.py"
+          ]
+        ]
+      },
+      "expect": [
+        "script_path_relative",
+        "script_unused"
+      ]
+    },
+    {
+      "name": "script run directly without a shebang",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "python3 {{scripts_dir}}/eagle.py",
+            "{{scripts_dir}}/eagle.py"
+          ]
+        ]
+      },
+      "expect": [
+        "script_no_shebang"
+      ]
+    },
+    {
+      "name": "script named in the app is not in the pack",
+      "remove": [
+        "scripts/eagle.py"
+      ],
+      "expect": [
+        "script_missing"
+      ]
+    },
+    {
+      "name": "script no app runs",
+      "add": {
+        "scripts/extra.py": "x\n"
+      },
+      "expect": [
+        "script_unused"
+      ]
+    },
+    {
+      "name": "script in a folder (nested folders install fine; it is only unused)",
+      "add": {
+        "scripts/lib/util.py": "x\n"
+      },
+      "expect": [
+        "script_unused"
+      ]
+    },
+    {
+      "name": "script with a space in its name",
+      "add": {
+        "scripts/a b.py": "x\n"
+      },
+      "expect": [
+        "script_name"
+      ]
+    },
+    {
+      "name": "parse mode not accepted",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "parse: json",
+            "parse: xml"
+          ]
+        ]
+      },
+      "expect": [
+        "parse_not_allowed"
+      ],
+      "bolt_error_contains": "bridge.parse"
+    },
+    {
+      "name": "timeout too long",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "timeout_seconds: 20",
+            "timeout_seconds: 300"
+          ]
+        ]
+      },
+      "expect": [
+        "timeout_out_of_range"
+      ],
+      "bolt_error_contains": "timeout_seconds must be 1..=60"
+    },
+    {
+      "name": "inline env value",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  parse: json",
+            "  env:\n    EAGLE_KEY: abc123\n  parse: json"
+          ]
+        ]
+      },
+      "expect": [
+        "env_inline_value",
+        "env_secret_name"
+      ],
+      "bolt_error_contains": "bridge.env"
+    },
+    {
+      "name": "unknown top-level key",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "emits: Generic",
+            "emits: Generic\nversion: 2"
+          ]
+        ]
+      },
+      "expect": [
+        "yaml_key_unknown"
+      ],
+      "bolt_error_contains": "unknown field"
+    },
+    {
+      "name": "admin-only key",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "emits: Generic",
+            "emits: Generic\nscopes: [read]"
+          ]
+        ]
+      },
+      "expect": [
+        "yaml_admin_only_key"
+      ],
+      "bolt_error_contains": "admin-only field"
+    },
+    {
+      "name": "missing required key",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "chip: eagle\n",
+            ""
+          ]
+        ]
+      },
+      "expect": [
+        "yaml_key_missing"
+      ],
+      "bolt_error_contains": "missing field"
+    },
+    {
+      "name": "schema_version 9",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "schema_version: 1",
+            "schema_version: 9"
+          ]
+        ]
+      },
+      "expect": [
+        "schema_version_unsupported"
+      ],
+      "bolt_error_contains": "schema_version must be"
+    },
+    {
+      "name": "runtime Bolt does not know",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: shell"
+          ]
+        ]
+      },
+      "expect": [
+        "runtime_not_allowed"
+      ],
+      "bolt_error_contains": "runtime must be one of"
+    },
+    {
+      "name": "id with capitals",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "id: eagle-info",
+            "id: Eagle_Info"
+          ]
+        ]
+      },
+      "expect": [
+        "id_invalid"
+      ],
+      "bolt_error_contains": "id must be lowercase-kebab"
+    },
+    {
+      "name": "chip with a space",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "chip: eagle",
+            "chip: \"my eagle\""
+          ]
+        ]
+      },
+      "expect": [
+        "chip_invalid"
+      ],
+      "bolt_error_contains": "chip must be lowercase-kebab"
+    },
+    {
+      "name": "empty title",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "title: \"Eagle info\"",
+            "title: \"\""
+          ]
+        ]
+      },
+      "expect": [
+        "title_empty"
+      ],
+      "bolt_error_contains": "title must be non-empty"
+    },
+    {
+      "name": "emits a kind Bolt does not know",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "emits: Generic",
+            "emits: Bird"
+          ]
+        ]
+      },
+      "expect": [
+        "emits_not_allowed"
+      ],
+      "bolt_error_contains": "emits"
+    },
+    {
+      "name": "widget not accepted",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "widget: list",
+            "widget: chart"
+          ]
+        ]
+      },
+      "expect": [
+        "widget_not_allowed"
+      ],
+      "bolt_error_contains": "presentation.widget"
+    },
+    {
+      "name": "bridge runtime without a bridge block",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            ""
+          ]
+        ]
+      },
+      "expect": [
+        "block_missing",
+        "script_unused"
+      ],
+      "bolt_error_contains": "requires a `bridge` block"
+    },
+    {
+      "name": "transform runtime with a bridge block",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: transform"
+          ]
+        ]
+      },
+      "expect": [
+        "block_missing",
+        "block_not_allowed"
+      ],
+      "bolt_error_contains": "transform"
+    },
+    {
+      "name": "args from something other than query.word",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "query.word(0)",
+            "clipboard"
+          ]
+        ]
+      },
+      "expect": [
+        "args_from_unsupported"
+      ],
+      "bolt_error_contains": "unsupported"
+    },
+    {
+      "name": "http_local to a remote host",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: http_local"
+          ],
+          [
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"
+          ]
+        ]
+      },
+      "remove": [
+        "scripts/eagle.py"
+      ],
+      "expect": [
+        "http_host_not_loopback",
+        "missing_field",
+        "timeout_default"
+      ],
+      "bolt_error_contains": "not a loopback address"
+    },
+    {
+      "name": "http_local with a bad method and path",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: http_local"
+          ],
+          [
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n"
+          ]
+        ]
+      },
+      "remove": [
+        "scripts/eagle.py"
+      ],
+      "expect": [
+        "http_method_not_allowed",
+        "http_path_invalid",
+        "missing_field",
+        "timeout_default"
+      ],
+      "bolt_error_contains": "http.request"
+    },
+    {
+      "name": "action kind Bolt does not know",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:",
+            "actions:\n  - { id: a, kind: shell, label: A }\npresentation:"
+          ]
+        ]
+      },
+      "expect": [
+        "action_not_allowed"
+      ],
+      "bolt_error_contains": "action"
+    },
+    {
+      "name": "nested unknown key in bridge",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  parse: json\n",
+            "  parse: json\n  bogus_key: 1\n"
+          ]
+        ]
+      },
+      "expect": [
+        "unknown_field"
+      ],
+      "bolt_error_contains": "unknown field `bogus_key`"
+    },
+    {
+      "name": "bridge without parse",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  parse: json\n",
+            ""
+          ]
+        ]
+      },
+      "expect": [
+        "missing_field"
+      ],
+      "bolt_error_contains": "missing field `parse`"
+    },
+    {
+      "name": "bind key the pane does not read (a pack is always strict)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  title_field: title\n",
+            "  title_field: title\n  right_widget:\n    kind: cards\n    mode: list_data\n    bind:\n      bogus_key: x\n"
+          ]
+        ]
+      },
+      "expect": [
+        "right_widget_bind_unread"
+      ],
+      "bolt_error_contains": "unknown key for a cards pane"
+    },
+    {
+      "name": "timeout not set (allowed, runs 10 s)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  timeout_seconds: 20\n",
+            ""
+          ]
+        ]
+      },
+      "expect": [
+        "timeout_default"
+      ]
+    },
+    {
+      "name": "env value with a secret-looking name",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  parse: json\n",
+            "  parse: json\n  env:\n    GITHUB_TOKEN: \"${env:GITHUB_TOKEN}\"\n"
+          ]
+        ]
+      },
+      "expect": [
+        "env_secret_name"
+      ],
+      "bolt_error_contains": "never forwarded"
+    },
+    {
+      "name": "env value that is not exactly ${env:NAME}",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "  parse: json\n",
+            "  parse: json\n  env:\n    PGHOST: literal\n"
+          ]
+        ]
+      },
+      "expect": [
+        "env_inline_value"
+      ],
+      "bolt_error_contains": "must be exactly one"
+    },
+    {
+      "name": "http port reserved by Bolt",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: http_local"
+          ],
+          [
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "http:\n  port: 13020\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\n"
+          ]
+        ]
+      },
+      "expect": [
+        "http_port_reserved",
+        "script_unused"
+      ],
+      "bolt_error_contains": "one of Bolt's own local services"
+    },
+    {
+      "name": "url action to localhost",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: open, kind: url, label: Open, url_template: \"https://localhost/x\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_url_internal"
+      ]
+    },
+    {
+      "name": "run action with braces in the template",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: go, kind: run, label: Go, query_template: \"x {{view}}\" }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "run_action_template"
+      ]
+    },
+    {
+      "name": "action icon not on the allowlist",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "presentation:\n",
+            "actions:\n  - { id: c, kind: composer, label: Copy, insert: x, icon: skull }\npresentation:\n"
+          ]
+        ]
+      },
+      "expect": [
+        "action_icon"
+      ]
+    },
+    {
+      "name": "script nested deeper than 8 folders",
+      "add": {
+        "scripts/a/b/c/d/e/f/g/h/i/x.py": "x\n"
+      },
+      "expect": [
+        "script_depth",
+        "script_unused"
+      ],
+      "bolt_error_contains": "nested more than 8 folders"
+    }
   ]
 }

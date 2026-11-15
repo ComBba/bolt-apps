@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
 import { get, str } from './yamlsubset.mjs';
+import { layoutProblems } from './boltrules.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const RULES = JSON.parse(fs.readFileSync(path.join(here, '..', '..', 'schema', 'install-rules.json'), 'utf8'));
@@ -31,7 +32,31 @@ export const FIXES = {
 	entry_kind_skipped: 'Dropping a pack on the launcher installs User Apps and scripts only. Install snippets and search engines from Bolt Apps instead.',
 	entry_kind_unknown: 'Bolt does not install this kind of file from a pack. Remove it from the app folder.',
 	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with bolt-apps pack.',
-	script_subfolder: 'Bolt installs every script into one flat scripts folder, so a script that imports from a folder breaks. Put each script directly in scripts/ as a single file (no vendored library folders).',
+	script_depth: 'Use at most 8 folder levels under scripts/.',
+	script_path: 'Remove the . or .. part from the script path.',
+	script_case_clash: 'Rename one of the two files so they differ by more than letter case.',
+	script_file_folder: 'Rename the file or the folder so one name is not both.',
+	unknown_field: 'Remove the field, or fix its spelling: the launcher refuses an app file with a field it does not know (it names the allowed fields).',
+	missing_field: 'Add the required field named in the message.',
+	bind_invalid: 'Fix the bind value as the message says (type, list or enum).',
+	env_passthrough_max: 'List at most 16 names in env_passthrough.',
+	env_name: 'Use an uppercase name of letters, digits and _.',
+	env_secret_name: 'Remove it: keys belong in the keychain or ~/.config/<id>/.env, read inside the script.',
+	env_not_allowed: 'Use only a variable on the launcher\'s benign list, or read the value another way.',
+	env_inline_value: 'Write the value exactly as ${env:NAME}.',
+	timeout_default: 'Set bridge.timeout_seconds (1 to 60) so a slow app is not stopped at 10 seconds.',
+	http_port: 'Use a port from 1 to 65535.',
+	http_port_reserved: 'Pick a port outside 13017-13027 and 15432-15441.',
+	http_parse: 'Use json, lines or raw.',
+	action_id: 'Use a plain id of letters, digits, _ and -, not repeated.',
+	action_kind: 'Use url, composer, utility or run.',
+	action_field: 'Add the field this action kind needs.',
+	action_primary: 'Mark at most one action primary.',
+	action_icon: 'Use one of the 37 footer icon names the message lists.',
+	action_label_reserved: 'Use a label that is not one of the launcher\'s reserved words.',
+	action_url: 'Write a literal host after https://.',
+	action_url_internal: 'Link to a public address, not a local or private one.',
+	view_arg_index: 'Bind the view to an earlier query word (0 to 8).',
 	script_name: 'Use only letters, digits, . _ and - in script names, with no leading or trailing dot. Rename the script.',
 	script_missing: 'The app file runs a script that is not in the pack. Add the file to scripts/ or fix the name after {{scripts_dir}}/.',
 	script_unused: 'No app file runs this script. Remove it or reference it as {{scripts_dir}}/<name> in the command.',
@@ -124,15 +149,15 @@ export function checkManifests(files, opts = {}) {
 	const scripts = new Map(files.filter((f) => f.kind === 'script').map((f) => [path.basename(f.path), f.content]));
 	const used = new Set();
 	let unknownAssess = false;
+	for (const lp of layoutProblems([...files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, ''))])) add('error', lp.code, lp.message, 'scripts');
 	for (const f of files.filter((x) => x.kind === 'script')) {
 		const rel = f.path.replace(/^scripts\//, '');
-		if (rel.includes('/')) add('error', 'script_subfolder', `${f.path} is inside a folder; Bolt installs scripts flat, so it would not be found where the app imports it`, f.path);
-		else if (!plainName(rel)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
+		if (!rel.split('/').every(plainName)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
 	}
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
 		const esc_ = escapeProblem(y); if (esc_) add('error', esc_.code, esc_.message, file, 1);
-		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms, platformsUnknown: opts.platformsUnknown }); apps.push({ ...a, file });
+		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms, platformsUnknown: opts.platformsUnknown, pack: true }); apps.push({ ...a, file });
 		for (const r of a.refs) used.add(r);
 		if (a.unknown) { add('error', 'yaml_unreadable_here', `this tool cannot interpret ${a.why}; Bolt may read it differently`, file, 1); unknownAssess = true; continue; }
 		const root = a.tree, E = (code, msg, line) => add('error', code, msg, file, line || 1);
@@ -180,7 +205,9 @@ export function checkManifests(files, opts = {}) {
 			const env = val(bridge, 'env'); if (env && env.t === 'm') for (const e of env.entries) if (e.value.t !== 's' || !/^\$\{env:[A-Z][A-Z0-9_]{0,63}\}$/.test(e.value.v)) E('env_inline_value', `bridge.env.${e.key} value must be exactly \${env:NAME}`, e.line ?? ln(bridge, 'env', bl));
 		}
 		const args = val(root, 'args'); for (const it of args?.items || []) { const fr = S(it, 'from'); if (fr !== undefined && !/^query\.word\(\s*\d+\s*\)$/.test(fr.trim())) E('args_from_unsupported', `args[].from "${fr}" is not supported`, ln(root, 'args')); }
-		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed')) add(pr.level || 'error', pr.code, pr.message, file, ln(root, 'actions') || 1);
+		// checks verify already makes with its own codes (top-level keys, timeout range, inline env, loopback host, method) are not reported twice
+		const DUP = new Set(['env_inline_value', 'timeout_out_of_range', 'http_host_not_loopback', 'http_method_not_allowed', 'action_kind', 'http_parse']);
+		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed' && !DUP.has(x.code) && !(/^(unknown_field|missing_field)$/.test(x.code) && /^the app file/.test(x.message)) && !(x.code === 'missing_field' && /"(bridge|http)" is required/.test(x.message)))) add(pr.level || 'error', pr.code, pr.message, file, ln(root, 'actions') || 1);
 	}
 	for (const r of used) if (!scripts.has(r)) add('error', 'script_missing', `an app runs {{scripts_dir}}/${r} but the pack has no scripts/${r}`, `scripts/${r}`);
 	const usedAll = dataFilesUsed(used, [...scripts.keys()], (n) => scripts.get(n));
@@ -192,7 +219,7 @@ export function checkManifests(files, opts = {}) {
 	// what the install prompt's text search will list for the person installing: the manifests and the scripts they run
 	const scanned = [...usedAll].filter((n) => scripts.has(n) && /\.(py|sh|js|mjs|rb|ps1)$/.test(n)).map((n) => ({ name: n, text: scripts.get(n).toString('utf8') }));
 	for (const f of files.filter((x) => x.kind === 'user_utility')) scanned.push({ name: path.basename(f.path), text: f.content.toString('utf8') });
-	for (const m of scanMentions(scanned)) add('warning', 'script_mentions', `the install prompt will list: ${m}. A courtesy search, not a verdict: change the text if it is not what the app does`, 'scripts');
+	for (const m of scanMentions(scanned)) add('warning', 'script_mentions', `the install prompt will list: ${m}. A courtesy search, not a verdict: change the text if it is not what the app does${/keychain/.test(m) && /bolt_app_kit\.py/.test(m) ? '. The vendored kit contains the keychain reader; it runs only if your script calls kit.get_secret. The prompt lists it either way, and that is true of what the file can do' : ''}`, 'scripts');
 	return { findings: dedupe(findings), apps, unknownAssess };
 }
 const dedupe = (fs_) => { const seen = new Set(); return fs_.filter((f) => { const k = `${f.code}|${f.file}|${f.message}`; if (seen.has(k)) return false; seen.add(k); return true; }); };

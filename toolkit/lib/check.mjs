@@ -4,6 +4,7 @@
 // schema validation of every output; footer button and label limits; the numeric tile rule; text safety scan;
 // vendored-kit divergence guard. Not built: see docs/kit-design.md, section "What check does not do".
 import fs from 'node:fs';
+import { RULES } from './boltrules.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -352,7 +353,7 @@ export async function checkApp(appDir, opts = {}) {
 			makeStubs(stubDir, appDir, osName, kase, files);
 			// Sample mode: a case (or check.json as a whole) sets "fixture": true, so the script runs on its recorded answers while the shipped app stays live.
 			const sample = kase.fixture ?? cfg.fixture;
-			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), PATH: stubDir, HOME: home, ...(sample === undefined ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
+			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...(sample === undefined ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
 			const ex = kase.expect || {};
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;

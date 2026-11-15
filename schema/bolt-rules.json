@@ -1,0 +1,842 @@
+{
+ "$comment": "The one rules file the toolkit, the kit, the schema, ENGINE.md and the drift tests read. Values come from the launcher's own checks at the time of writing; the launcher side should emit or compare the same file (see docs/verify-rules.md). Add a new widget kind in 'right_widget.bind' and 'widget_kinds' only.",
+ "bolt_rules_version": 2,
+ "schema_versions": [
+  1,
+  2
+ ],
+ "timeouts": {
+  "default_s": 10,
+  "min_s": 1,
+  "max_s": 60
+ },
+ "widget_kinds": [
+  "card",
+  "map",
+  "image",
+  "calc",
+  "color",
+  "weather",
+  "date",
+  "markdown",
+  "entity_preview",
+  "chart",
+  "table",
+  "cards",
+  "detail",
+  "json_tree",
+  "diff",
+  "image_grid"
+ ],
+ "no_app_data_kinds": [
+  "image",
+  "color",
+  "weather",
+  "date",
+  "calc"
+ ],
+ "right_widget": {
+  "modes": [
+   "selected_row",
+   "list_data"
+  ],
+  "bind": {
+   "card": {
+    "title": {
+     "t": "text",
+     "max": 4096
+    },
+    "subtitle": {
+     "t": "text",
+     "max": 4096
+    },
+    "actions": {
+     "t": "textList",
+     "items": 16,
+     "max": 200
+    }
+   },
+   "markdown": {
+    "title": {
+     "t": "text",
+     "max": 4096
+    },
+    "subtitle": {
+     "t": "text",
+     "max": 4096
+    },
+    "body": {
+     "t": "text",
+     "max": 16384
+    },
+    "actions": {
+     "t": "textList",
+     "items": 16,
+     "max": 200
+    }
+   },
+   "entity_preview": {
+    "tiles_above": {
+     "t": "map",
+     "keys": {
+      "value": {
+       "t": "text",
+       "max": 4096,
+       "required": true
+      },
+      "title": {
+       "t": "text",
+       "max": 4096
+      },
+      "subtitle": {
+       "t": "text",
+       "max": 4096
+      },
+      "badge": {
+       "t": "text",
+       "max": 4096
+      },
+      "footer": {
+       "t": "text",
+       "max": 4096
+      },
+      "unit": {
+       "t": "text",
+       "max": 4096
+      },
+      "delta": {
+       "t": "text",
+       "max": 4096
+      },
+      "delta_label": {
+       "t": "text",
+       "max": 4096
+      },
+      "max": {
+       "t": "textOrNumber",
+       "max": 4096
+      },
+      "min": {
+       "t": "textOrNumber",
+       "max": 4096
+      },
+      "trend": {
+       "t": "text",
+       "max": 4096
+      }
+     }
+    },
+    "title": {
+     "t": "text",
+     "max": 4096
+    },
+    "subtitle": {
+     "t": "text",
+     "max": 4096
+    },
+    "image_url": {
+     "t": "text",
+     "max": 4096
+    },
+    "fields": {
+     "t": "list",
+     "keys": {
+      "label": {
+       "t": "text",
+       "max": 200
+      },
+      "value": {
+       "t": "text",
+       "max": 4096
+      },
+      "kind": {
+       "t": "enum",
+       "values": [
+        "text",
+        "badge",
+        "chips",
+        "branch",
+        "diff"
+       ]
+      },
+      "tone": {
+       "t": "enum",
+       "values": [
+        "merged",
+        "open",
+        "closed",
+        "draft",
+        "success",
+        "warn",
+        "danger",
+        "neutral"
+       ]
+      }
+     },
+     "items": 40
+    },
+    "body": {
+     "t": "text",
+     "max": 16384
+    },
+    "actions": {
+     "t": "textList",
+     "items": 16,
+     "max": 200
+    }
+   },
+   "chart": {
+    "type": {
+     "t": "enum",
+     "values": [
+      "line",
+      "bar",
+      "sparkline"
+     ]
+    },
+    "x": {
+     "t": "text",
+     "max": 200
+    },
+    "y": {
+     "t": "text",
+     "max": 200
+    },
+    "values": {
+     "t": "text",
+     "max": 200
+    },
+    "label": {
+     "t": "text",
+     "max": 200
+    },
+    "color": {
+     "t": "enum",
+     "values": [
+      "accent",
+      "muted"
+     ]
+    },
+    "unit": {
+     "t": "text",
+     "max": 200
+    }
+   },
+   "table": {
+    "columns": {
+     "t": "list",
+     "keys": {
+      "field": {
+       "t": "text",
+       "max": 200,
+       "required": true
+      },
+      "label": {
+       "t": "text",
+       "max": 200
+      },
+      "align": {
+       "t": "enum",
+       "values": [
+        "left",
+        "right",
+        "center"
+       ]
+      },
+      "total": {
+       "t": "enum",
+       "values": [
+        "sum",
+        "avg",
+        "min",
+        "max",
+        "count",
+        "none"
+       ]
+      },
+      "format": {
+       "t": "enum",
+       "values": [
+        "text",
+        "number",
+        "percent",
+        "currency",
+        "date"
+       ]
+      },
+      "unit": {
+       "t": "text",
+       "max": 200
+      }
+     },
+     "items": 40
+    },
+    "sort": {
+     "t": "map",
+     "keys": {
+      "field": {
+       "t": "text",
+       "max": 200,
+       "required": true
+      },
+      "dir": {
+       "t": "enum",
+       "values": [
+        "asc",
+        "desc"
+       ]
+      }
+     }
+    },
+    "totals_label": {
+     "t": "text",
+     "max": 200
+    }
+   },
+   "cards": {
+    "title": {
+     "t": "text",
+     "max": 4096
+    },
+    "subtitle": {
+     "t": "text",
+     "max": 4096
+    },
+    "badge": {
+     "t": "text",
+     "max": 4096
+    },
+    "image": {
+     "t": "text",
+     "max": 4096
+    },
+    "footer": {
+     "t": "text",
+     "max": 4096
+    },
+    "layout": {
+     "t": "enum",
+     "values": [
+      "grid",
+      "tiles"
+     ]
+    },
+    "value": {
+     "t": "text",
+     "max": 4096
+    },
+    "unit": {
+     "t": "text",
+     "max": 4096
+    },
+    "delta": {
+     "t": "text",
+     "max": 4096
+    },
+    "delta_label": {
+     "t": "text",
+     "max": 4096
+    },
+    "max": {
+     "t": "textOrNumber",
+     "max": 4096
+    },
+    "min": {
+     "t": "textOrNumber",
+     "max": 4096
+    },
+    "trend": {
+     "t": "text",
+     "max": 4096
+    }
+   },
+   "detail": {
+    "title": {
+     "t": "text",
+     "max": 4096
+    },
+    "subtitle": {
+     "t": "text",
+     "max": 4096
+    },
+    "fields": {
+     "t": "list",
+     "keys": {
+      "label": {
+       "t": "text",
+       "max": 200
+      },
+      "value": {
+       "t": "text",
+       "max": 4096
+      },
+      "copy": {
+       "t": "bool"
+      }
+     },
+     "items": 40
+    }
+   },
+   "json_tree": {
+    "source": {
+     "t": "text",
+     "max": 200
+    }
+   },
+   "diff": {
+    "left": {
+     "t": "text",
+     "max": 4096
+    },
+    "right": {
+     "t": "text",
+     "max": 4096
+    },
+    "leftLabel": {
+     "t": "text",
+     "max": 200
+    },
+    "rightLabel": {
+     "t": "text",
+     "max": 200
+    }
+   },
+   "image_grid": {
+    "src": {
+     "t": "text",
+     "max": 4096
+    },
+    "caption": {
+     "t": "text",
+     "max": 4096
+    },
+    "alt": {
+     "t": "text",
+     "max": 4096
+    },
+    "columns": {
+     "t": "int",
+     "lo": 1,
+     "hi": 8
+    }
+   },
+   "map": {},
+   "image": {},
+   "calc": {},
+   "color": {},
+   "weather": {},
+   "date": {}
+  },
+  "strict_from_schema_version": 2,
+  "packs_always_strict": true
+ },
+ "row_pane_kinds": [
+  "entity_preview",
+  "detail",
+  "markdown",
+  "json_tree",
+  "chart",
+  "table",
+  "card"
+ ],
+ "views": {
+  "max": 8,
+  "name_pattern": "^[a-z][a-z0-9_-]{0,23}$",
+  "reserved_names": [
+   "constructor",
+   "prototype"
+  ],
+  "nav_word_max_index": 8
+ },
+ "nav_token_pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$",
+ "env": {
+  "benign_passthrough": [
+   "GH_HOST",
+   "GH_REPO",
+   "GITLAB_HOST",
+   "DOCKER_CONTEXT",
+   "DOCKER_TLS_VERIFY",
+   "AWS_PROFILE",
+   "AWS_REGION",
+   "AWS_DEFAULT_REGION",
+   "AWS_CA_BUNDLE",
+   "AWS_ENDPOINT_URL",
+   "CLOUDSDK_CORE_PROJECT",
+   "OKTA_CLIENT_ORGURL",
+   "SF_TARGET_ORG",
+   "SF_ORG_INSTANCE_URL",
+   "TWILIO_ACCOUNT_SID",
+   "TWILIO_REGION",
+   "TWILIO_EDGE",
+   "VERCEL_ORG_ID",
+   "VERCEL_PROJECT_ID",
+   "PGHOST",
+   "PGPORT",
+   "PGUSER",
+   "PGDATABASE",
+   "PGSERVICE",
+   "PGSSLMODE"
+  ],
+  "secret_name_parts": [
+   "TOKEN",
+   "KEY",
+   "SECRET",
+   "PASS",
+   "PWD",
+   "CRED",
+   "AUTH",
+   "PRIVATE",
+   "SESSION",
+   "COOKIE"
+  ],
+  "passthrough_max": 16,
+  "name_max_len": 64,
+  "name_pattern": "^[A-Z][A-Z0-9_]*$",
+  "inline_value_pattern": "^\\$\\{env:[A-Z][A-Z0-9_]*\\}$"
+ },
+ "actions": {
+  "kinds": [
+   "url",
+   "composer",
+   "utility",
+   "run"
+  ],
+  "reserved_label_words": [
+   "allow",
+   "approve",
+   "delete",
+   "confirm",
+   "cancel",
+   "deny",
+   "ok",
+   "yes",
+   "no",
+   "remove",
+   "unlock",
+   "sign in"
+  ],
+  "icons": [
+   "star",
+   "bookmark",
+   "tag",
+   "flag",
+   "bell",
+   "calendar",
+   "clock",
+   "mail",
+   "message-square",
+   "phone",
+   "user",
+   "users",
+   "folder",
+   "file-text",
+   "list",
+   "list-checks",
+   "package",
+   "box",
+   "git-branch",
+   "git-merge",
+   "git-pull-request",
+   "git-commit",
+   "activity",
+   "chart-column",
+   "database",
+   "cloud",
+   "download",
+   "upload",
+   "pencil",
+   "plus",
+   "refresh-cw",
+   "play",
+   "map-pin",
+   "image",
+   "search",
+   "layout-grid",
+   "globe"
+  ],
+  "id_pattern": "^[A-Za-z0-9_-]{1,64}$",
+  "forbidden_ids": [
+   "constructor",
+   "prototype",
+   "__proto__",
+   "hasOwnProperty",
+   "toString",
+   "valueOf"
+  ],
+  "internal_host_suffixes": [
+   ".local",
+   ".lan",
+   ".internal"
+  ],
+  "footer_max_bolt": 6,
+  "footer_max_kit": 3,
+  "label_kept_bolt": 40,
+  "label_shown": 14
+ },
+ "http_local": {
+  "reserved_ports": [
+   [
+    13017,
+    13027
+   ],
+   [
+    15432,
+    15441
+   ]
+  ],
+  "hosts": [
+   "127.0.0.1",
+   "::1",
+   "localhost"
+  ],
+  "methods": [
+   "GET",
+   "POST"
+  ],
+  "parse": [
+   "json",
+   "lines",
+   "raw"
+  ]
+ },
+ "bridge": {
+  "interpreters": [
+   "sh",
+   "bash",
+   "python3",
+   "python",
+   "node"
+  ],
+  "parse": [
+   "json",
+   "lines",
+   "raw"
+  ],
+  "output_cap_bytes": 4194304
+ },
+ "pack": {
+  "script_max_depth": 8,
+  "entry_name_max": 128,
+  "entry_path_max": 512,
+  "entry_part_pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*[A-Za-z0-9_-]$|^[A-Za-z0-9_-]$",
+  "version": {
+   "strip_prefix": [
+    "v",
+    "V"
+   ],
+   "strip_build": "+",
+   "note": "numeric dotted core, optional -prerelease"
+  }
+ },
+ "tile": {
+  "label_cut": 24,
+  "trend_keep": 30,
+  "value_compact_over_chars": 12,
+  "unit_max": 4
+ },
+ "rows": {
+  "bolt_max": 2000,
+  "kit_schema_max": 200,
+  "engine_max": 50
+ },
+ "runner_env": {
+  "fixed": {
+   "PYTHONNOUSERSITE": "1",
+   "PYTHONDONTWRITEBYTECODE": "1",
+   "PYTHONUNBUFFERED": "1"
+  },
+  "allowlisted_from_host": [
+   "HOME",
+   "PATH",
+   "USER",
+   "LOGNAME",
+   "LANG",
+   "TERM",
+   "TMPDIR",
+   "TZ"
+  ],
+  "allowlisted_prefixes": [
+   "LC_",
+   "XDG_"
+  ],
+  "ca_bundle": [
+   "SSL_CERT_FILE",
+   "SSL_CERT_DIR",
+   "REQUESTS_CA_BUNDLE",
+   "CURL_CA_BUNDLE",
+   "NODE_EXTRA_CA_CERTS"
+  ]
+ },
+ "keys": {
+  "top": [
+   "schema_version",
+   "runtime",
+   "id",
+   "chip",
+   "title",
+   "icon",
+   "description",
+   "placeholder_examples",
+   "emits",
+   "bridge",
+   "http",
+   "args",
+   "presentation",
+   "actions",
+   "dispatch",
+   "detect",
+   "inputs",
+   "submit",
+   "recognize",
+   "transform",
+   "permissions"
+  ],
+  "bridge": {
+   "all": [
+    "command",
+    "parse",
+    "timeout_seconds",
+    "env",
+    "env_passthrough",
+    "cwd"
+   ],
+   "required": [
+    "command",
+    "parse"
+   ]
+  },
+  "bridge.command": {
+   "all": [
+    "macos",
+    "linux",
+    "windows"
+   ],
+   "required": []
+  },
+  "http": {
+   "all": [
+    "port",
+    "host",
+    "request",
+    "parse",
+    "rows_path",
+    "timeout_seconds",
+    "headers"
+   ],
+   "required": [
+    "port",
+    "request",
+    "parse"
+   ]
+  },
+  "http.request": {
+   "all": [
+    "method",
+    "path"
+   ],
+   "required": [
+    "path"
+   ]
+  },
+  "args[]": {
+   "all": [
+    "name",
+    "from",
+    "default"
+   ],
+   "required": [
+    "name",
+    "from"
+   ]
+  },
+  "presentation": {
+   "all": [
+    "widget",
+    "title_field",
+    "subtitle_field",
+    "searchable",
+    "right_widget",
+    "view_arg",
+    "views"
+   ],
+   "required": [
+    "widget"
+   ]
+  },
+  "presentation.views.*": {
+   "all": [
+    "right_widget",
+    "title_field",
+    "subtitle_field"
+   ],
+   "required": []
+  },
+  "right_widget": {
+   "all": [
+    "kind",
+    "mode",
+    "bind"
+   ],
+   "required": [
+    "kind"
+   ]
+  },
+  "actions[]": {
+   "all": [
+    "id",
+    "kind",
+    "target",
+    "label",
+    "url_template",
+    "insert",
+    "target_chip",
+    "query_template",
+    "primary",
+    "icon",
+    "flow",
+    "confirm"
+   ],
+   "required": [
+    "id",
+    "kind",
+    "label"
+   ]
+  },
+  "dispatch": {
+   "all": [
+    "mode",
+    "confirm_label",
+    "confirm_hint",
+    "choices"
+   ],
+   "required": []
+  },
+  "inputs[]": {
+   "all": [
+    "name",
+    "type",
+    "label",
+    "required",
+    "default",
+    "placeholder",
+    "options",
+    "min",
+    "max",
+    "step",
+    "max_length",
+    "pattern"
+   ],
+   "required": [
+    "name",
+    "label"
+   ]
+  },
+  "submit": {
+   "all": [
+    "label",
+    "confirm"
+   ],
+   "required": []
+  }
+ }
+}

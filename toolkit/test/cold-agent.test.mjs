@@ -84,9 +84,12 @@ test('lint: declared permissions that disagree with the computed ones warn, and 
 	const root = tmp(), d = copyExample('system-glance', path.join(root, 'system-glance'));
 	const r = run(root, 'lint', d, '--personal', '--json'); const j = JSON.parse(r.stdout);
 	assert.equal(JSON.stringify(j).includes('permissions_differ'), false, 'system-glance declares exactly what is computed');
-	const lp = path.join(d, 'bolt-app.json'), l = JSON.parse(fs.readFileSync(lp, 'utf8')); l.permissions = ['runs_commands', 'files']; fs.writeFileSync(lp, JSON.stringify(l));
+	const lp = path.join(d, 'bolt-app.json'), l = JSON.parse(fs.readFileSync(lp, 'utf8'));
+	l.permissions = ['runs_commands', 'files', 'network']; fs.writeFileSync(lp, JSON.stringify(l));   // declared extras are fine for a script app
+	assert.equal(JSON.stringify(JSON.parse(run(root, 'lint', d, '--personal', '--json').stdout)).includes('permissions_differ'), false);
+	l.permissions = ['files']; fs.writeFileSync(lp, JSON.stringify(l));   // a computed permission left out warns, and the message says which list wins
 	const r2 = run(root, 'lint', d, '--personal'); assert.equal(r2.status, 0);
-	assert.match(r2.stdout, /permissions_differ/); assert.match(r2.stdout, /declared but not computed: files/); assert.match(r2.stdout, /computed list wins/);
+	assert.match(r2.stdout, /permissions_differ/); assert.match(r2.stdout, /computed but not declared: .*runs_commands/); assert.match(r2.stdout, /computed list wins/);
 });
 
 test('verify: a pack and its folder agree about platforms (a pack records none, so no OS command is reported missing)', () => {
