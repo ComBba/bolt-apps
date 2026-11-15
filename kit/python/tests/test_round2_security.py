@@ -30,6 +30,16 @@ class RedactTree(unittest.TestCase):
         self.assertIn("api_key=[hidden]", got); self.assertIn("key=[hidden]", got); self.assertIn("token=[hidden]", got); self.assertIn("access_token=[hidden]", got)
         self.assertIn("mykey=keep", got)
 
+    def test_credential_spellings_stay_redacted_and_benign_names_stay(self):
+        for name in ("client_secret", "session_key", "access_key_id", "x_api_token", "refresh_token", "id_token", "X-Amz-Signature", "sig", "credential",
+                     "X-Amz-Credential", "sessionToken", "api-key", "APIKEY", "password", "bearer_token"):
+            got = k.redact_tree({"u": "https://x/y?a=1&%s=Zq81x7LmP&b=2" % name}, [KEY])["u"]
+            self.assertIn("%s=[hidden]" % name, got, name)
+            self.assertIn("a=1", got); self.assertIn("b=2", got)
+        for name in ("keyword", "monkey", "author", "next_page_token", "page_token", "cursor", "sort_key", "primary_key", "page", "q", "authors", "key_id"):
+            url = "https://x/y?%s=abc123" % name
+            self.assertEqual(k.redact_tree({"u": url}, [KEY])["u"], url, name)
+
     def test_the_configured_auth_param_is_covered(self):
         self.assertIn("appid=[hidden]", k.redact_tree({"u": "https://x/y?appid=abcdef&n=1"}, [KEY], "appid")["u"])
         self.assertIn("n=1", k.redact_tree({"u": "https://x/y?appid=abcdef&n=1"}, [KEY], "appid")["u"])

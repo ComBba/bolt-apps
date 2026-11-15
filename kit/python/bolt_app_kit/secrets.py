@@ -156,14 +156,32 @@ def redact(text, secrets=(), limit=None):
     return t if limit is None else t[:limit]
 
 
-# Parameter names that carry a credential in a link. Matched as WHOLE names, never as a part of a longer one (keyword, monkey, author and
-# next_page_token are not credentials).
-_WELL_KNOWN = ("api_key", "apikey", "api-key", "key", "access_token", "token", "auth", "authorization", "secret", "password", "passwd", "sig", "signature", "x-api-key")
+# Which query parameters carry a credential. A name is split into segments on _ - and . and compared case-folded: it is redacted when any
+# segment is a credential word (client_secret, session_key, access_key_id, x_api_token, refresh_token, id_token, X-Amz-Signature, sig, credential),
+# or the name holds "apikey". Whole names that only look like credentials are excluded on purpose.
+# Tradeoff, recorded: matching by segment catches the many spellings real APIs use, at the price of a few false positives (a plain "key" or
+# "token" parameter that was not a secret is hidden). The explicit exclude list below removes the common benign names (keyword, monkey, author,
+# page and cursor tokens, sort and database keys); add to it when a real API shows another. Hiding too much costs a field in one link; hiding
+# too little leaks a key, so the rule errs toward hiding.
+_CRED_SEGMENTS = frozenset(("key", "token", "secret", "pass", "password", "passwd", "pwd", "auth", "authorization", "sig", "signature", "credential",
+                            "credentials", "session", "cookie", "bearer", "apikey", "access"))
+_BENIGN_NAMES = frozenset(("keyword", "keywords", "monkey", "author", "authors", "next_page_token", "page_token", "nextpagetoken", "pagetoken", "next_token",
+                           "cursor", "sort_key", "order_key", "primary_key", "foreign_key", "key_id", "session_count", "access_count", "pass_count"))
+_PARAM = re.compile(r"([?&;])([A-Za-z0-9_.\-]{1,64})=([^&;\s#\"']+)")
 
 
-def _param_re(names):
-    alt = "|".join(re.escape(n) for n in sorted(set(names), key=len, reverse=True))
-    return re.compile(r"(?i)([?&;](?:%s)=)[^&;\s#\"']+" % alt)
+def _param_sub(extra):
+    def one(m):
+        raw = m.group(2)
+        name = raw.lower()
+        if name in extra:
+            hide = True
+        elif name in _BENIGN_NAMES:
+            hide = False
+        else:
+            hide = "apikey" in name or any(seg in _CRED_SEGMENTS for seg in re.split(r"[_.\-]", re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", raw).lower()))
+        return "%s%s=[hidden]" % (m.group(1), m.group(2)) if hide else m.group(0)
+    return one
 
 
 def redact_tree(value, secrets=(), auth_param=None, depth=0):
@@ -175,7 +193,7 @@ def redact_tree(value, secrets=(), auth_param=None, depth=0):
     well-known credential parameter names (whole names: keyword, monkey and next_page_token stay) are replaced. Walks with a stack, depth 40."""
     vals = [x.value if isinstance(x, Secret) else x for x in secrets]
     forms = sorted({f for v in vals if isinstance(v, str) and len(v) >= MIN_REDACT for f in _forms(v)}, key=len, reverse=True)
-    rx = _param_re(list(_WELL_KNOWN) + ([auth_param] if auth_param else []))
+    sub = _param_sub(frozenset([auth_param.lower()]) if auth_param else frozenset())
 
     def clean(t):
         if forms:
@@ -183,7 +201,7 @@ def redact_tree(value, secrets=(), auth_param=None, depth=0):
                 if f in t:
                     t = t.replace(f, "[hidden]")
         if "=" in t and ("?" in t or "&" in t or ";" in t):
-            t = rx.sub(r"\1[hidden]", t)
+            t = _PARAM.sub(sub, t)
         if "://" in t and "@" in t:
             t = _USERINFO.sub(r"\1[hidden]@", t)
         return t
