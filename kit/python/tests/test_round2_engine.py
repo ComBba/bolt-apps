@@ -75,7 +75,7 @@ class Round2(unittest.TestCase):
                          {"id": "top", "endpoint": "top", "item": {"title": "{title}"}}]}
         self.cfg_path = os.path.join(self.home, "config.json")
         json.dump(cfg, open(self.cfg_path, "w"))
-        spec = importlib.util.spec_from_file_location("eng_r2", os.path.join(ROOT, "engine.py"))
+        spec = importlib.util.spec_from_file_location("eng_r2", os.path.join(ROOT, "portal-template__engine.py"))
         self.eng = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.eng)
         self._emit, kit.emit = kit.emit, fake_emit

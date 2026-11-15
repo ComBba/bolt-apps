@@ -7,6 +7,9 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseYaml, get, str } from './yamlsubset.mjs';
+import { vendorKit } from './check.mjs';
+import { formatBoltSays } from './boltsays.mjs';
+import { versionProblem } from './boltrules.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
@@ -56,11 +59,31 @@ export function newFromTemplate(template, id, root) {
 	fs.rmSync(path.join(dir, 'golden'), { recursive: true, force: true });   // the template's goldens belong to the template; check --update-golden writes new ones
 	const title = id.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 	const edit = (f, fn) => { const p = path.join(dir, f); if (fs.existsSync(p)) fs.writeFileSync(p, fn(fs.readFileSync(p, 'utf8'))); };
+	// What the template called itself, read before anything is rewritten: its id (the folder name), its chip and its title.
+	const tud = path.join(dir, 'utilities');
+	let oldChip, oldTitle;
+	try { const y = fs.readdirSync(tud).find((f) => /\.ya?ml$/.test(f)); const root = parseYaml(fs.readFileSync(path.join(tud, y), 'utf8')); oldChip = str(get(root, 'chip')?.value); oldTitle = str(get(root, 'title')?.value); } catch { /* no readable app file: only the id is rewritten */ }
+	// Bolt keeps every installed app's scripts in ONE shared folder, so each script file is named <app id>__<name>. A copy renames them all.
+	const sd0 = path.join(dir, 'scripts');
+	if (fs.existsSync(sd0)) for (const f of fs.readdirSync(sd0)) if (f.startsWith(`${template}__`)) fs.renameSync(path.join(sd0, f), path.join(sd0, `${id}__${f.slice(template.length + 2)}`));
+	const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	// Words the template used for itself, in every text file of the copy: its file prefix, "=chip" (what the person types), its id and its title as a whole word. A bare chip is not replaced
+	// (it can be an ordinary word, such as branch); only the =chip form is.
+	const reword = (s) => {
+		let o = s.split(`${template}__`).join(`${id}__`);
+		if (oldChip && oldChip !== chip) o = o.replace(new RegExp(`=${esc(oldChip)}(?![A-Za-z0-9_-])`, 'g'), `=${chip}`);
+		if (template !== id) o = o.replace(new RegExp(`(?<![A-Za-z0-9_-])${esc(template)}(?![A-Za-z0-9_]|-[a-z])`, 'g'), id);
+		if (oldTitle && oldTitle !== title) o = o.replace(new RegExp(`(?<![A-Za-z0-9_-])${esc(oldTitle)}(?![A-Za-z0-9_-])`, 'g'), title);
+		return o;
+	};
+	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = reword(s); if (r !== s) fs.writeFileSync(f, r); } } };
+	walkText(dir);
 	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; return JSON.stringify(j, null, 2) + '\n'; });
-	edit('scripts/config.json', (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; } return JSON.stringify(j, null, 2) + '\n'; });
+	const cfgName = `scripts/${id}__config.json`;
+	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; } return JSON.stringify(j, null, 2) + '\n'; });
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
 	const sd = path.join(dir, 'scripts');
-	const emitter = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('.py') && f !== 'bolt_app_kit.py').find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')) : null;
+	const emitter = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('.py') && !f.endsWith('__bolt_app_kit.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')) : null;
 	const ud = path.join(dir, 'utilities');
 	if (emitter) {
 		const r = spawnSync('python3', [`scripts/${emitter}`, '--emit-yaml'], { cwd: dir, encoding: 'utf8' });
@@ -68,6 +91,8 @@ export function newFromTemplate(template, id, root) {
 		for (const y of fs.readdirSync(ud)) fs.rmSync(path.join(ud, y));
 		fs.writeFileSync(path.join(ud, `${id}.yaml`), r.stdout);
 	} else if (fs.existsSync(ud)) for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
+	// the vendored kit is named for its app: re-vendor it under the new name (the template's lock and file name carry the old id)
+	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { die(`could not vendor the kit: ${e.message}`); } }
 	let note = '';
 	if (fs.existsSync(path.join(dir, 'check.json'))) {   // goldens were not copied: record them for the new app and show that it passes
 		const r = bolt(['check', dir, '--update-golden']);
@@ -133,8 +158,14 @@ export function runApp(args) {
 const notLink = (f) => { try { if (fs.lstatSync(f).isSymbolicLink()) die(`${f} is a link, which is not followed. Replace it with a real file or folder you own`); } catch (e) { if (e.code !== 'ENOENT') throw e; } };
 const loadShip = () => { try { const j = JSON.parse(fs.readFileSync(path.join(STATE, 'ship.json'), 'utf8')); return j && typeof j === 'object' && !Array.isArray(j) ? Object.assign(Object.create(null), j) : Object.create(null); } catch { return Object.create(null); } };
 const bump = (v) => { const p = String(v).split('.').map(Number); if (p.length !== 3 || p.some((n) => !Number.isInteger(n))) return '1.0.1'; p[2] += 1; return p.join('.'); };
+// Bolt replaces an installed pack only with a NEWER version, and compares numbers (a missing part counts as 0, "+build" is ignored, a pre-release is older). The patch
+// number here is seconds since 2026-01-01, so a build made later is always higher, even when ~/.bolt-apps/ship.json is lost or another computer made the last one.
+const EPOCH_MS = Date.UTC(2026, 0, 1);
+export const clockVersion = (now = Date.now()) => `1.0.${Math.max(1, Math.floor((now - EPOCH_MS) / 1000))}`;
+const core = (v) => String(v).trim().replace(/^[vV]/, '').split('+')[0].split('-')[0].split('.').map((x) => Number(x) || 0);
+export const newer = (a, b) => { const x = core(a), y = core(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; } return false; };
 export function ship(args) {
-	const dir = args.find((a) => !a.startsWith('--')); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps ship <app-folder>   (lint, check, pack, verify, with the next version picked for you)');
+	const dir = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--version'); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps ship <app-folder> [--version X]   (lint, check, pack, verify, with the next version picked for you)');
 	refuseSecrets(dir);
 	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { die(`${q(path.join(dir, 'bolt-app.json'))} is not valid JSON (${e.message}). Fix it, then run ship again`); }
 	if (!app || typeof app !== 'object' || Array.isArray(app)) die(`${q(path.join(dir, 'bolt-app.json'))} must be a JSON object with an id, title and so on, not ${app === null ? 'null' : Array.isArray(app) ? 'a list' : typeof app}. Fix it, then run ship again`);
@@ -145,18 +176,39 @@ export function ship(args) {
 	notLink(STATE); notLink(path.join(STATE, 'key.pem')); notLink(path.join(STATE, 'ship.json')); notLink(path.join(STATE, 'packs'));
 	const key = path.join(STATE, 'key.pem');
 	if (!fs.existsSync(key)) { const k = bolt(['keygen']); if (k.status !== 0) die(`could not make your signing key: ${k.stderr || k.stdout}`); console.log('ok made your signing key in ~/.bolt-apps/key.pem (keep it private, never share it)'); }
-	const state = loadShip(), version = typeof state[app.id] === 'string' ? bump(state[app.id]) : '1.0.0';
+	const state = loadShip(), vflag = args.indexOf('--version'), forced = vflag >= 0 ? args[vflag + 1] : undefined;
+	let version, why;
+	if (forced !== undefined) { const vp = versionProblem(forced); if (vp) die(`${vp}. Example: --version 1.0.5, or leave --version out and ship picks one`); version = forced; why = 'the version you asked for with --version'; }
+	else {
+		version = clockVersion(); why = 'taken from the clock, so it is higher than every earlier build, even if your ship notes are lost or another computer built the last one';
+		// the packs this computer already made also count (a lost ship.json leaves them), so a wrong clock cannot make a lower number either
+		let last = typeof state[app.id] === 'string' ? state[app.id] : null;
+		try { for (const f of fs.readdirSync(path.join(STATE, 'packs'))) { const m = new RegExp(`^${app.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+\\.\\d+\\.\\d+)\\.boltpack$`).exec(f); if (m && (!last || newer(m[1], last))) last = m[1]; } } catch { /* no packs folder yet */ }
+		if (last && !newer(version, last)) { version = bump(last); why = `one above your last build (${last})`; }
+	}
+	console.log(`ok version ${version}: ${why}`);
 	fs.mkdirSync(path.join(STATE, 'packs'), { recursive: true, mode: 0o700 });
 	const out = path.join(STATE, 'packs', `${app.id}-${version}.boltpack`);
 	step(`pack ${version}`, bolt(['pack', dir, '--personal', '--version', version, '--out', out]));
 	step('verify', bolt(['verify', out]));
 	state[app.id] = version; fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(Object.fromEntries(Object.entries(state)), null, 2) + '\n');
 	const chip = (() => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || app.id; } catch { return app.id; } })();
-	console.log(`\nShipped ${app.id} ${version}: ${out}\nInstall: drop that file on the Bolt launcher (or Bolt Apps), read the prompt, approve it, then type =${chip}.\nThis app runs as you: only install code you have read. Next time run ship again and the version rises by itself.`);
+	console.log(`\nShipped ${app.id} ${version}: ${out}\n\nInstall it:
+  1. Drop ${q(out)} on the Bolt launcher (or on Bolt Apps; not Admin settings).
+  2. Bolt shows a review card. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it.
+  3. Approve. Bolt asks once more because you signed the pack yourself. Approve again.
+  4. Open the launcher and type =${chip}.
+To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.
+This app runs as you: only install code you have read.
+
+If Bolt refuses it, the usual reasons:
+${formatBoltSays(['same_or_older_version', 'owned_by_other', 'file_exists', 'org_policy'])}
+Every message and fix: bolt-apps doctor --bolt-says`);
 }
 
 // ---------------------------------------------------------------- doctor
 export function doctor(args) {
+	if (args.includes('--bolt-says')) { console.log(`Bolt said X, do Y:\n${formatBoltSays()}`); return; }
 	const dir = args.find((a) => !a.startsWith('--'));
 	const line = (ok, what, fix) => console.log(`${ok ? 'ok  ' : 'FIX '} ${what}${ok ? '' : `\n       ${fix}`}`);
 	let bad = 0; const chk = (ok, what, fix) => { if (!ok) bad++; line(ok, what, fix); };

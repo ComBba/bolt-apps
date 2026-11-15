@@ -133,10 +133,13 @@ test('env: verify requires the value to be exactly ${env:KEY} and checks the var
 	assert.ok(!c('    PGHOST: "${env:PGHOST}"\n').some((x) => /env_/.test(x)));
 });
 
-test('verify: a nested script is refused (script_subfolder) until the toolkit can check nested files; pack ids are the relative path', async () => {
+test('verify: scripts must be named for the app (script_not_namespaced); nested files are keyed by their full path', async () => {
 	const { checkManifests } = await import('../lib/verify.mjs');
-	const f = [{ path: 'utilities/demo.yaml', kind: 'user_utility', content: Buffer.from(app()) }, { path: 'scripts/x.py', kind: 'script', content: Buffer.from('print(1)\n') }, { path: 'scripts/lib/x.py', kind: 'script', content: Buffer.from('print(2)\n') }];
-	assert.ok(checkManifests(f, {}).findings.some((x) => x.code === 'script_subfolder'));
+	const f = [{ path: 'utilities/demo.yaml', kind: 'user_utility', content: Buffer.from(app()) }, { path: 'scripts/x.py', kind: 'script', content: Buffer.from('print(1)\n') }, { path: 'scripts/demo__lib/x.py', kind: 'script', content: Buffer.from('print(2)\n') }, { path: 'scripts/demo__y.py', kind: 'script', content: Buffer.from('print(3)\n') }];
+	const bad = checkManifests(f, { appId: 'demo' }).findings.filter((x) => x.code === 'script_not_namespaced');
+	assert.deepEqual(bad.map((x) => x.file), ['scripts/x.py']);
+	assert.ok(!checkManifests(f, { appId: 'demo' }).findings.some((x) => x.code === 'script_subfolder'));
+	assert.ok(checkManifests([f[0], f[1]], {}).findings.some((x) => x.code === 'script_not_namespaced'));   // no id known: a bare top-level name is still refused
 });
 
 test('false errors are gone: lowercase http method, public IPv6 links, pre-release labels, plain composer ids', () => {

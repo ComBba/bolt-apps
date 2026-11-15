@@ -15,7 +15,7 @@ import bolt_app_kit as kit  # noqa: E402
 
 
 def load_engine():
-    spec = importlib.util.spec_from_file_location("portal_engine_r", os.path.join(ROOT, "engine.py"))
+    spec = importlib.util.spec_from_file_location("portal_engine_r", os.path.join(ROOT, "portal-template__engine.py"))
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m

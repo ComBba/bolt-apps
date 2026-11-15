@@ -8,15 +8,15 @@ It is a tier 3 personal-use app (it runs a script and calls the network), so it 
 
 | # | File | What to change |
 |---|---|---|
-| 1 | `scripts/config.json` `app`, `api` | App id, chip, title; `base_url`, the key variable name, the `.env` path, the auth header |
-| 2 | `scripts/config.json` `endpoints` | One entry per API path, with `map` from your field names to the names the views use (`"title": "name"`, dotted paths such as `"owner": "assignee.name"` work) |
-| 3 | `scripts/config.json` `stats`, `overview`, `views` | Counters, the tiles on the overview, and per view: row title, subtitle, tile, up to 5 detail fields, body, link, `children` for a drill to a second list |
-| 4 | `scripts/fixtures.json` | A real response saved per endpoint. `check` runs on it (`"fixture": true` in `check.json`); the shipped app is live (`api.fixture_default: false`) |
+| 1 | `scripts/portal-template__config.json` `app`, `api` | App id, chip, title; `base_url`, the key variable name, the `.env` path, the auth header |
+| 2 | `scripts/portal-template__config.json` `endpoints` | One entry per API path, with `map` from your field names to the names the views use (`"title": "name"`, dotted paths such as `"owner": "assignee.name"` work) |
+| 3 | `scripts/portal-template__config.json` `stats`, `overview`, `views` | Counters, the tiles on the overview, and per view: row title, subtitle, tile, up to 5 detail fields, body, link, `children` for a drill to a second list |
+| 4 | `scripts/portal-template__fixtures.json` | A real response saved per endpoint. `check` runs on it (`"fixture": true` in `check.json`); the shipped app is live (`api.fixture_default: false`) |
 
 Then rebuild the app file and check:
 
 ```
-python3 scripts/engine.py --emit-yaml > utilities/portal-template.yaml
+python3 scripts/portal-template__engine.py --emit-yaml > utilities/portal-template.yaml
 bolt-apps kit vendor --flat .          # the kit as one file, so the app can be packed
 bolt-apps check . --update-golden     # review the golden/ diff once
 bolt-apps check .

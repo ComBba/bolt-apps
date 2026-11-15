@@ -241,3 +241,19 @@ export function layoutProblems(files) {
 	for (const f of files) { const parts = f.split('/'); for (let i = 1; i < parts.length; i++) if (set.has(parts.slice(0, i).join('/').toLowerCase())) out.push({ code: 'script_file_folder', message: `scripts/${parts.slice(0, i).join('/')} is both a file and a folder` }); }
 	return out;
 }
+
+// ---- 11: script namespacing. Bolt installs every pack's scripts into ONE shared folder and refuses a file whose path already belongs to another
+// installed pack (owned_by_other). App ids are unique, so every file an app ships starts with "<app id>__" (two ids can never give the same name:
+// an id holds no underscore, so the first "__" always ends the id). An app with a bare bolt_app_kit.py or config.json collides with the next app.
+export const nsPrefix = (id) => `${id}__`;
+export function namespaceProblems(paths, id) {
+	const out = [], known = typeof id === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(id);
+	const first = (f) => f.split('/')[0];
+	const prefixes = new Set(paths.map((f) => { const m = /^([a-z0-9][a-z0-9-]*)__./.exec(first(f)); return m ? m[1] : null; }));
+	for (const f of paths) {
+		const want = known ? nsPrefix(id) : null, m = /^([a-z0-9][a-z0-9-]*)__./.exec(first(f));
+		const ok = known ? first(f).startsWith(want) && first(f).length > want.length : !!m && prefixes.size === 1;
+		if (!ok) out.push({ code: 'script_not_namespaced', file: f, message: `scripts/${f} is not named for this app. Bolt keeps every installed app's scripts in one shared folder and refuses an app whose script has the same name as another app's (error code owned_by_other), so a shared name such as ${first(f)} would stop a second app installing. Name it ${known ? nsPrefix(id) : '<app id>__'}${known ? '' : first(f)}${known ? first(f).replace(/^.*?__/, '') : ''}` });
+	}
+	return out;
+}

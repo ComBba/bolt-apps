@@ -28,7 +28,7 @@ function signed(d, manifests, over = {}, entriesOver) {
 	fs.writeFileSync(f, zlib.gzipSync(Buffer.concat([tarFile('bundle.json', bundle), tarFile('signature.bin', sig), ...[...manifests].map(([p, c]) => tarFile(`manifests/${p}`, c)), Buffer.alloc(1024)])));
 	return f;
 }
-const withYaml = (y) => new Map([['utilities/eagle-info.yaml', Buffer.from(y)], ['scripts/eagle.py', Buffer.from('#!/usr/bin/env python3\n')]]);
+const withYaml = (y) => new Map([['utilities/eagle-info.yaml', Buffer.from(y)], ['scripts/eagle-info__eagle.py', Buffer.from('#!/usr/bin/env python3\n')]]);
 
 test('(1) a bad signer_pubkey is refused with a signature code', () => {
 	const d = tmp(); const f = signed(d, withYaml(BASE), { signer_pubkey: 'zz' });
@@ -51,10 +51,10 @@ const UNREADABLE = {
 	anchor: BASE.replace('timeout_seconds: 20', 'timeout_seconds: &t 20'),
 	alias: BASE.replace('title_field: title', 'title_field: *t'),
 	tag: BASE.replace('emits: Generic', 'emits: !!str Generic'),
-	'block scalar in a command': BASE.replace('    macos: "python3 {{scripts_dir}}/eagle.py {{view}}"', '    macos: |\n      python3 {{scripts_dir}}/eagle.py {{view}}'),
+	'block scalar in a command': BASE.replace('    macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"', '    macos: |\n      python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}'),
 	'quoted key': BASE.replace('\nruntime: bridge', '\n"runtime": bridge'),
 	'escape sequence': BASE.replace('title: "Eagle info"', 'title: "Eagle \\u0041 info"'),
-	'flow-style document': '{ schema_version: 1, runtime: bridge, id: eagle-info, chip: eagle, title: T, emits: Generic, bridge: { command: { macos: "python3 {{scripts_dir}}/eagle.py" }, parse: json }, presentation: { widget: list }, detect: { binary: git } }\n',
+	'flow-style document': '{ schema_version: 1, runtime: bridge, id: eagle-info, chip: eagle, title: T, emits: Generic, bridge: { command: { macos: "python3 {{scripts_dir}}/eagle-info__eagle.py" }, parse: json }, presentation: { widget: list }, detect: { binary: git } }\n',
 	'duplicate key': BASE + 'runtime: transform\n',
 	'merge key': BASE + '<<: *x\n',
 	'second document': BASE + '---\nruntime: bridge\n',
@@ -154,7 +154,7 @@ test('(c) a folder entry under manifests/ is accepted and a duplicate stays refu
 test('one cause is reported once: a bad runtime and an anchor in a folder', () => {
 	const mk = (y) => { const d = tmp(), dir = path.join(d, 'apps', 'eagle-info'); fs.mkdirSync(path.join(dir, 'utilities'), { recursive: true }); fs.mkdirSync(path.join(dir, 'scripts'));
 		fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'eagle-info', title: 'E', role: 'r', saves: 's', author: { name: 'T' }, tier: 3, permissions: [] }));
-		fs.writeFileSync(path.join(dir, 'utilities', 'eagle-info.yaml'), y); fs.writeFileSync(path.join(dir, 'scripts', 'eagle.py'), '#!x\n');
+		fs.writeFileSync(path.join(dir, 'utilities', 'eagle-info.yaml'), y); fs.writeFileSync(path.join(dir, 'scripts', 'eagle-info__eagle.py'), '#!x\n');
 		return JSON.parse(run(d, 'verify', 'apps/eagle-info', '--json').stdout); };
 	assert.equal(mk(BASE.replace('runtime: bridge', 'runtime: shell')).findings.filter((x) => x.code === 'runtime_not_allowed').length, 1);
 	assert.equal(mk(BASE.replace('timeout_seconds: 20', 'timeout_seconds: &t 20')).findings.filter((x) => x.code === 'yaml_unreadable_here').length, 1);
@@ -167,23 +167,23 @@ test('a signed pack with a malformed bundle.json is a finding, never a stack tra
 	}
 });
 test('a Windows command with a backslash after scripts_dir is not a relative script path', () => {
-	const y = BASE.replace('    macos:', '    windows: "python {{scripts_dir}}\\\\eagle.py {{view}}"\n    macos:');
+	const y = BASE.replace('    macos:', '    windows: "python {{scripts_dir}}\\\\eagle-info__eagle.py {{view}}"\n    macos:');
 	const d = tmp(); const j = JSON.parse(run(d, 'verify', signed(d, withYaml(y)), '--json').stdout);
 	assert.ok(!j.findings.some((x) => ['script_path_relative', 'yaml_unreadable_here', 'script_missing'].includes(x.code)), JSON.stringify(j.findings.map((x) => x.code)));
 });
 
 test('pack --personal refuses what verify refuses (no pack Bolt would reject is written)', () => {
-	for (const [y, code] of [[BASE.replace('eagle.py {{view}}"', 'eagle.py {{view}} | head"'), 'command_shell_operator'], [BASE.replace('timeout_seconds: 20', 'timeout_seconds: 300'), 'timeout_out_of_range'], [BASE + 'bogus: 1\n', 'yaml_key_unknown']]) {
+	for (const [y, code] of [[BASE.replace('eagle-info__eagle.py {{view}}"', 'eagle-info__eagle.py {{view}} | head"'), 'command_shell_operator'], [BASE.replace('timeout_seconds: 20', 'timeout_seconds: 300'), 'timeout_out_of_range'], [BASE + 'bogus: 1\n', 'yaml_key_unknown']]) {
 		const d = tmp(), dir = path.join(d, 'apps', 'eagle-info'); fs.mkdirSync(path.join(dir, 'utilities'), { recursive: true }); fs.mkdirSync(path.join(dir, 'scripts'));
 		fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'eagle-info', title: 'E', role: 'r', saves: 's', author: { name: 'T' }, tier: 3, permissions: [] }));
-		fs.writeFileSync(path.join(dir, 'utilities', 'eagle-info.yaml'), y); fs.writeFileSync(path.join(dir, 'scripts', 'eagle.py'), '#!x\n');
+		fs.writeFileSync(path.join(dir, 'utilities', 'eagle-info.yaml'), y); fs.writeFileSync(path.join(dir, 'scripts', 'eagle-info__eagle.py'), '#!x\n');
 		run(d, 'keygen', '--out', path.join(d, 'k.pem'));
 		const r = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', path.join(d, 'k.pem'));
 		assert.equal(r.status, 1); assert.match(r.stderr, new RegExp(code)); assert.ok(!fs.existsSync(path.join(d, 'eagle-info.boltpack')));
 	}
 });
 test('a script name that is only an argument is not a relative script path', () => {
-	const y = BASE.replace('eagle.py {{view}}"', 'eagle.py --template page.sh {{view}}"');
+	const y = BASE.replace('eagle-info__eagle.py {{view}}"', 'eagle-info__eagle.py --template page.sh {{view}}"');
 	const d = tmp(); const j = JSON.parse(run(d, 'verify', signed(d, withYaml(y)), '--json').stdout);
 	assert.ok(!j.findings.some((x) => x.code === 'script_path_relative'));
 });
@@ -192,7 +192,7 @@ test('a missing id or runtime in a folder is reported once, as yaml_key_missing'
 	for (const [re, key] of [[/^id:.*\n/m, 'id'], [/^runtime:.*\n/m, 'runtime']]) {
 		const d = tmp(), dir = path.join(d, 'apps', 'eagle-info'); fs.mkdirSync(path.join(dir, 'utilities'), { recursive: true }); fs.mkdirSync(path.join(dir, 'scripts'));
 		fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'eagle-info', title: 'E', role: 'r', saves: 's', author: { name: 'T' }, tier: 3, permissions: [] }));
-		fs.writeFileSync(path.join(dir, 'utilities', 'eagle-info.yaml'), BASE.replace(re, '')); fs.writeFileSync(path.join(dir, 'scripts', 'eagle.py'), '#!x\n');
+		fs.writeFileSync(path.join(dir, 'utilities', 'eagle-info.yaml'), BASE.replace(re, '')); fs.writeFileSync(path.join(dir, 'scripts', 'eagle-info__eagle.py'), '#!x\n');
 		const j = JSON.parse(run(d, 'verify', 'apps/eagle-info', '--json').stdout);
 		const hits = j.findings.filter((x) => (x.code === 'field_missing' || x.code === 'yaml_key_missing') && x.message.includes(key));
 		assert.equal(hits.length, 1, JSON.stringify(hits)); assert.equal(hits[0].code, 'yaml_key_missing');
@@ -200,8 +200,8 @@ test('a missing id or runtime in a folder is reported once, as yaml_key_missing'
 });
 
 test('a Windows-only script app without a #! line is fine; the same on macOS is not', () => {
-	const w = BASE.replace('    macos: "python3 {{scripts_dir}}/eagle.py {{view}}"', '    windows: "{{scripts_dir}}\\\\eagle.py {{view}}"');
-	const bare = (y) => { const d = tmp(); return JSON.parse(run(d, 'verify', signed(d, new Map([['utilities/eagle-info.yaml', Buffer.from(y)], ['scripts/eagle.py', Buffer.from('print(1)\n')]])), '--json').stdout); };
+	const w = BASE.replace('    macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"', '    windows: "{{scripts_dir}}\\\\eagle-info__eagle.py {{view}}"');
+	const bare = (y) => { const d = tmp(); return JSON.parse(run(d, 'verify', signed(d, new Map([['utilities/eagle-info.yaml', Buffer.from(y)], ['scripts/eagle-info__eagle.py', Buffer.from('print(1)\n')]])), '--json').stdout); };
 	assert.ok(!bare(w).findings.some((x) => x.code === 'script_no_shebang'), JSON.stringify(bare(w).findings.map((x) => x.code)));
 	assert.ok(bare(BASE.replace('python3 {{scripts_dir}}', '{{scripts_dir}}')).findings.some((x) => x.code === 'script_no_shebang'));
 });

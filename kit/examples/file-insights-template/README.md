@@ -25,19 +25,19 @@ A local-file app: the person types the path of a CSV, the app reads it with the 
 Any app that reads one local file and explains it: a log summary, an expense export, a metrics dump. Change the columns and the rules, keep the reader.
 
 ## Edit only these fields
-`scripts/config.json`:
+`scripts/file-insights-template__config.json`:
 - `columns`: header words that mean date, value and group (case-insensitive). `mapping` pins an exact header, for example `{"value": "Net sales"}`.
 - `date_formats`, `currency`, `unit`, `delimiters`, `limits`.
 - `rules`: `sum`, `change` (`watch_below_pct`, `good_above_pct`), `top_share` (`watch_above_pct`), `outliers` (`z`), `missing` (`watch_above_pct`). Each has a `title` and `subtitle` template. Delete a rule to drop it.
 - `charts`: the chart titles and types (`line`, `bar` or `sparkline` only). `table_columns`: the table.
 
-`scripts/fixtures.json`: the sample CSV (invented) and the demo files the tests use.
+`scripts/file-insights-template__fixtures.json`: the sample CSV (invented) and the demo files the tests use.
 
 ## Commands
 Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/file-insights-template
-python3 kit/examples/file-insights-template/scripts/insights.py --emit-yaml > kit/examples/file-insights-template/utilities/insights.yaml
+python3 kit/examples/file-insights-template/scripts/file-insights-template__insights.py --emit-yaml > kit/examples/file-insights-template/utilities/insights.yaml
 node toolkit/bin/bolt-apps.mjs check kit/examples/file-insights-template --update-golden
 node toolkit/bin/bolt-apps.mjs lint kit/examples/file-insights-template --personal
 node toolkit/bin/bolt-apps.mjs pack kit/examples/file-insights-template --personal --version 1.0.1 --out file-insights-template-1.0.1.boltpack

@@ -18,7 +18,7 @@ import bolt_app_kit as kit  # noqa: E402
 
 
 def load(app, script):
-    spec = importlib.util.spec_from_file_location("ex_" + script[:-3], os.path.join(EX, app, "scripts", script))
+    spec = importlib.util.spec_from_file_location("ex_" + script[:-3], os.path.join(EX, app, "scripts", app + "__" + script))
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m
@@ -71,7 +71,7 @@ class Radar(unittest.TestCase):
         self.assertTrue(self.r.valid_seen({"seen": {"stars": 1}, "seen_ts": 5.0, "base": None, "base_ts": None}))
 
     def test_releases_row_does_not_claim_a_90_day_count_from_8(self):
-        src = open(os.path.join(EX, "repo-radar", "scripts", "radar.py")).read()
+        src = open(os.path.join(EX, "repo-radar", "scripts", "repo-radar__radar.py")).read()
         self.assertNotIn('"Releases · %d in 90 days"', src)
 
     def test_compare_runs_both_repos_at_once(self):
@@ -199,12 +199,12 @@ class CopiesDoNotShare(unittest.TestCase):
     def run_copy(self, app, script, args, new_id, home, extra_path=None):
         d = os.path.join(tempfile.mkdtemp(), new_id)
         shutil.copytree(os.path.join(EX, app), d, ignore=shutil.ignore_patterns("__pycache__", "golden"))
-        p = os.path.join(d, "scripts", "config.json")
+        p = os.path.join(d, "scripts", app + "__config.json")
         c = json.load(open(p))
         c["app"].update({"id": new_id, "chip": new_id.replace("-", "")[:20], "title": new_id})
         json.dump(c, open(p, "w"))
         env = {"HOME": home, "PATH": (extra_path + os.pathsep if extra_path else "") + "/usr/bin:/bin", "BOLT_APP_FIXTURE": "1"}
-        r = subprocess.run([sys.executable, os.path.join(d, "scripts", script)] + args, env=env, capture_output=True, text=True, timeout=60)
+        r = subprocess.run([sys.executable, os.path.join(d, "scripts", app + "__" + script)] + args, env=env, capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr[-300:])
         return json.loads(r.stdout)
 

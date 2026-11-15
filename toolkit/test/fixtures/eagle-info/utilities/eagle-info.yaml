@@ -9,9 +9,9 @@ args:
   - { name: q, from: "query.word(0)", default: "nest" }
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/eagle_info.py {{q}}"
-    linux: "python3 {{scripts_dir}}/eagle_info.py {{q}}"
-    windows: "python {{scripts_dir}}/eagle_info.py {{q}}"
+    macos: "python3 {{scripts_dir}}/eagle-info__eagle_info.py {{q}}"
+    linux: "python3 {{scripts_dir}}/eagle-info__eagle_info.py {{q}}"
+    windows: "python {{scripts_dir}}/eagle-info__eagle_info.py {{q}}"
   parse: json
   timeout_seconds: 20
 presentation: { widget: list, title_field: title }
@@ -19,10 +19,10 @@ permissions:
   exec:
     - program: python3
       args:
-        - ["{{scripts_dir}}/eagle_info.py", { arg: q }]
+        - ["{{scripts_dir}}/eagle-info__eagle_info.py", { arg: q }]
     - program: python
       args:
-        - ["{{scripts_dir}}/eagle_info.py", { arg: q }]
+        - ["{{scripts_dir}}/eagle-info__eagle_info.py", { arg: q }]
   files: { read: [scripts] }
   network:
     - { host: api.example.invalid }

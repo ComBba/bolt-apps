@@ -25,15 +25,15 @@ How to wrap a command-line tool as a Bolt App, using the system `ping` as the to
 An app around any read-only command: `dig`, `whois`, `git log`, `df`, `docker ps`. Change `tool`, `commands`, `exit_codes` and `parse`, then change `build()` rows to the shape of your tool's output. Keep `check_host` style validation for every typed word, and never build a command string.
 
 ## Edit only these fields
-For a CLI app you ARE expected to edit `scripts/wrap.py`: replace `build()` with rows that fit what your tool prints, and `parse_output()` if the output is not ping's. The rest is data in `scripts/config.json`: `app` (id, chip, title, icon `network` is a valid launcher icon), `tool`, `params`, `host`, `commands`, `exit_codes`, `limits`, `parse`, `verdict`, `chart`.
+For a CLI app you ARE expected to edit `scripts/cli-wrapper-template__wrap.py`: replace `build()` with rows that fit what your tool prints, and `parse_output()` if the output is not ping's. The rest is data in `scripts/cli-wrapper-template__config.json`: `app` (id, chip, title, icon `network` is a valid launcher icon), `tool`, `params`, `host`, `commands`, `exit_codes`, `limits`, `parse`, `verdict`, `chart`.
 
-`scripts/fixtures.json` is a sample output per system. Sample mode (`BOLT_APP_FIXTURE=1`, or `"fixture": true` in `check.json`) parses it instead of running the tool, so a copy has a working path before the tool is installed. The bridge command names `config.json`, `fixtures.json` and `bolt_app_kit.py` as helper files, and `split_args()` drops those trailing words, so keep all three in the command if you rename or add helpers. The check stubs in `fixtures/<os>/*.out` are for the checker only and are not packed. A tool with several subcommands is tested with `by_args` stubs (see `../ENGINE.md`).
+`scripts/cli-wrapper-template__fixtures.json` is a sample output per system. Sample mode (`BOLT_APP_FIXTURE=1`, or `"fixture": true` in `check.json`) parses it instead of running the tool, so a copy has a working path before the tool is installed. The bridge command names `config.json`, `fixtures.json` and `bolt_app_kit.py` as helper files, and `split_args()` drops those trailing words, so keep all three in the command if you rename or add helpers. The check stubs in `fixtures/<os>/*.out` are for the checker only and are not packed. A tool with several subcommands is tested with `by_args` stubs (see `../ENGINE.md`).
 
 ## Commands
 Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/cli-wrapper-template
-python3 kit/examples/cli-wrapper-template/scripts/wrap.py --emit-yaml > kit/examples/cli-wrapper-template/utilities/pingcheck.yaml
+python3 kit/examples/cli-wrapper-template/scripts/cli-wrapper-template__wrap.py --emit-yaml > kit/examples/cli-wrapper-template/utilities/pingcheck.yaml
 node toolkit/bin/bolt-apps.mjs check kit/examples/cli-wrapper-template --update-golden
 node toolkit/bin/bolt-apps.mjs lint kit/examples/cli-wrapper-template --personal
 node toolkit/bin/bolt-apps.mjs pack kit/examples/cli-wrapper-template --personal --version 1.0.1 --out cli-wrapper-template-1.0.1.boltpack

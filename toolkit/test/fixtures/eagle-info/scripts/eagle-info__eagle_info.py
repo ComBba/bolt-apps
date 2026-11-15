@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "eagle-info__lib"))   # the helper package sits in this app's own folder
 
 from bolt_app_kit import rows, dates  # noqa: E402
 

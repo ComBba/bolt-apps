@@ -1,8 +1,8 @@
 {
-  "script": "scripts/insights.py",
+  "script": "scripts/file-insights-template__insights.py",
   "interpreter": "python3",
   "manifest_actions": 1,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/file-insights-template__bolt_app_kit.py",
   "cases": [
     {
       "name": "no path: labelled sample data, tiles and insight rules",

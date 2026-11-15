@@ -83,13 +83,13 @@ For apps that run a script (not accepted in the gallery), the [authoring kit](ki
 ### A rich app for a web API, in minutes
 
 Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
-[`kit/examples/portal-template`](kit/examples/portal-template), change data in `scripts/config.json` and
-`scripts/fixtures.json`, generate the YAML, then check and pack it for yourself:
+[`kit/examples/portal-template`](kit/examples/portal-template), make a copy with `bolt-apps new` (it renames every file for your app), change data in
+`scripts/my-app__config.json` and `scripts/my-app__fixtures.json`, generate the YAML, then check and pack it for yourself:
 
 ```
-cp -R kit/examples/portal-template ~/my-app && cd ~/my-app      # folder name = app id
-# edit scripts/config.json and fixtures.json; set "id" in bolt-app.json; delete utilities/portal-template.yaml
-python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
+node <this repo>/toolkit/bin/bolt-apps.mjs new portal-template my-app --dir ~ && cd ~/my-app      # folder name = app id
+# edit scripts/my-app__config.json and scripts/my-app__fixtures.json
+python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
 node <this repo>/toolkit/bin/bolt-apps.mjs check .
 node <this repo>/toolkit/bin/bolt-apps.mjs pack . --personal --version 1.0.1 --out ../my-app-1.0.1.boltpack
 ```
