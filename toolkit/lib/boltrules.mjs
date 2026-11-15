@@ -150,8 +150,10 @@ export function hostProblem(u) {
 		const g = ipv6Groups(h.slice(1, -1)); if (!g) return { code: 'action_url', message: 'has an IPv6 address that cannot be read' };
 		const lead = g[0];
 		if (g.every((n, i) => i === 7 ? n <= 1 : n === 0)) return bad('the IPv6 loopback or unspecified address');
-		if (g.slice(0, 5).every((n) => n === 0) && g[5] === 0xffff) { const q = [g[6] >> 8, g[6] & 255]; return IPV4_PRIVATE(q[0], q[1]) ? bad('a private address') : null; }
-		if ((lead & 0xffc0) === 0xfe80 || (lead & 0xfe00) === 0xfc00 || (lead & 0xff00) === 0xff00 || lead === 0x2002 || (lead === 0x64 && g[1] === 0xff9b)) return bad('a local, private, translated or multicast IPv6 address');
+		// an IPv4 address carried inside an IPv6 one: mapped (::ffff:a.b.c.d), translated (::ffff:0:a.b.c.d) and the old compatible form (::a.b.c.d)
+		const embedded = g.slice(0, 5).every((n) => n === 0) && g[5] === 0xffff ? [g[6], g[7]] : g.slice(0, 4).every((n) => n === 0) && g[4] === 0xffff && g[5] === 0 ? [g[6], g[7]] : g.slice(0, 6).every((n) => n === 0) ? [g[6], g[7]] : null;
+		if (embedded) { const q = [embedded[0] >> 8, embedded[0] & 255]; return IPV4_PRIVATE(q[0], q[1]) ? bad('an IPv6 address that carries a private or local IPv4 address') : null; }
+		if ((lead & 0xffc0) === 0xfe80 || (lead & 0xffc0) === 0xfec0 || (lead & 0xfe00) === 0xfc00 || (lead & 0xff00) === 0xff00 || lead === 0x2002 || (lead === 0x64 && g[1] === 0xff9b)) return bad('a local, private, translated or multicast IPv6 address');
 		return null;   // a public IPv6 literal is allowed
 	}
 	const q = ipv4Parts(h);

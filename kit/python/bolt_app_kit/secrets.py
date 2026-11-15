@@ -52,7 +52,7 @@ def _parse_value(raw):
     if v[:1] in ("'", '"'):
         end = v.find(v[0], 1)
         return v[1:end] if end > 0 else v[1:]
-    return re.split(r"\s+#", v, 1)[0].strip()   # an unquoted value ends at a trailing comment
+    return re.split(r"[ \t]+#", v, 1)[0].strip()   # an unquoted value ends at a trailing comment
 
 
 def _from_file(app_id, name, path=None):

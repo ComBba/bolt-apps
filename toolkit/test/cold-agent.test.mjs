@@ -136,3 +136,28 @@ test('check: text_on_disk fails a script that wrote an echoed key into its cache
 	fs.writeFileSync(sp, t.replace('raw = kit.redact_tree(raw, [self.key] if self.key else [], c["api"].get("auth_param"))', 'pass'));
 	const r = run(root, 'check', d); assert.equal(r.status, 1); assert.match(r.stdout, /text_on_disk/);
 });
+
+test('ship and doctor: a bolt-app.json that is JSON null (or a list) gives a plain error, not a crash and not "not valid JSON"', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const env = { ...process.env, HOME: home };
+	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
+	assert.equal(sh('new', 'script-template', 'odd').status, 0);
+	for (const body of ['null', '[]', '7']) {
+		fs.writeFileSync(path.join(root, 'odd', 'bolt-app.json'), body);
+		const s1 = sh('ship', 'odd'); assert.equal(s1.status, 1); assert.match(s1.stderr, /must be a JSON object/); assert.doesNotMatch(s1.stderr + s1.stdout, /TypeError|at .*\.mjs/);
+		const d = sh('doctor', 'odd'); assert.equal(d.status, 1); assert.match(d.stdout, /is a JSON object/); assert.doesNotMatch(d.stdout, /not valid JSON/);
+	}
+});
+
+test('the repo-root bolt-apps launcher runs the toolkit from any folder, through a symlink, and says so when node is missing', () => {
+	const launcher = path.join(REPO, 'bolt-apps');
+	assert.ok(fs.statSync(launcher).mode & 0o111, 'bolt-apps is executable');
+	const root = tmp();
+	const run1 = (cmd, args, env = process.env) => spawnSync(cmd, args, { cwd: root, encoding: 'utf8', env });
+	assert.match(run1(launcher, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	assert.match(run1(launcher, ['--help']).stdout, /new <template> <id>/);
+	const link = path.join(root, 'bolt-apps-link'); fs.symlinkSync(launcher, link);
+	assert.match(run1(link, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	const nonode = run1('/bin/sh', [launcher, '--version'], { PATH: '/nonexistent' });
+	assert.equal(nonode.status, 127); assert.match(nonode.stderr, /Node 18 or newer is needed/);
+});

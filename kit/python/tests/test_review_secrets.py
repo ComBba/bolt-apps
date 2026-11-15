@@ -36,6 +36,12 @@ class KeyFile(unittest.TestCase):
             s = k.secrets._from_file("demo", "MY_KEY", path=self.f(body))
             self.assertEqual(s.value, want, body)
 
+    def test_a_comment_needs_a_space_or_tab_before_the_hash(self):
+        s = k.secrets._from_file("demo", "MY_KEY", path=self.f("MY_KEY=abc#def12345 # note\n"))
+        self.assertEqual(s.value, "abc#def12345")
+        s = k.secrets._from_file("demo", "MY_KEY", path=self.f("MY_KEY=abc12345\t# note\n"))
+        self.assertEqual(s.value, "abc12345")
+
     def test_setup_hint_leaves_umask_alone(self):
         h = k.setup_hint("demo", "MY_KEY", os_="macos")
         self.assertNotIn("umask 077 &&", h)

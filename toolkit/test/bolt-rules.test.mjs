@@ -152,3 +152,8 @@ test('false errors are gone: lowercase http method, public IPv6 links, pre-relea
 test('layout: a file and a folder that differ only in letter case clash', () => {
 	assert.deepEqual(codes(layoutProblems(['Lib', 'lib/x.py'])), ['script_file_folder']);
 });
+
+test('IPv6 literals that carry a private IPv4 address or are site-local are refused; a public IPv4 inside stays allowed', () => {
+	for (const u of ['https://[fec0::1]/x', 'https://[::ffff:0:7f00:1]/x', 'https://[::7f00:1]/x', 'https://[::ffff:7f00:1]/x', 'https://[::ffff:c0a8:101]/x']) assert.equal(hostProblem(u)?.code, 'action_url_internal', u);
+	for (const u of ['https://[::808:808]/x', 'https://[::ffff:808:808]/x', 'https://[2001:4860:4860::8888]/x']) assert.equal(hostProblem(u), null, u);
+});
