@@ -5,6 +5,12 @@ An example of the Bolt Apps kit: this file holds data and wiring only. Formattin
 deadlines, caching and JSON output come from bolt_app_kit."""
 import sys
 
+import os as _os
+import sys as _sys
+
+_sys.dont_write_bytecode = True   # Bolt installs the script folder as it is: no __pycache__ in it
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))   # python -I drops the script folder from the path; the kit sits beside the script
+import os
 import bolt_app_kit as kit
 
 OS = kit.os_name()
@@ -108,7 +114,12 @@ def run(argv):
         main(argv)
     except SystemExit:
         raise
+    except kit.KitError as e:   # a row the contract refuses is the author's bug: say what it is
+        kit.emit([kit.error_row("Row contract: %s" % kit.clean_text(str(e), 200), title="This app could not run")])
     except Exception as e:   # one plain row: never a traceback, and the message is not shown (it could carry a key)
+        if os.environ.get("BOLT_APP_DEBUG"):   # bolt-apps run sets this: the real error goes to the terminal
+            import traceback
+            traceback.print_exc()
         kit.emit([kit.error_row("%s while building the rows. Run the script in a terminal to see why." % e.__class__.__name__)])
 
 

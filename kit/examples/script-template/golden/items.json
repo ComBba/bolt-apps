@@ -1,0 +1,112 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the overview",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Alpha service",
+    "subtitle": "ok · 12",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "item",
+      "arg": "101"
+    },
+    "actions": [],
+    "pane": "item",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "item_name": "Alpha service",
+    "status": "ok",
+    "count": 12
+  },
+  {
+    "title": "Beta service",
+    "subtitle": "late · 7",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "item",
+      "arg": "102"
+    },
+    "actions": [],
+    "pane": "item",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "LATE",
+    "copy_text": "",
+    "item_name": "Beta service",
+    "status": "late",
+    "count": 7
+  },
+  {
+    "title": "Gamma worker",
+    "subtitle": "ok · 31",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "item",
+      "arg": "103"
+    },
+    "actions": [],
+    "pane": "item",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "OK",
+    "copy_text": "",
+    "item_name": "Gamma worker",
+    "status": "ok",
+    "count": 31
+  },
+  {
+    "title": "Delta queue",
+    "subtitle": "down · 0",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "item",
+      "arg": "104"
+    },
+    "actions": [],
+    "pane": "item",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "DOWN",
+    "copy_text": "",
+    "item_name": "Delta queue",
+    "status": "down",
+    "count": 0
+  }
+]

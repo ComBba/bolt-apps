@@ -39,8 +39,10 @@
         "Coins",
         "Contrast",
         "Cpu",
+        "CreditCard",
         "Crop",
         "Crosshair",
+        "Database",
         "DollarSign",
         "Download",
         "ExternalLink",
@@ -53,6 +55,7 @@
         "GitMerge",
         "Globe",
         "Hash",
+        "IdCard",
         "Image",
         "Key",
         "KeySquare",
@@ -88,6 +91,7 @@
         "Sigma",
         "Sparkles",
         "SquareTerminal",
+        "StickyNote",
         "Terminal",
         "TextCursorInput",
         "Timer",
@@ -151,7 +155,7 @@
         "wallet",
         "wifi"
       ],
-      "x-source-sha256": "4a53fba485be87fa8cb5d985c06585c776824b42e05a5c21d9da82c7f5581143"
+      "x-source-sha256": "1427b76818b0381b22c596731dc3de7762532cca67ca27fdc66608f81ac0caa7"
     },
     "id": {
       "type": "string",

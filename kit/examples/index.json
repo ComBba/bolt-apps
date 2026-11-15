@@ -391,6 +391,43 @@
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery-2",
       "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "script-template",
+      "need": "a script app on the kit for an API or tool no engine template fits",
+      "layout": "overview tiles, list with a filter word, detail with Back",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/app.py",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "table",
+        "detail"
+      ],
+      "techniques": [
+        "views and nav",
+        "Back row",
+        "filter word",
+        "fresh and old cache in code",
+        "offline row",
+        "setup row",
+        "key from keychain or .env",
+        "key stripped from the answer",
+        "sample mode",
+        "--emit-yaml",
+        "KitError text"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/config.json",
+        "scripts/fixtures.json",
+        "scripts/app.py (n_items, http_get, build, emit_yaml)",
+        "check.json"
+      ],
+      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/script-template",
+      "verified": "not yet verified in real Bolt"
     }
   ],
   "coverage": {

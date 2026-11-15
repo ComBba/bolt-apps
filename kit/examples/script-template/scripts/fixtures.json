@@ -1,0 +1,36 @@
+{
+ "_note": "SAMPLE DATA, invented for this template (api.example.com is a placeholder). Replace it with a recorded answer from your API. The api_key in the links below is the made-up value the check case sets, to prove the kit strips an echoed key before it caches anything.",
+ "_now": 1763208300,
+ "items": {
+  "items": [
+   {
+    "id": "101",
+    "name": "Alpha service",
+    "status": "ok",
+    "count": 12
+   },
+   {
+    "id": "102",
+    "name": "Beta service",
+    "status": "late",
+    "count": 7
+   },
+   {
+    "id": "103",
+    "name": "Gamma worker",
+    "status": "ok",
+    "count": 31
+   },
+   {
+    "id": "104",
+    "name": "Delta queue",
+    "status": "down",
+    "count": 0
+   }
+  ],
+  "links": {
+   "self": "https://api.example.com/v1/items?api_key=tpl-key-1234567890"
+  },
+  "message": "served for tpl-key-1234567890"
+ }
+}

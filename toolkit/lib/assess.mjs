@@ -10,6 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
+import { RULES, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems } from './boltrules.mjs';
 export function httpsLiteralHost(t) {
 	const rest = String(t).trim();
 	if (!rest.startsWith('https://')) return null;
@@ -162,19 +163,20 @@ export function launcherRules(root, opts = {}) {
 		if (NO_APP_DATA_KINDS.includes(kind)) W('right_widget_no_data', `${p}.kind "${kind}" passes validation but Bolt shows "This app asks for a ${kind} pane, which cannot show app data" instead of your rows. Use table, detail, cards or chart${kind === 'image' ? ' (image_grid for pictures)' : ''}`);
 		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
-		if (kind === 'chart' && bind && bind.t === 'm') { const t = str(get(bind, 'type')?.value); if (t !== undefined && !CHART_TYPES.includes(t)) bad('right_widget_bind_unread', `${p}.bind.type must be one of ${CHART_TYPES.join(', ')}, got "${t}"`); }
+		// Every other kind: keys, types, enums and caps from the launcher's table (schema/bolt-rules.json). Strict for schema_version 2 and for every pack.
+		if (!BIND_NONE.includes(kind) && bind && bind.t === 'm') for (const bp of bindProblems(kind, bind, `${p}.bind`)) (strict || opts.pack ? E : W)('right_widget_bind_unread', bp.message + (strict || opts.pack ? '' : ' (a warning for schema_version 1, an error from schema_version 2 and in every pack)'));
 	}
-	// a manifest `run` action: the footer button is disabled when the template is empty or has {{ (the launcher)
-	for (const it of get(root, 'actions')?.value?.items || []) if (it.t === 'm' && str(get(it, 'kind')?.value) === 'run') { const t = str(get(it, 'query_template')?.value) ?? ''; if (!t.trim() || t.includes('{{')) W('run_action_template', `action "${str(get(it, 'id')?.value) ?? '?'}" is kind run, whose query_template must be fixed text with no {{ }}; otherwise the button does nothing`); }
 	// no command for a platform: the app has nothing to run there. A warning, since an app may be single-platform on purpose.
 	if (str(get(root, 'runtime')?.value) === 'bridge') {
 		const cm = get(get(root, 'bridge')?.value, 'command')?.value;
 		if (cm && cm.t === 'm' && cm.entries.length) for (const o of OS3) if (!cm.entries.some((e) => e.key === o) && !opts.platformsUnknown && (!Array.isArray(opts.platforms) || opts.platforms.includes(o))) W('command_os_missing', `bridge.command has no ${o} entry, so the app has nothing to run on ${o}${Array.isArray(opts.platforms) ? '' : '. Add one, or list only the systems it supports in "platforms" in bolt-app.json'}`);
 	}
+	// The launcher's structure, env, timeout, loopback, action and nav rules (schema/bolt-rules.json). Each is an error because the launcher refuses the file.
+	for (const f of [structureProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems]) for (const pr of f(root)) (pr.level === 'warning' ? W : E)(pr.code, pr.message);
 	return out;
 }
 // Codes assessYaml can return as problems: verify takes these from checkManifests, so the folder view drops lint's copy.
-export const ASSESS_CODES = new Set(['scripts_dir_form', 'runtime_not_allowed', 'action_not_allowed', 'views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template']);
+export const ASSESS_CODES = new Set(['unknown_field', 'missing_field', 'bind_invalid', 'env_passthrough_max', 'env_name', 'env_secret_name', 'env_not_allowed', 'env_inline_value', 'timeout_default', 'timeout_out_of_range', 'http_port', 'http_port_reserved', 'http_host_not_loopback', 'http_method_not_allowed', 'http_parse', 'action_id', 'action_kind', 'action_field', 'run_action_template', 'action_primary', 'action_icon', 'action_label_reserved', 'action_url', 'action_url_internal', 'action_url_port', 'action_admin_only', 'input_type', 'bridge_cwd', 'env_passthrough_duplicate', 'http_header', 'view_arg_index', 'scripts_dir_form', 'runtime_not_allowed', 'action_not_allowed', 'views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template']);
 export const MAX_HASHED_FILE_BYTES = 2 * 1024 * 1024;         // the launcher MAX_HASHED_FILE_BYTES
 const WORDS = [
 	[/^runs_commands$/, 'run programs on your computer'], [/^network:localhost:(\d+)$/, 'talk to a service on this computer (port $1)'],

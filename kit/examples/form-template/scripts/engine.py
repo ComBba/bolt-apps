@@ -9,6 +9,7 @@ Other:   engine.py --emit-yaml    prints the launcher app file for this config
 
 An author edits config.json and fixtures.json only. Formatting, row structure, text safety, deadlines and the
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
+import concurrent.futures as cf
 import json
 import math
 import os
@@ -21,6 +22,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+import os as _os
+import sys as _sys
+
+_sys.dont_write_bytecode = True   # Bolt installs the script folder as it is: no __pycache__ in it
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))   # python -I drops the script folder from the path; the kit sits beside the script
 import bolt_app_kit as kit
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -252,6 +258,19 @@ def validate_config(cfg):
     if not isinstance(eps, dict) or not eps:
         p.append("endpoints must list at least one endpoint")
         eps = {}
+    if api.get("auth_in", "header") not in ("header", "query"):
+        p.append("api.auth_in must be header or query")
+    if api.get("auth_param") is not None and not re.match(r"^[A-Za-z_][A-Za-z0-9_-]{0,31}\Z", str(api.get("auth_param"))):
+        p.append("api.auth_param must be a plain parameter name")
+    for n, ep in eps.items():
+        if not isinstance(ep, dict):
+            continue
+        h = ep.get("hydrate")
+        if h is not None and (not isinstance(h, dict) or "{id}" not in str(h.get("path", "")) or ep.get("kind", "list") != "list"
+                              or not isinstance(h.get("limit", 20), int) or not 1 <= h.get("limit", 20) <= MAX_ROWS):
+            p.append("endpoint %s: hydrate needs {path with {id}, limit 1 to %d} on a list endpoint" % (n, MAX_ROWS))
+        if ep.get("flatten") is not None and not isinstance(ep["flatten"], (str, bool)):
+            p.append("endpoint %s: flatten is true or the name of the field that keeps the key" % n)
     base_host = _host_of(api["base_url"]) if isinstance(api.get("base_url"), str) else None
     allowed = set([base_host] + [h for h in (api.get("allowed_hosts") or []) if isinstance(h, str)])
     for n, ep in eps.items():
@@ -392,11 +411,46 @@ def http_get(api, key, path, timeout):
     headers = {"Accept": "application/json", "User-Agent": api.get("user_agent", "bolt-app-example/1.0")}
     url = path if path.startswith("https:") else api["base_url"].rstrip("/") + path
     if key and _host_of(url) == _host_of(api["base_url"]):   # the key goes to the host it was made for, never to a second one
-        headers[api.get("auth_header", "X-API-Key")] = api.get("auth_prefix", "") + key
+        if api.get("auth_in") == "query":   # a key some APIs want as a query parameter; it is redacted from the answer before anything keeps it
+            url += ("&" if "?" in url else "?") + urllib.parse.urlencode({api.get("auth_param", "api_key"): key})
+        else:
+            headers[api.get("auth_header", "X-API-Key")] = api.get("auth_prefix", "") + key   # an empty auth_prefix is allowed
     req = urllib.request.Request(url, headers=headers, method="GET")
     with urllib.request.build_opener(_SameHost).open(req, timeout=timeout) as r:
         raw = r.read(5 * 1024 * 1024)
     return json.loads(raw.decode("utf-8")) if raw else None
+
+
+def hydrate(api, key, ep, raw, deadline):
+    """A list of ids (Hacker News topstories) then one request per id, in parallel under the shared deadline. Ids that fail are dropped;
+    if none answer the whole endpoint counts as failed."""
+    h = ep["hydrate"]
+    path = ep.get("data", "data")
+    v = get_path(raw, path) if path else raw
+    if v is None and isinstance(raw, list):
+        v = raw
+    ids = [x for x in (v if isinstance(v, list) else []) if isinstance(x, (int, str)) and not isinstance(x, bool)
+           and str(x) not in ("", ".", "..") and len(str(x)) <= 128 and "/" not in str(x)][:min(int(h.get("limit", 20)), MAX_ROWS)]   # an odd id costs that row, never the app
+
+    def one(i):
+        try:
+            return http_get(api, key, h["path"].replace("{id}", urllib.parse.quote(str(i), safe="")), deadline.cap(REQ_TIMEOUT))
+        except Exception:
+            return None
+    ex = cf.ThreadPoolExecutor(max_workers=8)
+    futs = [ex.submit(one, i) for i in ids]
+    got = []
+    for f in futs:
+        try:
+            r = f.result(timeout=max(0.1, deadline.remaining()))
+        except Exception:
+            r = None
+        if isinstance(r, dict):
+            got.append(r)
+    ex.shutdown(wait=False, cancel_futures=True)
+    if ids and not got:
+        raise urllib.error.URLError("no item answered")
+    return got
 
 
 def cause_of(e):
@@ -419,11 +473,14 @@ def ago(sec):
 def unwrap(ep, raw):
     """The rows or the object inside an answer, or None when the answer is not what this endpoint is configured to return.
     An error body such as {"message": "Bad credentials"} and a list of non-records are unread, never data."""
-    path = ep.get("data", "data")
+    path = "" if ep.get("hydrate") else ep.get("data", "data")   # a hydrated endpoint already holds its list of records
     kind = ep.get("kind", "list")
     v = get_path(raw, path) if path else raw
     if v is None and kind == "list" and isinstance(raw, list):
         v = raw
+    if kind == "list" and ep.get("flatten") and isinstance(v, dict):   # an object of lists keyed by date or name: one list, the key kept in a field
+        fld = ep["flatten"] if isinstance(ep["flatten"], str) else "key"
+        v = [dict(x, **{fld: k}) for k in sorted(v) if isinstance(v[k], list) for x in v[k] if isinstance(x, dict)]
     if kind == "list":
         if not isinstance(v, list) or (v and not any(isinstance(x, dict) for x in v)):
             return None
@@ -477,8 +534,17 @@ class Loaded(object):
         self.cached_age, self.from_cache = 0, False
 
 
+NOW_OVERRIDE = [None]   # sample mode sets this from fixtures.json "_now" so {today} does not drift
+DATE_TOKEN = re.compile(r"\{today(?:([+-])(\d{1,4})d)?\}")
+
+
+def _day(delta):
+    return time.strftime("%Y-%m-%d", time.localtime((NOW_OVERRIDE[0] or time.time()) + delta * 86400))
+
+
 def fill_path(path, pvars):
-    """Fill {name} and {name.field} in an endpoint path from earlier results and the typed query, URL-quoted."""
+    """Fill {today}, {today-7d}, {today+1d} (local dates), then {name} and {name.field} from earlier results and the typed query, URL-quoted."""
+    path = DATE_TOKEN.sub(lambda m: _day(int(m.group(2) or 0) * (-1 if m.group(1) == "-" else 1)), path)
     return TOKEN.sub(lambda m: urllib.parse.quote(str(lookup(m.group(1), pvars, {}) if lookup(m.group(1), pvars, {}) is not None else ""), safe=""), path) if pvars else path
 
 
@@ -515,6 +581,10 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         return L
 
     if fixture_mode:
+        NOW_OVERRIDE[0] = fixtures.get("_now") if isinstance(fixtures.get("_now"), (int, float)) else None
+        sec = find_key(app, api)[0] if api.get("key_env") else ""
+        if sec:
+            fixtures = kit.redact_tree(fixtures, [sec], api.get("auth_param"))   # sample answers get the same treatment as live ones
         if demo == "demo-nokey":
             L.stop = ("nokey", "Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), 0)
             return L
@@ -553,6 +623,9 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         def run():
             try:
                 v = http_get(api, key, fill_path(eps[n]["path"], pvars), deadline.cap(REQ_TIMEOUT))
+                if eps[n].get("hydrate"):
+                    v = hydrate(api, key, eps[n], v, deadline)
+                v = kit.redact_tree(v, [key] if key else [], api.get("auth_param"))   # APIs echo the key in their links and errors: strip it before anything is cached or shown
                 return kit.Probe(n, v is not None and unwrap(eps[n], v) is not None, v, "other")
             except Exception as e:
                 return kit.Probe(n, False, reason=cause_of(e))
@@ -1138,6 +1211,9 @@ def main(argv):
     except kit.KitError as e:   # a config value the row contract refuses: say which
         kit.emit([kit.error_row("config.json: %s" % e, title="This app is not set up correctly")])
     except Exception as e:  # never a stack trace in the launcher
+        if os.environ.get("BOLT_APP_DEBUG"):   # bolt-apps run sets this: the real error goes to the terminal
+            import traceback
+            traceback.print_exc()
         kit.emit([kit.error_row("%s while building the rows. Run the script in a terminal to see why." % e.__class__.__name__)])
 
 

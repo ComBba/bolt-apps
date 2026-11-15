@@ -9,7 +9,7 @@ import os
 from .fmt import plain_number
 from .icons_data import ICONS
 from .schema import validate_rows
-from .text import clean_lines, clean_text, neutralise_braces, safe_copy, text
+from .text import clean_lines, clean_text, neutralise_braces, safe_copy, safe_text, text
 
 _SCHEME = "^https?:" + "//"   # split so the install prompt's text search does not read a pattern as a web address with a backslash
 LABEL_MAX = 14
@@ -31,7 +31,11 @@ class KitError(ValueError):
 
 def _icon(name):
     if name not in ICONS:
-        raise KitError("icon %r is not in the launcher icon map (see kit/schema/icons.json)" % (name,))
+        import difflib
+        low = dict((i.lower(), i) for i in ICONS)
+        near = low.get(str(name).lower()) or next(iter(difflib.get_close_matches(str(name), sorted(ICONS), n=1, cutoff=0.6)), None)
+        raise KitError("icon %r is not in the launcher icon list (kit/schema/icons.json). Icon names are case-sensitive%s" % (
+            name, (": did you mean %r?" % near) if near else ", for example network, globe, list, file, line-chart or Globe, Mail"))
     return name
 
 
@@ -83,7 +87,13 @@ def action_url(id, label, url_template):
     return _action(id, "url", label, url_template=url_template)
 
 
+_PROTO_IDS = frozenset(("constructor", "prototype", "__proto__", "hasOwnProperty", "isPrototypeOf", "propertyIsEnumerable", "toLocaleString", "toString", "valueOf",
+                        "__defineGetter__", "__defineSetter__", "__lookupGetter__", "__lookupSetter__"))   # the launcher looks row actions up by id
+
+
 def _action(id, kind, label, **kw):
+    if isinstance(id, str) and id in _PROTO_IDS:
+        raise KitError("action id %r is a name the launcher refuses (it is a built-in object name)" % id)
     if not isinstance(id, str) or not _ID.match(id):
         raise KitError("action id %r must match %s" % (id, _ID.pattern))
     lab = clean_text(label)
@@ -110,7 +120,7 @@ def chips(items, sep=", ", limit=400):
 
 
 def row(title, subtitle="", icon=DEFAULT_ICON, body="", nav=None, actions=None, tile=None, badge="", copy=True,
-        badges=None, pane=None, category=None, url=None, open_url=None, id=None, manifest_actions=1, data=None, trend=None, multiline=None, **fields):
+        badges=None, pane=None, category=None, url=None, open_url=None, copy_raw=None, id=None, manifest_actions=1, data=None, trend=None, multiline=None, **fields):
     """One row. Every string is cleaned (control, bidi, zero-width, tag characters out; `{{` broken). `copy`
     True copies "title - subtitle" through safe_copy, a string/list copies that, False/nav rows copy nothing.
     A nav row has no actions. A row has at most 3 - manifest_actions footer buttons."""
@@ -151,6 +161,8 @@ def row(title, subtitle="", icon=DEFAULT_ICON, body="", nav=None, actions=None, 
               "kpi_badge": text(badge, 24)})
     if nav is not None or copy is False:
         r["copy_text"] = ""
+    elif copy_raw is not None:   # a bare value to paste (a host name, an id): no "- " bullet. Use it only for text the person expects to paste as it is
+        r["copy_text"] = safe_text(copy_raw)
     elif copy is True:
         r["copy_text"] = safe_copy("%s - %s" % (r["title"], r["subtitle"]) if r["subtitle"] else r["title"])
     else:

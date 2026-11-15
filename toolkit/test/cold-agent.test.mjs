@@ -84,9 +84,12 @@ test('lint: declared permissions that disagree with the computed ones warn, and 
 	const root = tmp(), d = copyExample('system-glance', path.join(root, 'system-glance'));
 	const r = run(root, 'lint', d, '--personal', '--json'); const j = JSON.parse(r.stdout);
 	assert.equal(JSON.stringify(j).includes('permissions_differ'), false, 'system-glance declares exactly what is computed');
-	const lp = path.join(d, 'bolt-app.json'), l = JSON.parse(fs.readFileSync(lp, 'utf8')); l.permissions = ['runs_commands', 'files']; fs.writeFileSync(lp, JSON.stringify(l));
+	const lp = path.join(d, 'bolt-app.json'), l = JSON.parse(fs.readFileSync(lp, 'utf8'));
+	l.permissions = ['runs_commands', 'files', 'network']; fs.writeFileSync(lp, JSON.stringify(l));   // declared extras are fine for a script app
+	assert.equal(JSON.stringify(JSON.parse(run(root, 'lint', d, '--personal', '--json').stdout)).includes('permissions_differ'), false);
+	l.permissions = ['files']; fs.writeFileSync(lp, JSON.stringify(l));   // a computed permission left out warns, and the message says which list wins
 	const r2 = run(root, 'lint', d, '--personal'); assert.equal(r2.status, 0);
-	assert.match(r2.stdout, /permissions_differ/); assert.match(r2.stdout, /declared but not computed: files/); assert.match(r2.stdout, /computed list wins/);
+	assert.match(r2.stdout, /permissions_differ/); assert.match(r2.stdout, /computed but not declared: .*runs_commands/); assert.match(r2.stdout, /computed list wins/);
 });
 
 test('verify: a pack and its folder agree about platforms (a pack records none, so no OS command is reported missing)', () => {
@@ -101,4 +104,67 @@ test('help lists every command and --version prints the version', () => {
 	const h = run(REPO, '--help').stdout;
 	for (const w of ['new', 'lint', 'check', 'kit vendor', 'keygen', 'pack', 'verify', '--version']) assert.ok(h.includes(w), w);
 	assert.match(run(REPO, '--version').stdout.trim(), /^\d+\.\d+\.\d+$/);
+});
+
+test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, with no hand edits', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const env = { ...process.env, HOME: home };
+	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
+	const n = sh('new', 'script-template', 'my-tool'); assert.equal(n.status, 0, n.stdout + n.stderr); assert.match(n.stdout, /check passes/);
+	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'golden', 'left-over.json')));
+	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Alpha service/); assert.match(r.stdout, /right pane: table/);
+	const j = JSON.parse(sh('run', 'my-tool', '--sample', '--json').stdout); assert.ok(Array.isArray(j));
+	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.0/); assert.match(s1.stdout, /type =mytool/);
+	const s2 = sh('ship', 'my-tool'); assert.match(s2.stdout, /Shipped my-tool 1\.0\.1/);
+	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'scripts', '__pycache__')));
+});
+
+test('workflow: run and ship refuse a folder that holds a real-looking key; doctor reports fixes', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const env = { ...process.env, HOME: home };
+	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
+	assert.equal(sh('new', 'script-template', 'leaky').status, 0);
+	fs.writeFileSync(path.join(root, 'leaky', 'scripts', 'notes.txt'), 'token ghp_' + 'a'.repeat(36));
+	for (const c of ['run', 'ship']) { const r = sh(c, 'leaky', '--sample'); assert.equal(r.status, 1); assert.match(r.stderr, /shaped like a real key/); assert.doesNotMatch(r.stdout + r.stderr, /ghp_a{36}/); }
+	const d = sh('doctor'); assert.equal(d.status, 1); assert.match(d.stdout, /bolt-apps keygen/);
+});
+
+test('check: text_on_disk fails a script that wrote an echoed key into its cache (script-template proves the kit strips it)', () => {
+	const root = tmp(), d = copyExample('script-template', path.join(root, 'script-template'));
+	assert.equal(run(root, 'check', d).status, 0);
+	const sp = path.join(d, 'scripts/app.py'), t = fs.readFileSync(sp, 'utf8');
+	fs.writeFileSync(sp, t.replace('raw = kit.redact_tree(raw, [self.key] if self.key else [], c["api"].get("auth_param"))', 'pass'));
+	const r = run(root, 'check', d); assert.equal(r.status, 1); assert.match(r.stdout, /text_on_disk/);
+});
+
+test('ship and doctor: a bolt-app.json that is JSON null (or a list) gives a plain error, not a crash and not "not valid JSON"', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const env = { ...process.env, HOME: home };
+	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
+	assert.equal(sh('new', 'script-template', 'odd').status, 0);
+	for (const body of ['null', '[]', '7']) {
+		fs.writeFileSync(path.join(root, 'odd', 'bolt-app.json'), body);
+		const s1 = sh('ship', 'odd'); assert.equal(s1.status, 1); assert.match(s1.stderr, /must be a JSON object/); assert.doesNotMatch(s1.stderr + s1.stdout, /TypeError|at .*\.mjs/);
+		const d = sh('doctor', 'odd'); assert.equal(d.status, 1); assert.match(d.stdout, /is a JSON object/); assert.doesNotMatch(d.stdout, /not valid JSON/);
+	}
+});
+
+test('the repo-root bolt-apps launcher runs the toolkit from any folder, through a symlink, and says so when node is missing', () => {
+	const launcher = path.join(REPO, 'bolt-apps');
+	assert.ok(fs.statSync(launcher).mode & 0o111, 'bolt-apps is executable');
+	const root = tmp();
+	const run1 = (cmd, args, env = process.env) => spawnSync(cmd, args, { cwd: root, encoding: 'utf8', env });
+	assert.match(run1(launcher, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	assert.match(run1(launcher, ['--help']).stdout, /new <template> <id>/);
+	const link = path.join(root, 'bolt-apps-link'); fs.symlinkSync(launcher, link);
+	assert.match(run1(link, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	const hop1 = path.join(root, 'hop1'), hop2 = path.join(root, 'sub', 'hop2'); fs.mkdirSync(path.join(root, 'sub'));
+	fs.symlinkSync(launcher, hop1); fs.symlinkSync(path.join('..', 'hop1'), hop2);   // a two-link chain, the second one with a relative target
+	assert.match(run1(hop2, ['--version']).stdout.trim(), /^\d+\.\d+\.\d+$/);
+	const fake = path.join(root, 'oldnode'); fs.mkdirSync(fake);   // a node that says it is version 16
+	fs.writeFileSync(path.join(fake, 'node'), '#!/bin/sh\ncase "$1" in -p) echo 16 ;; -v) echo v16.0.0 ;; *) echo ran ;; esac\n', { mode: 0o755 });
+	const old = run1('/bin/sh', [launcher, '--version'], { PATH: `${fake}:/usr/bin:/bin` });
+	assert.equal(old.status, 127); assert.match(old.stderr, /Node 18 or newer is needed; this is Node v16/);
+	const nonode = run1('/bin/sh', [launcher, '--version'], { PATH: '/nonexistent' });
+	assert.equal(nonode.status, 127); assert.match(nonode.stderr, /Node 18 or newer is needed/);
 });

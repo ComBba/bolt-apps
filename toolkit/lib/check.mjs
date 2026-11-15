@@ -4,6 +4,7 @@
 // schema validation of every output; footer button and label limits; the numeric tile rule; text safety scan;
 // vendored-kit divergence guard. Not built: see docs/kit-design.md, section "What check does not do".
 import fs from 'node:fs';
+import { RULES } from './boltrules.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -352,7 +353,7 @@ export async function checkApp(appDir, opts = {}) {
 			makeStubs(stubDir, appDir, osName, kase, files);
 			// Sample mode: a case (or check.json as a whole) sets "fixture": true, so the script runs on its recorded answers while the shipped app stays live.
 			const sample = kase.fixture ?? cfg.fixture;
-			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), PATH: stubDir, HOME: home, ...(sample === undefined ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
+			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...(sample === undefined ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
 			const ex = kase.expect || {};
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;
@@ -370,6 +371,8 @@ export async function checkApp(appDir, opts = {}) {
 				if (bad) E('app_error_row', `the script printed its own error row instead of rows: "${bad.title}": ${String(bad.subtitle).slice(0, 300)}. Fix that first, then the expected text`);
 				else for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `output does not contain "${t}". The first rows were: ${head}`);
 				for (const t of ex.text_absent || []) if (flat.includes(t)) E('forbidden_text_present', `output contains "${t}"`);
+				// home_absent: text that must not be on disk after the run (a key echoed by the API must never reach the cache). HOME is the temporary folder of this case.
+				if ((ex.home_absent || []).length) { const hits = []; const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.isFile()) { const b = fs.readFileSync(f, 'utf8'); for (const t of ex.home_absent) if (b.includes(t)) hits.push(`${path.relative(home, f)} holds "${t}"`); } } }; walk(home); for (const h of hits) E('text_on_disk', `${h}. The kit strips a secret from an API answer before it is cached: call kit.redact_tree on the parsed answer`); }
 				if (kase.golden) {
 					const gp = path.join(appDir, kase.golden);
 					if (opts.updateGolden && f.some((x) => x.level === 'error')) E('golden_not_written', 'not writing a golden from a failing run');
