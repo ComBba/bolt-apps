@@ -1,5 +1,10 @@
 # The shared engine: every config option, once
 
+> **Known issue (Bolt 0.1.181): two kit-built apps cannot be installed together.**
+> Bolt installs every pack's scripts into one shared folder and refuses a file whose path already belongs to another pack (`owned_by_other`, shown as "one of its files already belongs to another installed pack"). Every app built from the kit, templates or examples ships the same file names (`scripts/bolt_app_kit.py`, `scripts/config.json`, `scripts/fixtures.json`, `scripts/engine.py`), so one installs fine and a second is refused until the first is removed. Apps whose script and helper files all have unique names are unaffected.
+> **Workaround:** install one kit-built app at a time and remove the previous one first (Settings, User Apps, Remove), or rename every script and helper file of your app to a name unique to your app id (and update the command and the engine and kit references) before packing.
+> Renaming is fiddly for kit apps. The permanent fix will make `./bolt-apps new` do it automatically; it needs no Bolt release, and there is no date yet.
+
 All apps here run the same `scripts/engine.py`. An app is `scripts/config.json` plus `scripts/fixtures.json`. Nothing else is edited. Regenerate the app file after any change:
 
 ```
