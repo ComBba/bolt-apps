@@ -1,0 +1,158 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "3 documents",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Order 1042",
+    "subtitle": "API response",
+    "icon": "binary",
+    "body": "",
+    "actions": [],
+    "pane": "docs",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Order 1042 - API response",
+    "data": {
+      "id": 1042,
+      "status": "shipped",
+      "customer": {
+        "name": "Ada Example",
+        "tier": "gold",
+        "address": {
+          "city": "Springfield",
+          "country": "US"
+        }
+      },
+      "items": [
+        {
+          "sku": "A-100",
+          "qty": 2,
+          "price": 9.5
+        },
+        {
+          "sku": "B-220",
+          "qty": 1,
+          "price": 24
+        }
+      ],
+      "totals": {
+        "subtotal": 43,
+        "shipping": 4.5,
+        "paid": true
+      }
+    },
+    "open_url": ""
+  },
+  {
+    "title": "Service settings",
+    "subtitle": "config file",
+    "icon": "binary",
+    "body": "",
+    "actions": [],
+    "pane": "docs",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Service settings - config file",
+    "data": {
+      "service": "report-builder",
+      "port": 8080,
+      "features": {
+        "export_pdf": true,
+        "dark_mode": false,
+        "beta": [
+          "search",
+          "share"
+        ]
+      },
+      "limits": {
+        "rows": 5000,
+        "timeout_s": 30
+      },
+      "owners": [
+        "team-red",
+        "team-blue"
+      ]
+    },
+    "open_url": ""
+  },
+  {
+    "title": "Package manifest",
+    "subtitle": "package file",
+    "icon": "binary",
+    "body": "",
+    "actions": [],
+    "pane": "docs",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Package manifest - package file",
+    "data": {
+      "name": "sample-lib",
+      "version": "2.4.1",
+      "license": "MIT",
+      "scripts": {
+        "build": "make",
+        "test": "make check"
+      },
+      "dependencies": {
+        "alpha": "^1.2.0",
+        "beta": "~3.0.1"
+      },
+      "keywords": [
+        "sample",
+        "tree",
+        "demo"
+      ]
+    },
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "docs",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "docs",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

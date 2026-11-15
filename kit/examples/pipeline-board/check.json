@@ -1,0 +1,84 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: three drills",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Stages",
+          "FAILURES",
+          "What changed"
+        ]
+      }
+    },
+    {
+      "name": "a stage drills to its runs",
+      "os": "macos",
+      "args": [
+        "stages",
+        "build"
+      ],
+      "golden": "golden/stages-build.json",
+      "expect": {
+        "text_present": [
+          "Back to stages",
+          "Run 302",
+          "Run 303"
+        ],
+        "text_absent": [
+          "Run 306"
+        ]
+      }
+    },
+    {
+      "name": "runs, failed first",
+      "os": "macos",
+      "args": [
+        "runs"
+      ],
+      "golden": "golden/runs.json",
+      "expect": {
+        "text_present": [
+          "6 runs",
+          "Run 303"
+        ]
+      }
+    },
+    {
+      "name": "the diff list",
+      "os": "macos",
+      "args": [
+        "changes"
+      ],
+      "golden": "golden/changes.json",
+      "expect": {
+        "text_present": [
+          "login form, line 12",
+          "readme intro"
+        ]
+      }
+    },
+    {
+      "name": "offline with nothing cached",
+      "os": "macos",
+      "args": [
+        "runs",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not connect"
+        ]
+      }
+    }
+  ]
+}

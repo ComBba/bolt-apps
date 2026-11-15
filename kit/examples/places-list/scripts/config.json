@@ -1,0 +1,112 @@
+{
+  "app": {
+    "id": "places-list",
+    "chip": "places",
+    "title": "Places list",
+    "icon": "MapPin",
+    "description": "Places as rows with an Open button that opens each one in an online map. No map widget: a personal app cannot draw one. Invented places.",
+    "service": "Places list",
+    "searchable": true
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "PLACES_API_KEY",
+    "env_file": "~/.config/places-list/.env",
+    "fixture_default": false,
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "places": {
+      "path": "/v1/places",
+      "map": {
+        "title": "name"
+      }
+    }
+  },
+  "stats": {
+    "places_total": {
+      "endpoint": "places"
+    },
+    "places_open": {
+      "endpoint": "places",
+      "where": {
+        "open_now": [
+          "yes"
+        ]
+      }
+    }
+  },
+  "overview": {
+    "rows": [
+      {
+        "title": "Nearby places",
+        "subtitle": "Enter opens the list. Open shows one in a map",
+        "icon": "MapPin",
+        "view": "places",
+        "tile": {
+          "label": "Open now",
+          "value": "places_open",
+          "max": "places_total",
+          "note": "of the places",
+          "badge": [
+            {
+              "if": "places_open>=1",
+              "badge": "SOME OPEN"
+            },
+            {
+              "badge": "ALL CLOSED"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "places",
+      "title": "Places",
+      "icon": "MapPin",
+      "endpoint": "places",
+      "sort": [
+        {
+          "field": "km"
+        }
+      ],
+      "item": {
+        "title": "{title}",
+        "subtitle": "{kind} · {km} km · open {open_now}",
+        "icon": "MapPin",
+        "url": "https://www.openstreetmap.org/?mlat={lat}&mlon={lon}#map=17/{lat}/{lon}",
+        "body": "## {title}\n\n{note}\n\nPress Open to see it in OpenStreetMap. The coordinates are {lat}, {lon}.",
+        "copy": "{title} {lat},{lon}",
+        "fields": [
+          {
+            "label": "Kind",
+            "value": "{kind}"
+          },
+          {
+            "label": "Distance",
+            "value": "{km} km"
+          },
+          {
+            "label": "Open now",
+            "value": "{open_now}"
+          },
+          {
+            "label": "Latitude",
+            "value": "{lat}"
+          },
+          {
+            "label": "Longitude",
+            "value": "{lon}"
+          }
+        ]
+      }
+    }
+  ]
+}

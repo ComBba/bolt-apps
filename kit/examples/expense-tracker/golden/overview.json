@@ -1,0 +1,93 @@
+[
+  {
+    "title": "Spent this month",
+    "subtitle": "against the monthly budget. Enter opens the categories",
+    "icon": "wallet",
+    "body": "",
+    "nav": {
+      "view": "categories"
+    },
+    "actions": [],
+    "kpi_label": "Spent",
+    "kpi_value": 544,
+    "kpi_unit": "USD",
+    "kpi_max": 970,
+    "kpi_note": "of the budget",
+    "kpi_foot": "",
+    "kpi_badge": "ON TRACK",
+    "copy_text": "",
+    "trend": [
+      18.4,
+      62,
+      33.2,
+      12,
+      27.9,
+      41.5,
+      54,
+      29,
+      46.7,
+      188,
+      9.6,
+      21.8
+    ],
+    "open_url": ""
+  },
+  {
+    "title": "All expenses",
+    "subtitle": "newest first. Enter opens the list",
+    "icon": "credit-card",
+    "body": "",
+    "nav": {
+      "view": "expenses"
+    },
+    "actions": [],
+    "kpi_label": "Expenses",
+    "kpi_value": 12,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "logged this month",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Daily spending",
+    "subtitle": "a bar per day. Enter opens the chart",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "chart"
+    },
+    "actions": [],
+    "kpi_label": "Biggest",
+    "kpi_value": 188,
+    "kpi_unit": "USD",
+    "kpi_max": "",
+    "kpi_note": "single expense",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

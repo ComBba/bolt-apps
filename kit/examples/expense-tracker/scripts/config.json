@@ -1,0 +1,252 @@
+{
+  "app": {
+    "id": "expense-tracker",
+    "chip": "spend",
+    "title": "Expense tracker",
+    "icon": "wallet",
+    "description": "Spending summary tiles, expenses by category with a drill, a daily bar chart and a detail pane per expense. Invented sample data.",
+    "service": "Expense tracker",
+    "searchable": true
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "SPEND_API_KEY",
+    "env_file": "~/.config/expense-tracker/.env",
+    "fixture_default": false,
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "expenses": {
+      "path": "/v1/expenses",
+      "map": {
+        "title": "merchant"
+      }
+    },
+    "categories": {
+      "path": "/v1/categories",
+      "map": {
+        "title": "name"
+      }
+    },
+    "daily": {
+      "path": "/v1/daily"
+    }
+  },
+  "stats": {
+    "spent": {
+      "endpoint": "expenses",
+      "field_sum": "amount"
+    },
+    "count": {
+      "endpoint": "expenses"
+    },
+    "budget": {
+      "endpoint": "categories",
+      "field_sum": "budget"
+    },
+    "biggest": {
+      "endpoint": "expenses",
+      "field_max": "amount"
+    }
+  },
+  "overview": {
+    "widget": {
+      "kind": "cards",
+      "mode": "list_data",
+      "bind": {
+        "layout": "tiles",
+        "title": "{{row.kpi_label}}",
+        "value": "{{row.kpi_value}}",
+        "unit": "{{row.kpi_unit}}",
+        "max": "{{row.kpi_max}}",
+        "trend": "{{row.trend}}",
+        "subtitle": "{{row.kpi_note}}",
+        "badge": "{{row.kpi_badge}}",
+        "footer": "{{row.kpi_foot}}"
+      }
+    },
+    "rows": [
+      {
+        "title": "Spent this month",
+        "subtitle": "against the monthly budget. Enter opens the categories",
+        "icon": "wallet",
+        "view": "categories",
+        "tile": {
+          "label": "Spent",
+          "value": "spent",
+          "max": "budget",
+          "unit": "USD",
+          "note": "of the budget",
+          "badge": [
+            {
+              "if": "spent>=budget",
+              "badge": "OVER"
+            },
+            {
+              "badge": "ON TRACK"
+            }
+          ]
+        },
+        "trend": [
+          18.4,
+          62.0,
+          33.2,
+          12.0,
+          27.9,
+          41.5,
+          54.0,
+          29.0,
+          46.7,
+          188.0,
+          9.6,
+          21.8
+        ]
+      },
+      {
+        "title": "All expenses",
+        "subtitle": "newest first. Enter opens the list",
+        "icon": "credit-card",
+        "view": "expenses",
+        "tile": {
+          "label": "Expenses",
+          "value": "count",
+          "note": "logged this month"
+        }
+      },
+      {
+        "title": "Daily spending",
+        "subtitle": "a bar per day. Enter opens the chart",
+        "icon": "line-chart",
+        "view": "chart",
+        "tile": {
+          "label": "Biggest",
+          "value": "biggest",
+          "unit": "USD",
+          "note": "single expense"
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "categories",
+      "title": "Categories",
+      "icon": "PieChart",
+      "endpoint": "categories",
+      "sort": [
+        {
+          "field": "total",
+          "desc": true
+        }
+      ],
+      "children": [
+        {
+          "view": "expenses",
+          "match": "category"
+        }
+      ],
+      "no_children": "No expenses in this category",
+      "item": {
+        "title": "{title} \u00b7 {total|round}",
+        "subtitle": "{count} expenses \u00b7 budget {budget}",
+        "icon": "PieChart",
+        "tile": {
+          "label": "Used",
+          "value": "total",
+          "max": "budget",
+          "unit": "USD",
+          "note": "of this category budget",
+          "badge": [
+            {
+              "if": "total>=budget",
+              "badge": "OVER"
+            },
+            {
+              "badge": "OK"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "label": "Spent",
+            "value": "{total}"
+          },
+          {
+            "label": "Budget",
+            "value": "{budget}"
+          },
+          {
+            "label": "Expenses",
+            "value": "{count}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "expenses",
+      "title": "Expenses",
+      "icon": "credit-card",
+      "endpoint": "expenses",
+      "sort": [
+        {
+          "field": "date",
+          "desc": true
+        }
+      ],
+      "item": {
+        "title": "{title} \u00b7 {amount|round2}",
+        "subtitle": "{date} \u00b7 {category}",
+        "icon": "credit-card",
+        "body": "## {title}\n\n{note}",
+        "copy": "{date} {title} {amount}",
+        "fields": [
+          {
+            "label": "Date",
+            "value": "{date}"
+          },
+          {
+            "label": "Category",
+            "value": "{category}"
+          },
+          {
+            "label": "Amount",
+            "value": "{amount}"
+          },
+          {
+            "label": "Paid with",
+            "value": "{method}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "chart",
+      "title": "Daily spending",
+      "icon": "line-chart",
+      "endpoint": "daily",
+      "item": {
+        "title": "{day} \u00b7 {amount}",
+        "subtitle": "spent",
+        "extra": {
+          "label": "{day}",
+          "value": "{amount}"
+        }
+      },
+      "widget": {
+        "kind": "chart",
+        "mode": "list_data",
+        "bind": {
+          "type": "bar",
+          "x": "label",
+          "y": "value",
+          "label": "label"
+        }
+      }
+    }
+  ]
+}

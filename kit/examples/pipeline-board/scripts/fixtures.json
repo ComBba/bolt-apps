@@ -1,0 +1,122 @@
+{
+  "stages": {
+    "data": [
+      {
+        "id": "queued",
+        "name": "Queued",
+        "order": 1,
+        "runs": 1,
+        "typical": "1m"
+      },
+      {
+        "id": "build",
+        "name": "Build",
+        "order": 2,
+        "runs": 2,
+        "typical": "3m"
+      },
+      {
+        "id": "test",
+        "name": "Test",
+        "order": 3,
+        "runs": 2,
+        "typical": "6m"
+      },
+      {
+        "id": "deploy",
+        "name": "Deploy",
+        "order": 4,
+        "runs": 1,
+        "typical": "2m"
+      }
+    ]
+  },
+  "runs": {
+    "data": [
+      {
+        "id": "r301",
+        "name": "Run 301",
+        "stage": "queued",
+        "state": "queued",
+        "branch": "feature/search",
+        "author": "mira",
+        "commit": "a1b2c3d",
+        "seconds": 0,
+        "summary": "Waiting for a free worker."
+      },
+      {
+        "id": "r302",
+        "name": "Run 302",
+        "stage": "build",
+        "state": "running",
+        "branch": "main",
+        "author": "omar",
+        "commit": "e4f5a6b",
+        "seconds": 95,
+        "summary": "Compiling the web bundle."
+      },
+      {
+        "id": "r303",
+        "name": "Run 303",
+        "stage": "build",
+        "state": "failed",
+        "branch": "fix/login",
+        "author": "li",
+        "commit": "c7d8e9f",
+        "seconds": 140,
+        "summary": "Build stopped: a missing import in the login form."
+      },
+      {
+        "id": "r304",
+        "name": "Run 304",
+        "stage": "test",
+        "state": "running",
+        "branch": "main",
+        "author": "sana",
+        "commit": "0a1b2c3",
+        "seconds": 410,
+        "summary": "Running the end to end suite."
+      },
+      {
+        "id": "r305",
+        "name": "Run 305",
+        "stage": "test",
+        "state": "passed",
+        "branch": "docs/readme",
+        "author": "tom",
+        "commit": "4d5e6f7",
+        "seconds": 210,
+        "summary": "All 312 checks passed."
+      },
+      {
+        "id": "r306",
+        "name": "Run 306",
+        "stage": "deploy",
+        "state": "passed",
+        "branch": "main",
+        "author": "mira",
+        "commit": "8a9b0c1",
+        "seconds": 120,
+        "summary": "Released to the staging site."
+      }
+    ]
+  },
+  "changes": {
+    "data": [
+      {
+        "id": "c1",
+        "run": "Run 303",
+        "note": "login form, line 12",
+        "before": "import { Form } from './form'\nexport function Login() {\n  return <Form fields={fields} />\n}\n",
+        "after": "import { Form } from './form'\nimport { fields } from './fields'\nexport function Login() {\n  return <Form fields={fields} />\n}\n"
+      },
+      {
+        "id": "c2",
+        "run": "Run 305",
+        "note": "readme intro",
+        "before": "# Sample app\nA small demo.\nRun it with make.\n",
+        "after": "# Sample app\nA small demo with a search box.\nRun it with make run.\nSee the docs folder.\n"
+      }
+    ]
+  }
+}

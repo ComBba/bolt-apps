@@ -1,0 +1,67 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: open now tile",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Nearby places",
+          "SOME OPEN"
+        ]
+      }
+    },
+    {
+      "name": "places nearest first",
+      "os": "macos",
+      "args": [
+        "places"
+      ],
+      "golden": "golden/places.json",
+      "expect": {
+        "text_present": [
+          "5 places",
+          "Riverside Cafe",
+          "Harbour Lights Bistro"
+        ]
+      }
+    },
+    {
+      "name": "filter word",
+      "os": "macos",
+      "args": [
+        "places",
+        "bakery"
+      ],
+      "expect": {
+        "text_present": [
+          "Old Market Bakery"
+        ],
+        "text_absent": [
+          "Riverside Cafe"
+        ]
+      }
+    },
+    {
+      "name": "offline with nothing cached",
+      "os": "macos",
+      "args": [
+        "places",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not connect"
+        ]
+      }
+    }
+  ]
+}

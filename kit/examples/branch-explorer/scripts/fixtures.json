@@ -1,0 +1,96 @@
+{
+  "nodes": {
+    "data": [
+      {
+        "id": "root",
+        "parent": "",
+        "name": "Company",
+        "kind": "branch",
+        "level": 0,
+        "path": "company",
+        "note": "The top of the tree."
+      },
+      {
+        "id": "eng",
+        "parent": "root",
+        "name": "Engineering",
+        "kind": "branch",
+        "level": 1,
+        "path": "company/engineering",
+        "note": "Builds the product."
+      },
+      {
+        "id": "ops",
+        "parent": "root",
+        "name": "Operations",
+        "kind": "branch",
+        "level": 1,
+        "path": "company/operations",
+        "note": "Keeps it running."
+      },
+      {
+        "id": "web",
+        "parent": "eng",
+        "name": "Web team",
+        "kind": "branch",
+        "level": 2,
+        "path": "company/engineering/web",
+        "note": "Pages and forms."
+      },
+      {
+        "id": "api",
+        "parent": "eng",
+        "name": "API team",
+        "kind": "branch",
+        "level": 2,
+        "path": "company/engineering/api",
+        "note": "Services and data."
+      },
+      {
+        "id": "web-a",
+        "parent": "web",
+        "name": "Search page",
+        "kind": "leaf",
+        "level": 3,
+        "path": "company/engineering/web/search",
+        "note": "Owner: Mira."
+      },
+      {
+        "id": "web-b",
+        "parent": "web",
+        "name": "Settings page",
+        "kind": "leaf",
+        "level": 3,
+        "path": "company/engineering/web/settings",
+        "note": "Owner: Omar."
+      },
+      {
+        "id": "api-a",
+        "parent": "api",
+        "name": "Orders service",
+        "kind": "leaf",
+        "level": 3,
+        "path": "company/engineering/api/orders",
+        "note": "Owner: Li."
+      },
+      {
+        "id": "ops-a",
+        "parent": "ops",
+        "name": "On-call rota",
+        "kind": "leaf",
+        "level": 2,
+        "path": "company/operations/oncall",
+        "note": "Weekly rotation."
+      },
+      {
+        "id": "ops-b",
+        "parent": "ops",
+        "name": "Runbooks",
+        "kind": "leaf",
+        "level": 2,
+        "path": "company/operations/runbooks",
+        "note": "Step by step fixes."
+      }
+    ]
+  }
+}

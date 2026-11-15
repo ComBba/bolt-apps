@@ -1,0 +1,198 @@
+{
+  "expenses": {
+    "data": [
+      {
+        "id": "e101",
+        "merchant": "Corner Bakery",
+        "category": "food",
+        "amount": 18.4,
+        "method": "card",
+        "note": "Team breakfast.",
+        "date": "2026-11-02"
+      },
+      {
+        "id": "e102",
+        "merchant": "Metro Rail",
+        "category": "travel",
+        "amount": 62.0,
+        "method": "card",
+        "note": "Return ticket to the client site.",
+        "date": "2026-11-03"
+      },
+      {
+        "id": "e103",
+        "merchant": "Paper & Pen Co",
+        "category": "office",
+        "amount": 33.25,
+        "method": "cash",
+        "note": "Notebooks and markers.",
+        "date": "2026-11-04"
+      },
+      {
+        "id": "e104",
+        "merchant": "Cloud Notes",
+        "category": "software",
+        "amount": 12.0,
+        "method": "card",
+        "note": "Monthly plan.",
+        "date": "2026-11-05"
+      },
+      {
+        "id": "e105",
+        "merchant": "Noodle House",
+        "category": "food",
+        "amount": 27.9,
+        "method": "card",
+        "note": "Lunch with a client.",
+        "date": "2026-11-06"
+      },
+      {
+        "id": "e106",
+        "merchant": "City Cab",
+        "category": "travel",
+        "amount": 41.5,
+        "method": "card",
+        "note": "Late ride home.",
+        "date": "2026-11-07"
+      },
+      {
+        "id": "e107",
+        "merchant": "Desk Lamp Store",
+        "category": "office",
+        "amount": 54.0,
+        "method": "card",
+        "note": "Lamp for the home desk.",
+        "date": "2026-11-08"
+      },
+      {
+        "id": "e108",
+        "merchant": "Diagram Tool",
+        "category": "software",
+        "amount": 29.0,
+        "method": "card",
+        "note": "Annual diagram add-on, monthly share.",
+        "date": "2026-11-09"
+      },
+      {
+        "id": "e109",
+        "merchant": "Green Grocer",
+        "category": "food",
+        "amount": 46.7,
+        "method": "cash",
+        "note": "Snacks for the office.",
+        "date": "2026-11-10"
+      },
+      {
+        "id": "e110",
+        "merchant": "Airline Example",
+        "category": "travel",
+        "amount": 188.0,
+        "method": "card",
+        "note": "Flight to the spring meetup.",
+        "date": "2026-11-11"
+      },
+      {
+        "id": "e111",
+        "merchant": "Coffee Cart",
+        "category": "food",
+        "amount": 9.6,
+        "method": "cash",
+        "note": "Morning coffee.",
+        "date": "2026-11-12"
+      },
+      {
+        "id": "e112",
+        "merchant": "Print Shop",
+        "category": "office",
+        "amount": 21.8,
+        "method": "card",
+        "note": "Posters for the demo day.",
+        "date": "2026-11-13"
+      }
+    ]
+  },
+  "categories": {
+    "data": [
+      {
+        "id": "food",
+        "name": "Food",
+        "budget": 400,
+        "total": 102.6,
+        "count": 4
+      },
+      {
+        "id": "travel",
+        "name": "Travel",
+        "budget": 300,
+        "total": 291.5,
+        "count": 3
+      },
+      {
+        "id": "software",
+        "name": "Software",
+        "budget": 120,
+        "total": 41.0,
+        "count": 2
+      },
+      {
+        "id": "office",
+        "name": "Office",
+        "budget": 150,
+        "total": 109.05,
+        "count": 3
+      }
+    ]
+  },
+  "daily": {
+    "data": [
+      {
+        "day": "11-02",
+        "amount": 18.4
+      },
+      {
+        "day": "11-03",
+        "amount": 62.0
+      },
+      {
+        "day": "11-04",
+        "amount": 33.2
+      },
+      {
+        "day": "11-05",
+        "amount": 12.0
+      },
+      {
+        "day": "11-06",
+        "amount": 27.9
+      },
+      {
+        "day": "11-07",
+        "amount": 41.5
+      },
+      {
+        "day": "11-08",
+        "amount": 54.0
+      },
+      {
+        "day": "11-09",
+        "amount": 29.0
+      },
+      {
+        "day": "11-10",
+        "amount": 46.7
+      },
+      {
+        "day": "11-11",
+        "amount": 188.0
+      },
+      {
+        "day": "11-12",
+        "amount": 9.6
+      },
+      {
+        "day": "11-13",
+        "amount": 21.8
+      }
+    ]
+  }
+}

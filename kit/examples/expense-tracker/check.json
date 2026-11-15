@@ -1,0 +1,98 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: spent against budget, three drills",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Spent this month",
+          "ON TRACK",
+          "All expenses"
+        ]
+      }
+    },
+    {
+      "name": "categories with a meter each",
+      "os": "macos",
+      "args": [
+        "categories"
+      ],
+      "golden": "golden/categories.json",
+      "expect": {
+        "text_present": [
+          "Travel",
+          "Food",
+          "4 categories"
+        ]
+      }
+    },
+    {
+      "name": "a category drills to its expenses",
+      "os": "macos",
+      "args": [
+        "categories",
+        "food"
+      ],
+      "golden": "golden/categories-food.json",
+      "expect": {
+        "text_present": [
+          "Back to categories",
+          "Coffee Cart",
+          "Noodle House"
+        ],
+        "text_absent": [
+          "Metro Rail"
+        ]
+      }
+    },
+    {
+      "name": "expenses newest first",
+      "os": "macos",
+      "args": [
+        "expenses"
+      ],
+      "golden": "golden/expenses.json",
+      "expect": {
+        "text_present": [
+          "12 expenses",
+          "Print Shop"
+        ]
+      }
+    },
+    {
+      "name": "the daily chart rows",
+      "os": "macos",
+      "args": [
+        "chart"
+      ],
+      "golden": "golden/chart.json",
+      "expect": {
+        "text_present": [
+          "11-11"
+        ]
+      }
+    },
+    {
+      "name": "offline with an old copy",
+      "os": "macos",
+      "args": [
+        "categories",
+        "demo-stale"
+      ],
+      "expect": {
+        "text_present": [
+          "STALE"
+        ]
+      }
+    }
+  ]
+}

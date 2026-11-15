@@ -1,0 +1,41 @@
+[
+  {
+    "title": "Documents",
+    "subtitle": "Enter opens the list. Each one is a JSON tree",
+    "icon": "binary",
+    "body": "",
+    "nav": {
+      "view": "docs"
+    },
+    "actions": [],
+    "kpi_label": "Documents",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "each opens as a tree",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

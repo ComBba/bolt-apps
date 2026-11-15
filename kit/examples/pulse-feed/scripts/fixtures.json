@@ -1,0 +1,398 @@
+{
+ "_note": "SAMPLE DATA, invented for this example; example.com is a placeholder domain. Real answers come from the two public Hacker News APIs.",
+ "_now": 1763208300,
+ "topstories": [
+  91000,
+  91001,
+  91002,
+  91003,
+  91004,
+  91005,
+  91006,
+  91007,
+  91008,
+  91009,
+  91010,
+  91011,
+  91012,
+  91013,
+  91014,
+  91015,
+  91016,
+  91017,
+  91018,
+  91019,
+  91020,
+  91021,
+  91022,
+  91023,
+  91024,
+  91025,
+  91026,
+  91027,
+  91028,
+  91029,
+  91030,
+  91031
+ ],
+ "items": {
+  "91000": {
+   "id": 91000,
+   "type": "story",
+   "by": "lightdb",
+   "title": "A small database that fits in a single file",
+   "score": 412,
+   "descendants": 138,
+   "time": 1763197500,
+   "url": "https://example.com/post/91000"
+  },
+  "91001": {
+   "id": 91001,
+   "type": "story",
+   "by": "mira_k",
+   "title": "Why our team moved back to a monolith",
+   "score": 388,
+   "descendants": 211,
+   "time": 1763190300,
+   "url": "https://example.com/post/91001"
+  },
+  "91002": {
+   "id": 91002,
+   "type": "story",
+   "by": "omar",
+   "title": "Show: a keyboard-driven launcher written in Rust",
+   "score": 301,
+   "descendants": 97,
+   "time": 1763201100,
+   "url": "https://example.com/post/91002"
+  },
+  "91003": {
+   "id": 91003,
+   "type": "story",
+   "by": "sana",
+   "title": "Ask: how do you keep a personal wiki up to date?",
+   "score": 240,
+   "descendants": 154,
+   "time": 1763183100
+  },
+  "91004": {
+   "id": 91004,
+   "type": "story",
+   "by": "tom_w",
+   "title": "The history of the humble progress bar",
+   "score": 219,
+   "descendants": 41,
+   "time": 1763175900,
+   "url": "https://example.com/post/91004"
+  },
+  "91005": {
+   "id": 91005,
+   "type": "story",
+   "by": "li",
+   "title": "Rust 2.0 release notes",
+   "score": 530,
+   "descendants": 260,
+   "time": 1763204700,
+   "url": "https://example.com/post/91005"
+  },
+  "91006": {
+   "id": 91006,
+   "type": "story",
+   "by": "ada",
+   "title": "Notes on writing a tiny Rust parser",
+   "score": 187,
+   "descendants": 63,
+   "time": 1763168700,
+   "url": "https://example.com/post/91006"
+  },
+  "91007": {
+   "id": 91007,
+   "type": "story",
+   "by": "pixel",
+   "title": "A visual guide to how browsers render pages",
+   "score": 176,
+   "descendants": 29,
+   "time": 1763157900,
+   "url": "https://example.com/post/91007"
+  },
+  "91008": {
+   "id": 91008,
+   "type": "story",
+   "by": "geo",
+   "title": "Open source maps tiles for everyone",
+   "score": 163,
+   "descendants": 52,
+   "time": 1763186700,
+   "url": "https://example.com/post/91008"
+  },
+  "91009": {
+   "id": 91009,
+   "type": "story",
+   "by": "nina",
+   "title": "Show: tracking my sleep with a spreadsheet",
+   "score": 150,
+   "descendants": 88,
+   "time": 1763179500,
+   "url": "https://example.com/post/91009"
+  },
+  "91010": {
+   "id": 91010,
+   "type": "story",
+   "by": "ops_fan",
+   "title": "What I learned running a small server for ten years",
+   "score": 144,
+   "descendants": 120,
+   "time": 1763150700,
+   "url": "https://example.com/post/91010"
+  },
+  "91011": {
+   "id": 91011,
+   "type": "story",
+   "by": "indexer",
+   "title": "Fast approximate search without a vector database",
+   "score": 139,
+   "descendants": 35,
+   "time": 1763193900,
+   "url": "https://example.com/post/91011"
+  },
+  "91012": {
+   "id": 91012,
+   "type": "story",
+   "by": "typed",
+   "title": "A gentle introduction to type systems",
+   "score": 131,
+   "descendants": 47,
+   "time": 1763143500,
+   "url": "https://example.com/post/91012"
+  },
+  "91013": {
+   "id": 91013,
+   "type": "story",
+   "by": "astro",
+   "title": "Photographing the night sky with a phone",
+   "score": 120,
+   "descendants": 22,
+   "time": 1763136300,
+   "url": "https://example.com/post/91013"
+  },
+  "91014": {
+   "id": 91014,
+   "type": "story",
+   "by": "pyfan",
+   "title": "Python packaging, explained one step at a time",
+   "score": 118,
+   "descendants": 76,
+   "time": 1763172300,
+   "url": "https://example.com/post/91014"
+  },
+  "91015": {
+   "id": 91015,
+   "type": "story",
+   "by": "stable",
+   "title": "The case for boring technology",
+   "score": 112,
+   "descendants": 98,
+   "time": 1763165100,
+   "url": "https://example.com/post/91015"
+  },
+  "91016": {
+   "id": 91016,
+   "type": "story",
+   "by": "weekly",
+   "title": "How a tiny team shipped weekly for a year",
+   "score": 109,
+   "descendants": 61,
+   "time": 1763161500,
+   "url": "https://example.com/post/91016"
+  },
+  "91017": {
+   "id": 91017,
+   "type": "story",
+   "by": "offline",
+   "title": "Show: an offline-first notes app",
+   "score": 101,
+   "descendants": 30,
+   "time": 1763154300,
+   "url": "https://example.com/post/91017"
+  },
+  "91018": {
+   "id": 91018,
+   "type": "story",
+   "by": "shell",
+   "title": "Is the command line getting friendlier?",
+   "score": 97,
+   "descendants": 84,
+   "time": 1763147100,
+   "url": "https://example.com/post/91018"
+  },
+  "91019": {
+   "id": 91019,
+   "type": "story",
+   "by": "a11y",
+   "title": "Building accessible forms, a checklist",
+   "score": 93,
+   "descendants": 19,
+   "time": 1763139900,
+   "url": "https://example.com/post/91019"
+  },
+  "91020": {
+   "id": 91020,
+   "type": "story",
+   "by": "cells",
+   "title": "A short history of the spreadsheet",
+   "score": 88,
+   "descendants": 27,
+   "time": 1763132700,
+   "url": "https://example.com/post/91020"
+  },
+  "91021": {
+   "id": 91021,
+   "type": "story",
+   "by": "webdev",
+   "title": "Rust for web developers: first impressions",
+   "score": 85,
+   "descendants": 44,
+   "time": 1763129100,
+   "url": "https://example.com/post/91021"
+  },
+  "91022": {
+   "id": 91022,
+   "type": "story",
+   "by": "toolbox",
+   "title": "Ask: what is your favourite small tool?",
+   "score": 80,
+   "descendants": 140,
+   "time": 1763125500
+  },
+  "91023": {
+   "id": 91023,
+   "type": "story",
+   "by": "builder",
+   "title": "The quiet joy of a fast build",
+   "score": 77,
+   "descendants": 33,
+   "time": 1763121900,
+   "url": "https://example.com/post/91023"
+  },
+  "91024": {
+   "id": 91024,
+   "type": "story",
+   "by": "perf",
+   "title": "Learning to read a flame graph",
+   "score": 74,
+   "descendants": 25,
+   "time": 1763114700,
+   "url": "https://example.com/post/91024"
+  },
+  "91025": {
+   "id": 91025,
+   "type": "story",
+   "by": "glyph",
+   "title": "Making a font from scratch",
+   "score": 70,
+   "descendants": 18,
+   "time": 1763107500,
+   "url": "https://example.com/post/91025"
+  },
+  "91026": {
+   "id": 91026,
+   "type": "story",
+   "by": "calendar",
+   "title": "Why dates are hard",
+   "score": 66,
+   "descendants": 71,
+   "time": 1763100300,
+   "url": "https://example.com/post/91026"
+  },
+  "91027": {
+   "id": 91027,
+   "type": "story",
+   "by": "forecast",
+   "title": "Show: a terminal weather widget",
+   "score": 62,
+   "descendants": 14,
+   "time": 1763093100,
+   "url": "https://example.com/post/91027"
+  },
+  "91028": {
+   "id": 91028,
+   "type": "story",
+   "by": "sqlfan",
+   "title": "Practical notes on SQLite in production",
+   "score": 58,
+   "descendants": 39,
+   "time": 1763085900,
+   "url": "https://example.com/post/91028"
+  },
+  "91029": {
+   "id": 91029,
+   "type": "story",
+   "by": "review",
+   "title": "Small habits that make code reviews kinder",
+   "score": 55,
+   "descendants": 28,
+   "time": 1763078700,
+   "url": "https://example.com/post/91029"
+  },
+  "91030": {
+   "id": 91030,
+   "type": "story",
+   "by": "extra",
+   "title": "Unused story beyond the first thirty",
+   "score": 20,
+   "descendants": 3,
+   "time": 1763064300,
+   "url": "https://example.com/post/91030"
+  },
+  "91031": {
+   "id": 91031,
+   "type": "story",
+   "by": "rustacean",
+   "title": "Another Rust tooling roundup",
+   "score": 45,
+   "descendants": 12,
+   "time": 1763049900,
+   "url": "https://example.com/post/91031"
+  }
+ },
+ "search": {
+  "hits": [
+   {
+    "objectID": "92100",
+    "title": "Rust ownership explained with pictures",
+    "url": "https://example.com/post/92100",
+    "author": "borrow",
+    "points": 143,
+    "num_comments": 40,
+    "created_at_i": 1763028300
+   },
+   {
+    "objectID": "91006",
+    "title": "Notes on writing a tiny Rust parser",
+    "url": "https://example.com/post/91006",
+    "author": "ada",
+    "points": 187,
+    "num_comments": 63,
+    "created_at_i": 1763168700
+   },
+   {
+    "objectID": "91005",
+    "title": "Rust 2.0 release notes",
+    "url": "https://example.com/post/91005",
+    "author": "li",
+    "points": 530,
+    "num_comments": 260,
+    "created_at_i": 1763204700
+   },
+   {
+    "objectID": "92101",
+    "title": "A year of Rust in production",
+    "url": "https://example.com/post/92101",
+    "author": "prod",
+    "points": 98,
+    "num_comments": 55,
+    "created_at_i": 1762920300
+   }
+  ]
+ }
+}
