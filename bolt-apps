@@ -1,15 +1,25 @@
 #!/bin/sh
-# bolt-apps: short launcher for the toolkit from a clone. Finds node, then runs toolkit/bin/bolt-apps.mjs with your arguments.
-#   ./bolt-apps new script-template my-tool      (or put this folder on PATH)
-here=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd -P) || exit 2
-# follow a symlink to this file (a copy on PATH)
-if [ -L "$0" ]; then
-  target=$(readlink "$0"); case "$target" in /*) ;; *) target="$(dirname -- "$0")/$target" ;; esac
-  here=$(CDPATH= cd -- "$(dirname -- "$target")" 2>/dev/null && pwd -P) || exit 2
-fi
+# bolt-apps: short launcher for the toolkit from a clone. Finds node (18 or newer), then runs toolkit/bin/bolt-apps.mjs with your arguments.
+#   ./bolt-apps new script-template my-tool      (or link this file onto PATH)
+f=$0
+hops=0
+# follow a chain of symlinks (relative or absolute targets) to the real file
+while [ -L "$f" ]; do
+  hops=$((hops + 1))
+  if [ "$hops" -gt 40 ]; then echo "bolt-apps: too many links while finding the toolkit" >&2; exit 2; fi
+  target=$(readlink "$f") || exit 2
+  case "$target" in /*) f=$target ;; *) f="$(dirname -- "$f")/$target" ;; esac
+done
+here=$(CDPATH= cd -- "$(dirname -- "$f")" 2>/dev/null && pwd -P) || exit 2
 node_bin=$(command -v node 2>/dev/null || command -v nodejs 2>/dev/null)
 if [ -z "$node_bin" ]; then
   echo "bolt-apps: Node 18 or newer is needed and was not found. Install it from https://nodejs.org, then run this again." >&2
+  exit 127
+fi
+major=$("$node_bin" -p 'process.versions.node.split(".")[0]' 2>/dev/null)
+case "$major" in ''|*[!0-9]*) major=0 ;; esac
+if [ "$major" -lt 18 ]; then
+  echo "bolt-apps: Node 18 or newer is needed; this is Node $("$node_bin" -v 2>/dev/null). Install a newer one from https://nodejs.org, then run this again." >&2
   exit 127
 fi
 exec "$node_bin" "$here/toolkit/bin/bolt-apps.mjs" "$@"

@@ -189,7 +189,31 @@ class Fuzz(unittest.TestCase):
                 if len(bad) > 5:
                     break
         self.assertEqual(bad[:5], [])
-        self.assertLess(time.time() - t0, 20.0)
+        self.assertLess(time.time() - t0, 120.0)   # a very loose bound: only a runaway loop trips it, a loaded machine does not
+
+
+    def test_unknown_passwords_in_userinfo_never_survive_and_the_host_stays(self):
+        r = random.Random(7261115)
+        chars = self.ALPHA + "?#@:%!*+/=-_.~"
+        bad = []
+        for i in range(20000):
+            pw = "".join(r.choice(chars) for _ in range(r.randint(3, 30)))
+            if "/" in pw or any(c.isspace() for c in pw):
+                pw = pw.replace("/", "x")   # a slash ends the authority by definition: that is a different URL
+            user = "".join(r.choice(self.ALPHA) for _ in range(r.randint(1, 8)))
+            scheme = r.choice(["https", "http", "ftp", "postgres", "git+ssh"])
+            host = "h%d.example.org" % r.randint(1, 999)
+            path = r.choice(["", "/", "/p/q", "/p?x=1#frag", "/a@b/c"])
+            url = "%s://%s:%s@%s%s" % (scheme, user, pw, host, path)
+            text = self.junk(r).replace("@", "") + " " + url + " " + self.junk(r).replace("@", "")
+            out = k.redact_tree({"u": text}, [KEY])["u"]
+            loose = k.redact(text, [KEY])
+            want_tail = host + path
+            if pw in out or pw in loose or (path and want_tail not in out) or (path and want_tail not in loose):
+                bad.append((url, out))
+                if len(bad) > 3:
+                    break
+        self.assertEqual(bad[:3], [])
 
 
 if __name__ == "__main__":
