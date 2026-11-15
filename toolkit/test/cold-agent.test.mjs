@@ -130,6 +130,6 @@ test('check: text_on_disk fails a script that wrote an echoed key into its cache
 	const root = tmp(), d = copyExample('script-template', path.join(root, 'script-template'));
 	assert.equal(run(root, 'check', d).status, 0);
 	const sp = path.join(d, 'scripts/app.py'), t = fs.readFileSync(sp, 'utf8');
-	fs.writeFileSync(sp, t.replace('raw = kit.redact_tree(raw, [self.key] if self.key else [])', 'pass'));
+	fs.writeFileSync(sp, t.replace('raw = kit.redact_tree(raw, [self.key] if self.key else [], c["api"].get("auth_param"))', 'pass'));
 	const r = run(root, 'check', d); assert.equal(r.status, 1); assert.match(r.stdout, /text_on_disk/);
 });

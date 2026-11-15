@@ -13,6 +13,7 @@ const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
 const EXAMPLES = path.resolve(HERE, '../../kit/examples');
 const STATE = path.join(os.homedir(), '.bolt-apps');
 const DOCS = 'https://sparcle.app/docs/extend/agent-guide.md';
+const q = (p) => (/^[A-Za-z0-9_./:@%+=,~-]+$/.test(p) ? p : `'${String(p).replace(/'/g, `'\\''`)}'`);   // a path with spaces is printed in quotes so it can be pasted
 const die = (m, code = 1) => { console.error(`bolt-apps: ${m}`); process.exit(code); };
 const bolt = (args, opts = {}) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', ...opts });
 
@@ -70,7 +71,7 @@ export function newFromTemplate(template, id, root) {
 		const r = bolt(['check', dir, '--update-golden']);
 		note = r.status === 0 ? 'check passes on the sample data' : `check did not pass yet:\n${r.stdout.slice(-900)}`;
 	}
-	console.log(`created ${dir} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).join(', ')}\n  2. bolt-apps run ${dir} --sample      (see the rows) and  bolt-apps check ${dir}\n  3. bolt-apps ship ${dir}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).join(', ')}\n  2. bolt-apps run ${q(dir)} --sample      (see the rows) and  bolt-apps check ${q(dir)}\n  3. bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`);
 }
 
 // ---------------------------------------------------------------- run
@@ -87,8 +88,9 @@ function bridgeCommand(dir0, words) {
 		const m = /^query\.word\(\s*(\d+)\s*\)$/.exec((str(get(a, 'from')?.value) ?? '').trim());
 		if (m) vars[str(get(a, 'name')?.value)] = words[Number(m[1])] ?? String(str(get(a, 'default')?.value) ?? '-');
 	}
-	const cmd = tpl.replace(/\{\{scripts_dir\}\}/g, path.join(dir, 'scripts')).replace(/\{\{(\w+)\}\}/g, (_, n) => vars[n] ?? '-');
-	return { root, argv: cmd.split(/\s+/).filter(Boolean) };
+	// split the command into words first, then fill each word: a folder with spaces in its path stays one word, and a query word can never add words
+	const argv = tpl.split(/\s+/).filter(Boolean).map((w) => w.replace(/\{\{scripts_dir\}\}/g, path.join(dir, 'scripts')).replace(/\{\{(\w+)\}\}/g, (_, n) => vars[n] ?? '-'));
+	return { root, argv };
 }
 function paneOf(root, view) {
 	const pres = get(root, 'presentation')?.value, v = get(get(pres, 'views')?.value, view)?.value;
@@ -97,14 +99,14 @@ function paneOf(root, view) {
 }
 export function runApp(args) {
 	const flags = args.filter((a) => a.startsWith('--')), rest = args.filter((a) => !a.startsWith('--'));
-	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app as Bolt would (empty environment, your query words) and shows the rows.');
+	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app as Bolt would and shows the rows. Note: it executes the app\'s own command on your computer with your real HOME and PATH; --live reads your real keychain and ~/.config/<id>/.env. Run only code you have read.');
 	refuseSecrets(dir);
 	const words = rest.slice(1);
 	const b = bridgeCommand(dir, words); if (b.error) die(b.error);
 	const env = { PATH: process.env.PATH, HOME: os.homedir(), LANG: process.env.LANG || 'en_US.UTF-8', BOLT_APP_DEBUG: '1' };
 	if (flags.includes('--sample')) env.BOLT_APP_FIXTURE = '1'; else if (flags.includes('--live')) env.BOLT_APP_FIXTURE = '0';
 	const r = spawnSync(b.argv[0], b.argv.slice(1), { env, cwd: path.join(dir, 'scripts'), encoding: 'utf8', input: '', timeout: 30000 });
-	if (r.error || r.status !== 0) die(`the script failed (exit ${r.status}). ${r.stderr ? 'Its error output:\n' + r.stderr.trim().split('\n').slice(-12).join('\n') : (r.error ? String(r.error.message) : '')}\n  Command: ${b.argv.join(' ')}`);
+	if (r.error || r.status !== 0) die(`the script failed (exit ${r.status}). ${r.stderr ? 'Its error output:\n' + r.stderr.trim().split('\n').slice(-12).join('\n') : (r.error ? String(r.error.message) : '')}\n  Command: ${b.argv.map(q).join(' ')}`);
 	let rows; try { rows = JSON.parse(r.stdout); } catch { die(`the script did not print JSON rows. It printed: ${r.stdout.slice(0, 300)}${r.stderr ? '\nstderr: ' + r.stderr.trim().slice(-300) : ''}`); }
 	if (flags.includes('--json')) { console.log(JSON.stringify(rows, null, 2)); return; }
 	const view = words[0] || 'overview';
@@ -126,23 +128,25 @@ export function runApp(args) {
 }
 
 // ---------------------------------------------------------------- ship
+const notLink = (f) => { try { if (fs.lstatSync(f).isSymbolicLink()) die(`${f} is a link, which is not followed. Replace it with a real file or folder you own`); } catch (e) { if (e.code !== 'ENOENT') throw e; } };
 const loadShip = () => { try { return JSON.parse(fs.readFileSync(path.join(STATE, 'ship.json'), 'utf8')); } catch { return {}; } };
 const bump = (v) => { const p = String(v).split('.').map(Number); if (p.length !== 3 || p.some((n) => !Number.isInteger(n))) return '1.0.1'; p[2] += 1; return p.join('.'); };
 export function ship(args) {
 	const dir = args.find((a) => !a.startsWith('--')); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: bolt-apps ship <app-folder>   (lint, check, pack, verify, with the next version picked for you)');
 	refuseSecrets(dir);
-	const app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8'));
+	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { die(`${path.join(dir, 'bolt-app.json')} is not valid JSON (${e.message}). Fix it, then run ship again`); }
 	const step = (name, r) => { if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
 	step('lint --personal', bolt(['lint', dir, '--personal']));
 	if (fs.existsSync(path.join(dir, 'check.json'))) step('check', bolt(['check', dir]));
+	notLink(STATE); notLink(path.join(STATE, 'key.pem')); notLink(path.join(STATE, 'ship.json')); notLink(path.join(STATE, 'packs'));
 	const key = path.join(STATE, 'key.pem');
 	if (!fs.existsSync(key)) { const k = bolt(['keygen']); if (k.status !== 0) die(`could not make your signing key: ${k.stderr || k.stdout}`); console.log('ok made your signing key in ~/.bolt-apps/key.pem (keep it private, never share it)'); }
 	const state = loadShip(), version = state[app.id] ? bump(state[app.id]) : '1.0.0';
-	fs.mkdirSync(path.join(STATE, 'packs'), { recursive: true });
+	fs.mkdirSync(path.join(STATE, 'packs'), { recursive: true, mode: 0o700 });
 	const out = path.join(STATE, 'packs', `${app.id}-${version}.boltpack`);
 	step(`pack ${version}`, bolt(['pack', dir, '--personal', '--version', version, '--out', out]));
 	step('verify', bolt(['verify', out]));
-	state[app.id] = version; fs.mkdirSync(STATE, { recursive: true }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(state, null, 2) + '\n');
+	state[app.id] = version; fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(state, null, 2) + '\n');
 	const chip = (() => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || app.id; } catch { return app.id; } })();
 	console.log(`\nShipped ${app.id} ${version}: ${out}\nInstall: drop that file on the Bolt launcher (or Bolt Apps), read the prompt, approve it, then type =${chip}.\nThis app runs as you: only install code you have read. Next time run ship again and the version rises by itself.`);
 }
@@ -156,14 +160,14 @@ export function doctor(args) {
 	const py = spawnSync('python3', ['--version'], { encoding: 'utf8' }); const pv = /(\d+)\.(\d+)/.exec(py.stdout || py.stderr || '');
 	chk(!!pv && (Number(pv[1]) > 3 || (Number(pv[1]) === 3 && Number(pv[2]) >= 9)), `python3 ${pv ? pv[0] : 'not found'}`, 'Install Python 3.9 or newer; script apps run with python3.');
 	chk(fs.existsSync(path.join(STATE, 'key.pem')), 'signing key (~/.bolt-apps/key.pem)', 'Run: bolt-apps keygen   (once; ship also makes it for you)');
-	try { fs.mkdirSync(STATE, { recursive: true }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', `Run: mkdir -p ${STATE} && chmod 700 ${STATE}`); }
+	try { fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', `Run: mkdir -p ${STATE} && chmod 700 ${STATE}`); }
 	if (dir && fs.existsSync(path.join(dir, 'bolt-app.json'))) {
-		const id = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')).id;
+		let id; try { id = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')).id; } catch (e) { chk(false, 'bolt-app.json is valid JSON', `Fix ${path.join(dir, 'bolt-app.json')}: ${e.message}`); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); }
 		const env = path.join(os.homedir(), '.config', id, '.env');
 		if (fs.existsSync(env)) chk((fs.statSync(env).mode & 0o077) === 0, `~/.config/${id}/.env is private`, `Run: chmod 600 ${env}`);
 		const hits = keyLooking(dir); chk(!hits.length, 'no real-looking key in the app folder', `Remove the key from ${hits.join(', ')}; keys go in the keychain or ~/.config/${id}/.env.`);
-		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: bolt-apps lint ${dir} --personal   and fix each line it prints.`);
-		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: bolt-apps verify ${dir}   and fix each line it prints.`); }
+		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: bolt-apps lint ${q(dir)} --personal   and fix each line it prints.`);
+		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: bolt-apps verify ${q(dir)}   and fix each line it prints.`); }
 	} else console.log('\n(give an app folder to also check its key file, lint and verify: bolt-apps doctor <app-folder>)');
 	console.log(bad ? `\n${bad} thing(s) to fix.` : '\nAll good.');
 	process.exit(bad ? 1 : 0);

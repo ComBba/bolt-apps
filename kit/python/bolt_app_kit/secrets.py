@@ -94,7 +94,7 @@ def _from_keychain(app_id, name, tool_dirs=None, os_=None):
     return Secret(v, "keychain") if v else Secret()
 
 
-def get_secret(app_id, name, env_names=(), env_file=None, tool_dirs=None, os_=None):
+def _get_secret(app_id, name, env_names=(), env_file=None, tool_dirs=None, os_=None):
     """Find the key called `name` for app `app_id`. See the module text for the order."""
     if not _APP.match(app_id or "") or not _NAME.match(name or ""):
         raise ValueError("app id is lowercase letters, digits and hyphens; the key name is a plain identifier")
@@ -107,6 +107,15 @@ def get_secret(app_id, name, env_names=(), env_file=None, tool_dirs=None, os_=No
         return k
     f = _from_file(app_id, name, env_file)
     return f if (f or f.problem) else Secret()
+
+
+def get_secret(app_id, name, env_names=(), env_file=None, tool_dirs=None, os_=None):
+    """Find the key called `name` for app `app_id`. See the module text for the order. A key shorter than MIN_REDACT characters is refused
+    (problem set, no value): it cannot be hidden from an API answer, so it is not a key worth using."""
+    s = _get_secret(app_id, name, env_names, env_file, tool_dirs, os_)
+    if s and len(s.value) < MIN_REDACT:
+        return Secret(problem="the key %s is shorter than %d characters, so it cannot be hidden from API answers; use a real key" % (name, MIN_REDACT))
+    return s
 
 
 def setup_hint(app_id, name, os_=None):
@@ -122,16 +131,20 @@ def setup_hint(app_id, name, os_=None):
 
 
 def _forms(v):
-    out = {v, urllib.parse.quote(v, safe=""), urllib.parse.quote_plus(v), urllib.parse.quote(v)}
+    """Every way a key is likely to appear in an answer: as it is, URL-encoded, lower and upper case, hex, and base64 (standard and URL-safe, with
+    and without padding). Not covered, and said plainly: a key split across lines, base64 of a longer string that contains it at a different
+    alignment, or a key stored as a JSON number. A key under MIN_REDACT characters is refused by get_secret as invalid."""
+    out = {v, v.lower(), v.upper(), urllib.parse.quote(v, safe=""), urllib.parse.quote_plus(v), urllib.parse.quote(v), v.encode("utf-8").hex()}
     for enc in (base64.b64encode, base64.urlsafe_b64encode):
-        out.add(enc(v.encode("utf-8")).decode("ascii"))
-        out.add(enc(v.encode("utf-8")).decode("ascii").rstrip("="))
+        b = enc(v.encode("utf-8")).decode("ascii")
+        out.add(b)
+        out.add(b.rstrip("="))
     return sorted((x for x in out if len(x) >= MIN_REDACT), key=len, reverse=True)
 
 
 def redact(text, secrets=(), limit=None):
-    """Text that is safe to show: each secret value (also URL-encoded and base64 forms), any user:password@ in a web
-    address, and key-like query values (?api_key=..., ?token=...) are replaced. `secrets` is a list of values or Secret objects."""
+    """Text that is safe to show: each secret value (in the forms _forms lists), any user:password@ in a web address, and key-like query values
+    (?api_key=..., ?token=...) are replaced. `secrets` is a list of values or Secret objects. This is the looser pattern, meant for error text."""
     t = str(text)
     for s in secrets:
         v = s.value if isinstance(s, Secret) else s
@@ -143,16 +156,46 @@ def redact(text, secrets=(), limit=None):
     return t if limit is None else t[:limit]
 
 
-def redact_tree(value, secrets=(), depth=0):
-    """A copy of parsed JSON with every string passed through redact(). APIs echo the key they were sent (in links such as
-    ...&api_key=DEMO_KEY, in an error message, in a request echo), so call this on the whole answer BEFORE it is cached, logged
-    or shown. Lists and dicts are walked to a depth of 40; deeper values are dropped to None."""
-    if depth > 40:
-        return None
-    if isinstance(value, str):
-        return redact(value, secrets)
-    if isinstance(value, list):
-        return [redact_tree(v, secrets, depth + 1) for v in value]
-    if isinstance(value, dict):
-        return dict((redact(str(k), secrets), redact_tree(v, secrets, depth + 1)) for k, v in value.items())
-    return value
+# Parameter names that carry a credential in a link. Matched as WHOLE names, never as a part of a longer one (keyword, monkey, author and
+# next_page_token are not credentials).
+_WELL_KNOWN = ("api_key", "apikey", "api-key", "key", "access_token", "token", "auth", "authorization", "secret", "password", "passwd", "sig", "signature", "x-api-key")
+
+
+def _param_re(names):
+    alt = "|".join(re.escape(n) for n in sorted(set(names), key=len, reverse=True))
+    return re.compile(r"(?i)([?&;](?:%s)=)[^&;\s#\"']+" % alt)
+
+
+def redact_tree(value, secrets=(), auth_param=None, depth=0):
+    """A copy of parsed JSON with every string cleaned of the secrets. APIs echo the key they were sent (in links such as ...&api_key=DEMO_KEY, in an
+    error message, in a request echo), so call this on the whole answer BEFORE it is cached, logged or shown.
+
+    Cost: the forms of each secret are computed once; a string that holds none of them and has no query string or address in it is returned as it is
+    (so a 5 MB body is one pass of substring tests). Only the literal secret, its encoded forms, the configured `auth_param` and a short list of
+    well-known credential parameter names (whole names: keyword, monkey and next_page_token stay) are replaced. Walks with a stack, depth 40."""
+    vals = [x.value if isinstance(x, Secret) else x for x in secrets]
+    forms = sorted({f for v in vals if isinstance(v, str) and len(v) >= MIN_REDACT for f in _forms(v)}, key=len, reverse=True)
+    rx = _param_re(list(_WELL_KNOWN) + ([auth_param] if auth_param else []))
+
+    def clean(t):
+        if forms:
+            for f in forms:
+                if f in t:
+                    t = t.replace(f, "[hidden]")
+        if "=" in t and ("?" in t or "&" in t or ";" in t):
+            t = rx.sub(r"\1[hidden]", t)
+        if "://" in t and "@" in t:
+            t = _USERINFO.sub(r"\1[hidden]@", t)
+        return t
+
+    def walk(node, d):
+        if d > 40:
+            return None
+        if isinstance(node, str):
+            return clean(node)
+        if isinstance(node, list):
+            return [walk(x, d + 1) for x in node]
+        if isinstance(node, dict):
+            return dict((clean(str(k)), walk(x, d + 1)) for k, x in node.items())
+        return node
+    return walk(value, depth)

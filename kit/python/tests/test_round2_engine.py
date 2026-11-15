@@ -48,7 +48,7 @@ class Echo(http.server.BaseHTTPRequestHandler):
             self.send({"links": {"self": "http://x/feed?api_key=%s&end=1" % k}, "message": "ok for %s" % k,
                        "objs": {"2026-11-14": [{"name": "A", "link": "https://x/a?api_key=%s" % k}], "2026-11-13": [{"name": "B", "link": "https://x/b?api_key=%s" % k}]}})
         elif u.path == "/top.json":
-            self.send([1, 2, 3, 4, 5])
+            self.send([1, "..", ".", "", 2, 3, 4, 5])
         elif u.path.startswith("/item/"):
             i = int(re.search(r"(\d+)", u.path).group(1))
             self.send({"id": i, "title": "Story %d" % i})
@@ -124,7 +124,7 @@ class Round2(unittest.TestCase):
     def test_hydrate_fetches_each_id_up_to_the_limit(self):
         r = self.rows("top")
         self.assertEqual([x["title"] for x in r if x["title"].startswith("Story")], ["Story 1", "Story 2", "Story 3"])
-        self.assertEqual(len([h for h in Echo.hits if h.startswith("/item/")]), 3)
+        self.assertEqual(len([h for h in Echo.hits if h.startswith("/item/")]), 3)   # "..", "." and "" are dropped before the limit
 
     def test_config_problems_are_named(self):
         cfg = json.load(open(self.cfg_path))

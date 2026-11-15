@@ -128,10 +128,10 @@ class Source(object):
         try:
             if "demo-offline" in self.demos or "demo-stale" in self.demos:
                 if "demo-stale" in self.demos:
-                    self.old.put("items", {"items": n_items(kit.redact_tree(load_json("fixtures.json")["items"], [self.key]), c)})
+                    self.old.put("items", {"items": n_items(kit.redact_tree(load_json("fixtures.json")["items"], [self.key], c["api"].get("auth_param")), c)})
                 raise Fail("fail", "could not connect")
             raw = load_json("fixtures.json")["items"] if self.fixture else http_get(c, c["endpoints"]["items"]["path"], self.key)
-            raw = kit.redact_tree(raw, [self.key] if self.key else [])   # APIs echo the key in links and messages: strip it before anything is cached or shown
+            raw = kit.redact_tree(raw, [self.key] if self.key else [], c["api"].get("auth_param"))   # APIs echo the key in links and messages: strip it before anything is cached or shown
             items = n_items(raw, c)
             self_link = str((raw.get("links") or {}).get("self", ""))[:300] if isinstance(raw, dict) else ""   # kept so the cache holds the API's own link, which may echo the key
         except Fail as e:
