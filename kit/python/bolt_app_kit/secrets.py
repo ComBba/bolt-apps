@@ -141,3 +141,18 @@ def redact(text, secrets=(), limit=None):
     t = _USERINFO.sub(r"\1[hidden]@", t)
     t = _QUERY_KEY.sub(r"\1[hidden]", t)
     return t if limit is None else t[:limit]
+
+
+def redact_tree(value, secrets=(), depth=0):
+    """A copy of parsed JSON with every string passed through redact(). APIs echo the key they were sent (in links such as
+    ...&api_key=DEMO_KEY, in an error message, in a request echo), so call this on the whole answer BEFORE it is cached, logged
+    or shown. Lists and dicts are walked to a depth of 40; deeper values are dropped to None."""
+    if depth > 40:
+        return None
+    if isinstance(value, str):
+        return redact(value, secrets)
+    if isinstance(value, list):
+        return [redact_tree(v, secrets, depth + 1) for v in value]
+    if isinstance(value, dict):
+        return dict((redact(str(k), secrets), redact_tree(v, secrets, depth + 1)) for k, v in value.items())
+    return value

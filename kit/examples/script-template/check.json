@@ -1,0 +1,156 @@
+{
+  "script": "scripts/app.py",
+  "interpreter": "python3",
+  "manifest_actions": 1,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: tile, drill, Check again",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Sample data",
+          "Items: 4",
+          "1 late"
+        ]
+      }
+    },
+    {
+      "name": "items list with a drill per row",
+      "os": "macos",
+      "args": [
+        "items"
+      ],
+      "golden": "golden/items.json",
+      "expect": {
+        "text_present": [
+          "Alpha service",
+          "Delta queue"
+        ]
+      }
+    },
+    {
+      "name": "a filter word narrows the list",
+      "os": "macos",
+      "args": [
+        "items",
+        "gamma"
+      ],
+      "expect": {
+        "text_present": [
+          "Gamma worker"
+        ],
+        "text_absent": [
+          "Alpha service"
+        ]
+      }
+    },
+    {
+      "name": "detail with Back",
+      "os": "macos",
+      "args": [
+        "item",
+        "101"
+      ],
+      "golden": "golden/item.json",
+      "expect": {
+        "text_present": [
+          "Alpha service"
+        ]
+      }
+    },
+    {
+      "name": "unknown id",
+      "os": "macos",
+      "args": [
+        "item",
+        "999"
+      ],
+      "expect": {
+        "text_present": [
+          "Not found"
+        ]
+      }
+    },
+    {
+      "name": "offline with nothing cached: one retry row",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-offline"
+      ],
+      "expect": {
+        "text_present": [
+          "Could not reach Example API",
+          "OFFLINE"
+        ]
+      }
+    },
+    {
+      "name": "offline with an old copy: the data and a banner",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-stale"
+      ],
+      "expect": {
+        "text_present": [
+          "Showing an old copy",
+          "Items: 4"
+        ]
+      }
+    },
+    {
+      "name": "no key: the exact one-line setup",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-nokey"
+      ],
+      "expect": {
+        "text_present": [
+          "Add your Example API API key"
+        ]
+      }
+    },
+    {
+      "name": "an echoed key never reaches the cache or a row",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "env": {
+        "TEMPLATE_API_KEY": "tpl-key-1234567890"
+      },
+      "expect": {
+        "text_present": [
+          "Items: 4"
+        ],
+        "text_absent": [
+          "tpl-key-1234567890"
+        ],
+        "home_absent": [
+          "tpl-key-1234567890"
+        ]
+      }
+    },
+    {
+      "name": "hostile text is cleaned",
+      "os": "macos",
+      "args": [
+        "items",
+        "{{x}}"
+      ],
+      "expect": {
+        "text_present": [
+          "No match"
+        ]
+      }
+    }
+  ]
+}

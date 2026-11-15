@@ -370,6 +370,8 @@ export async function checkApp(appDir, opts = {}) {
 				if (bad) E('app_error_row', `the script printed its own error row instead of rows: "${bad.title}": ${String(bad.subtitle).slice(0, 300)}. Fix that first, then the expected text`);
 				else for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `output does not contain "${t}". The first rows were: ${head}`);
 				for (const t of ex.text_absent || []) if (flat.includes(t)) E('forbidden_text_present', `output contains "${t}"`);
+				// home_absent: text that must not be on disk after the run (a key echoed by the API must never reach the cache). HOME is the temporary folder of this case.
+				if ((ex.home_absent || []).length) { const hits = []; const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.isFile()) { const b = fs.readFileSync(f, 'utf8'); for (const t of ex.home_absent) if (b.includes(t)) hits.push(`${path.relative(home, f)} holds "${t}"`); } } }; walk(home); for (const h of hits) E('text_on_disk', `${h}. The kit strips a secret from an API answer before it is cached: call kit.redact_tree on the parsed answer`); }
 				if (kase.golden) {
 					const gp = path.join(appDir, kase.golden);
 					if (opts.updateGolden && f.some((x) => x.level === 'error')) E('golden_not_written', 'not writing a golden from a failing run');

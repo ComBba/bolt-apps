@@ -102,3 +102,34 @@ test('help lists every command and --version prints the version', () => {
 	for (const w of ['new', 'lint', 'check', 'kit vendor', 'keygen', 'pack', 'verify', '--version']) assert.ok(h.includes(w), w);
 	assert.match(run(REPO, '--version').stdout.trim(), /^\d+\.\d+\.\d+$/);
 });
+
+test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, with no hand edits', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const env = { ...process.env, HOME: home };
+	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
+	const n = sh('new', 'script-template', 'my-tool'); assert.equal(n.status, 0, n.stdout + n.stderr); assert.match(n.stdout, /check passes/);
+	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'golden', 'left-over.json')));
+	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Alpha service/); assert.match(r.stdout, /right pane: table/);
+	const j = JSON.parse(sh('run', 'my-tool', '--sample', '--json').stdout); assert.ok(Array.isArray(j));
+	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.0/); assert.match(s1.stdout, /type =mytool/);
+	const s2 = sh('ship', 'my-tool'); assert.match(s2.stdout, /Shipped my-tool 1\.0\.1/);
+	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'scripts', '__pycache__')));
+});
+
+test('workflow: run and ship refuse a folder that holds a real-looking key; doctor reports fixes', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const env = { ...process.env, HOME: home };
+	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
+	assert.equal(sh('new', 'script-template', 'leaky').status, 0);
+	fs.writeFileSync(path.join(root, 'leaky', 'scripts', 'notes.txt'), 'token ghp_' + 'a'.repeat(36));
+	for (const c of ['run', 'ship']) { const r = sh(c, 'leaky', '--sample'); assert.equal(r.status, 1); assert.match(r.stderr, /shaped like a real key/); assert.doesNotMatch(r.stdout + r.stderr, /ghp_a{36}/); }
+	const d = sh('doctor'); assert.equal(d.status, 1); assert.match(d.stdout, /bolt-apps keygen/);
+});
+
+test('check: text_on_disk fails a script that wrote an echoed key into its cache (script-template proves the kit strips it)', () => {
+	const root = tmp(), d = copyExample('script-template', path.join(root, 'script-template'));
+	assert.equal(run(root, 'check', d).status, 0);
+	const sp = path.join(d, 'scripts/app.py'), t = fs.readFileSync(sp, 'utf8');
+	fs.writeFileSync(sp, t.replace('raw = kit.redact_tree(raw, [self.key] if self.key else [])', 'pass'));
+	const r = run(root, 'check', d); assert.equal(r.status, 1); assert.match(r.stdout, /text_on_disk/);
+});

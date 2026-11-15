@@ -1,0 +1,71 @@
+[
+  {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no network. Unset BOLT_APP_FIXTURE for the live API",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Items: 4",
+    "subtitle": "1 late",
+    "icon": "Activity",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Items",
+    "kpi_value": 4,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "1 late",
+    "kpi_foot": "",
+    "kpi_badge": "LATE",
+    "copy_text": ""
+  },
+  {
+    "title": "All items",
+    "subtitle": "the list, with a filter word",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "items"
+    },
+    "actions": [],
+    "pane": "items",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Check again",
+    "subtitle": "Enter to fetch fresh data past the cache",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

@@ -16,6 +16,7 @@ import { checkManifests, confirmPreview, checkPackShape, FIXES } from '../lib/ve
 import { get, str } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem } from '../lib/assess.mjs';
+import { newList, newFromTemplate, listTemplates, runApp, ship, doctor } from '../lib/workflow.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
@@ -189,6 +190,8 @@ const keyOf = (id) => { let k = id.replace(/[^a-z0-9_-]/g, '').slice(0, 24); ret
 const prefixOf = (id) => { let k = id.replace(/[^a-z0-9]/g, '').slice(0, 12); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 12); };
 function flag(args, name, dflt) { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : dflt; }
 function cmdNew(args) {
+	if (args[0] === '--list' || args[0] === 'list') return newList();
+	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && listTemplates().some((a) => a.id === args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
 	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps'), author = flag(args, '--author', os.userInfo().username);
 	if (!id || !ID.test(id)) die(`usage: bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);
@@ -390,7 +393,11 @@ function cmdVerify(args) {
 // ---------- main ----------
 const HELP = `bolt-apps: author toolkit for Bolt Apps
 
-  new <id> [--type snippet|search|transform|recognizer]   start from a working template
+  new <template> <id> [--dir .]                           copy a template (new --list shows them): renamed, check passes, next steps printed
+  new <id> [--type snippet|search|transform|recognizer]   start a gallery app from a small template
+  run <app-folder> [view [word]] [--sample|--live] [--json]  run the app as Bolt would and show the rows (the debug loop)
+  ship <app-folder>                                       lint, check, pack, verify with the next version picked; prints how to install
+  doctor [app-folder]                                     check node, python, your key, folders and what would block an install
   lint [path] [--personal] [--json]                       offline shape checks (--personal: your own tier 3 or script app)
   check <app-folder> [--os macos|linux|windows] [--case text] [--update-golden] [--json]
                                                           run a script app's check.json cases against stubbed commands and goldens
@@ -423,7 +430,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 		const { dest, lock } = vendorKit(target, { flat: args.includes('--flat') });
 		console.log(`vendored ${lock.name} ${lock.version} (sha256 ${lock.sha256.slice(0, 16)}...) into ${dest}`);
 	};
-	const cmds = { check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify };
+	const cmds = { check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify, run: (a) => runApp(a), ship: (a) => ship(a), doctor: (a) => doctor(a) };
 	if (cmds[cmd]) await cmds[cmd](rest);
 	else if (cmd === '--version' || cmd === 'version') console.log(JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version);
 	else if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);

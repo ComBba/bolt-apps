@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the overview",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Alpha service",
+    "subtitle": "ok · 12",
+    "icon": "file",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Count",
+    "kpi_value": 12,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "ok",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "Alpha service",
+    "item_name": "Alpha service",
+    "status": "ok",
+    "count": 12
+  }
+]
