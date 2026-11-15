@@ -119,6 +119,112 @@
           "Fill the form"
         ]
       }
+    },
+    {
+      "name": "a tiny value is written in full",
+      "os": "macos",
+      "args": [
+        "1e-12",
+        "m",
+        "km"
+      ],
+      "expect": {
+        "text_present": [
+          "0.000000000001 m = 0.000000000000001 km"
+        ],
+        "text_absent": [
+          "0. "
+        ]
+      }
+    },
+    {
+      "name": "a value below 1e-15 stays scientific and exact",
+      "os": "macos",
+      "args": [
+        "1e-300",
+        "m",
+        "km"
+      ],
+      "expect": {
+        "text_present": [
+          "1e-300 m = 1e-303 km"
+        ]
+      }
+    },
+    {
+      "name": "a huge amount is refused",
+      "os": "macos",
+      "args": [
+        "1e300",
+        "km",
+        "mm"
+      ],
+      "expect": {
+        "text_present": [
+          "Not converted",
+          "too large"
+        ]
+      }
+    },
+    {
+      "name": "an overflowing amount is refused",
+      "os": "macos",
+      "args": [
+        "1e999",
+        "km",
+        "mm"
+      ],
+      "expect": {
+        "text_present": [
+          "Not converted",
+          "too large"
+        ],
+        "text_absent": [
+          "inf"
+        ]
+      }
+    },
+    {
+      "name": "a big result is clean scientific",
+      "os": "macos",
+      "args": [
+        "1e15",
+        "km",
+        "mm"
+      ],
+      "expect": {
+        "text_present": [
+          "1e+15 km = 1e+21 mm"
+        ]
+      }
+    },
+    {
+      "name": "below absolute zero in Celsius",
+      "os": "macos",
+      "args": [
+        "-300",
+        "C",
+        "K"
+      ],
+      "expect": {
+        "text_present": [
+          "below absolute zero"
+        ]
+      }
+    },
+    {
+      "name": "below absolute zero in Kelvin",
+      "os": "macos",
+      "args": [
+        "-1",
+        "K",
+        "C"
+      ],
+      "expect": {
+        "text_present": [
+          "below absolute zero"
+        ]
+      }
     }
   ]
 }

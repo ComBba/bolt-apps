@@ -31,7 +31,7 @@
       "golden": "golden/topic-rust.json",
       "expect": {
         "text_present": [
-          "Topic rust: 7 stories",
+          "Topic rust: 8 stories",
           "Rust 2.0 release notes",
           "Rust ownership explained with pictures",
           "BOTH",
@@ -51,7 +51,56 @@
       ],
       "expect": {
         "text_present": [
-          "Topic rust: 7 stories"
+          "Topic rust: 8 stories"
+        ]
+      }
+    },
+    {
+      "name": "topic: HTML and markdown in a post are shown as plain words, an impossible score is dropped",
+      "os": "macos",
+      "args": [
+        "rust"
+      ],
+      "expect": {
+        "text_present": [
+          "Rust & click here https://evil.example/x tricks"
+        ],
+        "text_absent": [
+          "<b>",
+          "[click here]",
+          "&amp;",
+          "impossible score"
+        ]
+      }
+    },
+    {
+      "name": "a topic named like a view word needs the topic escape",
+      "os": "macos",
+      "args": [
+        "topic",
+        "overview"
+      ],
+      "expect": {
+        "text_present": [
+          "Topic overview: 0 stories"
+        ]
+      }
+    },
+    {
+      "name": "topic, front page unreadable: the other source and a PARTIAL row",
+      "os": "macos",
+      "args": [
+        "rust",
+        "demo-partial"
+      ],
+      "expect": {
+        "text_present": [
+          "PARTIAL",
+          "HN front page did not answer",
+          "Rust ownership explained with pictures"
+        ],
+        "text_absent": [
+          "keyboard-driven launcher"
         ]
       }
     },

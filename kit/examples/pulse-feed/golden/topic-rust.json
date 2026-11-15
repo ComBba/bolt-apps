@@ -15,13 +15,13 @@
     "copy_text": ""
   },
   {
-    "title": "Topic rust: 7 stories",
+    "title": "Topic rust: 8 stories",
     "subtitle": "front page and search merged. The Narrow button on a story goes deeper",
     "icon": "TrendingUp",
     "body": "",
     "actions": [],
     "kpi_label": "Stories",
-    "kpi_value": 7,
+    "kpi_value": 8,
     "kpi_unit": "",
     "kpi_max": "",
     "kpi_note": "topic rust",
@@ -256,6 +256,36 @@
     "story_author": "rustacean",
     "story_age": "44 h",
     "story_score": 45
+  },
+  {
+    "title": "Rust & click here https://evil.example/x tricks",
+    "subtitle": "12 points, 1 comments, 2 h 18 min ago",
+    "icon": "trending-up",
+    "body": "12 points, 1 comments, posted 2 h 18 min ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
+    "actions": [
+      {
+        "id": "narrow",
+        "kind": "utility",
+        "label": "Narrow",
+        "target_chip": "pulse",
+        "query_template": "example"
+      }
+    ],
+    "pane": "stories",
+    "url": "https://example.com/post/92200",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- \"Rust click here https://evil.example/x tricks\" - mal on Hacker News, https://example.com/post/92200",
+    "open_url": "https://example.com/post/92200",
+    "story_source": "HN search",
+    "story_author": "mal",
+    "story_age": "2 h 18 min",
+    "story_score": 12
   },
   {
     "title": "Check again",

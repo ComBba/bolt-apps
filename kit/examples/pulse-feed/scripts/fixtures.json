@@ -357,6 +357,8 @@
  },
  "search": {
   "hits": [
+  {"objectID": "92200", "title": "<b>Rust</b> &amp; [click here](https://evil.example/x) tricks", "url": "https://example.com/post/92200", "author": "<i>mal</i>", "points": 12, "num_comments": 1, "created_at_i": 1763200000},
+  {"objectID": "92201", "title": "Rust with an impossible score", "url": "https://example.com/post/92201", "author": "odd", "points": 1e999, "num_comments": 1, "created_at_i": 1763200000},
    {
     "objectID": "92100",
     "title": "Rust ownership explained with pictures",

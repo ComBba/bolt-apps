@@ -17,10 +17,13 @@ _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))   # python -I 
 import bolt_app_kit as kit
 
 import concurrent.futures as cf
+import html
 import json
+import math
 import os
 import re
 import sys
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -67,6 +70,9 @@ class _SameHost(urllib.request.HTTPRedirectHandler):
         return urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
 
 
+BUDGET = [0.0]   # the wall-clock time after which no request may still be reading (set in main)
+
+
 def http_get(cfg, url):
     u = urllib.parse.urlparse(url)
     if u.scheme != "https" or u.hostname not in cfg["hosts"]:
@@ -75,7 +81,18 @@ def http_get(cfg, url):
     req = urllib.request.Request(url, headers={"User-Agent": cfg["api"]["user_agent"], "Accept": "application/json"})
     try:
         with urllib.request.build_opener(_SameHost).open(req, timeout=cfg["api"]["call_timeout_s"]) as r:
-            raw = r.read(cfg["api"]["max_bytes"] + 1)
+            chunks, size = [], 0
+            while True:   # read in pieces: a server that drips bytes must not outlive the budget (the socket timeout is per read)
+                if BUDGET[0] and time.time() > BUDGET[0]:
+                    raise Fail("fail", "timed out")
+                piece = r.read(16384)
+                if not piece:
+                    break
+                chunks.append(piece)
+                size += len(piece)
+                if size > cfg["api"]["max_bytes"]:
+                    break
+            raw = b"".join(chunks)
     except urllib.error.HTTPError as e:
         raise Fail("rate" if e.code == 429 else "fail", "answered %d" % e.code)
     except (urllib.error.URLError, OSError, ValueError) as e:
@@ -108,7 +125,7 @@ class Net(object):
 
     def item(self, i):
         if self.fixture:
-            return self.fx["items"].get(str(i))
+            return None if "demo-partial" in self.demos else self.fx["items"].get(str(i))
         return http_get(self.cfg, "%s/item/%d.json" % (self.cfg["sources"]["firebase"], i))
 
     def search(self, topic, n):
@@ -128,21 +145,34 @@ def good_url(v, i):
     return HN_ITEM % i
 
 
+def plain(s, limit):
+    """Text from a public post as plain words: entities decoded, then no angle brackets, brackets, parentheses, backticks or braces."""
+    if not isinstance(s, str):
+        return ""
+    return kit.clean_text(re.sub(r"[<>\[\]()`{}]", " ", re.sub(r"<[^>]*>", " ", html.unescape(s))), limit)
+
+
 def story(i, title, url, author, score, ts, comments, source):
     """One story, or None when a field is missing or not the right type (one odd post costs that post, not the list)."""
-    if not isinstance(i, int) or isinstance(i, bool) or not isinstance(title, str) or not title.strip():
+    if not isinstance(i, int) or isinstance(i, bool) or not isinstance(title, str):
         return None
+    title = plain(title, 160)
     nums = (score, ts, comments)
-    if any(isinstance(n, bool) or not isinstance(n, (int, float)) for n in nums):
+    if not title or any(isinstance(n, bool) or not isinstance(n, (int, float)) or not math.isfinite(n) for n in nums):
         return None
-    return {"id": i, "title": title, "url": good_url(url, i), "author": author if isinstance(author, str) else "unknown",
-            "score": int(score), "ts": int(ts), "comments": int(comments), "source": source}
+    if not 0 <= ts < 4e9:
+        return None
+    return {"id": i, "title": title, "url": good_url(url, i), "author": plain(author, 40) or "unknown",
+            "score": min(int(max(score, 0)), 10 ** 9), "ts": int(ts), "comments": min(int(max(comments, 0)), 10 ** 9), "source": source}
 
 
 def n_firebase(d):
     if not isinstance(d, dict) or d.get("type") != "story" or d.get("dead") or d.get("deleted"):
         return None
-    return story(d.get("id"), d.get("title"), d.get("url"), d.get("by"), d.get("score"), d.get("time"), d.get("descendants", 0), "HN front page")
+    try:
+        return story(d.get("id"), d.get("title"), d.get("url"), d.get("by"), d.get("score"), d.get("time"), d.get("descendants", 0), "HN front page")
+    except (OverflowError, ValueError, TypeError):
+        return None
 
 
 def n_algolia(raw):
@@ -154,7 +184,10 @@ def n_algolia(raw):
             i = int(h.get("objectID"))
         except (TypeError, ValueError):
             continue
-        s = story(i, h.get("title"), h.get("url"), h.get("author"), h.get("points") or 0, h.get("created_at_i"), h.get("num_comments") or 0, "HN search")
+        try:
+            s = story(i, h.get("title"), h.get("url"), h.get("author"), h.get("points") or 0, h.get("created_at_i"), h.get("num_comments") or 0, "HN search")
+        except (OverflowError, ValueError, TypeError):   # NaN, Infinity or an odd type costs that hit only
+            s = None
         if s:
             out.append(s)
     return out
@@ -163,24 +196,32 @@ def n_algolia(raw):
 # ------------------------------------------------------------------ fetch: ids, then every story in parallel (hydrate)
 
 def hydrate(net, ids, deadline):
-    """One request per id on a pool. Returns (stories in the order of ids, how many did not answer)."""
-    stories, missed = {}, 0
-    ex = cf.ThreadPoolExecutor(max_workers=net.cfg["api"]["workers"])
-    futs = dict((ex.submit(net.item, i), i) for i in ids)
-    done, late = cf.wait(list(futs), timeout=max(0.5, deadline - time.time()))
-    for f in done:
-        try:
-            s = n_firebase(f.result())
-        except Exception:   # an item that failed or was odd is skipped
-            s = None
-        if s:
-            stories[futs[f]] = s
-        else:
-            missed += 1
-    for f in late:
-        f.cancel()
-    ex.shutdown(wait=False)
-    return [stories[i] for i in ids if i in stories], missed + len(late)
+    """One request per id on daemon threads, inside the deadline. Returns (stories in the order of ids, how many did not answer).
+    A thread still reading at the deadline is abandoned: it is a daemon, and the budget in http_get stops it reading on."""
+    found, lock, todo = {}, threading.Lock(), list(ids)
+
+    def work():
+        while True:
+            with lock:
+                if not todo or time.time() > deadline:
+                    return
+                i = todo.pop(0)
+            try:
+                s = n_firebase(net.item(i))
+            except Exception:   # an item that failed or was odd is skipped
+                s = None
+            if s:
+                with lock:
+                    found[i] = s
+
+    threads = [threading.Thread(target=work, daemon=True) for _ in range(min(net.cfg["api"]["workers"], max(1, len(ids))))]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(max(0.1, deadline - time.time()))
+    with lock:
+        got = dict(found)
+    return [got[i] for i in ids if i in got], len(ids) - len(got)
 
 
 def front_page(net, n, deadline):
@@ -205,7 +246,9 @@ def gather(net, topic):
         srch = ex.submit(lambda: n_algolia(net.search(topic, lim["search"])))
         merged, failed = {}, []
         try:
-            page, _missed = scan.result(timeout=max(1, deadline - time.time()))
+            page, missed = scan.result(timeout=max(1, deadline - time.time()))
+            if not page or missed * 2 >= lim["scan"]:   # most of the front page did not answer: say so, never hide it
+                failed.append("HN front page")
             for s in page:
                 if topic in s["title"].lower():
                     merged[s["id"]] = s
@@ -228,9 +271,28 @@ def gather(net, topic):
 
 # ------------------------------------------------------------------ cache: fresh and an old copy
 
+class MemCache(object):
+    """The part of kit.Cache this app uses, held in memory, with a fixed age so sample output is the same every time."""
+
+    def __init__(self):
+        self.d = {}
+
+    def get(self, key):
+        return self.d.get(key)
+
+    def put(self, key, value):
+        self.d[key] = value
+
+    def age(self, key):
+        return 3 * 3600
+
+
 class Source(object):
     def __init__(self, cfg, net):
         self.cfg, self.net = cfg, net
+        if net.fixture:   # sample mode keeps its cache in memory: a check run never reads or writes the real cache folder
+            self.fresh, self.old = MemCache(), MemCache()
+            return
         root = kit.cache.default_root(APP)
         shape = lambda v: isinstance(v, dict) and isinstance(v.get("stories"), list)
         self.fresh = kit.Cache(APP, cfg["cache"]["ttl"], shape, root=root + "/fresh")
@@ -255,8 +317,8 @@ class Source(object):
             return self._fallback(key, e.msg)
         except Exception:   # an odd answer is unread, never a traceback
             return self._fallback(key, "unexpected answer")
-        if not self.net.fixture:   # sample mode never writes the cache, so a check run is the same every time
-            self.fresh.put(key, {"stories": stories, "notes": notes})
+        self.fresh.put(key, {"stories": stories, "notes": notes})
+        if not notes:   # a partial answer must never replace a complete old copy
             self.old.put(key, {"stories": stories, "notes": notes})
         return stories, {"stale": None, "err": "", "notes": notes, "cached": 0}
 
@@ -363,7 +425,7 @@ def main(argv):
         view, rest = words[0], words[1:]
     else:
         view, rest = "topic", words   # =pulse rust: a bare word is the topic
-    demos = [w for w in rest if w in ("demo-offline", "demo-stale")]
+    demos = [w for w in rest if w in ("demo-offline", "demo-stale", "demo-partial")]
     rest = [w for w in rest if w not in demos]
     refresh = bool(rest) and (rest[0] == "refresh" or rest[0].startswith("refresh."))
     topic = ""
@@ -376,6 +438,12 @@ def main(argv):
         refresh = True
     env = os.environ.get("BOLT_APP_FIXTURE")
     fixture = (env == "1") if env in ("0", "1") else bool(cfg["api"]["fixture_default"])
+    if not fixture:
+        BUDGET[0] = time.time() + cfg["api"]["deadline_s"]
+        # a last resort inside the launcher's timeout (timeout_seconds in the app file): whatever is still running, answer with one row and end the process
+        wd = threading.Timer(cfg["api"]["deadline_s"] + 4, lambda: kit.emit([kit.error_row("Hacker News took too long. Press Enter to try again", title="Timed out")]))
+        wd.daemon = True
+        wd.start()
     net = Net(cfg, fixture, demos if fixture else [])
     now = net.fx["_now"] if fixture else int(time.time())
     stories, state = Source(cfg, net).get(topic, refresh=refresh)

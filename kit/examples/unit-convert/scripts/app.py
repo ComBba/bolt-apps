@@ -14,6 +14,7 @@ _sys.dont_write_bytecode = True   # Bolt installs the script folder as it is: no
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))   # python -I drops the script folder from the path; the kit sits beside the script
 import bolt_app_kit as kit
 
+import decimal
 import json
 import math
 import os
@@ -22,7 +23,10 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FILE_WORDS = ("config.json", "bolt_app_kit.py")   # the helper files the bridge command names, so Bolt shows them in the approval
-NUMBER = re.compile(r"^[+-]?(\d{1,15})(\.\d{1,12})?([eE][+-]?\d{1,3})?\Z")
+NUMBER = re.compile(r"^[+-]?([0-9]{1,15})(\.[0-9]{1,12})?([eE][+-]?[0-9]{1,3})?\Z")
+MAX_AMOUNT = 1e15   # a bigger amount is refused: the answer would be noise
+MAX_RESULT = 1e30
+ABSOLUTE_ZERO_C = {"C": -273.15, "F": -459.67, "K": 0.0}   # the lowest value of each temperature unit
 
 
 def load_json(name):
@@ -64,12 +68,15 @@ def convert(cfg, v, a, b):
 
 
 def num(x):
-    """Six significant digits, no trailing zeros, no -0, scientific only for very large or very small values."""
+    """Six significant digits with no exponent for ordinary sizes (Decimal expands it properly), no trailing zeros, no -0.
+    Below 1e-15 or from 1e15 up it keeps a clean scientific form such as 1.23457e+21."""
     if x == 0:
         return "0"
     s = "%.6g" % x
-    if "e" in s:   # plain digits instead of 5e+06 or 1e-05
-        s = ("%d" % round(float(s))) if abs(x) >= 1 else ("%.10f" % float(s)).rstrip("0")
+    if 1e-15 <= abs(x) < 1e15:
+        s = format(decimal.Decimal(s), "f")
+        if "." in s:
+            s = s.rstrip("0").rstrip(".")
     return "0" if s in ("-0", "0") else s
 
 
@@ -91,10 +98,18 @@ def build(cfg, words):
     v = float(amount)
     if not math.isfinite(v):
         return [kit.row("Not converted", "that number is too large", icon="AlertCircle", copy=False)]
+    if abs(v) > MAX_AMOUNT:
+        return [kit.row("Not converted", "that number is too large (up to 1e15)", icon="AlertCircle", copy=False)]
     if kind_of(cfg, a) is None or kind_of(cfg, b) is None:
         return [kit.row("Not converted", "pick units from the lists", icon="AlertCircle", copy=False)]
     if kind_of(cfg, a) != kind_of(cfg, b):
         return [kit.row("Not converted", "%s is a %s and %s is a %s: pick two of the same kind" % (a, kind_of(cfg, a), b, kind_of(cfg, b)), icon="AlertCircle", copy=False)]
+    if kind_of(cfg, a) == "temperature" and v < ABSOLUTE_ZERO_C[a]:
+        return [kit.row("Not converted", "%s %s is below absolute zero" % (num(v), a), icon="AlertCircle", copy=False)]
+    for other in [b] + [u for u in cfg["units"][kind_of(cfg, a)] if u not in (a, b)]:
+        out, _ = convert(cfg, v, a, other)
+        if not math.isfinite(out) or abs(out) > MAX_RESULT:
+            return [kit.row("Not converted", "the result is too large", icon="AlertCircle", copy=False)]
     rows = [row_for(v, a, b, primary=True, cfg=cfg)]
     for other in cfg["units"][kind_of(cfg, a)]:
         if other not in (a, b):
