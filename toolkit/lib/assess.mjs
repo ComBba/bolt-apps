@@ -6,6 +6,9 @@
 export const ALLOWED_RUNTIME = ['bridge', 'http_local', 'transform'];
 export const ALLOWED_ACTION_KIND = ['url', 'composer', 'utility', 'run'];
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
 export function httpsLiteralHost(t) {
 	const rest = String(t).trim();
@@ -94,6 +97,12 @@ export function assessYaml(yaml, name = 'the app', opts = {}) {
 }
 
 // ---- more launcher rules, each mirrored from the launcher source (read, not guessed) ----
+// The launcher draws a plain plug for an icon name that is not in its list, so an unknown name is a silent defect: refuse it with the fix.
+let ICONS = null;
+export function iconProblem(name) {
+	try { ICONS ??= new Set(JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../kit/schema/icons.json'), 'utf8')).icons); } catch { return null; }
+	return ICONS.has(name) ? null : `icon "${name}" is not in the launcher icon list (kit/schema/icons.json), so the launcher draws a plain plug. Use a listed name such as activity, list, globe, file, line-chart or map-pin`;
+}
 export const MAX_VIEWS = 8;                                   // the launcher MAX_VIEWS, checked by the launcher
 const VIEW_NAME = /^[a-z][a-z0-9_-]{0,23}$/;                  // the launcher name_re
 export const NAV_ARG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/; // the launcher NAV_ARG_RE
@@ -160,7 +169,7 @@ export function launcherRules(root, opts = {}) {
 	// no command for a platform: the app has nothing to run there. A warning, since an app may be single-platform on purpose.
 	if (str(get(root, 'runtime')?.value) === 'bridge') {
 		const cm = get(get(root, 'bridge')?.value, 'command')?.value;
-		if (cm && cm.t === 'm' && cm.entries.length) for (const o of OS3) if (!cm.entries.some((e) => e.key === o) && (!Array.isArray(opts.platforms) || opts.platforms.includes(o))) W('command_os_missing', `bridge.command has no ${o} entry, so the app has nothing to run on ${o}${Array.isArray(opts.platforms) ? '' : '. Add one, or list only the systems it supports in "platforms" in bolt-app.json'}`);
+		if (cm && cm.t === 'm' && cm.entries.length) for (const o of OS3) if (!cm.entries.some((e) => e.key === o) && !opts.platformsUnknown && (!Array.isArray(opts.platforms) || opts.platforms.includes(o))) W('command_os_missing', `bridge.command has no ${o} entry, so the app has nothing to run on ${o}${Array.isArray(opts.platforms) ? '' : '. Add one, or list only the systems it supports in "platforms" in bolt-app.json'}`);
 	}
 	return out;
 }

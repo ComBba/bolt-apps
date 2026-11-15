@@ -132,7 +132,7 @@ export function checkManifests(files, opts = {}) {
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
 		const esc_ = escapeProblem(y); if (esc_) add('error', esc_.code, esc_.message, file, 1);
-		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms }); apps.push({ ...a, file });
+		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms, platformsUnknown: opts.platformsUnknown }); apps.push({ ...a, file });
 		for (const r of a.refs) used.add(r);
 		if (a.unknown) { add('error', 'yaml_unreadable_here', `this tool cannot interpret ${a.why}; Bolt may read it differently`, file, 1); unknownAssess = true; continue; }
 		const root = a.tree, E = (code, msg, line) => add('error', code, msg, file, line || 1);

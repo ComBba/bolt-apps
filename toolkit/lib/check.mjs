@@ -234,22 +234,24 @@ const HOSTILE = 'a\u202eb\u200bc{{x}}\u{E0041}d\u2028e\u0007f\u3164g\u2800h';
 function makeStubs(dir, appDir, osName, kase, files) {
 	const stubs = {};
 	const base = path.join(appDir, 'fixtures', osName);
-	if (fs.existsSync(base)) for (const f of fs.readdirSync(base)) { const m = /^(.+)\.out$/.exec(f); if (m) stubs[m[1]] = { file: path.join(base, f), rc: fs.existsSync(path.join(base, `${m[1]}.rc`)) ? Number(fs.readFileSync(path.join(base, `${m[1]}.rc`), 'utf8').trim()) : 0 }; }
-	for (const [n, o] of Object.entries(kase.stubs || {})) stubs[n] = o.file ? { ...o, file: path.join(appDir, o.file) } : { ...o };
+	if (fs.existsSync(base)) for (const f of fs.readdirSync(base)) { const m = /^(.+)\.out$/.exec(f); if (m) stubs[m[1]] = { abs: true, file: path.join(base, f), rc: fs.existsSync(path.join(base, `${m[1]}.rc`)) ? Number(fs.readFileSync(path.join(base, `${m[1]}.rc`), 'utf8').trim()) : 0 }; }
+	for (const [n, o] of Object.entries(kase.stubs || {})) stubs[n] = o.file ? { ...o, abs: true, file: path.join(appDir, o.file) } : { ...o };
 	for (const n of kase.hang || []) stubs[n] = { hang: true };
 	fs.mkdirSync(dir, { recursive: true });
 	for (const [name, s] of Object.entries(stubs)) {
 		if (!/^[A-Za-z0-9._+-]+$/.test(name)) throw new Error(`bad stub name ${name}`);
 		if (s.missing) continue;
+		const data = (d, tag) => { let text = d.file ? fs.readFileSync(d.abs ? d.file : path.join(appDir, d.file), 'utf8') : (d.stdout ?? ''); text = text.split('@@HOSTILE@@').join(kase.hostile ? HOSTILE : 'plainname'); const df = path.join(dir, `.data-${name}-${tag}`); fs.writeFileSync(df, text); files.push(df); return df; };
 		let body = '#!/bin/sh\n';
 		if (s.hang) body += '/bin/sleep 60\n';
 		else {
-			let data = s.file ? fs.readFileSync(s.file, 'utf8') : (s.stdout ?? '');
-			data = data.split('@@HOSTILE@@').join(kase.hostile ? HOSTILE : 'plainname');
-			const df = path.join(dir, `.data-${name}`);
-			fs.writeFileSync(df, data);
-			files.push(df);
-			body += `/bin/cat ${SH_QUOTE(df)}\nexit ${Number.isInteger(s.rc) ? s.rc : 0}\n`;
+			// "by_args": [{ "args": ["status", "--porcelain"], "file" | "stdout", "rc" }, ...]: the first rule whose words equal the first words of the command line answers; the stub's own file or stdout is the default
+			(s.by_args || []).forEach((r, i) => {
+				if (!Array.isArray(r.args) || !r.args.length) throw new Error(`stub ${name}: by_args rule ${i} needs a non-empty args list`);
+				const cond = r.args.map((a, k) => `[ "$${k + 1}" = ${SH_QUOTE(a)} ]`).join(' && ');
+				body += `if ${cond}; then /bin/cat ${SH_QUOTE(data(r, 'r' + i))}; exit ${Number.isInteger(r.rc) ? r.rc : 0}; fi\n`;
+			});
+			body += `/bin/cat ${SH_QUOTE(data(s, 'd'))}\nexit ${Number.isInteger(s.rc) ? s.rc : 0}\n`;
 		}
 		fs.writeFileSync(path.join(dir, name), body, { mode: 0o755 });
 	}
@@ -326,6 +328,12 @@ export async function checkApp(appDir, opts = {}) {
 	if (opts.os) { cases = cases.filter((c) => (c.os || host) === opts.os); if (!cases.length) { top('error', 'no_cases_for_os', `check.json has no case for ${opts.os}`, 'check.json'); return report; } }
 	if (opts.only) cases = cases.filter((c) => c.name.includes(opts.only));
 	if (!cases.length) top('error', 'no_cases', 'check.json lists no cases', 'check.json');
+	// A golden file that no case names is left over from a copy or a renamed case: it is never compared, so it can hide a drift.
+	if (!opts.only && !opts.os) {
+		const named = new Set(cases.map((c) => c.golden && path.normalize(c.golden)).filter(Boolean));
+		const gd = path.join(appDir, 'golden');
+		if (fs.existsSync(gd)) for (const g of fs.readdirSync(gd)) if (g.endsWith('.json') && !named.has(path.normalize(path.join('golden', g)))) top('error', 'golden_stale', `golden/${g} is not named by any case in check.json. Delete it, or add a case with "golden": "golden/${g}" (a copied template brings its goldens along: keep only the cases you want, then run check --update-golden once and review the files)`, `golden/${g}`);
+	}
 	for (const kase of cases) {
 		const osName = kase.os || host, f = [], E = (code, message) => f.push({ level: 'error', code, message });
 		let secs = 0;
@@ -335,7 +343,9 @@ export async function checkApp(appDir, opts = {}) {
 			const stubDir = path.join(tmp, 'bin'), home = path.join(tmp, 'home');
 			fs.mkdirSync(home);
 			makeStubs(stubDir, appDir, osName, kase, files);
-			const r = await runScript(py, script, osName, kase.args || [], { PATH: stubDir, HOME: home }, home);
+			// Sample mode: a case (or check.json as a whole) sets "fixture": true, so the script runs on its recorded answers while the shipped app stays live.
+			const sample = kase.fixture ?? cfg.fixture;
+			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), PATH: stubDir, HOME: home, ...(sample === undefined ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
 			const ex = kase.expect || {};
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;
@@ -348,7 +358,10 @@ export async function checkApp(appDir, opts = {}) {
 				for (const x of checkRows(rows, cfg.manifest_actions ?? 1)) f.push(x);
 				if (/[^\x00-\x7f]/.test(r.out)) f.push({ level: 'warning', code: 'non_ascii_output', message: 'stdout has non-ASCII bytes; ensure_ascii JSON is safe on any console code page' });
 				const flat = strings(rows, '$', []).map(([, s]) => s).join('\n');
-				for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `output does not contain "${t}"`);
+				const bad = rows.find((r) => r && typeof r.title === 'string' && /^This app (is not set up correctly|could not run)$/.test(r.title));
+				const head = rows.slice(0, 5).map((r) => `"${String(r && r.title).slice(0, 60)}"${r && r.subtitle ? ` / "${String(r.subtitle).slice(0, 80)}"` : ''}`).join('; ');
+				if (bad) E('app_error_row', `the script printed its own error row instead of rows: "${bad.title}": ${String(bad.subtitle).slice(0, 300)}. Fix that first, then the expected text`);
+				else for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `output does not contain "${t}". The first rows were: ${head}`);
 				for (const t of ex.text_absent || []) if (flat.includes(t)) E('forbidden_text_present', `output contains "${t}"`);
 				if (kase.golden) {
 					const gp = path.join(appDir, kase.golden);
