@@ -4,6 +4,8 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor, Copilot and other
 create or change an app in this repository. Follow them exactly. Humans: see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+> **Building an app for yourself (a rich app, a script, a web API)? Read [kit/examples/QUICKSTART.md](kit/examples/QUICKSTART.md) only: decision tree, four commands, ten rules and the one rules table. [kit/examples/CAPABILITIES.md](kit/examples/CAPABILITIES.md) says what works. The sections below are the reference.**
+
 > **Status: the gallery is not open yet and contributions are not accepted.** Do not open a pull request against this
 > repository unless the person you work for is a Sparcle maintainer. You may still build
 > and check an app locally.
@@ -96,13 +98,13 @@ no real customer or company data.
 
 ## 4a. Start from the toolkit
 
-`bolt-apps` below means `node toolkit/bin/bolt-apps.mjs`.
+`bolt-apps` below means `./bolt-apps`, the launcher at the root of the clone (a short script that runs `toolkit/bin/bolt-apps.mjs` with Node; put the folder on PATH to type just `bolt-apps`).
 
 ```
-node toolkit/bin/bolt-apps.mjs new <id> --type snippet|search|transform|recognizer
-node toolkit/bin/bolt-apps.mjs lint apps/<id> --json     # exit 0 before you go on
-node toolkit/bin/bolt-apps.mjs pack apps/<id>            # needs a key: bolt-apps keygen, once
-node toolkit/bin/bolt-apps.mjs pack <folder> --personal   # own-use tier 3 or script app (section 2); never for the gallery
+./bolt-apps new <id> --type snippet|search|transform|recognizer
+./bolt-apps lint apps/<id> --json     # exit 0 before you go on
+./bolt-apps pack apps/<id>            # needs a key: bolt-apps keygen, once
+./bolt-apps pack <folder> --personal   # own-use tier 3 or script app (section 2); never for the gallery
 ```
 
 `lint` is the offline shape check; it does not run tests. Never put a signing key (`*.pem`) in this repository.
@@ -113,12 +115,12 @@ Do these in order. Each step prints findings with a stable `code`, the file, the
 fix; branch on `code` with `--json`, never on message text.
 
 ```
-node toolkit/bin/bolt-apps.mjs lint <folder> --personal --json    # layout, ids, tier (exit 0 first)
-node toolkit/bin/bolt-apps.mjs check <folder> --json              # script apps with check.json: runs the script against fixtures
-node toolkit/bin/bolt-apps.mjs verify <folder> --json             # the rules Bolt enforces at install, before you pack
-node toolkit/bin/bolt-apps.mjs keygen                             # once
-node toolkit/bin/bolt-apps.mjs pack <folder> --personal           # <id>.boltpack, prints what the app can do
-node toolkit/bin/bolt-apps.mjs verify <id>.boltpack --json        # the same rules on the file you will hand over
+./bolt-apps lint <folder> --personal --json    # layout, ids, tier (exit 0 first)
+./bolt-apps check <folder> --json              # script apps with check.json: runs the script against fixtures
+./bolt-apps verify <folder> --json             # the rules Bolt enforces at install, before you pack
+./bolt-apps keygen                             # once
+./bolt-apps pack <folder> --personal           # <id>.boltpack, prints what the app can do
+./bolt-apps verify <id>.boltpack --json        # the same rules on the file you will hand over
 ```
 
 Then drop the `.boltpack` on the Bolt launcher or Bolt Apps (never Admin settings, Utilities,
@@ -173,16 +175,16 @@ pack is the way to ship a rich app: the gallery refuses it, and Bolt shows its p
 the person to confirm when they drop the pack on the Bolt launcher or Bolt Apps.
 
 ```
-cp -R kit/examples/portal-template ~/my-app && cd ~/my-app      # the folder name is the app id
-# edit scripts/config.json, scripts/fixtures.json, bolt-app.json, README.md; rename utilities/<old>.yaml to <id>.yaml
-python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
-node <repo>/toolkit/bin/bolt-apps.mjs check . --update-golden    # read the golden/ diff once
-node <repo>/toolkit/bin/bolt-apps.mjs check .
-node <repo>/toolkit/bin/bolt-apps.mjs lint . --personal --json
-node <repo>/toolkit/bin/bolt-apps.mjs verify . --json
-node <repo>/toolkit/bin/bolt-apps.mjs keygen                      # once
-node <repo>/toolkit/bin/bolt-apps.mjs pack . --personal --version 1.0.1 --out ../my-app-1.0.1.boltpack
+./bolt-apps new portal-template my-app --dir ~/my-apps   # copy, rename, sample passes
+# edit ~/my-apps/my-app/scripts/config.json and fixtures.json (the `edit` list of the template in kit/examples/index.json)
+# then regenerate the app file:  cd ~/my-apps/my-app && python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
+./bolt-apps run ~/my-apps/my-app --sample     # the rows Bolt would show
+./bolt-apps check ~/my-apps/my-app
+./bolt-apps ship ~/my-apps/my-app              # lint --personal, check, pack (next version), verify
 ```
+
+`ship` runs what sections 4b and 4c used to list by hand (lint, check, keygen once, pack with the next
+version, verify). To do the steps yourself, `lint`, `verify`, `keygen` and `pack --personal --version X` still work.
 
 Raise `--version` on every pack: Bolt refuses a pack that is the same version or older than the
 installed one ("a pack is only replaced by a newer version"). Keep the pack outside the folder: a
@@ -208,7 +210,7 @@ with the exact error text and the fix for each are in the "Rules Bolt enforces" 
 | `scripts/fixtures.json`: a sample response per endpoint, made-up data | `scripts/bolt_app_kit.py` and `bolt_app_kit.lock.json` (refresh only with `bolt-apps kit vendor --flat .`) |
 | `bolt-app.json`, `README.md`, `check.json` (one case per view you add), `golden/` | `utilities/<id>.yaml` by hand: regenerate it with `--emit-yaml` |
 
-Pitfalls: at most 8 views including the overview (use `views[].children` for a detail level, it
+Pitfalls: stay inside the view limit in [the rules table](kit/examples/QUICKSTART.md#4-the-rules-table) (use `views[].children` for a detail level, it
 reuses a view); no filter field in a row (the filter is the second word typed); scripts are flat
 single files; the YAML stays in the plain form the engine writes; `id` equals the folder name,
 `config.json` id and the yaml file name (lint refuses a mismatch); change `id` in `bolt-app.json` and delete the old

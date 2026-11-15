@@ -183,7 +183,7 @@ test('a stale app file left beside the regenerated one is refused by lint and pa
 // ---- schema/user-app.schema.json ----
 test('schema: every right_widget kind is described, the enum still equals the launcher list, and data-less kinds say so', () => {
 	const sc = JSON.parse(fs.readFileSync(path.resolve(HERE, '../../schema/user-app.schema.json'), 'utf8'));
-	const kind = sc.properties.presentation.properties.right_widget.properties.kind;
+	const kind = sc.$defs.presentation.properties.right_widget.properties.kind;
 	assert.deepEqual([...kind.enum].sort(), [...RIGHT_WIDGET_KINDS].sort());
 	assert.deepEqual(kind.oneOf.map((x) => x.const).sort(), [...kind.enum].sort());
 	assert.ok(kind.oneOf.every((x) => x.description.length > 20));

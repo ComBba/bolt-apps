@@ -37,7 +37,7 @@ export function keyLooking(dir) {
 const refuseSecrets = (dir) => { const h = keyLooking(dir); if (h.length) die(`${h.join(', ')} holds something shaped like a real key or token. Remove it from the app folder: keys go in the system keychain or ~/.config/<id>/.env (mode 600), never in a file you pack or share. See ${DOCS}#secrets`); };
 
 // ---------------------------------------------------------------- new <template> <id>  and  new --list
-export const listTemplates = () => { try { return JSON.parse(fs.readFileSync(path.join(EXAMPLES, 'index.json'), 'utf8')).apps; } catch { return []; } };
+export const listTemplates = () => { try { return JSON.parse(fs.readFileSync(path.join(EXAMPLES, 'index.json'), 'utf8')).apps.filter((a) => fs.existsSync(path.join(EXAMPLES, a.id, 'bolt-app.json'))); } catch { return []; } };   // an entry whose folder is not here yet is not offered
 export const hasTemplate = (name) => /^[a-z0-9][a-z0-9-]*$/.test(name) && fs.existsSync(path.join(EXAMPLES, name, 'bolt-app.json'));
 export function newList() {
 	const apps = listTemplates();

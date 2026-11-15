@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://bolt.sparcle.app/schemas/utility-manifest-v1.json",
+  "$id": "https://sparcle.app/schemas/connector-v1.json",
   "title": "Bolt Utility Manifest v1",
   "description": "See https://sparcle.app/docs/extend/connector-spec/. This schema validates structure and enums; deep semantic checks (template paths, type contracts, jq budgets) live in the Rust linter.",
   "type": "object",

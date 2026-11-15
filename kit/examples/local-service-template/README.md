@@ -21,8 +21,8 @@ An app over any loopback HTTP service: Docker Engine on `2375`, a dev server's s
 `utilities/localmodels.yaml`: `chip`, `title`, `http.port`, `http.request.path`, `http.rows_path`, `presentation.title_field`, `presentation.subtitle_field`, `presentation.right_widget.bind.fields`.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/local-service-template --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/local-service-template --personal --version 1.0.1 --out local-service-template-1.0.1.boltpack
+./bolt-apps lint kit/examples/local-service-template --personal
+./bolt-apps pack kit/examples/local-service-template --personal --version 1.0.1 --out local-service-template-1.0.1.boltpack
 ```

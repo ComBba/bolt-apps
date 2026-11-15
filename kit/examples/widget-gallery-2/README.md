@@ -22,12 +22,12 @@ A gallery, a palette, an avatar list, a screenshot index. Replace `endpoints.swa
 `scripts/config.json`: `endpoints`, `overview.rows`, each view's `item.extra` and `widget.bind`. `scripts/fixtures.json`: the recorded or sample response.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/widget-gallery-2
+./bolt-apps kit vendor --flat kit/examples/widget-gallery-2
 python3 kit/examples/widget-gallery-2/scripts/engine.py --emit-yaml > kit/examples/widget-gallery-2/utilities/widget-gallery-2.yaml
-node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery-2 --update-golden
-node toolkit/bin/bolt-apps.mjs lint kit/examples/widget-gallery-2 --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/widget-gallery-2 --personal --version 1.0.1 --out widget-gallery-2-1.0.1.boltpack
+./bolt-apps check kit/examples/widget-gallery-2 --update-golden
+./bolt-apps lint kit/examples/widget-gallery-2 --personal
+./bolt-apps pack kit/examples/widget-gallery-2 --personal --version 1.0.1 --out widget-gallery-2-1.0.1.boltpack
 ```
 Not run in the real launcher: how the grid and the cards draw the images is read from the launcher source, not seen on screen.

@@ -30,13 +30,13 @@ For a CLI app you ARE expected to edit `scripts/wrap.py`: replace `build()` with
 `scripts/fixtures.json` is a sample output per system. Sample mode (`BOLT_APP_FIXTURE=1`, or `"fixture": true` in `check.json`) parses it instead of running the tool, so a copy has a working path before the tool is installed. The bridge command names `config.json`, `fixtures.json` and `bolt_app_kit.py` as helper files, and `split_args()` drops those trailing words, so keep all three in the command if you rename or add helpers. The check stubs in `fixtures/<os>/*.out` are for the checker only and are not packed. A tool with several subcommands is tested with `by_args` stubs (see `../ENGINE.md`).
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/cli-wrapper-template
+./bolt-apps kit vendor --flat kit/examples/cli-wrapper-template
 python3 kit/examples/cli-wrapper-template/scripts/wrap.py --emit-yaml > kit/examples/cli-wrapper-template/utilities/pingcheck.yaml
-node toolkit/bin/bolt-apps.mjs check kit/examples/cli-wrapper-template --update-golden
-node toolkit/bin/bolt-apps.mjs lint kit/examples/cli-wrapper-template --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/cli-wrapper-template --personal --version 1.0.1 --out cli-wrapper-template-1.0.1.boltpack
+./bolt-apps check kit/examples/cli-wrapper-template --update-golden
+./bolt-apps lint kit/examples/cli-wrapper-template --personal
+./bolt-apps pack kit/examples/cli-wrapper-template --personal --version 1.0.1 --out cli-wrapper-template-1.0.1.boltpack
 ```
 Use: `=pingcheck one.one.one.one`, `=pingcheck example.com 5` (count 1 to 10), then the Replies, Raw output and The command rows.
 

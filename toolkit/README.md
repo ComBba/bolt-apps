@@ -1,13 +1,13 @@
 # Bolt Apps toolkit
 
-One small command, `bolt-apps`, for making a Bolt App on your own machine. No account, no network, no dependencies. Node 18 or newer.
+One small command, `bolt-apps`, for making a Bolt App on your own machine. No account, no network, no dependencies. Node 18 or newer. `bolt-apps` in the docs means `./bolt-apps`, the launcher at the root of the clone (it runs `toolkit/bin/bolt-apps.mjs` with Node). Building a rich app for yourself? Start at [kit/examples/QUICKSTART.md](../kit/examples/QUICKSTART.md).
 
 ```
-node toolkit/bin/bolt-apps.mjs new my-app --type transform     # start from a working template
-node toolkit/bin/bolt-apps.mjs lint apps/my-app                 # offline shape checks
-node toolkit/bin/bolt-apps.mjs keygen                           # once: your signing key
-node toolkit/bin/bolt-apps.mjs pack apps/my-app                 # my-app.boltpack, self-signed
-node toolkit/bin/bolt-apps.mjs verify my-app.boltpack           # Bolt's install rules, offline
+./bolt-apps new my-app --type transform     # start from a working template
+./bolt-apps lint apps/my-app                 # offline shape checks
+./bolt-apps keygen                           # once: your signing key
+./bolt-apps pack apps/my-app                 # my-app.boltpack, self-signed
+./bolt-apps verify my-app.boltpack           # Bolt's install rules, offline
 ```
 
 Then drop the `.boltpack` on the Bolt launcher or on Bolt Apps. Bolt shows a review card and, because you signed it yourself, asks once more before it installs. Do not use Admin settings, Utilities, Bundles: that door takes only bundles signed by Sparcle and answers "Bundle rejected" to everything else. Dropping a pack on the launcher installs User Apps and scripts; Bolt skips snippets and search engines in a pack.
@@ -17,8 +17,8 @@ Then drop the `.boltpack` on the Bolt launcher or on Bolt Apps. Bolt shows a rev
 The gallery takes tier 1 and 2 only. An app that runs programs or reaches the network (`runtime: bridge` or `http_local`, a `detect` block, a script in `scripts/`) can still be packed for yourself or people who trust you:
 
 ```
-node toolkit/bin/bolt-apps.mjs lint apps/my-app --personal
-node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
+./bolt-apps lint apps/my-app --personal
+./bolt-apps pack apps/my-app --personal
 ```
 
 `pack --personal` recomputes what the app can do from its files and prints it in plain words, then Bolt shows the same facts and asks whoever installs it to confirm, because the pack is signed only by you. On a device whose company policy allows only approved apps, Bolt refuses it. Bolt installs nested folders under `scripts/` (at most 8 deep) but this toolkit refuses them for now (`script_subfolder`: it matches files by name). Also the approval hash covers only helper files the command names as `{{scripts_dir}}/<file>`, so vendor the kit as one file with `kit vendor --flat`. `check.json`, `fixtures/` and `golden/` stay on your machine and are not packed.
@@ -27,7 +27,11 @@ node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
 
 | Command | What it does |
 |---|---|
+| `new <template> <id> [--dir d]` | Copies a working template from `kit/examples` (`new --list` shows them and what to edit), renames it, writes the app file and records goldens, so `check` passes before you change anything. |
 | `new <id> --type snippet\|search\|transform\|recognizer` | Creates `apps/<id>/` with `bolt-app.json`, a README and one content file. Every template passes `lint` and carries a test you can edit. |
+| `run <app> [view [word]] [--sample\|--live] [--json]` | Runs the app as Bolt would and prints the rows. It executes the app's own command with your real HOME and PATH. |
+| `ship <app>` | `lint --personal`, `check`, makes your key once, `pack` with the next version, `verify`; prints how to install. |
+| `doctor [app]` | Checks node, python, your key, `~/.bolt-apps` and what would block an install. |
 | `lint [path]` | Offline checks: file layout, id and key rules, the tier and permissions your content needs, and that every content file has a test. `--json` for tools and agents; branch on `code`, not `message`. |
 | `keygen [--out file]` | Makes an Ed25519 signing key in `~/.bolt-apps/key.pem` (mode 600). Never overwrites a key. Keep it out of any git repo. |
 | `verify <app-folder or file.boltpack> [--json]` | The checks Bolt runs at install, offline: each problem has a stable `code`, the file, the line and the fix; then an estimate of what Bolt will show (tier, permissions, files); Bolt checks again at install. Exit 1 on any error. |
@@ -40,10 +44,10 @@ node toolkit/bin/bolt-apps.mjs pack apps/my-app --personal
 `kit/` holds `bolt_app_kit`, a Python library (standard library only, 3.9+) that does formatting, row structure, JSON output, text safety, deadlines and caching, so an app only holds data and wiring. The row contract is a JSON Schema in `kit/schema/`. Example: `kit/examples/system-glance`. Design, what `check` covers and what it does not: [docs/kit-design.md](../docs/kit-design.md).
 
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor kit/examples/system-glance
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/acme-dash   # one file, packable
-node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance
-node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance --os linux
+./bolt-apps kit vendor kit/examples/system-glance
+./bolt-apps kit vendor --flat kit/examples/acme-dash   # one file, packable
+./bolt-apps check kit/examples/system-glance
+./bolt-apps check kit/examples/system-glance --os linux
 ```
 
 `check` for script apps is a first slice. Run it only on code you have read: it executes the script on your machine, and the empty environment is not a sandbox. It runs your script against recorded command output on this machine. It does not run the real launcher, Windows, or the real tools of another OS; those cases are labelled "fixture-tested only".

@@ -11,12 +11,12 @@ A blank script app on the kit, for an API or a tool no engine template fits. One
 
 ## Run these commands
 ```
-node toolkit/bin/bolt-apps.mjs new script-template my-tool --dir apps   # copies kit/examples/script-template
-node toolkit/bin/bolt-apps.mjs run apps/my-tool items --sample
-node toolkit/bin/bolt-apps.mjs check apps/my-tool
-node toolkit/bin/bolt-apps.mjs ship apps/my-tool # needs-network (not run by the README test: it writes your key and the pack to ~/.bolt-apps)
+./bolt-apps new script-template my-tool --dir apps   # copies kit/examples/script-template
+./bolt-apps run apps/my-tool items --sample
+./bolt-apps check apps/my-tool
+./bolt-apps ship apps/my-tool # needs-network (not run by the README test: it writes your key and the pack to ~/.bolt-apps)
 ```
-Then drop the `.boltpack` that `ship` prints on Bolt and type `=<chip>`. Run `node toolkit/bin/bolt-apps.mjs keygen` once if `ship` says you have no key.
+Then drop the `.boltpack` that `ship` prints on Bolt and type `=<chip>`. Run `./bolt-apps keygen` once if `ship` says you have no key.
 
 ## How it behaves
 - Ships live (`api.fixture_default: false`): with no key it shows the exact one-line setup; with the network down it shows the offline row or an old copy with its age. `check` runs it in sample mode (`"fixture": true`).

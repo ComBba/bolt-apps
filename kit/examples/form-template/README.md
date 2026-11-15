@@ -16,10 +16,10 @@ Any app that takes a few typed values and shows what was recorded: expenses, tim
 - Not covered: sending the entry to a web API. Use the `views` mode for reading APIs.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 See `../ENGINE.md`. Use a higher `--version` each time you pack again.
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/form-template --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/form-template
-node toolkit/bin/bolt-apps.mjs pack kit/examples/form-template --personal --version 1.0.1 --out ../form-template-1.0.1.boltpack
+./bolt-apps lint kit/examples/form-template --personal
+./bolt-apps check kit/examples/form-template
+./bolt-apps pack kit/examples/form-template --personal --version 1.0.1 --out ../form-template-1.0.1.boltpack
 ```

@@ -1,5 +1,7 @@
 # The shared engine: every config option, once
 
+`bolt-apps` in this page means `./bolt-apps`, run from the root of the clone. Limits live in [the rules table](QUICKSTART.md#4-the-rules-table); what is supported is in [CAPABILITIES.md](CAPABILITIES.md).
+
 All apps here run the same `scripts/engine.py`. An app is `scripts/config.json` plus `scripts/fixtures.json`. Nothing else is edited. Regenerate the app file after any change:
 
 ```
@@ -20,13 +22,15 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 `id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (true lets the launcher filter rows as you type), `timeout` (seconds, 1 to 60).
 
 ## `api` (views and lookup)
-`base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row).
+`base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.
 
 ## `cache`
 `ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero.
 
 ## `endpoints`
-`name: { path, kind (list or object), data (where the rows sit in the response, default "data"), map }`. `map` renames fields: `{ "title": "name", "owner": "assignee.name" }` (dotted paths work). Fixture mode reads `fixtures.json[name]`, the raw response.
+`name: { path, kind (list or object), data (where the rows sit in the response, default "data"), map }`. `map` renames fields: `{ "title": "name", "owner": "assignee.name" }` (dotted paths work). Fixture mode reads `fixtures.json[name]`, the raw response. `fixtures.json` may also hold `_now` (epoch seconds: a fixed clock for the date tokens in sample mode) and, for a form app, `seed` (sample rows shown after the saved ones).
+
+More endpoint options: `hydrate` (`{ path, limit }`: the answer is a list of ids and `path` contains `{id}`; one request per id runs in parallel, `limit` 1 to 50, default 20; an id that fails is dropped; if none answer the endpoint fails), `flatten` (`true` or a field name: an object of lists keyed by date or name becomes one list, the key kept in that field, default `key`), `require` (on an object endpoint: dotted paths that must be present, otherwise the answer counts as failed, never as zero). A `path` may use the date tokens `{today}`, `{today-7d}` and `{today+1d}` (local dates, 0 to 9999 days). An answer that says there is more (a next link or cursor, `has_more`, or a total above the rows held; read from the answer, `meta` or `pagination`) shows a "first page only" notice.
 
 ## `stats` (named numbers for the overview)
 `{ endpoint, where, group }` counts rows. `where`: `{ "status": ["done"] }`, `{ "status": { "not": ["done"] } }`, `{ "n": { "gte": 1 } }`. `group` gives "7 a, 3 b". `{ "pct": [a, b] }` and `{ "sum": [a, b] }` combine other stats.
@@ -38,7 +42,9 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 `{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`.
 
 ## `views[]`
-`id` (at most 7 views besides overview: the launcher refuses more), `title`, `icon`, `endpoint`, `sort` (`[{ field, order[], desc }]`), `children` (`[{ view, match }]` drills to rows of another view whose `match` field equals this row's id), `no_children`, `empty`, `widget` (`{ kind, mode, bind }`, copied into the app file; default is a detail preview built from `item.fields`).
+`id` (view count: see [the rules table](QUICKSTART.md#4-the-rules-table)), `title`, `icon`, `endpoint`, `sort` (`[{ field, order[], desc }]`), `children` (`[{ view, match }]` drills to rows of another view whose `match` field equals this row's id), `no_children`, `empty`, `widget` (`{ kind, mode, bind }`, copied into the app file; default is a detail preview built from `item.fields`). Pane kinds with app data: card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (the same list as the rules table; chart types are line, bar and sparkline only).
+
+More view options: `id_field` (the row field that holds its id, default `id`), `pane_id` (the pane name the rows use, default the view id), and on a `children` entry `parent_field` (the row field compared to `match`, default the view's `id_field`).
 
 `item`: `title`, `subtitle`, `icon`, `url`, `body` (markdown), `copy`, `tile`, `fields` (up to 5 `{ label, value, kind }`), `extra` (named row fields a widget binds as `{{row.name}}`; a value that is exactly `{field}` keeps a number a number), `data_field` (a nested object for a json_tree pane), `trend_field`. A field named `left`, `right` or ending `_lines` keeps line breaks.
 
@@ -51,7 +57,7 @@ Templates use `{field}` and `{field|filter}`: `human`, `day`, `hhmm`, `when` (an
 `inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
 
 ## `lookup`
-`endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `none_title`, `examples`.
+`endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `prompt_subtitle`, `none_title`, `examples`.
 
 ## Files named in the command
 The app file lists `config.json`, `fixtures.json` and `bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
@@ -59,17 +65,17 @@ The app file lists `config.json`, `fixtures.json` and `bolt_app_kit.py` after th
 ## Commands
 
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/<id>     # once, and after a kit update
-node toolkit/bin/bolt-apps.mjs check kit/examples/<id> --update-golden # review golden/ once
-node toolkit/bin/bolt-apps.mjs check kit/examples/<id>
-node toolkit/bin/bolt-apps.mjs lint kit/examples/<id> --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/<id> --personal --version 1.0.1   # a higher version each time
+./bolt-apps kit vendor --flat kit/examples/<id>     # once, and after a kit update
+./bolt-apps check kit/examples/<id> --update-golden # review golden/ once
+./bolt-apps check kit/examples/<id>
+./bolt-apps lint kit/examples/<id> --personal
+./bolt-apps pack kit/examples/<id> --personal --version 1.0.1   # a higher version each time
 ```
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack (it makes your signing key and never overwrites one). Drop the `.boltpack` on the Bolt launcher or Bolt Apps.
+Run `./bolt-apps keygen` once before the first pack (it makes your signing key and never overwrites one). Drop the `.boltpack` on the Bolt launcher or Bolt Apps.
 
 ## Where to store keys (measured against the launcher)
 
-Bolt starts a personal app's script with an empty environment except a short allowlist: HOME, PATH, USER, LANG, TERM, TMPDIR, TZ, LC_*, XDG_* and the certificate bundle variables. A name that looks secret (it contains TOKEN, KEY, SECRET, PASS, PWD, CRED, AUTH, PRIVATE, SESSION or COOKIE) is never forwarded to a personal or packed app, and `bridge.env` is refused if it lists one; only apps shipped inside Bolt may forward them. So an environment variable in your shell does NOT reach the script when Bolt runs it. It works only in a terminal and in tests.
+Bolt starts a personal app's script with an empty environment except a short allowlist (listed in [the rules table](QUICKSTART.md#4-the-rules-table), from `schema/bolt-rules.json` `runner_env`). A name that looks secret (it contains TOKEN, KEY, SECRET, PASS, PWD, CRED, AUTH, PRIVATE, SESSION or COOKIE) is never forwarded to a personal or packed app, and `bridge.env` is refused if it lists one; only apps shipped inside Bolt may forward them. So an environment variable in your shell does NOT reach the script when Bolt runs it. It works only in a terminal and in tests.
 
 | Place | Works in Bolt | Good | Bad |
 |---|---|---|---|
@@ -104,7 +110,7 @@ Expected install-prompt finding: an app that reads the keychain is listed as "th
 
 These examples are not driven by `engine.py`: `file-insights-template`, `cli-wrapper-template`, `repo-radar` and `around` each have their own script on the same flat kit, with `config.json` holding what changes (columns, command table, weights, TTLs) and `--emit-yaml` generating the app file. Their entries in `index.json` say `custom script on the flat kit`.
 
-Launcher facts measured for these examples: a personal app cannot show data in `right_widget` kinds `image`, `color`, `weather`, `date`, `calc` or `map` (use an Open in Maps URL action); chart types are `line`, `bar` and `sparkline` only, and the chart title is the `label` bind written as literal text; at most 8 views including the overview; a nav arg is one plain token (no slash), so repeat the typed query from the kit cache; the bridge command must name every helper file as `{{scripts_dir}}/<file>`.
+Launcher facts measured for these examples: pane kinds and limits are in [the rules table](QUICKSTART.md#4-the-rules-table) (a place opens with an Open in Maps URL action, not a map pane); the chart title is the `label` bind written as literal text; a nav arg is one plain token, so repeat the typed query from the kit cache; the bridge command must name every helper file as `{{scripts_dir}}/<file>`.
 
 ## MCP: the workaround script
 
@@ -171,21 +177,13 @@ Limits: servers that need a login or a key are out of scope here (use `get_secre
 ## Limits of views mode (so you pick the right template)
 
 - Views mode calls the list endpoints you name; it cannot call a per-id detail endpoint. `{id}`-style paths (and `{query}`) work only in `lookup` mode, where one typed word drives the calls. For a detail view, put the detail fields in the list response, or use a `lookup` app, or write a script like `repo-radar`.
-- Row actions in config are only Open (`url` on an item) and Copy (`copy`). More buttons need the app file's `actions:` (kinds `url`, `composer`, `utility`, `run`), at most 3 footer buttons including those two, and a nav row carries no actions.
+- Row actions in config are only Open (`url` on an item) and Copy (`copy`). More buttons need the app file's `actions:` (kinds `url`, `composer`, `utility`, `run`; the count limit is in [the rules table](QUICKSTART.md#4-the-rules-table), and Open and Copy count), and a nav row carries no actions.
 - Stitching: stats from several endpoints on the overview, and `children` that list rows of another view whose field equals this row's id. There is no cross-join of two endpoints into one row. For that, use a script (`repo-radar` joins on a repo and its package; `around` stitches by distance).
-- Lists show at most 50 rows (`MAX_ROWS` in `engine.py`); the view says so. The chart and table panes could draw more, but the engine does not hand them more.
+- Lists are capped by the engine (row limits: [the rules table](QUICKSTART.md#4-the-rules-table)); the view says so.
 
 ## Which file to edit in each template
 
-| Template | You edit | You do not edit |
-|---|---|---|
-| portal-template, acme-dash, chart-template, table-template, lookup-template, widget-gallery, widget-gallery-2, form-template | `scripts/config.json`, `scripts/fixtures.json` | `scripts/engine.py` |
-| file-insights-template | `scripts/config.json` (columns, rules, charts); `insights.py` only to add a rule kind | `bolt_app_kit.py` |
-| cli-wrapper-template | `scripts/config.json` (command table, exit codes, regexes) and `build()` in `scripts/wrap.py`: for a CLI app you ARE expected to edit this script, because the rows depend on what your tool prints. `scripts/fixtures.json` holds a sample output so a copy works before the tool is installed (sample mode) | `bolt_app_kit.py` |
-| repo-radar | `scripts/config.json`; `urls()`, the `n_*` readers, `model()` and `score()` in `scripts/radar.py` | `bolt_app_kit.py` |
-| around | `scripts/config.json`; `gather()`, the `n_*` readers, `stitch()` and `verdict()` in `scripts/around.py` | `bolt_app_kit.py` |
-| local-service-template | `utilities/*.yaml` only | |
-| system-glance | `scripts/system-glance.py` | `bolt_app_kit.py` |
+The `edit` list of each template in [index.json](index.json) is the one answer (a test checks the files exist). A template with no `edit_in_script` entry needs no script change. For a CLI app you are expected to edit `build()` in `scripts/wrap.py`, because the rows depend on what your tool prints. `scripts/fixtures.json` holds a sample so a copy works before the tool is installed.
 
 Never edit `bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --flat <app>`. Every script that lists a helper file in its command names it as `{{scripts_dir}}/<file>` (config.json, fixtures.json, bolt_app_kit.py) so Bolt shows it in the approval.
 

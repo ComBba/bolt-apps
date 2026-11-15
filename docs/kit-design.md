@@ -17,7 +17,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 | 5 | Launcher behaves differently from a shell | `check` runs in a clean subprocess: empty environment, temp HOME, controlled PATH | `the script runs with an empty environment` |
 | 6 | A hung command blows the 20 s bridge limit | One `Deadline` (14 s) shared by every command; `run_parallel` abandons slow tasks | `test_shared_deadline_*`, case "every command hangs" |
 | 7 | `{{ }}` re-expanding, bidi, zero-width, tag and control characters | `clean_text`, `neutralise_braces`; every builder applies them | `test_hostile_text_is_neutralised`, `text_unsafe`, `text_braces` |
-| 8 | Footer: more than 3 buttons, labels over 14 characters | `row()` and `_action()` raise; schema and `check` enforce | `test_footer_limit_*`, `label_too_long` |
+| 8 | Footer: more buttons or longer labels than [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table) allows | `row()` and `_action()` raise; schema and `check` enforce | `test_footer_limit_*`, `label_too_long` |
 | 9 | Rounding differs between display, thresholds and badges | `rnd()` = floor(x+0.5), used by every formatter | `test_rounding_one_rule` |
 | 10 | Cache: unchecked shape, symlinks, temp files, no pruning | `Cache`: shape check, `lstat`-checked directory, `O_EXCL|O_NOFOLLOW`, pruning | `CacheTests` |
 | 11 | Origins and hosts truncated generically | `host_label` elides from the left and keeps the registrable domain | `test_origin_never_through_generic_truncation` |
@@ -34,7 +34,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 | Row | `title` (required, 160), `subtitle` (200), `body` (markdown, 8000), `icon`, `pane`, `category`, `url` (http/https), `copy_text` | Free extra fields are scalars (string, number, boolean) a manifest binds as `{{row.x}}`. |
 | Tile | `kpi_label`, `kpi_value`, `kpi_unit` (4), `kpi_max`, `kpi_note`, `kpi_foot` (80), `kpi_badge` | `kpi_value` and `kpi_max` are a JSON number or `""`. A tile with a label but no number is invalid. |
 | Badges | `badges`: up to 4 of `{label, tone}` | |
-| Actions | `actions`: kinds `url`, `composer`, `utility`. A `url_template` must start with `http://` or `https://` and a literal host, so a placeholder never supplies the scheme or host | Up to 3 in the schema; a row adds at most `3 - manifest actions` (2 when the manifest declares Copy). `label` 1 to 14 characters. |
+| Actions | `actions`: kinds `url`, `composer`, `utility`, `run`. A `url_template` must start with `http://` or `https://` and a literal host, so a placeholder never supplies the scheme or host | Footer count and label length: [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table) (the kit's own limit, below Bolt's); a row adds at most the kit limit minus `manifest_actions`. |
 | Nav | `{"back": true}` or `{"view": token, "arg": token}` | Tokens match the launcher's `NAV_ARG_RE`. A nav row carries no actions. |
 | Icon | one of the launcher's icon names | See below. |
 
@@ -102,7 +102,7 @@ An author can ship either, with the same row contract:
 |---|---|---|
 | **A. Declared interpreters** (`requires`) | Authoring and docs yes; enforcement needs the runtime change above | The user installs Python; a missing one gives a plain message instead of a failed command |
 | **B. Shell fallbacks / single binary** (`sh`, PowerShell, or a compiled helper) | Yes, no new runtime | PowerShell and sh differ a lot; a compiled helper means a build per OS and a supply-chain review |
-| **C. A Bolt-provided sandboxed runtime** (WASM or an embedded script engine) | No | Big engineering; but it removes the interpreter problem, and is the natural place to enforce the permission and confinement roadmap |
+| **C. A Bolt-provided confined runtime** (WASM or an embedded script engine); not built | No | Big engineering; but it removes the interpreter problem, and is the natural place to enforce the permission and confinement roadmap |
 
 **Recommendation.** Do A now: declare `platforms` and `requires`, validate them in the toolkit (done), and have the runtime show a plain reason (proposal). Use B only for tiny apps where a POSIX `sh` or PowerShell one-liner is honest. Plan C as the long-term answer, because it fixes the interpreter and gives confinement in one move; design the kit contract so an app written today (JSON rows out) moves to a sandboxed runtime unchanged.
 
@@ -134,7 +134,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 4. **Hung-command mode**: `"hang": ["df", "lsof"]` makes those stubs sleep. The case asserts the whole run stays under its time budget (default 18 s, under the 20 s bridge limit) and the output still validates and does not say all clear.
 5. **Hostile-data fuzz**: `"hostile": true` replaces `@@HOSTILE@@` in the fixtures with a payload (bidi, zero-width, tag, line separator, bell, `{{x}}`). Every case already scans all output for such characters and for `{{`/`}}`.
 6. **Golden snapshots**: the rows must equal `golden/<name>.json`. `--update-golden` writes it; review the diff.
-7. **Schema validation** of every output, and the label (14), footer (3 minus manifest actions, `manifest_actions` in `check.json`) and numeric-tile rules.
+7. **Schema validation** of every output, and the label, footer (the kit limit minus manifest actions, `manifest_actions` in `check.json`) and numeric-tile rules, with the numbers in [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table).
 8. Expectations per case: `text_present`, `text_absent`, `max_seconds`, `exit`.
 9. **Kit guard**: the `bolt_app_kit` beside the script must match its lock (`kit_modified`), and match this toolkit's kit when the versions are equal (`kit_diverged`). An older pinned version is an error (`kit_outdated`) unless `check.json` sets `allow_outdated_kit` after the older kit was reviewed. The kit directory must hold exactly the kit's files: a symlink, a subdirectory, a `.so`, `.pyd` or `.pyc`, or any extra file fails `kit_modified` (only `__pycache__` contents are ignored). Paths in `check.json` may not pass through a symlink, and `kit vendor` only replaces a real directory named `bolt_app_kit` inside the app folder. The lock is not signed, so this catches accidents and unreviewed edits, not an author who rewrites the lock and the version on purpose; the pack signature (future, section 6) is what binds the kit to a release.
 
@@ -180,4 +180,4 @@ The JS validator inside `check` already runs the `validate` cases from `cases.js
 
 ## 9. Out of scope
 
-Permissions enforcement and confinement (the runtime), the gallery and its index, a JavaScript kit, Windows hosting for `check`, signing script apps.
+Not built: permissions enforcement and confinement (the runtime), the gallery and its index, a JavaScript kit, Windows hosting for `check`, signing script apps.

@@ -46,7 +46,7 @@ Run these from inside the app folder. If you changed the id, write it in place o
 - The real launcher. `bolt-apps check` runs the script on recorded data and checks the rows against the contract. It does not draw them.
 
 ## Pack and install
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 
 ```
 bolt-apps lint . --personal
