@@ -76,3 +76,57 @@ test('bridge and http blocks allow exactly the keys the rules file lists', () =>
 	assert.deepEqual(sorted(Object.keys(P.bridge.properties)), sorted(RULES.keys.bridge.all));
 	assert.deepEqual(sorted(Object.keys(P.http.properties)), sorted(RULES.keys.http.all));
 });
+
+// ---- constraints that must not loosen when the schema is edited (each one is something Bolt refuses)
+const install = JSON.parse(read('schema/install-rules.json')).contract;
+function read(f) { return fs.readFileSync(path.join(REPO, f), 'utf8'); }
+
+test('http.headers: a value has no ${ in it, or is exactly ${env:NAME} with NAME from the rules list; names match the rules pattern', () => {
+	const h = P.http.properties.headers;
+	assert.equal(h.propertyNames.pattern, RULES.http_local.header_name_pattern);
+	const v = h.additionalProperties;
+	assert.equal(v.type, 'string');
+	const [plain, exact] = v.anyOf;
+	const m = /^\^\\\$\\\{env:\(([A-Z0-9_|]+)\)\\\}\$$/.exec(exact.pattern);
+	assert.ok(m, `header value pattern shape: ${exact.pattern}`);
+	assert.deepEqual(sorted(m[1].split('|')), sorted(RULES.env.benign_passthrough), 'the header env list is the rules list');
+	const ok = (s) => !new RegExp(plain.not.pattern).test(s) || new RegExp(exact.pattern).test(s);
+	for (const good of ['text/plain', '${env:AWS_PROFILE}', '${env:PGHOST}']) assert.ok(ok(good), good);
+	for (const bad of ['${env:SECRET_TOKEN}', '${env:AWS_PROFILE}x', 'x${env:AWS_PROFILE}', '${HOME}', '${env:aws_profile}', '${env:}']) assert.ok(!ok(bad), bad);
+});
+
+test('the required keys, the title, the arg binding, the action fields and the detect binary keep the shape Bolt checks', () => {
+	assert.deepEqual(sorted(sc.required), sorted(install.required_keys));
+	assert.equal(P.title.minLength, 1); assert.match('x', new RegExp(P.title.pattern)); assert.doesNotMatch('  ', new RegExp(P.title.pattern));
+	const from = new RegExp(P.args.items.properties.from.pattern);   // the launcher is_supported_arg_from: query.word(N), spaces around N tolerated
+	for (const g of ['query.word(0)', 'query.word( 12 )']) assert.match(g, from);
+	for (const b of ['query.word()', 'query.word(x)', 'query.line(0)', 'query.word(-1)']) assert.doesNotMatch(b, from);
+	assert.deepEqual(sorted(D.action.required), ['id', 'kind', 'label']);
+	assert.deepEqual(sorted(P.http.properties.request.properties.method.enum.map((x) => x.toUpperCase())), ['GET', 'GET', 'POST', 'POST']);   // the launcher uppercases the method before it checks
+	const bin = new RegExp(P.detect.properties.binary.pattern);
+	for (const g of ['git', 'my-tool.exe']) assert.match(g, bin);
+	for (const b of ['/usr/bin/git', 'a/b', 'a\\b', '', ' git']) assert.doesNotMatch(b, bin);
+	assert.equal(P.http.properties.port.minimum, 1); assert.equal(P.http.properties.port.maximum, 65535);
+});
+
+test('transform steps equal the launcher lists (the launcher lists ALLOWED_TRANSFORM_NOARG and ALLOWED_TRANSFORM_PARAM)', () => {
+	const NOARG = ['lines', 'sort', 'dedupe', 'reverse', 'trim', 'upper', 'lower', 'title', 'camel', 'snake', 'kebab', 'slug', 'table', 'markdown', 'csv', 'aligned', 'sql', 'json', 'yaml', 'toml', 'env', 'properties', 'transpose', 'flatten', 'redact_secrets', 'sanitize'];
+	const PARAM = ['split', 'join', 'filter', 'head', 'tail', 'slice', 'replace', 'prefix', 'suffix', 'template', 'sortcol', 'dedupecol', 'rename_cols', 'pick', 'omit'];
+	const items = P.transform.properties.pipe.items.oneOf;
+	assert.deepEqual(sorted(items[0].enum), sorted(NOARG));
+	assert.deepEqual(sorted(items.slice(1).map((x) => x.required[0])), sorted(PARAM));
+	assert.equal(P.transform.properties.pipe.maxItems, 32);
+});
+
+test('every object with named properties refuses unknown keys, except the open bind maps', () => {
+	const open = new Set(['bind']);   // each kind's bind is checked by its own bind schema
+	const bad = [];
+	const walk = (o, where) => {
+		if (!o || typeof o !== 'object') return;
+		if (Array.isArray(o)) return o.forEach((x, i) => walk(x, `${where}[${i}]`));
+		if (o.properties && o.type === 'object' && o.additionalProperties === undefined && !open.has(where.split('.').pop())) bad.push(where);
+		for (const [k, v] of Object.entries(o)) walk(v, `${where}.${k}`);
+	};
+	walk(sc, '');
+	assert.deepEqual(bad, [], 'objects that accept unknown keys');
+});

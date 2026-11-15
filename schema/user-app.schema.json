@@ -40,7 +40,8 @@
     },
     "title": {
       "type": "string",
-      "pattern": "\\S"
+      "pattern": "\\S",
+      "minLength": 1
     },
     "icon": {
       "type": "string"
@@ -761,7 +762,17 @@
           },
           "additionalProperties": {
             "type": "string",
-            "description": "A literal, or exactly one ${env:NAME} where NAME is on the allowed list in the guide."
+            "description": "A literal with no ${ in it, or exactly one ${env:NAME} where NAME is on the allowed list (the same list as bridge.env_passthrough). Any other placeholder is refused.",
+            "anyOf": [
+              {
+                "not": {
+                  "pattern": "\\$\\{"
+                }
+              },
+              {
+                "pattern": "^\\$\\{env:(GH_HOST|GH_REPO|GITLAB_HOST|DOCKER_CONTEXT|DOCKER_TLS_VERIFY|AWS_PROFILE|AWS_REGION|AWS_DEFAULT_REGION|AWS_CA_BUNDLE|AWS_ENDPOINT_URL|CLOUDSDK_CORE_PROJECT|OKTA_CLIENT_ORGURL|SF_TARGET_ORG|SF_ORG_INSTANCE_URL|TWILIO_ACCOUNT_SID|TWILIO_REGION|TWILIO_EDGE|VERCEL_ORG_ID|VERCEL_PROJECT_ID|PGHOST|PGPORT|PGUSER|PGDATABASE|PGSERVICE|PGSSLMODE)\\}$"
+              }
+            ]
           }
         }
       }
