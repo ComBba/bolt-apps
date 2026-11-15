@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "lookup-template",
+  "title": "Lookup template",
+  "role": "Anyone building one-word lookups over a web API",
+  "saves": "Chaining two API calls, caching and laying out the result",
+  "summary": "Type =forecast and a place name for its weather, as tiles with a 24 hour sparkline. Copy it for any lookup that needs two calls.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

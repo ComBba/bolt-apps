@@ -1,0 +1,469 @@
+{
+ "app": {
+  "id": "widget-gallery",
+  "chip": "widget-gallery",
+  "title": "Widget gallery",
+  "icon": "activity",
+  "description": "One screen per right-hand pane the launcher can draw for an app: tiles, chart, table, detail, JSON tree, diff, preview and markdown. Sample data.",
+  "service": "Widget gallery",
+  "searchable": true
+ },
+ "api": {
+  "base_url": "https://api.example.com",
+  "key_env": "GALLERY_API_KEY",
+  "env_file": "~/.config/widget-gallery/.env",
+  "fixture_default": false,
+  "fixture_file": "fixtures.json",
+  "fixture_banner": false
+ },
+ "cache": {
+  "ttl": 45,
+  "stale_max": 86400
+ },
+ "endpoints": {
+  "deploys": {
+   "path": "/v1/deploys"
+  },
+  "services": {
+   "path": "/v1/services",
+   "map": {
+    "title": "name",
+    "status": "state",
+    "open_prs": "prs"
+   }
+  },
+  "responses": {
+   "path": "/v1/responses",
+   "map": {
+    "title": "label"
+   }
+  },
+  "configs": {
+   "path": "/v1/configs",
+   "map": {
+    "title": "name"
+   }
+  },
+  "notes": {
+   "path": "/v1/notes",
+   "map": {
+    "title": "name"
+   }
+  },
+  "customers": {
+   "path": "/v1/customers",
+   "map": {
+    "title": "name"
+   }
+  }
+ },
+ "stats": {
+  "deploys_total": {
+   "endpoint": "deploys"
+  },
+  "services_total": {
+   "endpoint": "services"
+  },
+  "services_up": {
+   "endpoint": "services",
+   "where": {
+    "status": [
+     "up"
+    ]
+   }
+  },
+  "customers_total": {
+   "endpoint": "customers"
+  },
+  "notes_total": {
+   "endpoint": "notes"
+  }
+ },
+ "overview": {
+  "widget": {
+   "kind": "cards",
+   "mode": "list_data",
+   "bind": {
+    "layout": "tiles",
+    "title": "{{row.kpi_label}}",
+    "value": "{{row.kpi_value}}",
+    "unit": "{{row.kpi_unit}}",
+    "delta": "{{row.delta}}",
+    "delta_label": "{{row.since}}",
+    "max": "{{row.kpi_max}}",
+    "trend": "{{row.trend}}",
+    "subtitle": "{{row.kpi_note}}",
+    "badge": "{{row.kpi_badge}}",
+    "footer": "{{row.kpi_foot}}"
+   }
+  },
+  "rows": [
+   {
+    "title": "Chart \u00b7 bars",
+    "subtitle": "Deploys per day. Enter opens it",
+    "icon": "line-chart",
+    "view": "chart",
+    "tile": {
+     "label": "Deploys / day",
+     "value": 96,
+     "unit": "",
+     "note": "peak this week",
+     "badge": "PEAK"
+    },
+    "extra": {
+     "delta": "+23",
+     "since": "vs Thursday"
+    },
+    "trend": [
+     42,
+     58,
+     51,
+     73,
+     96,
+     61,
+     47
+    ]
+   },
+   {
+    "title": "Table \u00b7 sortable",
+    "subtitle": "Services with totals",
+    "icon": "list",
+    "view": "table",
+    "tile": {
+     "label": "Services up",
+     "value": "services_up",
+     "max": "services_total",
+     "note": "of all services",
+     "badge": [
+      {
+       "if": "services_up==services_total",
+       "badge": "OK"
+      },
+      {
+       "badge": "ATTENTION"
+      }
+     ]
+    }
+   },
+   {
+    "title": "Detail \u00b7 key and value",
+    "subtitle": "One record, copyable values",
+    "icon": "file",
+    "view": "detail",
+    "tile": {
+     "label": "Replicas",
+     "value": 15,
+     "note": "across services"
+    }
+   },
+   {
+    "title": "JSON tree",
+    "subtitle": "Collapsible API response",
+    "icon": "binary",
+    "view": "tree",
+    "tile": {
+     "label": "Responses",
+     "value": 2,
+     "note": "sample payloads"
+    }
+   },
+   {
+    "title": "Diff \u00b7 line by line",
+    "subtitle": "Config drift",
+    "icon": "git-commit",
+    "view": "diff",
+    "tile": {
+     "label": "Lines changed",
+     "value": 5,
+     "note": "prod vs staging",
+     "badge": "DRIFT"
+    }
+   },
+   {
+    "title": "Preview \u00b7 facts and tile",
+    "subtitle": "Customer card with a meter",
+    "icon": "building-2",
+    "view": "preview",
+    "tile": {
+     "label": "Customers",
+     "value": "customers_total",
+     "note": "accounts"
+    }
+   },
+   {
+    "title": "Markdown",
+    "subtitle": "Notes and runbooks",
+    "icon": "FileText",
+    "view": "markdown",
+    "tile": {
+     "label": "Notes",
+     "value": "notes_total",
+     "note": "documents"
+    }
+   }
+  ]
+ },
+ "views": [
+  {
+   "id": "chart",
+   "title": "Chart",
+   "icon": "line-chart",
+   "endpoint": "deploys",
+   "item": {
+    "title": "{day} \u00b7 {count}",
+    "subtitle": "deploys / day",
+    "extra": {
+     "label": "{day}",
+     "value": "{count}"
+    }
+   },
+   "widget": {
+    "kind": "chart",
+    "mode": "list_data",
+    "bind": {
+     "type": "bar",
+     "x": "label",
+     "y": "value",
+     "label": "label"
+    }
+   }
+  },
+  {
+   "id": "table",
+   "title": "Table",
+   "icon": "list",
+   "endpoint": "services",
+   "item": {
+    "title": "{title} \u00b7 {status}",
+    "subtitle": "{lang} \u00b7 {commits} commits",
+    "extra": {
+     "service": "{title}",
+     "lang": "{lang}",
+     "status": "{status}",
+     "commits": "{commits}",
+     "open_prs": "{open_prs}"
+    }
+   },
+   "widget": {
+    "kind": "table",
+    "mode": "list_data",
+    "bind": {
+     "sort": {
+      "field": "commits",
+      "dir": "desc"
+     },
+     "totals_label": "Total",
+     "columns": [
+      {
+       "field": "service",
+       "label": "Service",
+       "total": "count"
+      },
+      {
+       "field": "lang",
+       "label": "Lang"
+      },
+      {
+       "field": "status",
+       "label": "Status"
+      },
+      {
+       "field": "commits",
+       "label": "Commits",
+       "align": "right",
+       "total": "sum"
+      },
+      {
+       "field": "open_prs",
+       "label": "PRs",
+       "align": "right",
+       "total": "sum"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "detail",
+   "title": "Detail",
+   "icon": "file",
+   "endpoint": "services",
+   "item": {
+    "title": "{title}",
+    "subtitle": "v{version} \u00b7 {region} \u00b7 {status}",
+    "extra": {
+     "service": "{title}",
+     "version": "{version}",
+     "region": "{region}",
+     "replicas": "{replicas}",
+     "status": "{status}",
+     "uptime": "{uptime}",
+     "cpu": "{cpu}",
+     "memory": "{memory}",
+     "endpoint": "{endpoint}",
+     "owner": "{owner}"
+    }
+   },
+   "widget": {
+    "kind": "detail",
+    "mode": "selected_row",
+    "bind": {
+     "title": "{{row.service}}",
+     "subtitle": "{{row.version}} \u00b7 {{row.region}}",
+     "fields": [
+      {
+       "label": "Status",
+       "value": "{{row.status}}"
+      },
+      {
+       "label": "Version",
+       "value": "{{row.version}}",
+       "copy": true
+      },
+      {
+       "label": "Region",
+       "value": "{{row.region}}"
+      },
+      {
+       "label": "Replicas",
+       "value": "{{row.replicas}}"
+      },
+      {
+       "label": "Uptime",
+       "value": "{{row.uptime}}"
+      },
+      {
+       "label": "CPU",
+       "value": "{{row.cpu}}"
+      },
+      {
+       "label": "Memory",
+       "value": "{{row.memory}}"
+      },
+      {
+       "label": "Endpoint",
+       "value": "{{row.endpoint}}",
+       "copy": true
+      },
+      {
+       "label": "Owner",
+       "value": "{{row.owner}}"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "tree",
+   "title": "JSON tree",
+   "icon": "binary",
+   "endpoint": "responses",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{status}",
+    "data_field": "payload"
+   },
+   "widget": {
+    "kind": "json_tree",
+    "mode": "selected_row",
+    "bind": {
+     "source": "data"
+    }
+   }
+  },
+  {
+   "id": "diff",
+   "title": "Diff",
+   "icon": "git-commit",
+   "endpoint": "configs",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{note}",
+    "extra": {
+     "left": "{left}",
+     "right": "{right}"
+    }
+   },
+   "widget": {
+    "kind": "diff",
+    "mode": "selected_row",
+    "bind": {
+     "left": "{{row.left}}",
+     "right": "{{row.right}}",
+     "leftLabel": "prod",
+     "rightLabel": "staging"
+    }
+   }
+  },
+  {
+   "id": "preview",
+   "title": "Preview",
+   "icon": "building-2",
+   "endpoint": "customers",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{plan} \u00b7 {region} \u00b7 owner {owner}",
+    "icon": "building-2",
+    "url": "{site}",
+    "body": "## {title}\n\n{summary}",
+    "tile": {
+     "label": "Seats used",
+     "value": "used",
+     "max": "seats",
+     "note": "of the plan",
+     "badge": [
+      {
+       "if": "used>=seats",
+       "badge": "FULL"
+      },
+      {
+       "badge": "OK"
+      }
+     ]
+    },
+    "fields": [
+     {
+      "label": "Plan",
+      "value": "{plan}"
+     },
+     {
+      "label": "Region",
+      "value": "{region}"
+     },
+     {
+      "label": "Owner",
+      "value": "{owner}"
+     },
+     {
+      "label": "Tags",
+      "value": "{tags|join}",
+      "kind": "chips"
+     }
+    ]
+   }
+  },
+  {
+   "id": "markdown",
+   "title": "Markdown",
+   "icon": "FileText",
+   "endpoint": "notes",
+   "item": {
+    "title": "{title}",
+    "subtitle": "{sub}",
+    "body": "{text}"
+   },
+   "widget": {
+    "kind": "markdown",
+    "mode": "selected_row",
+    "bind": {
+     "title": "{{row.title}}",
+     "subtitle": "{{row.subtitle}}",
+     "body": "{{row.body}}",
+     "actions": [
+      "copy"
+     ]
+    }
+   }
+  }
+ ]
+}

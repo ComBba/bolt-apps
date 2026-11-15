@@ -1,7 +1,7 @@
 // Run: node --test toolkit/test/install-fixture.test.mjs
 // Install safety net, toolkit half: the eagle-info fixture (script app, helper package
 // folder under scripts/, seven hosts, tier 3) goes author -> pack -> verify.
-// The Bolt half (pack_validate + pack_install + loader + run) is bolt-native
+// The Bolt half (pack_validate + pack_install + loader + run) is covered by the launcher's own tests
 // user_utilities::install_e2e, which builds a pack from a copy of the same fixture.
 // Set BOLT_APPS_CLI to test another checkout of the toolkit.
 import test from 'node:test';

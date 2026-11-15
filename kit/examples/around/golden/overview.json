@@ -1,0 +1,229 @@
+[
+  {
+    "title": "Sample data",
+    "subtitle": "Real answers recorded 2026-11-15, no network. Set api.fixture_default to false for live data",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Verdict · Good for a walk and a coffee",
+    "subtitle": "3 C, dry for the next hours, 38 cafes within 400 m",
+    "icon": "CheckCircle2",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Walk and coffee score",
+    "kpi_value": 81,
+    "kpi_unit": "/100",
+    "kpi_max": 100,
+    "kpi_note": "Weather 45 · Cafes 100 · Bikes 100 · Landmarks 100",
+    "kpi_foot": "",
+    "kpi_badge": "GOOD",
+    "copy_text": "- Bryant Park: Good for a walk and a coffee",
+    "open_url": "https://www.openstreetmap.org/?mlat=40.7537509&mlon=-73.9835428#map=16/40.7537509/-73.9835428"
+  },
+  {
+    "title": "Sources",
+    "subtitle": "Places sample · Bikes sample · Weather sample · Wikipedia sample",
+    "icon": "Globe",
+    "body": "",
+    "actions": [],
+    "badges": [
+      {
+        "label": "Places sample",
+        "tone": "ok"
+      },
+      {
+        "label": "Bikes sample",
+        "tone": "ok"
+      },
+      {
+        "label": "Weather sample",
+        "tone": "ok"
+      },
+      {
+        "label": "Wikipedia sample",
+        "tone": "ok"
+      }
+    ],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Cafes · 149 within 800 m",
+    "subtitle": "nearest: Joe Coffee Company, 70 m",
+    "icon": "Coins",
+    "body": "",
+    "nav": {
+      "view": "places"
+    },
+    "actions": [],
+    "pane": "places",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Gyms · 6 within 800 m",
+    "subtitle": "nearest: Blink Fitness, 160 m",
+    "icon": "Activity",
+    "body": "",
+    "nav": {
+      "view": "places"
+    },
+    "actions": [],
+    "pane": "places",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Bike docks · 22 bikes at the nearest",
+    "subtitle": "W 42 St & 6 Ave, 160 m · updated 13 s ago",
+    "icon": "Navigation",
+    "body": "",
+    "nav": {
+      "view": "bikes"
+    },
+    "actions": [],
+    "pane": "bikes",
+    "kpi_label": "Bikes at nearest dock",
+    "kpi_value": 22,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "updated 13 s ago",
+    "kpi_foot": "",
+    "kpi_badge": "LIVE",
+    "copy_text": ""
+  },
+  {
+    "title": "Weather · 3 C, dry",
+    "subtitle": "feels like 0 C, wind 10 km/h",
+    "icon": "CloudSun",
+    "body": "",
+    "nav": {
+      "view": "weather"
+    },
+    "actions": [],
+    "pane": "weather",
+    "kpi_label": "Temperature",
+    "kpi_value": 3.4,
+    "kpi_unit": "C",
+    "kpi_max": "",
+    "kpi_note": "next 12 hours below",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "trend": [
+      3.6,
+      3.3,
+      4.9,
+      6.2,
+      7.2,
+      7.8,
+      8.2,
+      8.3,
+      8.3,
+      7.8,
+      6.9,
+      6
+    ]
+  },
+  {
+    "title": "Landmarks · 6 nearby",
+    "subtitle": "nearest: Exhibition of the Industry of All Nations, 7 m",
+    "icon": "Landmark",
+    "body": "",
+    "nav": {
+      "view": "landmarks"
+    },
+    "actions": [],
+    "pane": "landmarks",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Keys and sign-in styles",
+    "subtitle": "how each API here asks for a key, and the one that needs yours",
+    "icon": "Key",
+    "body": "",
+    "nav": {
+      "view": "keys"
+    },
+    "actions": [],
+    "pane": "keys",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "About the data",
+    "subtitle": "Map data (c) OpenStreetMap contributors, ODbL. Weather by Open-Meteo.com (CC BY 4.0). Landmarks from Wikipedia (CC BY-SA). Bikes by CityBikes",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Check again",
+    "subtitle": "Enter to fetch fresh data (bikes are kept 30 s)",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

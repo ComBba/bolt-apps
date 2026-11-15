@@ -1,0 +1,8 @@
+PING one.one.one.one (<IP_ADDRESS_0b20e63c>) 56(84) bytes of data.
+64 bytes from one.one.one.one (<IP_ADDRESS_0b20e63c>): icmp_seq=1 ttl=54 time=16.1 ms
+64 bytes from one.one.one.one (<IP_ADDRESS_0b20e63c>): icmp_seq=2 ttl=54 time=15.1 ms
+64 bytes from one.one.one.one (<IP_ADDRESS_0b20e63c>): icmp_seq=3 ttl=54 time=13.8 ms
+
+--- one.one.one.one ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 13.752/14.976/16.093/0.959 ms

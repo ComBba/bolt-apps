@@ -1,0 +1,166 @@
+[
+  {
+    "title": "Chart · bars",
+    "subtitle": "Deploys per day. Enter opens it",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "chart"
+    },
+    "actions": [],
+    "kpi_label": "Deploys / day",
+    "kpi_value": 96,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "peak this week",
+    "kpi_foot": "",
+    "kpi_badge": "PEAK",
+    "copy_text": "",
+    "trend": [
+      42,
+      58,
+      51,
+      73,
+      96,
+      61,
+      47
+    ],
+    "open_url": "",
+    "delta": "+23",
+    "since": "vs Thursday"
+  },
+  {
+    "title": "Table · sortable",
+    "subtitle": "Services with totals",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "table"
+    },
+    "actions": [],
+    "kpi_label": "Services up",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": 5,
+    "kpi_note": "of all services",
+    "kpi_foot": "",
+    "kpi_badge": "ATTENTION",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Detail · key and value",
+    "subtitle": "One record, copyable values",
+    "icon": "file",
+    "body": "",
+    "nav": {
+      "view": "detail"
+    },
+    "actions": [],
+    "kpi_label": "Replicas",
+    "kpi_value": 15,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "across services",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "JSON tree",
+    "subtitle": "Collapsible API response",
+    "icon": "binary",
+    "body": "",
+    "nav": {
+      "view": "tree"
+    },
+    "actions": [],
+    "kpi_label": "Responses",
+    "kpi_value": 2,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "sample payloads",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Diff · line by line",
+    "subtitle": "Config drift",
+    "icon": "git-commit",
+    "body": "",
+    "nav": {
+      "view": "diff"
+    },
+    "actions": [],
+    "kpi_label": "Lines changed",
+    "kpi_value": 5,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "prod vs staging",
+    "kpi_foot": "",
+    "kpi_badge": "DRIFT",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Preview · facts and tile",
+    "subtitle": "Customer card with a meter",
+    "icon": "building-2",
+    "body": "",
+    "nav": {
+      "view": "preview"
+    },
+    "actions": [],
+    "kpi_label": "Customers",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "accounts",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Markdown",
+    "subtitle": "Notes and runbooks",
+    "icon": "FileText",
+    "body": "",
+    "nav": {
+      "view": "markdown"
+    },
+    "actions": [],
+    "kpi_label": "Notes",
+    "kpi_value": 2,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "documents",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

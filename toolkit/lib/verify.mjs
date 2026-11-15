@@ -1,12 +1,11 @@
 // bolt-apps verify: the checks Bolt runs when a pack is dropped, run offline before anything is installed.
-// Rules come from schema/install-rules.json (a data mirror of bolt-native user_utilities/contract.rs, pack_validate.rs
-// and pack_install.rs). The YAML is read with plain text rules, not Bolt's parser, so a pass here means "none of the
+// Rules come from schema/install-rules.json (a data mirror of the launcher's install rules). The YAML is read with plain text rules, not Bolt's parser, so a pass here means "none of the
 // known ways to fail were found", and Bolt still parses the file itself. See docs/verify-rules.md.
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { assessYaml, plainPermission, plainName, scriptRefs } from './assess.mjs';
+import { assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
 import { get, str } from './yamlsubset.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -72,13 +71,28 @@ export const FIXES = {
 	permission_unknown: 'Remove or rename this permission.',
 	yaml_unreadable_here: 'Write the file in plain YAML that this tool can read: unquoted top-level keys, one value per line, no anchors, aliases, tags or block scalars (| >), no escapes other than \\" and \\\\ in double quotes, no duplicate keys. Until then the tier and permissions below are unknown, not low.',
 	pack_malformed: 'The archive is damaged or hand-made badly (bad file size or header). Build the pack again with bolt-apps pack.',
+	views_too_many: 'Bolt allows at most 8 views including the overview, and refuses the whole file otherwise. Merge or drop views.',
+	view_name_invalid: 'A view name is lowercase, starts with a letter, uses letters, digits, _ and -, at most 24 characters, and is not constructor or prototype. Rename it.',
+	view_arg_missing: 'Add presentation.view_arg naming the arg whose value selects the view (for example view_arg: view).',
+	view_arg_unknown: 'presentation.view_arg must name an entry in args. Fix the name or add the arg.',
+	view_arg_not_query_word: 'Bind the view arg with from: "query.word(N)" (for example { name: view, from: "query.word(0)", default: overview }).',
+	view_arg_lead_default: 'Give the arg bound to each query word before the view word a default that is a plain word such as overview or all (letters, digits, _ . -). A default like - makes every drill and Back row do nothing. Or bind the view to query.word(0).',
+	view_arg_without_views: 'Add presentation.views, or remove presentation.view_arg.',
+	yaml_escape: 'Bolt will not run a file with \\x, \\u or \\U escapes or a backslash before a line break. Write the character itself, or rephrase.',
+	command_os_missing: 'Add a command for that system, or list only the systems the app supports under platforms in bolt-app.json. This is a warning: the app simply cannot run there.',
+	right_widget_no_data: 'Use table, detail, cards or chart (image_grid for pictures). Bolt shows a plain "cannot show app data" message for image, color, weather, date and calc panes.',
+	right_widget_kind_invalid: 'Use a right_widget kind and mode Bolt accepts: kinds card, map, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (and the data-less image, color, weather, date, calc); modes selected_row or list_data.',
+	right_widget_bind_unread: 'Remove the bind key: the map, image, calc, color, weather and date panes read nothing from bind. For a chart, type is line, bar or sparkline.',
+	run_action_template: 'Give the run action a fixed query_template with no {{ }} (for example refresh), or remove the action.',
+	script_too_large: 'Bolt hashes a script only up to 2 MB and will not run an app that names a larger file. Keep scripts small; put big data outside the app.',
+	helper_not_hashed: 'Name the file in the command (for example python3 {{scripts_dir}}/engine.py {{scripts_dir}}/config.json). Bolt\'s approval hash covers only the manifest and the scripts named as {{scripts_dir}}/<file>, so an unnamed helper can change without asking again.',
 	pack_duplicate_entry: 'The archive lists the same file name twice. Build the pack again with bolt-apps pack.',
 };
 const fixFor = (code) => FIXES[code] || 'See the message.';
 const mk = (level, code, message, file, line) => ({ level, code, message, file, ...(line ? { line } : {}), fix: fixFor(code) });
 
 const stripPlaceholders = (cmd) => { let out = '', rest = cmd; for (;;) { const i = rest.indexOf('{{'); if (i < 0) return out + rest; out += rest.slice(0, i); const j = rest.indexOf('}}', i + 2); if (j < 0) return out; rest = rest.slice(j + 2); } };
-// Port of contract.rs validate_command_placeholders and validate_argv_template. Returns [code, message] or null.
+// Port of the launcher validate_command_placeholders and validate_argv_template. Returns [code, message] or null.
 export function commandProblem(os, cmd) {
 	const f = `bridge.command.${os}`;
 	if (!cmd.trim()) return ['command_missing', `${f} must be non-empty`];
@@ -105,7 +119,7 @@ export function commandProblem(os, cmd) {
 }
 
 // files: [{ path: 'utilities/x.yaml' | 'scripts/x.py', kind, content: Buffer }]
-export function checkManifests(files) {
+export function checkManifests(files, opts = {}) {
 	const findings = [], apps = [], add = (...a) => findings.push(mk(...a));
 	const scripts = new Map(files.filter((f) => f.kind === 'script').map((f) => [path.basename(f.path), f.content]));
 	const used = new Set();
@@ -117,7 +131,8 @@ export function checkManifests(files) {
 	}
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
-		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, '')); apps.push({ ...a, file });
+		const esc_ = escapeProblem(y); if (esc_) add('error', esc_.code, esc_.message, file, 1);
+		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms, platformsUnknown: opts.platformsUnknown }); apps.push({ ...a, file });
 		for (const r of a.refs) used.add(r);
 		if (a.unknown) { add('error', 'yaml_unreadable_here', `this tool cannot interpret ${a.why}; Bolt may read it differently`, file, 1); unknownAssess = true; continue; }
 		const root = a.tree, E = (code, msg, line) => add('error', code, msg, file, line || 1);
@@ -165,10 +180,19 @@ export function checkManifests(files) {
 			const env = val(bridge, 'env'); if (env && env.t === 'm') for (const e of env.entries) if (e.value.t !== 's' || !/^\$\{env:[A-Z][A-Z0-9_]{0,63}\}$/.test(e.value.v)) E('env_inline_value', `bridge.env.${e.key} value must be exactly \${env:NAME}`, e.line ?? ln(bridge, 'env', bl));
 		}
 		const args = val(root, 'args'); for (const it of args?.items || []) { const fr = S(it, 'from'); if (fr !== undefined && !/^query\.word\(\s*\d+\s*\)$/.test(fr.trim())) E('args_from_unsupported', `args[].from "${fr}" is not supported`, ln(root, 'args')); }
-		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed')) E(pr.code, pr.message, pr.code === 'runtime_not_allowed' ? ln(root, 'runtime') : ln(root, 'actions'));
+		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed')) add(pr.level || 'error', pr.code, pr.message, file, ln(root, 'actions') || 1);
 	}
 	for (const r of used) if (!scripts.has(r)) add('error', 'script_missing', `an app runs {{scripts_dir}}/${r} but the pack has no scripts/${r}`, `scripts/${r}`);
-	for (const n of scripts.keys()) if (!used.has(n)) add('warning', 'script_unused', `scripts/${n} is not run by any app file`, `scripts/${n}`);
+	const usedAll = dataFilesUsed(used, [...scripts.keys()], (n) => scripts.get(n));
+	// The launcher: a named script over 2 MB is "too large to check" and the app is not run
+	for (const [n, c] of scripts) if (c.length > MAX_HASHED_FILE_BYTES) { const named = used.has(n); add(named ? 'error' : 'warning', 'script_too_large', `scripts/${n} is ${(c.length / 1048576).toFixed(1)} MB; Bolt hashes a script only up to 2 MB and will not run an app that names a larger one${named ? '' : ' (this one is not named, so it is only dead weight)'}`, `scripts/${n}`); }
+	// The launcher hashes only the manifest and scripts named as {{scripts_dir}}/<file>. A helper that a script reads (config.json) but no command names is outside the approval hash.
+	for (const n of usedAll) if (scripts.has(n) && !used.has(n)) add('warning', 'helper_not_hashed', `scripts/${n} is read by a script but no command names it as {{scripts_dir}}/${n}, so Bolt's approval hash does not cover it: it can change after the person approved the app without asking again`, `scripts/${n}`);
+	for (const n of scripts.keys()) if (!usedAll.has(n)) add('warning', 'script_unused', `scripts/${n} is not run by any app file`, `scripts/${n}`);
+	// what the install prompt's text search will list for the person installing: the manifests and the scripts they run
+	const scanned = [...usedAll].filter((n) => scripts.has(n) && /\.(py|sh|js|mjs|rb|ps1)$/.test(n)).map((n) => ({ name: n, text: scripts.get(n).toString('utf8') }));
+	for (const f of files.filter((x) => x.kind === 'user_utility')) scanned.push({ name: path.basename(f.path), text: f.content.toString('utf8') });
+	for (const m of scanMentions(scanned)) add('warning', 'script_mentions', `the install prompt will list: ${m}. A courtesy search, not a verdict: change the text if it is not what the app does`, 'scripts');
 	return { findings: dedupe(findings), apps, unknownAssess };
 }
 const dedupe = (fs_) => { const seen = new Set(); return fs_.filter((f) => { const k = `${f.code}|${f.file}|${f.message}`; if (seen.has(k)) return false; seen.add(k); return true; }); };
@@ -186,7 +210,7 @@ export function confirmPreview({ apps, files, scriptsList, signer, unknownAssess
 	};
 }
 
-// Checks on a pack's own listing, mirroring pack_validate.rs and the verifier.
+// Checks on a pack's own listing, mirroring the launcher and the verifier.
 export function checkPackShape(meta, man, count) {
 	const out = [], add = (...a) => out.push(mk(...a)), P_ = P;
 	if (meta.schema_version !== P_.bundle_schema_version) add('error', 'bundle_schema_version', `bundle.json schema_version is ${meta.schema_version}`, 'bundle.json');

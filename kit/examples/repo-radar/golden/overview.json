@@ -1,0 +1,244 @@
+[
+  {
+    "title": "Sample data",
+    "subtitle": "Recorded answers from 2026-11-15, no network. Set api.fixture_default to false in config.json for live data",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Safe to adopt · 98 of 100",
+    "subtitle": "Maintenance 100 · Security 100 · Adoption 100 · Momentum 90",
+    "icon": "CheckCircle2",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Health score",
+    "kpi_value": 98,
+    "kpi_unit": "/100",
+    "kpi_max": 100,
+    "kpi_note": "Maintenance 100 · Security 100 · Adoption 100 · Momentum 90",
+    "kpi_foot": "",
+    "kpi_badge": "ADOPT",
+    "copy_text": "- expressjs/express: Safe to adopt, 98 of 100",
+    "open_url": "https://github.com/expressjs/express"
+  },
+  {
+    "title": "Sources",
+    "subtitle": "GitHub sample 52/60 left · npm sample · OSV sample · HN sample",
+    "icon": "Globe",
+    "body": "",
+    "actions": [],
+    "badges": [
+      {
+        "label": "GitHub sample 52/60 left",
+        "tone": "ok"
+      },
+      {
+        "label": "npm sample",
+        "tone": "ok"
+      },
+      {
+        "label": "OSV sample",
+        "tone": "ok"
+      },
+      {
+        "label": "HN sample",
+        "tone": "ok"
+      }
+    ],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "expressjs/express · 69,690 stars",
+    "subtitle": "MIT · Fast, unopinionated, minimalist web framework for node.",
+    "icon": "Globe",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Stars",
+    "kpi_value": 69690,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "25,493 forks",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- expressjs/express",
+    "open_url": "https://github.com/expressjs/express"
+  },
+  {
+    "title": "Open issues · 259",
+    "subtitle": "includes open pull requests (GitHub counts both)",
+    "icon": "List",
+    "body": "",
+    "actions": [],
+    "kpi_label": "Open issues",
+    "kpi_value": 259,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Open issues 259 - includes open pull requests [GitHub counts both]"
+  },
+  {
+    "title": "Since you last looked · 7 changes",
+    "subtitle": "latest release, stars, open issues since 6 d ago",
+    "icon": "Clock",
+    "body": "",
+    "nav": {
+      "view": "since"
+    },
+    "actions": [],
+    "pane": "since",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Releases · 1 in 90 days (of the newest 8)",
+    "subtitle": "latest v5.3.0, 36 d 23 h ago",
+    "icon": "GitMerge",
+    "body": "",
+    "nav": {
+      "view": "releases"
+    },
+    "actions": [],
+    "pane": "releases",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Downloads · 197,054,038 a week",
+    "subtitle": "+16% against the half-month before",
+    "icon": "Download",
+    "body": "",
+    "nav": {
+      "view": "downloads"
+    },
+    "actions": [],
+    "pane": "downloads",
+    "kpi_label": "Weekly downloads",
+    "kpi_value": 197054,
+    "kpi_unit": "k",
+    "kpi_max": "",
+    "kpi_note": "npm express",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "trend": [
+      29398494,
+      15314197,
+      15271736,
+      0,
+      0,
+      33394269,
+      33983408,
+      31102434,
+      16415161,
+      16069656,
+      32631712,
+      32745724,
+      34073287,
+      33592302,
+      29610222,
+      15787027,
+      16519811,
+      31976529,
+      33981483,
+      34362992,
+      34111927,
+      30448481,
+      15898760,
+      15714164,
+      30975997,
+      33871844,
+      32368237,
+      35012984,
+      31867467,
+      17243345
+    ]
+  },
+  {
+    "title": "Vulnerabilities · 0 open",
+    "subtitle": "5 known in all versions; 0 affect the latest",
+    "icon": "ShieldCheck",
+    "body": "",
+    "nav": {
+      "view": "vulns"
+    },
+    "actions": [],
+    "pane": "vulns",
+    "kpi_label": "Open vulns",
+    "kpi_value": 0,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "latest 5.3.0",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Discussion · 24 threads",
+    "subtitle": "top: ExpressJS 5.0",
+    "icon": "MessageSquare",
+    "body": "",
+    "nav": {
+      "view": "discussion"
+    },
+    "actions": [],
+    "pane": "discussion",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Check again",
+    "subtitle": "Enter to fetch fresh data past the per-source cache",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

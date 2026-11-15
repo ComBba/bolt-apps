@@ -103,5 +103,14 @@ def main(argv):
     kit.emit(rows)
 
 
+def run(argv):
+    try:
+        main(argv)
+    except SystemExit:
+        raise
+    except Exception as e:   # one plain row: never a traceback, and the message is not shown (it could carry a key)
+        kit.emit([kit.error_row("%s while building the rows. Run the script in a terminal to see why." % e.__class__.__name__)])
+
+
 if __name__ == "__main__":
-    main(sys.argv)
+    run(sys.argv)

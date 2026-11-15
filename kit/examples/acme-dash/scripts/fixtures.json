@@ -1,0 +1,1968 @@
+{
+ "organization": {
+  "data": {
+   "name": "Acme Co",
+   "frameworks": [
+    "SOC 2",
+    "ISO 27001"
+   ]
+  }
+ },
+ "tasks": {
+  "data": [
+   {
+    "id": "T-001",
+    "name": "Review user access list",
+    "state": "done",
+    "assignee": {
+     "name": "Priya N."
+    },
+    "dueDate": "2026-01-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-001",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-002",
+    "name": "Rotate service credentials",
+    "state": "done",
+    "assignee": {
+     "name": "Marcus T."
+    },
+    "dueDate": "2026-06-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-002",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-003",
+    "name": "Enable disk encryption on laptops",
+    "state": "done",
+    "assignee": {
+     "name": "Elena R."
+    },
+    "dueDate": "2026-11-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-003",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-004",
+    "name": "Update the incident response plan",
+    "state": "done",
+    "assignee": {
+     "name": "Sam K."
+    },
+    "dueDate": "2026-04-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-004",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-005",
+    "name": "Run quarterly backup restore test",
+    "state": "done",
+    "assignee": {
+     "name": "Jordan L."
+    },
+    "dueDate": "2026-09-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-005",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-006",
+    "name": "Collect vendor security questionnaires",
+    "state": "done",
+    "assignee": {
+     "name": "Aiko M."
+    },
+    "dueDate": "2026-02-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-006",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-007",
+    "name": "Patch critical server vulnerabilities",
+    "state": "done",
+    "assignee": {
+     "name": "Dev P."
+    },
+    "dueDate": "2026-07-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-007",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-008",
+    "name": "Review firewall rules",
+    "state": "done",
+    "assignee": {
+     "name": "Noor H."
+    },
+    "dueDate": "2026-12-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-008",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-009",
+    "name": "Confirm offboarding checklist was followed",
+    "state": "done",
+    "assignee": {
+     "name": "Priya N."
+    },
+    "dueDate": "2026-05-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-009",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-010",
+    "name": "Approve the acceptable use policy",
+    "state": "done",
+    "assignee": {
+     "name": "Marcus T."
+    },
+    "dueDate": "2026-10-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-010",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-011",
+    "name": "Test disaster recovery runbook",
+    "state": "done",
+    "assignee": {
+     "name": "Elena R."
+    },
+    "dueDate": "2026-03-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-011",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-012",
+    "name": "Review audit log retention",
+    "state": "done",
+    "assignee": {
+     "name": "Sam K."
+    },
+    "dueDate": "2026-08-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-012",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-013",
+    "name": "Train new hires on security basics",
+    "state": "done",
+    "assignee": {
+     "name": "Jordan L."
+    },
+    "dueDate": "2026-01-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-013",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-014",
+    "name": "Verify MFA on admin accounts",
+    "state": "done",
+    "assignee": {
+     "name": "Aiko M."
+    },
+    "dueDate": "2026-06-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-014",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-015",
+    "name": "Scan code dependencies for known issues",
+    "state": "done",
+    "assignee": {
+     "name": "Dev P."
+    },
+    "dueDate": "2026-11-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-015",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-016",
+    "name": "Document data classification levels",
+    "state": "done",
+    "assignee": {
+     "name": "Noor H."
+    },
+    "dueDate": "2026-04-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-016",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-017",
+    "name": "Review third-party access",
+    "state": "done",
+    "assignee": {
+     "name": "Priya N."
+    },
+    "dueDate": "2026-09-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-017",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-018",
+    "name": "Check endpoint protection status",
+    "state": "done",
+    "assignee": {
+     "name": "Marcus T."
+    },
+    "dueDate": "2026-02-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-018",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-019",
+    "name": "Update the asset inventory",
+    "state": "done",
+    "assignee": {
+     "name": "Elena R."
+    },
+    "dueDate": "2026-07-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-019",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-020",
+    "name": "Confirm encryption at rest",
+    "state": "done",
+    "assignee": {
+     "name": "Sam K."
+    },
+    "dueDate": "2026-12-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-020",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-021",
+    "name": "Review change management tickets",
+    "state": "done",
+    "assignee": {
+     "name": "Jordan L."
+    },
+    "dueDate": "2026-05-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-021",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-022",
+    "name": "Run phishing awareness exercise",
+    "state": "done",
+    "assignee": {
+     "name": "Aiko M."
+    },
+    "dueDate": "2026-10-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-022",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-023",
+    "name": "Reconcile privileged accounts",
+    "state": "done",
+    "assignee": {
+     "name": "Dev P."
+    },
+    "dueDate": "2026-03-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-023",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-024",
+    "name": "Check TLS certificate expiry",
+    "state": "done",
+    "assignee": {
+     "name": "Noor H."
+    },
+    "dueDate": "2026-08-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-024",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-025",
+    "name": "Review risk register entries",
+    "state": "done",
+    "assignee": {
+     "name": "Priya N."
+    },
+    "dueDate": "2026-01-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-025",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-026",
+    "name": "Review user access list (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Marcus T."
+    },
+    "dueDate": "2026-06-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-026",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-027",
+    "name": "Rotate service credentials (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Elena R."
+    },
+    "dueDate": "2026-11-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-027",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-028",
+    "name": "Enable disk encryption on laptops (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Sam K."
+    },
+    "dueDate": "2026-04-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-028",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-029",
+    "name": "Update the incident response plan (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Jordan L."
+    },
+    "dueDate": "2026-09-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-029",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-030",
+    "name": "Run quarterly backup restore test (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Aiko M."
+    },
+    "dueDate": "2026-02-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-030",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-031",
+    "name": "Collect vendor security questionnaires (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Dev P."
+    },
+    "dueDate": "2026-07-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-031",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-032",
+    "name": "Patch critical server vulnerabilities (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Noor H."
+    },
+    "dueDate": "2026-12-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-032",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-033",
+    "name": "Review firewall rules (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Priya N."
+    },
+    "dueDate": "2026-05-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-033",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-034",
+    "name": "Confirm offboarding checklist was followed (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Marcus T."
+    },
+    "dueDate": "2026-10-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-034",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-035",
+    "name": "Approve the acceptable use policy (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Elena R."
+    },
+    "dueDate": "2026-03-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-035",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-036",
+    "name": "Test disaster recovery runbook (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Sam K."
+    },
+    "dueDate": "2026-08-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-036",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-037",
+    "name": "Review audit log retention (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Jordan L."
+    },
+    "dueDate": "2026-01-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-037",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-038",
+    "name": "Train new hires on security basics (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Aiko M."
+    },
+    "dueDate": "2026-06-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-038",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-039",
+    "name": "Verify MFA on admin accounts (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Dev P."
+    },
+    "dueDate": "2026-11-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-039",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-040",
+    "name": "Scan code dependencies for known issues (US)",
+    "state": "done",
+    "assignee": {
+     "name": "Noor H."
+    },
+    "dueDate": "2026-04-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-040",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-041",
+    "name": "Document data classification levels (EU)",
+    "state": "done",
+    "assignee": {
+     "name": "Priya N."
+    },
+    "dueDate": "2026-09-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 100,
+    "controlId": "C-041",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-042",
+    "name": "Review third-party access (US)",
+    "state": "in_progress",
+    "assignee": {
+     "name": "Marcus T."
+    },
+    "dueDate": "2026-02-08T09:00:00Z",
+    "priority": "urgent",
+    "progress": 73,
+    "controlId": "C-042",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-043",
+    "name": "Check endpoint protection status (EU)",
+    "state": "in_progress",
+    "assignee": {
+     "name": "Elena R."
+    },
+    "dueDate": "2026-07-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 26,
+    "controlId": "C-043",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-044",
+    "name": "Update the asset inventory (US)",
+    "state": "in_progress",
+    "assignee": {
+     "name": "Sam K."
+    },
+    "dueDate": "2026-12-22T09:00:00Z",
+    "priority": "urgent",
+    "progress": 39,
+    "controlId": "C-044",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-045",
+    "name": "Confirm encryption at rest (EU)",
+    "state": "in_progress",
+    "assignee": {
+     "name": "Jordan L."
+    },
+    "dueDate": "2026-05-01T09:00:00Z",
+    "priority": "normal",
+    "progress": 52,
+    "controlId": "C-001",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-046",
+    "name": "Review change management tickets (US)",
+    "state": "in_progress",
+    "assignee": {
+     "name": "Aiko M."
+    },
+    "dueDate": "2026-10-08T09:00:00Z",
+    "priority": "normal",
+    "progress": 65,
+    "controlId": "C-002",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-047",
+    "name": "Run phishing awareness exercise (EU)",
+    "state": "in_progress",
+    "assignee": {
+     "name": "Dev P."
+    },
+    "dueDate": "2026-03-15T09:00:00Z",
+    "priority": "normal",
+    "progress": 78,
+    "controlId": "C-003",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-048",
+    "name": "Reconcile privileged accounts (US)",
+    "state": "in_progress",
+    "assignee": {
+     "name": "Noor H."
+    },
+    "dueDate": "2026-08-22T09:00:00Z",
+    "priority": "normal",
+    "progress": 31,
+    "controlId": "C-004",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-049",
+    "name": "Check TLS certificate expiry (EU)",
+    "state": "not_started",
+    "assignee": {
+     "name": "Priya N."
+    },
+    "dueDate": "2026-01-01T09:00:00Z",
+    "priority": "urgent",
+    "progress": 0,
+    "controlId": "C-005",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   },
+   {
+    "id": "T-050",
+    "name": "Review risk register entries (US)",
+    "state": "not_started",
+    "assignee": {
+     "name": "Marcus T."
+    },
+    "dueDate": "2026-06-08T09:00:00Z",
+    "priority": "urgent",
+    "progress": 0,
+    "controlId": "C-006",
+    "description": "Evidence for this task is collected in the Acme Co shared drive. Owner updates status when complete."
+   }
+  ]
+ },
+ "policies": {
+  "data": [
+   {
+    "id": "P-01",
+    "name": "Information Security Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "IT",
+    "updatedAt": "2026-04-22T09:00:00Z",
+    "reviewInDays": 120,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-02",
+    "name": "Acceptable Use Policy",
+    "state": "published",
+    "cadence": "quarterly",
+    "department": "HR",
+    "updatedAt": "2026-09-01T09:00:00Z",
+    "reviewInDays": 200,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-03",
+    "name": "Access Control Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "Engineering",
+    "updatedAt": "2026-02-08T09:00:00Z",
+    "reviewInDays": 45,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-04",
+    "name": "Incident Response Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "Legal",
+    "updatedAt": "2026-07-15T09:00:00Z",
+    "reviewInDays": 300,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-05",
+    "name": "Business Continuity Plan",
+    "state": "published",
+    "cadence": "quarterly",
+    "department": "IT",
+    "updatedAt": "2026-12-22T09:00:00Z",
+    "reviewInDays": -12,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-06",
+    "name": "Data Classification Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "HR",
+    "updatedAt": "2026-05-01T09:00:00Z",
+    "reviewInDays": 90,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-07",
+    "name": "Encryption Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "Engineering",
+    "updatedAt": "2026-10-08T09:00:00Z",
+    "reviewInDays": 120,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-08",
+    "name": "Password Policy",
+    "state": "published",
+    "cadence": "quarterly",
+    "department": "Legal",
+    "updatedAt": "2026-03-15T09:00:00Z",
+    "reviewInDays": 200,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-09",
+    "name": "Vendor Management Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "IT",
+    "updatedAt": "2026-08-22T09:00:00Z",
+    "reviewInDays": 45,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-10",
+    "name": "Change Management Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "HR",
+    "updatedAt": "2026-01-01T09:00:00Z",
+    "reviewInDays": 300,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-11",
+    "name": "Backup Policy",
+    "state": "published",
+    "cadence": "quarterly",
+    "department": "Engineering",
+    "updatedAt": "2026-06-08T09:00:00Z",
+    "reviewInDays": -12,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-12",
+    "name": "Remote Work Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "Legal",
+    "updatedAt": "2026-11-15T09:00:00Z",
+    "reviewInDays": 90,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-13",
+    "name": "Code of Conduct",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "IT",
+    "updatedAt": "2026-04-22T09:00:00Z",
+    "reviewInDays": 120,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-14",
+    "name": "Risk Management Policy",
+    "state": "published",
+    "cadence": "quarterly",
+    "department": "HR",
+    "updatedAt": "2026-09-01T09:00:00Z",
+    "reviewInDays": 200,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-15",
+    "name": "Asset Management Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "Engineering",
+    "updatedAt": "2026-02-08T09:00:00Z",
+    "reviewInDays": 45,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-16",
+    "name": "Physical Security Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "Legal",
+    "updatedAt": "2026-07-15T09:00:00Z",
+    "reviewInDays": 300,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-17",
+    "name": "Secure Development Policy",
+    "state": "published",
+    "cadence": "quarterly",
+    "department": "IT",
+    "updatedAt": "2026-12-22T09:00:00Z",
+    "reviewInDays": -12,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-18",
+    "name": "Logging and Monitoring Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "HR",
+    "updatedAt": "2026-05-01T09:00:00Z",
+    "reviewInDays": 90,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-19",
+    "name": "Privacy Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "Engineering",
+    "updatedAt": "2026-10-08T09:00:00Z",
+    "reviewInDays": 120,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-20",
+    "name": "Data Retention Policy",
+    "state": "published",
+    "cadence": "quarterly",
+    "department": "Legal",
+    "updatedAt": "2026-03-15T09:00:00Z",
+    "reviewInDays": 200,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-21",
+    "name": "Human Resources Security Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "IT",
+    "updatedAt": "2026-08-22T09:00:00Z",
+    "reviewInDays": 45,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-22",
+    "name": "Clean Desk Policy",
+    "state": "published",
+    "cadence": "yearly",
+    "department": "HR",
+    "updatedAt": "2026-01-01T09:00:00Z",
+    "reviewInDays": 300,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-23",
+    "name": "Mobile Device Policy",
+    "state": "draft",
+    "cadence": "quarterly",
+    "department": "Engineering",
+    "updatedAt": "2026-06-08T09:00:00Z",
+    "reviewInDays": -12,
+    "description": "Applies to all staff and contractors at Acme Co."
+   },
+   {
+    "id": "P-24",
+    "name": "Disaster Recovery Policy",
+    "state": "draft",
+    "cadence": "yearly",
+    "department": "Legal",
+    "updatedAt": "2026-11-15T09:00:00Z",
+    "reviewInDays": 90,
+    "description": "Applies to all staff and contractors at Acme Co."
+   }
+  ]
+ },
+ "controls": {
+  "data": [
+   {
+    "id": "C-001",
+    "name": "Access reviews",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 2,
+    "owner": {
+     "name": "Sam K."
+    },
+    "description": "Control access reviews."
+   },
+   {
+    "id": "C-002",
+    "name": "Encryption in transit",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 2,
+    "owner": {
+     "name": "Jordan L."
+    },
+    "description": "Control encryption in transit."
+   },
+   {
+    "id": "C-003",
+    "name": "Encryption at rest",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 2,
+    "owner": {
+     "name": "Aiko M."
+    },
+    "description": "Control encryption at rest."
+   },
+   {
+    "id": "C-004",
+    "name": "Logical access control",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 2,
+    "owner": {
+     "name": "Dev P."
+    },
+    "description": "Control logical access control."
+   },
+   {
+    "id": "C-005",
+    "name": "Multi-factor authentication",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 2,
+    "owner": {
+     "name": "Noor H."
+    },
+    "description": "Control multi-factor authentication."
+   },
+   {
+    "id": "C-006",
+    "name": "Change approval",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 2,
+    "owner": {
+     "name": "Priya N."
+    },
+    "description": "Control change approval."
+   },
+   {
+    "id": "C-007",
+    "name": "Backup testing",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Marcus T."
+    },
+    "description": "Control backup testing."
+   },
+   {
+    "id": "C-008",
+    "name": "Incident response testing",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Elena R."
+    },
+    "description": "Control incident response testing."
+   },
+   {
+    "id": "C-009",
+    "name": "Vendor risk assessment",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Sam K."
+    },
+    "description": "Control vendor risk assessment."
+   },
+   {
+    "id": "C-010",
+    "name": "Security awareness training",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Jordan L."
+    },
+    "description": "Control security awareness training."
+   },
+   {
+    "id": "C-011",
+    "name": "Endpoint protection",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Aiko M."
+    },
+    "description": "Control endpoint protection."
+   },
+   {
+    "id": "C-012",
+    "name": "Network segmentation",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Dev P."
+    },
+    "description": "Control network segmentation."
+   },
+   {
+    "id": "C-013",
+    "name": "Vulnerability scanning",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Noor H."
+    },
+    "description": "Control vulnerability scanning."
+   },
+   {
+    "id": "C-014",
+    "name": "Log retention",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Priya N."
+    },
+    "description": "Control log retention."
+   },
+   {
+    "id": "C-015",
+    "name": "Onboarding checks",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Marcus T."
+    },
+    "description": "Control onboarding checks."
+   },
+   {
+    "id": "C-016",
+    "name": "Offboarding checks",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Elena R."
+    },
+    "description": "Control offboarding checks."
+   },
+   {
+    "id": "C-017",
+    "name": "Asset inventory",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Sam K."
+    },
+    "description": "Control asset inventory."
+   },
+   {
+    "id": "C-018",
+    "name": "Secure development review",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Jordan L."
+    },
+    "description": "Control secure development review."
+   },
+   {
+    "id": "C-019",
+    "name": "Penetration testing",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Aiko M."
+    },
+    "description": "Control penetration testing."
+   },
+   {
+    "id": "C-020",
+    "name": "Business continuity testing",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Dev P."
+    },
+    "description": "Control business continuity testing."
+   },
+   {
+    "id": "C-021",
+    "name": "Data classification",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Noor H."
+    },
+    "description": "Control data classification."
+   },
+   {
+    "id": "C-022",
+    "name": "Risk assessment",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Priya N."
+    },
+    "description": "Control risk assessment."
+   },
+   {
+    "id": "C-023",
+    "name": "Privileged access review",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Marcus T."
+    },
+    "description": "Control privileged access review."
+   },
+   {
+    "id": "C-024",
+    "name": "Password rules",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Elena R."
+    },
+    "description": "Control password rules."
+   },
+   {
+    "id": "C-025",
+    "name": "Physical access",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Sam K."
+    },
+    "description": "Control physical access."
+   },
+   {
+    "id": "C-026",
+    "name": "Monitoring and alerting",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Jordan L."
+    },
+    "description": "Control monitoring and alerting."
+   },
+   {
+    "id": "C-027",
+    "name": "Capacity planning",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Aiko M."
+    },
+    "description": "Control capacity planning."
+   },
+   {
+    "id": "C-028",
+    "name": "Configuration baselines",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Dev P."
+    },
+    "description": "Control configuration baselines."
+   },
+   {
+    "id": "C-029",
+    "name": "Patch management",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Noor H."
+    },
+    "description": "Control patch management."
+   },
+   {
+    "id": "C-030",
+    "name": "Data disposal",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Priya N."
+    },
+    "description": "Control data disposal."
+   },
+   {
+    "id": "C-031",
+    "name": "Customer data separation",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Marcus T."
+    },
+    "description": "Control customer data separation."
+   },
+   {
+    "id": "C-032",
+    "name": "Contract security terms",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Elena R."
+    },
+    "description": "Control contract security terms."
+   },
+   {
+    "id": "C-033",
+    "name": "Policy acknowledgement",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Sam K."
+    },
+    "description": "Control policy acknowledgement."
+   },
+   {
+    "id": "C-034",
+    "name": "Board oversight",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Jordan L."
+    },
+    "description": "Control board oversight."
+   },
+   {
+    "id": "C-035",
+    "name": "Security roles",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Aiko M."
+    },
+    "description": "Control security roles."
+   },
+   {
+    "id": "C-036",
+    "name": "Whistleblower channel",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Dev P."
+    },
+    "description": "Control whistleblower channel."
+   },
+   {
+    "id": "C-037",
+    "name": "Source code protection",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Noor H."
+    },
+    "description": "Control source code protection."
+   },
+   {
+    "id": "C-038",
+    "name": "Email filtering",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "portal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Priya N."
+    },
+    "description": "Control email filtering."
+   },
+   {
+    "id": "C-039",
+    "name": "Remote access",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "internal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Marcus T."
+    },
+    "description": "Control remote access."
+   },
+   {
+    "id": "C-040",
+    "name": "Time synchronisation",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "internal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Elena R."
+    },
+    "description": "Control time synchronisation."
+   },
+   {
+    "id": "C-041",
+    "name": "Cryptographic key management",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "internal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Sam K."
+    },
+    "description": "Control cryptographic key management."
+   },
+   {
+    "id": "C-042",
+    "name": "Third-party code review",
+    "frameworks": [
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "internal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Jordan L."
+    },
+    "description": "Control third-party code review."
+   },
+   {
+    "id": "C-043",
+    "name": "Customer support access",
+    "frameworks": [
+     "SOC 2"
+    ],
+    "trust": {
+     "visibility": "internal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Aiko M."
+    },
+    "description": "Control customer support access."
+   },
+   {
+    "id": "C-044",
+    "name": "Release approval",
+    "frameworks": [
+     "SOC 2",
+     "ISO 27001"
+    ],
+    "trust": {
+     "visibility": "internal"
+    },
+    "taskCount": 1,
+    "owner": {
+     "name": "Dev P."
+    },
+    "description": "Control release approval."
+   }
+  ]
+ },
+ "risks": {
+  "data": [
+   {
+    "id": "R-01",
+    "name": "Key supplier outage",
+    "state": "pending",
+    "impact": "major",
+    "likelihood": "likely",
+    "residual": 20,
+    "area": "operations",
+    "treatment": "mitigate",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-02",
+    "name": "Laptop theft",
+    "state": "closed",
+    "impact": "major",
+    "likelihood": "possible",
+    "residual": 16,
+    "area": "technology",
+    "treatment": "mitigate",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-03",
+    "name": "Phishing of staff",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "unlikely",
+    "residual": 6,
+    "area": "people",
+    "treatment": "mitigate",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-04",
+    "name": "Unpatched server",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "likely",
+    "residual": 4,
+    "area": "legal",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-05",
+    "name": "Cloud misconfiguration",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "possible",
+    "residual": 3,
+    "area": "operations",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-06",
+    "name": "Loss of a key engineer",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "unlikely",
+    "residual": 9,
+    "area": "technology",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-07",
+    "name": "Ransomware on a laptop",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "likely",
+    "residual": 5,
+    "area": "people",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-08",
+    "name": "Contract dispute",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "possible",
+    "residual": 2,
+    "area": "legal",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-09",
+    "name": "Regulation change",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "unlikely",
+    "residual": 8,
+    "area": "operations",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-10",
+    "name": "Data entry error",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "likely",
+    "residual": 3,
+    "area": "technology",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   },
+   {
+    "id": "R-11",
+    "name": "Payment delay",
+    "state": "closed",
+    "impact": "minor",
+    "likelihood": "possible",
+    "residual": 4,
+    "area": "people",
+    "treatment": "accept",
+    "description": "Reviewed by the risk committee."
+   }
+  ]
+ },
+ "vendors": {
+  "data": [
+   {
+    "id": "V-01",
+    "name": "Northwind Cloud",
+    "category": "infrastructure",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 6,
+    "website": "https://northwind.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-02",
+    "name": "Brightmail",
+    "category": "software_as_a_service",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 4,
+    "website": "https://brightmail.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-03",
+    "name": "Tallybooks",
+    "category": "finance",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 9,
+    "website": "https://tallybooks.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-04",
+    "name": "Pixel CRM",
+    "category": "software_as_a_service",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 3,
+    "website": "https://pixel.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-05",
+    "name": "Stackhost",
+    "category": "infrastructure",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 12,
+    "website": "https://stackhost.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-06",
+    "name": "Chatterbox",
+    "category": "software_as_a_service",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 2,
+    "website": "https://chatterbox.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-07",
+    "name": "Ledgerly",
+    "category": "software_as_a_service",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 5,
+    "website": "https://ledgerly.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-08",
+    "name": "Fastlane CDN",
+    "category": "infrastructure",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 8,
+    "website": "https://fastlane.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-09",
+    "name": "Docuseal",
+    "category": "software_as_a_service",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 4,
+    "website": "https://docuseal.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-10",
+    "name": "Hiresmart",
+    "category": "software_as_a_service",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 3,
+    "website": "https://hiresmart.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   },
+   {
+    "id": "V-11",
+    "name": "Metricly",
+    "category": "software_as_a_service",
+    "state": "assessed",
+    "isSubProcessor": false,
+    "residual": 6,
+    "website": "https://metricly.example.com",
+    "description": "Vendor reviewed by Acme Co security."
+   }
+  ]
+ },
+ "devices": {
+  "data": [
+   {
+    "id": "D-01",
+    "hostname": "acme-mac-01",
+    "platform": "darwin",
+    "osVersion": "macOS 15.1",
+    "diskEncrypted": true,
+    "lastSeenDaysAgo": 0,
+    "user": "Priya N."
+   },
+   {
+    "id": "D-02",
+    "hostname": "acme-mac-02",
+    "platform": "darwin",
+    "osVersion": "macOS 15.1",
+    "diskEncrypted": true,
+    "lastSeenDaysAgo": 0,
+    "user": "Marcus T."
+   },
+   {
+    "id": "D-03",
+    "hostname": "acme-mac-03",
+    "platform": "darwin",
+    "osVersion": "macOS 15.1",
+    "diskEncrypted": true,
+    "lastSeenDaysAgo": 1,
+    "user": "Elena R."
+   },
+   {
+    "id": "D-04",
+    "hostname": "acme-mac-04",
+    "platform": "darwin",
+    "osVersion": "macOS 15.1",
+    "diskEncrypted": true,
+    "lastSeenDaysAgo": 2,
+    "user": "Sam K."
+   },
+   {
+    "id": "D-05",
+    "hostname": "acme-win-05",
+    "platform": "windows",
+    "osVersion": "Windows 11 23H2",
+    "diskEncrypted": true,
+    "lastSeenDaysAgo": 0,
+    "user": "Jordan L."
+   },
+   {
+    "id": "D-06",
+    "hostname": "acme-win-06",
+    "platform": "windows",
+    "osVersion": "Windows 11 23H2",
+    "diskEncrypted": true,
+    "lastSeenDaysAgo": 3,
+    "user": "Aiko M."
+   }
+  ]
+ },
+ "people": {
+  "data": [
+   {
+    "id": "U-01",
+    "name": "Priya N.",
+    "role": "owner",
+    "department": "Leadership",
+    "active": true,
+    "lastLoginDaysAgo": 0,
+    "email": "priya@example.com"
+   },
+   {
+    "id": "U-02",
+    "name": "Marcus T.",
+    "role": "admin",
+    "department": "IT",
+    "active": true,
+    "lastLoginDaysAgo": 0,
+    "email": "marcus@example.com"
+   },
+   {
+    "id": "U-03",
+    "name": "Elena R.",
+    "role": "employee",
+    "department": "Engineering",
+    "active": true,
+    "lastLoginDaysAgo": 1,
+    "email": "elena@example.com"
+   },
+   {
+    "id": "U-04",
+    "name": "Sam K.",
+    "role": "employee",
+    "department": "Sales",
+    "active": true,
+    "lastLoginDaysAgo": 0,
+    "email": "sam@example.com"
+   },
+   {
+    "id": "U-05",
+    "name": "Jordan L.",
+    "role": "employee",
+    "department": "Leadership",
+    "active": true,
+    "lastLoginDaysAgo": 2,
+    "email": "jordan@example.com"
+   },
+   {
+    "id": "U-06",
+    "name": "Aiko M.",
+    "role": "employee",
+    "department": "IT",
+    "active": true,
+    "lastLoginDaysAgo": 0,
+    "email": "aiko@example.com"
+   },
+   {
+    "id": "U-07",
+    "name": "Dev P.",
+    "role": "employee",
+    "department": "Engineering",
+    "active": true,
+    "lastLoginDaysAgo": 5,
+    "email": "dev@example.com"
+   },
+   {
+    "id": "U-08",
+    "name": "Noor H.",
+    "role": "employee",
+    "department": "Sales",
+    "active": true,
+    "lastLoginDaysAgo": 1,
+    "email": "noor@example.com"
+   }
+  ]
+ },
+ "trust": {
+  "data": {
+   "live": 1,
+   "mode": "on",
+   "slug": "acme-demo"
+  }
+ }
+}

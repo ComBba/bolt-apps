@@ -1,0 +1,51 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json"
+    },
+    {
+      "name": "orders: only data rows, numbers stay numbers",
+      "os": "macos",
+      "args": [
+        "orders"
+      ],
+      "golden": "golden/orders.json",
+      "expect": {
+        "text_absent": [
+          "Back"
+        ]
+      }
+    },
+    {
+      "name": "share table",
+      "os": "macos",
+      "args": [
+        "shares"
+      ],
+      "golden": "golden/shares.json"
+    },
+    {
+      "name": "stale preview",
+      "os": "macos",
+      "args": [
+        "orders",
+        "demo-stale"
+      ],
+      "expect": {
+        "text_present": [
+          "STALE"
+        ]
+      }
+    }
+  ]
+}

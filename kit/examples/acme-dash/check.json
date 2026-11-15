@@ -1,0 +1,229 @@
+{
+  "script": "scripts/engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "Acme Co \u00b7 Compliance posture",
+          "readiness 82%",
+          "41 of 50 tasks done",
+          "Tasks \u00b7 41 of 50 done",
+          "Policies \u00b7 22 of 24 published",
+          "Trust portal \u00b7 on"
+        ],
+        "text_absent": [
+          "unknown"
+        ]
+      }
+    },
+    {
+      "name": "list view with a tile and fields per row",
+      "os": "macos",
+      "args": [
+        "tasks"
+      ],
+      "golden": "golden/tasks.json"
+    },
+    {
+      "name": "filter by one word",
+      "os": "macos",
+      "args": [
+        "tasks",
+        "urgent"
+      ],
+      "golden": "golden/tasks-urgent.json",
+      "expect": {
+        "text_present": [
+          "4 of 50 match",
+          "Enter to clear the filter"
+        ]
+      }
+    },
+    {
+      "name": "filter with no match says so",
+      "os": "macos",
+      "args": [
+        "tasks",
+        "zzz"
+      ],
+      "expect": {
+        "text_present": [
+          "0 of 50 match",
+          "No matching rows"
+        ]
+      }
+    },
+    {
+      "name": "level two: a list that drills down",
+      "os": "macos",
+      "args": [
+        "controls"
+      ],
+      "golden": "golden/controls.json"
+    },
+    {
+      "name": "level three: detail with linked rows from another endpoint",
+      "os": "macos",
+      "args": [
+        "controls",
+        "C-001"
+      ],
+      "golden": "golden/controls-C-001.json",
+      "expect": {
+        "text_present": [
+          "Back to controls",
+          "Review user access list"
+        ]
+      }
+    },
+    {
+      "name": "detail refresh keeps the item",
+      "os": "macos",
+      "args": [
+        "controls",
+        "refresh.C-001"
+      ],
+      "expect": {
+        "text_present": [
+          "Access reviews"
+        ]
+      }
+    },
+    {
+      "name": "unknown detail id is a filter, not a crash",
+      "os": "macos",
+      "args": [
+        "controls",
+        "C-999"
+      ],
+      "expect": {
+        "text_present": [
+          "0 of 44 match"
+        ]
+      }
+    },
+    {
+      "name": "policies",
+      "os": "macos",
+      "args": [
+        "policies"
+      ],
+      "golden": "golden/policies.json"
+    },
+    {
+      "name": "risks",
+      "os": "macos",
+      "args": [
+        "risks"
+      ],
+      "golden": "golden/risks.json"
+    },
+    {
+      "name": "vendors",
+      "os": "macos",
+      "args": [
+        "vendors"
+      ],
+      "golden": "golden/vendors.json"
+    },
+    {
+      "name": "devices",
+      "os": "macos",
+      "args": [
+        "devices"
+      ],
+      "golden": "golden/devices.json"
+    },
+    {
+      "name": "people",
+      "os": "macos",
+      "args": [
+        "people"
+      ],
+      "golden": "golden/people.json"
+    },
+    {
+      "name": "unknown view falls back to the overview",
+      "os": "macos",
+      "args": [
+        "nope"
+      ],
+      "expect": {
+        "text_present": [
+          "Compliance posture"
+        ]
+      }
+    },
+    {
+      "name": "offline with nothing cached: one retry row, Back first",
+      "os": "macos",
+      "args": [
+        "tasks",
+        "demo-offline"
+      ],
+      "golden": "golden/offline.json",
+      "expect": {
+        "text_present": [
+          "Could not connect",
+          "Enter to retry"
+        ],
+        "text_absent": [
+          "Tasks done"
+        ]
+      }
+    },
+    {
+      "name": "offline with an old copy: stale banner and the data",
+      "os": "macos",
+      "args": [
+        "tasks",
+        "demo-stale"
+      ],
+      "golden": "golden/stale.json",
+      "expect": {
+        "text_present": [
+          "is not answering. Showing data from 3.0 h ago",
+          "STALE",
+          "Review third-party access"
+        ]
+      }
+    },
+    {
+      "name": "key rejected",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-auth"
+      ],
+      "expect": {
+        "text_present": [
+          "rejected the API key"
+        ]
+      }
+    },
+    {
+      "name": "no key says where to put it and never shows one",
+      "os": "macos",
+      "args": [
+        "overview",
+        "demo-nokey"
+      ],
+      "expect": {
+        "text_present": [
+          "Add your Acme Compliance API key",
+          "add-generic-password"
+        ]
+      }
+    }
+  ]
+}

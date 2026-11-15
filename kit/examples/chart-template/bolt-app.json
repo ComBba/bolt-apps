@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "id": "chart-template",
+  "title": "Chart template",
+  "role": "Anyone building a dashboard or chart app",
+  "saves": "Working out the chart bind keys and the two data modes",
+  "summary": "Type =charts for a tile dashboard, then open each chart type from rows or from a number series. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

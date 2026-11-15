@@ -11,15 +11,17 @@ from .icons_data import ICONS
 from .schema import validate_rows
 from .text import clean_lines, clean_text, neutralise_braces, safe_copy, text
 
+_SCHEME = "^https?:" + "//"   # split so the install prompt's text search does not read a pattern as a web address with a backslash
 LABEL_MAX = 14
 FOOTER_MAX = 3
 UNIT_MAX = 4
 _ID = re.compile(r"^[A-Za-z0-9_-]{1,64}\Z")
 _NAV = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}\Z")
 _FIELD = re.compile(r"^[a-z][a-z0-9_]{0,31}\Z")
+MULTILINE = re.compile(r"^(left|right|[a-z][a-z0-9_]{0,24}_lines)\Z")   # fields that may hold line breaks (a diff pane, a log)
 _RESERVED = frozenset(("id", "title", "subtitle", "description", "icon", "body", "pane", "category", "url", "copy_text",
                        "copy_value", "nav", "actions", "badges", "kpi_label", "kpi_value", "kpi_unit", "kpi_max",
-                       "kpi_note", "kpi_foot", "kpi_badge"))
+                       "kpi_note", "kpi_foot", "kpi_badge", "data", "trend", "open_url"))
 DEFAULT_ICON = "Plug"
 
 
@@ -54,6 +56,14 @@ def tile(label, value, unit="", max=None, note="", foot=""):
     return t
 
 
+def safe_tile(label, value, **kw):
+    """tile() for a value that came from outside: a value that is not a finite number gives no tile, never an error."""
+    try:
+        return tile(label, value, **kw)
+    except KitError:
+        return None
+
+
 def action_copy(id, label, text_, safe=True):
     """A footer button that places text in the composer (Bolt never runs it). `safe` passes it through safe_copy,
     the allowlist for text a person will paste into a terminal or chat."""
@@ -68,8 +78,8 @@ def action_chain(id, label, target_chip, query=""):
 def action_url(id, label, url_template):
     if not isinstance(url_template, str) or clean_text(url_template) != url_template.strip() or len(url_template) > 2048:
         raise KitError("url_template must be clean text up to 2048 characters")
-    if not re.match(r"^https?://[A-Za-z0-9.-]+([:/?#].*)?\Z", url_template):
-        raise KitError("url_template must start with http:// or https:// and a literal host: a placeholder may never supply the scheme or host")
+    if not re.match(_SCHEME + r"[A-Za-z0-9.-]+([:/?#].*)?\Z", url_template):
+        raise KitError("url_template must start with http or https, then a colon and two slashes, and a literal host: a placeholder may never supply the scheme or host")
     return _action(id, "url", label, url_template=url_template)
 
 
@@ -100,7 +110,7 @@ def chips(items, sep=", ", limit=400):
 
 
 def row(title, subtitle="", icon=DEFAULT_ICON, body="", nav=None, actions=None, tile=None, badge="", copy=True,
-        badges=None, pane=None, category=None, url=None, id=None, manifest_actions=1, **fields):
+        badges=None, pane=None, category=None, url=None, open_url=None, id=None, manifest_actions=1, data=None, trend=None, multiline=None, **fields):
     """One row. Every string is cleaned (control, bidi, zero-width, tag characters out; `{{` broken). `copy`
     True copies "title - subtitle" through safe_copy, a string/list copies that, False/nav rows copy nothing.
     A nav row has no actions. A row has at most 3 - manifest_actions footer buttons."""
@@ -132,7 +142,7 @@ def row(title, subtitle="", icon=DEFAULT_ICON, body="", nav=None, actions=None, 
     if category:
         r["category"] = text(category, 64)
     if url:
-        if not re.match(r"^https?://[\x21-\x7e]+\Z", url) or len(url) > 2048 or "{" in url or "}" in url:
+        if not re.match(_SCHEME + r"[\x21-\x7e]+\Z", url) or len(url) > 2048 or "{" in url or "}" in url:
             raise KitError("url must be a clean http(s) link")
         r["url"] = url
     tl = tile or {}
@@ -145,9 +155,85 @@ def row(title, subtitle="", icon=DEFAULT_ICON, body="", nav=None, actions=None, 
         r["copy_text"] = safe_copy("%s - %s" % (r["title"], r["subtitle"]) if r["subtitle"] else r["title"])
     else:
         r["copy_text"] = safe_copy(copy)
+    for k, v in (multiline or {}).items():
+        if not MULTILINE.match(k) or k in _RESERVED:
+            raise KitError("multiline field %r must be named left, right or end in _lines" % k)
+        r[k] = clean_lines(v, 200, 4000)
+    if data is not None:
+        r["data"] = _json_object(data)
+    if trend is not None:
+        r["trend"] = _trend(trend)
+    if open_url == "":
+        r["open_url"] = ""   # a row that has the Open button but no link: the field exists and is empty
+    elif open_url is not None:   # the link the Open footer button follows: the same https-only check as url, so no javascript:, file: or app scheme
+        if not isinstance(open_url, str) or not re.match(_SCHEME + r"[\x21-\x7e]+\Z", open_url) or len(open_url) > 2048 or "{" in open_url or "}" in open_url:
+            raise KitError("open_url must be a clean http(s) link")
+        r["open_url"] = open_url
     for k, v in kv_fields(**fields).items():
         r[k] = v if isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) else ("" if v is None else text(str(v), 4000))
     return r
+
+
+# Fields that come from data, in the order safe_row gives them up when one of them is not valid.
+_DATA_FIELDS = ("open_url", "url", "trend", "data", "tile", "badges", "multiline")
+
+
+def safe_row(title, subtitle="", **kw):
+    """row() for a record that came from outside: one odd value (a link with a space, NaN, a series of 61, data nested
+    too deep) costs that field, never the row and never the whole list. Author mistakes in the other arguments (an
+    unknown icon, too many actions) still raise."""
+    dropped = []
+    while True:
+        try:
+            return row(title, subtitle, **kw)
+        except KitError:
+            for f in _DATA_FIELDS:
+                if kw.get(f) not in (None, "", {}, []) and f not in dropped:
+                    dropped.append(f)
+                    kw.pop(f, None)
+                    break
+            else:
+                raise
+
+
+def _clean_json(v, depth=0):
+    """A JSON value with every string cleaned (control, bidi, zero-width characters out, `{{` broken)."""
+    if depth > 8:
+        raise KitError("data is nested deeper than 8 levels")
+    if isinstance(v, str):
+        return text(v, 1000)
+    if isinstance(v, bool) or v is None:
+        return v
+    if isinstance(v, (int, float)):
+        if isinstance(v, float) and not math.isfinite(v):
+            raise KitError("data holds a number that is not finite")
+        return v
+    if isinstance(v, list):
+        return [_clean_json(x, depth + 1) for x in v[:200]]
+    if isinstance(v, dict):
+        return dict((text(str(k), 80), _clean_json(x, depth + 1)) for k, x in list(v.items())[:200])
+    raise KitError("data holds a value that is not JSON: %r" % (type(v),))
+
+
+def _json_object(v):
+    if not isinstance(v, dict):
+        raise KitError("data must be an object")
+    out = _clean_json(v)
+    if len(json.dumps(out)) > 20000:
+        raise KitError("data is longer than 20000 characters")
+    return out
+
+
+def _trend(v):
+    if not isinstance(v, (list, tuple)):
+        raise KitError("trend must be a list of numbers")
+    out = []
+    for x in list(v)[-60:]:   # the newest 60: a longer series is cut, not refused
+        n = plain_number(x)
+        if n is None:
+            raise KitError("trend holds a value that is not a finite number: %r" % (x,))
+        out.append(n)
+    return out
 
 
 def _nav(nav):

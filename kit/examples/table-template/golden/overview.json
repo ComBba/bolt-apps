@@ -1,0 +1,60 @@
+[
+  {
+    "title": "Orders · 14",
+    "subtitle": "sortable table with totals",
+    "icon": "list",
+    "body": "",
+    "nav": {
+      "view": "orders"
+    },
+    "actions": [],
+    "kpi_label": "Revenue",
+    "kpi_value": 1076,
+    "kpi_unit": "USD",
+    "kpi_max": "",
+    "kpi_note": "all orders",
+    "kpi_foot": "8 paid",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Revenue share by region",
+    "subtitle": "a table with a percent column (there is no pie pane)",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "shares"
+    },
+    "actions": [],
+    "kpi_label": "Orders",
+    "kpi_value": 14,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "across 4 regions",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

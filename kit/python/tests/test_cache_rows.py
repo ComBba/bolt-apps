@@ -218,6 +218,8 @@ class RowTests(unittest.TestCase):
                 hits = re.findall(r"os\.environ\S*|os\.getenv|getenv\(", src)
                 if f == "probe.py":  # PATH lookup and the parent-environment copy for the locale: no named variables
                     self.assertEqual(sorted(hits), ["os.environ)", "os.environ.get(\"PATH\","], hits)
+                elif f == "secrets.py":  # reads the key's own variable name, given by the app: a credential source, not a test hook
+                    self.assertEqual(hits, ["os.environ.get(n,"], hits)
                 else:
                     self.assertEqual(hits, [], f)
 

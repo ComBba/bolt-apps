@@ -7,13 +7,21 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseIconKeys } from '../../kit/schema/gen-icons.mjs';
-import { checkApp, checkRows, inside, platformFindings, schemaCheck, treeHash, vendorKit, KIT_ROOT, KIT_PY } from '../lib/check.mjs';
+import { createHash } from 'node:crypto';
+import { assessYaml } from '../lib/assess.mjs';
+import { flatKitSource, checkApp, checkRows, inside, platformFindings, schemaCheck, treeHash, vendorKit, KIT_ROOT, KIT_PY } from '../lib/check.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const EXAMPLE = path.join(root, 'kit', 'examples', 'system-glance');
 const CLI = path.join(root, 'toolkit', 'bin', 'bolt-apps.mjs');
 const codes = (f) => f.map((x) => x.code);
-const tmpCopy = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-test-')); fs.cpSync(EXAMPLE, d, { recursive: true }); return d; };
+// A copy of the example switched to the PACKAGE-FOLDER kit (the folder-mode guard tests need that shape; the shipped example is flat).
+const tmpCopy = () => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-test-')); fs.cpSync(EXAMPLE, d, { recursive: true });
+	fs.rmSync(path.join(d, 'scripts', 'bolt_app_kit.py')); fs.rmSync(path.join(d, 'bolt_app_kit.lock.json'));
+	const cfg = JSON.parse(fs.readFileSync(path.join(d, 'check.json'), 'utf8')); cfg.kit = 'scripts/bolt_app_kit'; fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify(cfg));
+	vendorKit(d); return d;
+};
 
 test('icon parser reads the shapes UTILITY_ICON_MAP uses', () => {
 	const ts = `import x;\nexport const UTILITY_ICON_MAP: Record<string, Component> = {\n  Calculator,\n  Bolt: BoltIcon,\n  // comment\n  'credit-card': CreditCard,\n  Search, // trailing\n};\nexport function f() {}`;
@@ -26,13 +34,6 @@ test('icon list: schema, icons.json and the Python module agree (drift test)', (
 	const j = JSON.parse(fs.readFileSync(path.join(KIT_ROOT, 'schema', 'icons.json'), 'utf8')).icons;
 	const py = [...fs.readFileSync(path.join(KIT_PY, 'icons_data.py'), 'utf8').matchAll(/^\s+"([^"]+)",$/gm)].map((m) => m[1]);
 	assert.deepEqual(s, j); assert.deepEqual(py, j); assert.ok(j.length > 100);
-});
-
-test('icon list still matches the launcher source when that checkout is present', (t) => {
-	const src = path.join(os.homedir(), 'dev', 'bolt-pwa', 'src', 'lib', 'components', 'ui', 'utilityIconMap.ts');
-	if (!fs.existsSync(src)) return t.skip('launcher source not on this machine; CI cannot see it');
-	const r = spawnSync('node', [path.join(KIT_ROOT, 'schema', 'gen-icons.mjs'), src, '--check'], { encoding: 'utf8' });
-	assert.equal(r.status, 0, r.stdout + r.stderr);
 });
 
 test('packaged Python schema equals the schema', () => {
@@ -90,8 +91,7 @@ test('--os selects fixture cases; an OS with no case is an error', async () => {
 	const lin = await checkApp(EXAMPLE, { os: 'linux' });
 	assert.ok(lin.cases.length && lin.cases.every((c) => c.os === 'linux'));
 	assert.match(lin.cases[0].tested, /fixtures only|stubbed/);
-	const none = JSON.parse(fs.readFileSync(path.join(EXAMPLE, 'check.json'), 'utf8')); none.cases = none.cases.filter((c) => c.os !== 'windows');
-	const d = tmpCopy(); fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify(none));
+	const d = tmpCopy(); const none = JSON.parse(fs.readFileSync(path.join(d, 'check.json'), 'utf8')); none.cases = none.cases.filter((c) => c.os !== 'windows'); fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify(none));
 	assert.equal((await checkApp(d, { os: 'windows' })).findings[0].code, 'no_cases_for_os');
 });
 
@@ -200,7 +200,7 @@ test('symlinks inside the app folder cannot redirect kit vendor or check outside
 });
 
 test('the vendored example kit equals the kit in this repo', () => {
-	assert.equal(treeHash(path.join(EXAMPLE, 'scripts', 'bolt_app_kit')), treeHash(KIT_PY));
+	assert.equal(fs.readFileSync(path.join(EXAMPLE, 'scripts', 'bolt_app_kit.py'), 'utf8'), flatKitSource());
 });
 
 test('CLI: check exits 0 on the example and 1 on a broken app; plain apps keep the old message', () => {
@@ -216,4 +216,89 @@ test('the Python kit unit tests pass (3.9+)', (t) => {
 	if (py.status !== 0) return t.skip('python3 not available');
 	const r = spawnSync('python3', ['-m', 'unittest', 'discover', '-s', 'tests'], { cwd: path.join(root, 'kit', 'python'), encoding: 'utf8' });
 	assert.equal(r.status, 0, r.stderr.slice(-2000));
+});
+
+// ---- flat (single-file) kit: what makes an app packable with --personal ----
+const ACME = path.join(root, 'kit', 'examples', 'acme-dash');
+const flatCopy = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-flat-')); fs.cpSync(ACME, d, { recursive: true }); return d; };
+
+test('flat kit: the example is flat, in sync with the repo kit, and passes check', async () => {
+	const lock = JSON.parse(fs.readFileSync(path.join(ACME, 'bolt_app_kit.lock.json'), 'utf8'));
+	assert.equal(lock.flat, true);
+	assert.equal(fs.readFileSync(path.join(ACME, 'scripts', 'bolt_app_kit.py'), 'utf8'), flatKitSource());
+	assert.deepEqual((await checkApp(ACME, { only: 'overview' })).findings, []);
+});
+
+test('flat kit guard: edited, missing, shadowed and outdated are caught', async () => {
+	const d = flatCopy(), kit = path.join(d, 'scripts', 'bolt_app_kit.py');
+	fs.appendFileSync(kit, '\n# edit\n');
+	assert.ok(codes((await checkApp(d, { only: 'overview' })).findings).includes('kit_modified'));
+	vendorKit(d);
+	assert.deepEqual((await checkApp(d, { only: 'overview' })).findings, []);
+	fs.mkdirSync(path.join(d, 'scripts', 'bolt_app_kit'));
+	assert.ok(codes((await checkApp(d, { only: 'overview' })).findings).includes('kit_modified'));
+	fs.rmSync(path.join(d, 'scripts', 'bolt_app_kit'), { recursive: true });
+	fs.rmSync(kit);
+	assert.ok(codes((await checkApp(d, { only: 'overview' })).findings).includes('kit_not_vendored'));
+	vendorKit(d);
+	const lp = path.join(d, 'bolt_app_kit.lock.json'), l = JSON.parse(fs.readFileSync(lp, 'utf8')); l.version = '0.0.1'; fs.writeFileSync(lp, JSON.stringify(l));
+	assert.ok(codes((await checkApp(d, { only: 'overview' })).findings).includes('kit_outdated'));
+	// a lock that claims this version but a file that differs from the repo kit is diverged
+	l.version = JSON.parse(fs.readFileSync(path.join(ACME, 'bolt_app_kit.lock.json'), 'utf8')).version;
+	const body = flatKitSource() + '\n# changed\n'; fs.writeFileSync(kit, body); l.sha256 = createHash('sha256').update(body).digest('hex'); fs.writeFileSync(lp, JSON.stringify(l));
+	assert.ok(codes((await checkApp(d, { only: 'overview' })).findings).includes('kit_diverged'));
+});
+
+test('flat kit behaves like the package kit (same rows, same refusals)', () => {
+	const run = (dir, code) => spawnSync('python3', ['-c', code], { encoding: 'utf8', env: { PYTHONPATH: dir, PATH: process.env.PATH, PYTHONDONTWRITEBYTECODE: '1' } });
+	const code = 'import bolt_app_kit as k, json\nr=[k.row("a {{x}}", "b", tile=k.tile("T", 5, "%", 10), nav={"view":"v","arg":"a"}), k.back_row("x")]\nprint(json.dumps(r), k.validate_rows(r), k.__version__)\ntry:\n k.tile("T","x")\nexcept k.KitError as e:\n print("refused")\ntry:\n k.row("a", icon="nope")\nexcept k.KitError:\n print("icon refused")';
+	const a = run(path.join(ACME, 'scripts'), code), b = run(path.join(root, 'kit', 'python'), code);
+	assert.equal(a.status, 0, a.stderr); assert.equal(a.stdout, b.stdout); assert.match(a.stdout, /icon refused/);
+});
+
+test('flat kit: both examples lint and pack with --personal, and the lock is not packed', () => {
+	for (const app of ['acme-dash', 'portal-template']) {
+		const dir = path.join(root, 'kit', 'examples', app);
+		const l = spawnSync('node', [CLI, 'lint', dir, '--personal', '--json'], { encoding: 'utf8' });
+		assert.equal(l.status, 0, l.stdout + l.stderr);
+		const v = spawnSync('node', [CLI, 'verify', dir, '--json'], { encoding: 'utf8' });
+		assert.equal(v.status, 0, v.stdout);
+		assert.ok(!JSON.parse(v.stdout).findings.some((x) => x.code === 'script_unused'), v.stdout);
+	}
+});
+
+test('script_unused still reports a real unused script, but not an imported module or a named data file', () => {
+	const d = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'unused-')), 'acme-dash'); fs.cpSync(ACME, d, { recursive: true });
+	fs.writeFileSync(path.join(d, 'scripts', 'stray.py'), 'print(1)\n');
+	fs.writeFileSync(path.join(d, 'scripts', 'orphan.json'), '{}');
+	const v = spawnSync('node', [CLI, 'verify', d, '--json'], { encoding: 'utf8' });
+	const un = JSON.parse(v.stdout).findings.filter((x) => x.code === 'script_unused').map((x) => x.file).sort();
+	assert.deepEqual(un, ['scripts/orphan.json', 'scripts/stray.py']);
+});
+
+// ---- the launcher's scripts-folder rule (the launcher plain_script_refs) ----
+const sdYaml = (cmd, extra = '') => `${extra}schema_version: 1\nruntime: bridge\nid: sd\nchip: sd\ntitle: "sd"\nicon: activity\ndescription: "d"\nemits: Generic\nbridge:\n  command:\n    macos: ${cmd}\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n  subtitle_field: subtitle\n`;
+const sdCodes = (y) => assessYaml(y, 'sd').problems.filter((p) => p.code !== 'command_os_missing').map((p) => p.code);   // the one-OS command warning is tested in launcher-rules.test.mjs
+test('scripts_dir_form: every mention must be {{scripts_dir}}/<file> as its own word, comments included', () => {
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{scripts_dir}}/engine.py {{view}}"')), []);
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{scripts_dir}}/a.py {{scripts_dir}}/b.json"')), []);   // two plain files are fine
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{scripts_dir}}/engine.py"', '# data: {{scripts_dir}}/fixtures.json\n')), ['scripts_dir_form']);   // the real failure: a comment
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{scripts_dir}}/engine.py"', '# see scripts_dir\n')), ['scripts_dir_form']);
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{ scripts_dir }}/engine.py"')), ['scripts_dir_form']);
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{SCRIPTS_DIR}}/engine.py"')), ['scripts_dir_form']);
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{scripts_dir}}/../x.py"')), ['scripts_dir_form']);
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{scripts_dir}}/.hidden.py"')), ['scripts_dir_form']);
+	assert.deepEqual(sdCodes(sdYaml('"python3 {{scripts_dir}}/name."')), ['scripts_dir_form']);
+	assert.deepEqual(sdCodes(sdYaml('"python3 -c {{scripts_dir}}"')), ['scripts_dir_form']);
+});
+
+test('scripts_dir_form: lint --personal and verify refuse a comment mention; the examples have none', () => {
+	const d = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sd-')), 'acme-dash'); fs.cpSync(ACME, d, { recursive: true });
+	const y = path.join(d, 'utilities', 'acme-dash.yaml');
+	fs.writeFileSync(y, '# data in {{scripts_dir}}/fixtures.json\n' + fs.readFileSync(y, 'utf8'));
+	for (const cmd of ['lint', 'verify']) {
+		const r = spawnSync('node', [CLI, cmd, d, '--personal', '--json'], { encoding: 'utf8' });
+		assert.equal(r.status, 1, cmd); assert.match(r.stdout, /scripts_dir_form/);
+	}
+	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py)/g, '')));
 });

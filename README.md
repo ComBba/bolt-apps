@@ -80,6 +80,26 @@ node toolkit/bin/bolt-apps.mjs pack apps/my-app
 
 For apps that run a script (not accepted in the gallery), the [authoring kit](kit/) and its [design](docs/kit-design.md) take care of formatting, row structure and JSON output.
 
+### A rich app for a web API, in minutes
+
+Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
+[`kit/examples/portal-template`](kit/examples/portal-template), change data in `scripts/config.json` and
+`scripts/fixtures.json`, generate the YAML, then check and pack it for yourself:
+
+```
+cp -R kit/examples/portal-template ~/my-app && cd ~/my-app      # folder name = app id
+# edit scripts/config.json and fixtures.json; set "id" in bolt-app.json; delete utilities/portal-template.yaml
+python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
+node <this repo>/toolkit/bin/bolt-apps.mjs check .
+node <this repo>/toolkit/bin/bolt-apps.mjs pack . --personal --version 1.0.1 --out ../my-app-1.0.1.boltpack
+```
+
+Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows what it can do and asks you to
+confirm (it rates a personal app high risk, which is expected). Raise `--version` each time you pack
+again: Bolt refuses a pack that is not newer than the installed one, and a repack must use the same signing key. Keep packs outside the app folder. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
+[`kit/examples/acme-dash`](kit/examples/acme-dash) shows the same template with 8 views and three levels.
+Walkthrough with the row formats: <https://sparcle.app/docs/extend/rich-apps/>. Agents: [AGENTS.md](AGENTS.md) section 4c.
+
 ## Contributing
 
 Not open yet (see the note at the top). When it opens:
