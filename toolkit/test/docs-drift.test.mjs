@@ -95,7 +95,7 @@ for (const f of SRC) {
 }
 for (const c of emitted) universe.add(c);
 // codes the unpublished checker inside Bolt emits; CHECKER.md says so and the toolkit does not
-const BOLT_ONLY = new Set(['sensitive_secret', 'sensitive_email', 'sensitive_internal_url', 'test_failed', 'snippet_invalid', 'search_engine_invalid', 'user_app_invalid', 'listing_invalid', 'parse_error', 'load_error', 'signature_invalid']);
+const BOLT_ONLY = new Set(['sensitive_secret', 'sensitive_email', 'sensitive_internal_url', 'test_failed', 'snippet_invalid', 'search_engine_invalid', 'user_app_invalid', 'listing_invalid', 'parse_error', 'load_error', 'signature_invalid', 'owned_by_other']);
 const known = new Set([...universe, ...BOLT_ONLY]);
 {
 	const add = (o) => { if (Array.isArray(o)) o.forEach(add); else if (o && typeof o === 'object') Object.entries(o).forEach(([k, v]) => { known.add(k); add(v); }); else if (typeof o === 'string') known.add(o); };
@@ -162,4 +162,12 @@ test('QUICKSTART.md and CAPABILITIES.md hold no raw HTML outside code (the websi
 test('no doc promises "no Reload" or a newer Remove behaviour without saying it is newer than 181', () => {
 	const promise = /\b(no|without|never need(s)?( a)?|not need(ed)?) reload\b|reload (is )?not (needed|required)|appears? immediately|in-place confirm/i;
 	for (const f of DOCS) read(f).split('\n').forEach((l, i) => { if (promise.test(l)) assert.match(l, /newer than 181|0\.1\.18[2-9]|not promised/i, `${f}:${i + 1} ${l.slice(0, 140)}`); });
+});
+
+test('every doc that tells a person to Remove an app carries the 181 qualification, or points at the Remove row that does', () => {
+	const mention = /\b(click|press|use)\s+Remove\b|\bRemove (the|an|this) (installed )?(app|User App)\b|\bremove the (installed )?app\b|\bthe Remove button\b/i;
+	const ok = /on the app's row in 181|see the Remove row|newer builds|tell us which Bolt version/i;
+	for (const f of DOCS) read(f).split('\n').forEach((l, i) => { if (mention.test(l)) assert.match(l, ok, `${f}:${i + 1} ${l.slice(0, 140)}`); });
+	const row = read('kit/examples/QUICKSTART.md').split('\n').find((l) => l.startsWith('| Remove |'));
+	for (const w of ["on the app's row in 181", 'not yet seen on a running 181', 'next to Revoke approval', 'Do not delete files by hand', 'owned_by_other', "its scripts and install record", 'tell us which Bolt version']) assert.ok(row.includes(w), `Remove row lacks: ${w}`);
 });

@@ -76,10 +76,10 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 | The chip is missing | Settings, Desktop App, User Apps, click Reload. A file that failed to load is listed there with the reason. |
 | "Not run. Needs your OK" | Press Enter on the app's run row, read what it can do, accept. First run only. |
 | HIGH RISK in the install prompt | Normal for a personal app that runs a script (tier 3). Read the permissions, confirm only code you have read. |
-| "a pack is only replaced by a newer version" | `ship` already raises the version. If you packed by hand, pass a higher `--version`. To go back, Remove the app first. |
-| "already belongs to" another signer | Pack with the key you first used (`~/.bolt-apps/key.pem`), or Remove the installed app and ship again. |
+| "a pack is only replaced by a newer version" | `ship` already raises the version. If you packed by hand, pass a higher `--version`. To go back, remove the app first (see the Remove row). |
+| "already belongs to" another signer | Pack with the key you first used (`~/.bolt-apps/key.pem`), or remove the installed app (see the Remove row) and ship again. |
 | "Bundle rejected" | You dropped it in Admin settings. Drop it on the Bolt launcher or Bolt Apps. |
-| Remove | Settings, Desktop App, User Apps, the Remove button on the app. If you built apps before a fix was announced for them: Remove the app there, then `./bolt-apps ship` it again. |
+| Remove | Remove the app in Settings, Desktop, User Apps (the Remove button is on the app's row in 181 (not yet seen on a running 181 build); newer builds also show it in the expanded panel next to Revoke approval). Do not delete files by hand: Bolt keeps an install record, and a hand-deleted file can leave `owned_by_other` behind. Remove deletes the app's YAML and, for a pack's last app, its scripts and install record. If you cannot find a Remove button on your build, tell us which Bolt version you have. If you built apps before a fix was announced for them: remove the app this way, then `./bolt-apps ship` it again. |
 
 Written from the 0.1.181 source, not seen in a running 181. Anything that needs a newer Bolt is marked "newer than 181" where it appears; none is promised here (for example, an install that needs no Reload even for hand-saved files, or an in-place Remove confirmation, are newer than 181).
 
