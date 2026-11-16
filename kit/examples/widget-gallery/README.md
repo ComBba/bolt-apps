@@ -34,12 +34,12 @@ Bolt shows a plain message instead of the pane for these kinds, because they rea
 Source: the launcher's own pane code. `card` and `image_grid` are in `../widget-gallery-2`. `map` draws the launcher's own state, reads no bind keys and cannot show app data: use an Open in Maps url action instead.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 See `../ENGINE.md` for every option. Install: drop the `.boltpack` on the Bolt launcher.
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/widget-gallery --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery
-node toolkit/bin/bolt-apps.mjs pack kit/examples/widget-gallery --personal --version 1.0.1 --out ../widget-gallery-1.0.1.boltpack
+./bolt-apps lint kit/examples/widget-gallery --personal
+./bolt-apps check kit/examples/widget-gallery
+./bolt-apps pack kit/examples/widget-gallery --personal --version 1.0.1 --out ../widget-gallery-1.0.1.boltpack
 ```
 
 The card pane, the image grid and image cards are in `../widget-gallery-2` (this gallery already uses the launcher limit of 8 views).

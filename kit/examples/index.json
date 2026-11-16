@@ -1,694 +1,7 @@
 {
-  "schema": "Pick a template by archetype, copy its folder, edit only the files listed in edit. Every config option is in ENGINE.md.",
+  "schema": "Pick a template by \"need\", copy it with: ./bolt-apps new <template> <id>. Edit only the paths in \"edit\". Rules: QUICKSTART.md. Every config option: ENGINE.md. What is supported: CAPABILITIES.md.",
   "engine": "portal-template/scripts/portal-template__engine.py",
   "reference": "ENGINE.md",
-  "apps": [
-    {
-      "id": "portal-template",
-      "layout": "overview tiles, drill down to lists, detail with related rows, per-row detail panel",
-      "mode": "views",
-      "widgets": [
-        "cards",
-        "entity_preview"
-      ],
-      "techniques": [
-        "drill",
-        "back",
-        "filter word",
-        "ttl cache",
-        "stale fallback",
-        "error rows",
-        "key from env or .env",
-        "fixture mode",
-        "children from another endpoint"
-      ],
-      "sources": [
-        "any REST API with a key"
-      ],
-      "edit": [
-        "scripts/portal-template__config.json",
-        "scripts/portal-template__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/portal-template",
-      "verified": "installed: not yet verified"
-    },
-    {
-      "id": "acme-dash",
-      "layout": "compliance dashboard, 7 lists, controls drill to linked tasks",
-      "mode": "views",
-      "widgets": [
-        "cards",
-        "entity_preview"
-      ],
-      "techniques": [
-        "stats and ratios",
-        "badge rules",
-        "filter word",
-        "3-level drill"
-      ],
-      "sources": [
-        "fictional API"
-      ],
-      "edit": [
-        "scripts/acme-dash__config.json",
-        "scripts/acme-dash__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/acme-dash",
-      "verified": "worked in sample mode (tiles, tasks drill, Back, placeholder_examples click-to-try) after install as an in-place upgrade. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
-    },
-    {
-      "id": "widget-gallery",
-      "layout": "one view per pane kind",
-      "mode": "views",
-      "widgets": [
-        "cards",
-        "chart",
-        "table",
-        "detail",
-        "json_tree",
-        "diff",
-        "entity_preview",
-        "markdown"
-      ],
-      "techniques": [
-        "widget bind keys",
-        "extra row fields",
-        "nested data",
-        "multiline fields",
-        "trend"
-      ],
-      "sources": [
-        "sample data"
-      ],
-      "edit": [
-        "scripts/widget-gallery__config.json",
-        "scripts/widget-gallery__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery",
-      "verified": "installed: not yet verified"
-    },
-    {
-      "id": "form-template",
-      "layout": "typed input form, result table",
-      "mode": "form",
-      "widgets": [
-        "table"
-      ],
-      "techniques": [
-        "inputs with number select date text toggle",
-        "validation",
-        "local log"
-      ],
-      "sources": [
-        "a local file"
-      ],
-      "edit": [
-        "scripts/form-template__config.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/form-template",
-      "verified": "installed: not yet verified"
-    },
-    {
-      "id": "chart-template",
-      "layout": "tile dashboard plus line, bar and sparkline from rows or from a number series",
-      "mode": "views",
-      "widgets": [
-        "cards",
-        "chart"
-      ],
-      "techniques": [
-        "bind.values series mode",
-        "rows mode",
-        "trend_field",
-        "field_sum stats"
-      ],
-      "sources": [
-        "any REST API"
-      ],
-      "edit": [
-        "scripts/chart-template__config.json",
-        "scripts/chart-template__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/chart-template",
-      "verified": "installed: not yet verified"
-    },
-    {
-      "id": "table-template",
-      "layout": "sortable table with totals, formats and a share column",
-      "mode": "views",
-      "widgets": [
-        "cards",
-        "table"
-      ],
-      "techniques": [
-        "columns format align total",
-        "sort",
-        "searchable"
-      ],
-      "sources": [
-        "any REST API"
-      ],
-      "edit": [
-        "scripts/table-template__config.json",
-        "scripts/table-template__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/table-template",
-      "verified": "installed: not yet verified"
-    },
-    {
-      "id": "lookup-template",
-      "layout": "one word in, weather tiles with a sparkline out",
-      "mode": "lookup",
-      "widgets": [
-        "cards"
-      ],
-      "techniques": [
-        "chained endpoints",
-        "path variables",
-        "value maps",
-        "two hosts",
-        "live keyless API"
-      ],
-      "sources": [
-        "Open-Meteo geocoding and forecast (keyless)"
-      ],
-      "edit": [
-        "scripts/lookup-template__config.json",
-        "scripts/lookup-template__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/lookup-template",
-      "verified": "installed: not yet verified"
-    },
-    {
-      "id": "file-insights-template",
-      "layout": "verdict tiles and insight rows, drill to a line chart, a bar chart, a table and a problems list",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/file-insights-template__insights.py",
-      "backing": "local file",
-      "widgets": [
-        "cards",
-        "chart",
-        "table",
-        "markdown"
-      ],
-      "techniques": [
-        "path from the query word",
-        "last path kept in the kit cache",
-        "stdlib csv with caps",
-        "hostile cell cleaning",
-        "column mapping in config",
-        "insight rules in config",
-        "labelled sample fallback",
-        "titled charts"
-      ],
-      "sources": [
-        "a local CSV file"
-      ],
-      "edit": [
-        "scripts/file-insights-template__config.json",
-        "scripts/file-insights-template__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/file-insights-template",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "cli-wrapper-template",
-      "layout": "verdict and tiles with a sparkline, drill to a line chart, raw output and the command",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/cli-wrapper-template__wrap.py",
-      "backing": "CLI command",
-      "widgets": [
-        "cards",
-        "chart",
-        "markdown"
-      ],
-      "techniques": [
-        "per-OS command table",
-        "argument list, no shell",
-        "host and count validation",
-        "timeout and kill",
-        "exit code table",
-        "regex output parsing",
-        "tool missing row",
-        "failure row",
-        "result reuse",
-        "fixture-recorded output"
-      ],
-      "sources": [
-        "the system ping command"
-      ],
-      "edit": [
-        "scripts/cli-wrapper-template__config.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/cli-wrapper-template",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "system-glance",
-      "layout": "three parallel command probes as tiles, Disk drill view",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/system-glance__system-glance.py",
-      "backing": "CLI command",
-      "widgets": [
-        "cards"
-      ],
-      "techniques": [
-        "parallel probes in one deadline",
-        "unread is never zero",
-        "per-OS command table",
-        "short cache"
-      ],
-      "sources": [
-        "df, uptime, lsof or ss"
-      ],
-      "edit": [
-        "scripts/system-glance__system-glance.py"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "repo-radar",
-      "layout": "verdict and tiles with source health badges, drill to releases diff, vulnerability detail, downloads chart, discussion, since-diff, compare table",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/repo-radar__radar.py",
-      "backing": "remote HTTP API (four, joined)",
-      "widgets": [
-        "cards",
-        "diff",
-        "detail",
-        "chart",
-        "table"
-      ],
-      "techniques": [
-        "parallel calls in a thread pool",
-        "per-call timeout and overall deadline",
-        "join on repo and package, verified",
-        "verdict score with weights in config",
-        "since-last-looked diff in the kit cache",
-        "per-source TTL",
-        "stale copy on failure",
-        "partial-failure rows",
-        "optional token via get_secret",
-        "rate-limit badge",
-        "compare mode"
-      ],
-      "sources": [
-        "GitHub REST",
-        "npm registry and downloads",
-        "OSV.dev",
-        "Hacker News search"
-      ],
-      "edit": [
-        "scripts/repo-radar__config.json",
-        "scripts/repo-radar__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/repo-radar",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "around",
-      "layout": "verdict and tiles with source badges, drill to places panels, bike table, weather line chart, landmarks, auth matrix",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/around__around.py",
-      "backing": "remote HTTP API (five, stitched by distance)",
-      "widgets": [
-        "cards",
-        "detail",
-        "table",
-        "chart"
-      ],
-      "techniques": [
-        "geocode then parallel calls",
-        "haversine stitching",
-        "per-source TTL (30 s bikes)",
-        "updated N s ago badge",
-        "stale copy on failure",
-        "Nominatim 1 req/s guard and User-Agent",
-        "Open in Maps url actions",
-        "auth matrix: none, optional, required free key, bearer, basic",
-        "get_secret setup row",
-        "masked credentials"
-      ],
-      "sources": [
-        "Nominatim",
-        "Overpass",
-        "CityBikes",
-        "Open-Meteo",
-        "Wikipedia geosearch"
-      ],
-      "edit": [
-        "scripts/around__config.json",
-        "scripts/around__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/around",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "local-service-template",
-      "layout": "list of what a local service reports, detail pane",
-      "mode": "http_local (no script)",
-      "backing": "local HTTP service",
-      "widgets": [
-        "detail"
-      ],
-      "techniques": [
-        "http_local GET",
-        "rows_path",
-        "title_field and subtitle_field",
-        "loopback only"
-      ],
-      "sources": [
-        "a service on 127.0.0.1 (Ollama model list as the example)"
-      ],
-      "edit": [
-        "utilities/localmodels.yaml"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs lint kit/examples/local-service-template --personal",
-      "verified": "not yet verified in real Bolt; response shape from documentation, not recorded"
-    },
-    {
-      "id": "widget-gallery-2",
-      "layout": "one view per pane kind: card, image grid, cards with images",
-      "mode": "views",
-      "widgets": [
-        "card",
-        "image_grid",
-        "cards"
-      ],
-      "techniques": [
-        "inline data images",
-        "image_grid bind",
-        "card bind",
-        "8-view limit workaround"
-      ],
-      "sources": [
-        "sample data (generated swatches)"
-      ],
-      "edit": [
-        "scripts/widget-gallery-2__config.json",
-        "scripts/widget-gallery-2__fixtures.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery-2",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "script-template",
-      "need": "a script app on the kit for an API or tool no engine template fits",
-      "layout": "overview tiles, list with a filter word, detail with Back",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/script-template__app.py",
-      "backing": "remote HTTP API",
-      "widgets": [
-        "cards",
-        "table",
-        "detail"
-      ],
-      "techniques": [
-        "views and nav",
-        "Back row",
-        "filter word",
-        "fresh and old cache in code",
-        "offline row",
-        "setup row",
-        "key from keychain or .env",
-        "key stripped from the answer",
-        "sample mode",
-        "--emit-yaml",
-        "KitError text"
-      ],
-      "sources": [
-        "a placeholder API (replace it)"
-      ],
-      "edit": [
-        "scripts/script-template__config.json",
-        "scripts/script-template__fixtures.json",
-        "scripts/script-template__app.py (n_items, http_get, build, emit_yaml)",
-        "check.json"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/script-template",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "pulse-feed",
-      "need": "a trending feed where a topic word merges more public sources, with open, copy and narrow buttons",
-      "layout": "trending overview with a tile row, a topic word that merges two sources in parallel, a preview pane per story",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/pulse-feed__app.py",
-      "template": "script-template",
-      "backing": "remote HTTP API",
-      "widgets": [
-        "cards",
-        "entity_preview"
-      ],
-      "techniques": [
-        "hydrate: ids then one request per item in parallel",
-        "two sources merged by id",
-        "partial result row",
-        "tile row then rows",
-        "open-link arrow (url)",
-        "Open post, Copy quote and Narrow (utility chain) footer buttons",
-        "safety note in the markdown body",
-        "fresh and old cache",
-        "sample mode with a fixed clock"
-      ],
-      "sources": [
-        "Hacker News Firebase API (free, no key)",
-        "Hacker News Algolia search API (free, no key)"
-      ],
-      "edit": [
-        "scripts/pulse-feed__config.json",
-        "scripts/pulse-feed__fixtures.json",
-        "scripts/pulse-feed__app.py (n_firebase, n_algolia, story_row, emit_yaml)"
-      ],
-      "snippets": [
-        "scripts/pulse-feed__app.py: hydrate() and gather()",
-        "scripts/pulse-feed__app.py: story_row() with kit.action_chain",
-        "scripts/pulse-feed__app.py: emit_yaml() entity_preview bind"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/pulse-feed",
-      "verified": "list worked (live Hacker News stories); the right pane was broken, fixed in PR #19. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
-    },
-    {
-      "id": "json-tree-browser",
-      "need": "show any JSON response as an expandable tree",
-      "layout": "a list of JSON documents, one collapsible tree per row",
-      "mode": "views",
-      "template": "portal-template",
-      "backing": "remote HTTP API",
-      "widgets": [
-        "cards",
-        "json_tree"
-      ],
-      "techniques": [
-        "json_tree pane",
-        "data_field",
-        "fixture mode"
-      ],
-      "sources": [
-        "a placeholder API (replace it)"
-      ],
-      "edit": [
-        "scripts/json-tree-browser__config.json",
-        "scripts/json-tree-browser__fixtures.json"
-      ],
-      "snippets": [
-        "scripts/json-tree-browser__config.json: views[0].item.data_field",
-        "scripts/json-tree-browser__config.json: views[0].widget json_tree"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/json-tree-browser",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "expense-tracker",
-      "need": "a spending summary with totals, a category drill and a chart",
-      "layout": "spending tiles with a budget meter, categories that drill to expenses, a daily bar chart",
-      "mode": "views",
-      "template": "portal-template",
-      "backing": "remote HTTP API",
-      "widgets": [
-        "cards",
-        "entity_preview",
-        "chart"
-      ],
-      "techniques": [
-        "field_sum and field_max stats",
-        "badge rules",
-        "drill with children",
-        "bar chart",
-        "tile sparkline"
-      ],
-      "sources": [
-        "a placeholder API (replace it)"
-      ],
-      "edit": [
-        "scripts/expense-tracker__config.json",
-        "scripts/expense-tracker__fixtures.json"
-      ],
-      "snippets": [
-        "scripts/expense-tracker__config.json: stats field_sum",
-        "scripts/expense-tracker__config.json: views[0].children",
-        "scripts/expense-tracker__config.json: chart widget bind"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/expense-tracker",
-      "verified": "installed and ran; the first run showed only the API-key setup row, sample fallback is in PR #19. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
-    },
-    {
-      "id": "pipeline-board",
-      "need": "rows grouped by stage with a detail pane and a before and after diff",
-      "layout": "runs grouped by stage, a detail pane per run and a diff pane",
-      "mode": "views",
-      "template": "portal-template",
-      "backing": "remote HTTP API",
-      "widgets": [
-        "cards",
-        "entity_preview",
-        "diff"
-      ],
-      "techniques": [
-        "grouped list with children",
-        "custom sort order",
-        "diff pane from multiline fields"
-      ],
-      "sources": [
-        "a placeholder API (replace it)"
-      ],
-      "edit": [
-        "scripts/pipeline-board__config.json",
-        "scripts/pipeline-board__fixtures.json"
-      ],
-      "snippets": [
-        "scripts/pipeline-board__config.json: stages view children",
-        "scripts/pipeline-board__config.json: diff widget bind with left and right"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/pipeline-board",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "unit-convert",
-      "need": "a typed form whose answer is a result detail",
-      "layout": "form (number and two selects), a result row and a detail pane, the same amount in other units",
-      "mode": "custom script on the flat kit",
-      "script": "scripts/unit-convert__app.py",
-      "template": "form-template",
-      "backing": "no network",
-      "widgets": [
-        "detail"
-      ],
-      "techniques": [
-        "inputs form in the app file",
-        "input checked again in the script",
-        "detail pane",
-        "Copy to composer",
-        "offline"
-      ],
-      "sources": [
-        "none: a unit table in config.json"
-      ],
-      "edit": [
-        "scripts/unit-convert__config.json",
-        "scripts/unit-convert__app.py (convert, build, emit_yaml)"
-      ],
-      "snippets": [
-        "scripts/unit-convert__app.py: emit_yaml() inputs and submit",
-        "scripts/unit-convert__app.py: convert()"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/unit-convert",
-      "verified": "worked: list of conversions and a per-row detail pane (Result, Formula, Reverse, Kind). maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
-    },
-    {
-      "id": "branch-explorer",
-      "need": "browse a tree level by level",
-      "layout": "a tree walked one level at a time with Back",
-      "mode": "views",
-      "template": "portal-template",
-      "backing": "remote HTTP API",
-      "widgets": [
-        "cards",
-        "entity_preview"
-      ],
-      "techniques": [
-        "self-referencing children",
-        "root arg",
-        "Back row",
-        "leaf message"
-      ],
-      "sources": [
-        "a placeholder API (replace it)"
-      ],
-      "edit": [
-        "scripts/branch-explorer__config.json",
-        "scripts/branch-explorer__fixtures.json"
-      ],
-      "snippets": [
-        "scripts/branch-explorer__config.json: views[0].children pointing at the same view",
-        "scripts/branch-explorer__config.json: overview row arg"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/branch-explorer",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "places-list",
-      "need": "a list of places where each row opens in a map",
-      "layout": "rows with an Open-in-map link, no map widget",
-      "mode": "views",
-      "template": "portal-template",
-      "backing": "remote HTTP API",
-      "widgets": [
-        "cards",
-        "entity_preview"
-      ],
-      "techniques": [
-        "url template from fields",
-        "https only link",
-        "sort by number"
-      ],
-      "sources": [
-        "a placeholder API (replace it)"
-      ],
-      "edit": [
-        "scripts/places-list__config.json",
-        "scripts/places-list__fixtures.json"
-      ],
-      "snippets": [
-        "scripts/places-list__config.json: views[0].item.url template"
-      ],
-      "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/places-list",
-      "verified": "not yet verified in real Bolt"
-    },
-    {
-      "id": "sky-watch",
-      "layout": "overview rows that drill into the ISS, launches, quakes and a city's weather; one preview pane shape (SOURCE, WHEN, KEY FIGURE, DATA)",
-      "mode": "script",
-      "script": "scripts/sky-watch__sky-watch.py",
-      "backing": "five keyless public APIs joined in one script, no engine",
-      "widgets": [
-        "entity_preview"
-      ],
-      "techniques": [
-        "several keyless sources in parallel",
-        "per-source cache with an old copy fallback",
-        "fixed host allowlist",
-        "same-host redirects only",
-        "typed text percent-encoded",
-        "free text as a city",
-        "demo word with labelled sample data"
-      ],
-      "sources": [
-        "api.wheretheiss.at",
-        "ll.thespacedevs.com",
-        "earthquake.usgs.gov",
-        "geocoding-api.open-meteo.com",
-        "api.open-meteo.com"
-      ],
-      "edit": [
-        "scripts/sky-watch__config.json",
-        "scripts/sky-watch__fixtures.json"
-      ],
-      "check": "kit/examples/sky-watch/check.json",
-      "verified": "not verified in real Bolt"
-    }
-  ],
   "coverage": {
     "remote HTTP API": [
       "portal-template",
@@ -758,6 +71,766 @@
       "how": "a bridge script starts the MCP server over stdio and calls one tool (see ENGINE.md, MCP workaround)",
       "use": "the snippet in ENGINE.md",
       "limits": "tested only against a stand-in server; the person needs the server installed; 15 s cap; one tool per app"
+    }
+  ],
+  "quickstart": "QUICKSTART.md",
+  "capabilities": "CAPABILITIES.md and capabilities.json",
+  "apps": [
+    {
+      "id": "portal-template",
+      "need": "a web API with a key: summary tiles, drill down with Back, a detail pane per row",
+      "layout": "overview tiles, drill down to lists, detail with related rows, per-row detail panel",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "drill",
+        "back",
+        "filter word",
+        "ttl cache",
+        "stale fallback",
+        "error rows",
+        "key from env or .env",
+        "fixture mode",
+        "children from another endpoint"
+      ],
+      "sources": [
+        "any REST API with a key"
+      ],
+      "edit": [
+        "scripts/portal-template__config.json",
+        "scripts/portal-template__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/portal-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "acme-dash",
+      "need": "a dashboard with several lists and three drill levels over one API",
+      "layout": "compliance dashboard, 7 lists, controls drill to linked tasks",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "stats and ratios",
+        "badge rules",
+        "filter word",
+        "3-level drill"
+      ],
+      "sources": [
+        "fictional API"
+      ],
+      "edit": [
+        "scripts/acme-dash__config.json",
+        "scripts/acme-dash__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/acme-dash",
+      "verified": "worked in sample mode (tiles, tasks drill, Back, placeholder_examples click-to-try) after install as an in-place upgrade. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
+    },
+    {
+      "id": "widget-gallery",
+      "need": "to see every pane kind drawn: cards, chart, table, detail, tree, diff, markdown",
+      "layout": "one view per pane kind",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "chart",
+        "table",
+        "detail",
+        "json_tree",
+        "diff",
+        "entity_preview",
+        "markdown"
+      ],
+      "techniques": [
+        "widget bind keys",
+        "extra row fields",
+        "nested data",
+        "multiline fields",
+        "trend"
+      ],
+      "sources": [
+        "sample data"
+      ],
+      "edit": [
+        "scripts/widget-gallery__config.json",
+        "scripts/widget-gallery__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/widget-gallery",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "form-template",
+      "need": "a typed input form that saves rows to a local log",
+      "layout": "typed input form, result table",
+      "mode": "form",
+      "widgets": [
+        "table"
+      ],
+      "techniques": [
+        "inputs with number select date text toggle",
+        "validation",
+        "local log"
+      ],
+      "sources": [
+        "a local file"
+      ],
+      "edit": [
+        "scripts/form-template__config.json"
+      ],
+      "check": "./bolt-apps check kit/examples/form-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "chart-template",
+      "need": "line, bar and sparkline charts over rows or a number series",
+      "layout": "tile dashboard plus line, bar and sparkline from rows or from a number series",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "chart"
+      ],
+      "techniques": [
+        "bind.values series mode",
+        "rows mode",
+        "trend_field",
+        "field_sum stats"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/chart-template__config.json",
+        "scripts/chart-template__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/chart-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "table-template",
+      "need": "a sortable table with totals and a share column",
+      "layout": "sortable table with totals, formats and a share column",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "table"
+      ],
+      "techniques": [
+        "columns format align total",
+        "sort",
+        "searchable"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/table-template__config.json",
+        "scripts/table-template__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/table-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "lookup-template",
+      "need": "one typed word in, one detail card out, from chained calls",
+      "layout": "one word in, weather tiles with a sparkline out",
+      "mode": "lookup",
+      "widgets": [
+        "cards"
+      ],
+      "techniques": [
+        "chained endpoints",
+        "path variables",
+        "value maps",
+        "two hosts",
+        "live keyless API"
+      ],
+      "sources": [
+        "Open-Meteo geocoding and forecast (keyless)"
+      ],
+      "edit": [
+        "scripts/lookup-template__config.json",
+        "scripts/lookup-template__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/lookup-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "file-insights-template",
+      "need": "insights about a local file the person names (CSV)",
+      "layout": "verdict tiles and insight rows, drill to a line chart, a bar chart, a table and a problems list",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/file-insights-template__insights.py",
+      "backing": "local file",
+      "widgets": [
+        "cards",
+        "chart",
+        "table",
+        "markdown"
+      ],
+      "techniques": [
+        "path from the query word",
+        "last path kept in the kit cache",
+        "stdlib csv with caps",
+        "hostile cell cleaning",
+        "column mapping in config",
+        "insight rules in config",
+        "labelled sample fallback",
+        "titled charts"
+      ],
+      "sources": [
+        "a local CSV file"
+      ],
+      "edit": [
+        "scripts/file-insights-template__config.json",
+        "scripts/file-insights-template__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/file-insights-template",
+      "verified": "not verified in real Bolt",
+      "edit_in_script": [
+        "scripts/file-insights-template__insights.py: only to add a rule kind"
+      ]
+    },
+    {
+      "id": "cli-wrapper-template",
+      "need": "wrap one command line tool with typed arguments",
+      "layout": "verdict and tiles with a sparkline, drill to a line chart, raw output and the command",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/cli-wrapper-template__wrap.py",
+      "backing": "CLI command",
+      "widgets": [
+        "cards",
+        "chart",
+        "markdown"
+      ],
+      "techniques": [
+        "per-OS command table",
+        "argument list, no shell",
+        "host and count validation",
+        "timeout and kill",
+        "exit code table",
+        "regex output parsing",
+        "tool missing row",
+        "failure row",
+        "result reuse",
+        "fixture-recorded output"
+      ],
+      "sources": [
+        "the system ping command"
+      ],
+      "edit": [
+        "scripts/cli-wrapper-template__config.json",
+        "scripts/cli-wrapper-template__wrap.py"
+      ],
+      "check": "./bolt-apps check kit/examples/cli-wrapper-template",
+      "verified": "not verified in real Bolt",
+      "edit_in_script": [
+        "scripts/cli-wrapper-template__wrap.py: build() (rows depend on what your tool prints)"
+      ]
+    },
+    {
+      "id": "system-glance",
+      "need": "several quick local probes shown as tiles",
+      "layout": "three parallel command probes as tiles, Disk drill view",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/system-glance__system-glance.py",
+      "backing": "CLI command",
+      "widgets": [
+        "cards"
+      ],
+      "techniques": [
+        "parallel probes in one deadline",
+        "unread is never zero",
+        "per-OS command table",
+        "short cache"
+      ],
+      "sources": [
+        "df, uptime, lsof or ss"
+      ],
+      "edit": [
+        "scripts/system-glance__system-glance.py"
+      ],
+      "check": "./bolt-apps check kit/examples/system-glance",
+      "verified": "not verified in real Bolt",
+      "edit_in_script": [
+        "scripts/system-glance__system-glance.py: the probes"
+      ]
+    },
+    {
+      "id": "repo-radar",
+      "need": "join several APIs into one verdict per item",
+      "layout": "verdict and tiles with source health badges, drill to releases diff, vulnerability detail, downloads chart, discussion, since-diff, compare table",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/repo-radar__radar.py",
+      "backing": "remote HTTP API (four, joined)",
+      "widgets": [
+        "cards",
+        "diff",
+        "detail",
+        "chart",
+        "table"
+      ],
+      "techniques": [
+        "parallel calls in a thread pool",
+        "per-call timeout and overall deadline",
+        "join on repo and package, verified",
+        "verdict score with weights in config",
+        "since-last-looked diff in the kit cache",
+        "per-source TTL",
+        "stale copy on failure",
+        "partial-failure rows",
+        "optional token via get_secret",
+        "rate-limit badge",
+        "compare mode"
+      ],
+      "sources": [
+        "GitHub REST",
+        "npm registry and downloads",
+        "OSV.dev",
+        "Hacker News search"
+      ],
+      "edit": [
+        "scripts/repo-radar__config.json",
+        "scripts/repo-radar__fixtures.json",
+        "scripts/repo-radar__radar.py"
+      ],
+      "check": "./bolt-apps check kit/examples/repo-radar",
+      "verified": "not verified in real Bolt",
+      "edit_in_script": [
+        "scripts/repo-radar__radar.py: urls(), the n_* readers, model(), score()"
+      ]
+    },
+    {
+      "id": "around",
+      "need": "stitch several place and weather APIs by distance",
+      "layout": "verdict and tiles with source badges, drill to places panels, bike table, weather line chart, landmarks, auth matrix",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/around__around.py",
+      "backing": "remote HTTP API (five, stitched by distance)",
+      "widgets": [
+        "cards",
+        "detail",
+        "table",
+        "chart"
+      ],
+      "techniques": [
+        "geocode then parallel calls",
+        "haversine stitching",
+        "per-source TTL (30 s bikes)",
+        "updated N s ago badge",
+        "stale copy on failure",
+        "Nominatim 1 req/s guard and User-Agent",
+        "Open in Maps url actions",
+        "auth matrix: none, optional, required free key, bearer, basic",
+        "get_secret setup row",
+        "masked credentials"
+      ],
+      "sources": [
+        "Nominatim",
+        "Overpass",
+        "CityBikes",
+        "Open-Meteo",
+        "Wikipedia geosearch"
+      ],
+      "edit": [
+        "scripts/around__config.json",
+        "scripts/around__fixtures.json",
+        "scripts/around__around.py"
+      ],
+      "check": "./bolt-apps check kit/examples/around",
+      "verified": "not verified in real Bolt",
+      "edit_in_script": [
+        "scripts/around__around.py: gather(), the n_* readers, stitch(), verdict()"
+      ]
+    },
+    {
+      "id": "local-service-template",
+      "need": "list what a service on this computer reports (no script)",
+      "layout": "list of what a local service reports, detail pane",
+      "mode": "http_local (no script)",
+      "backing": "local HTTP service",
+      "widgets": [
+        "detail"
+      ],
+      "techniques": [
+        "http_local GET",
+        "rows_path",
+        "title_field and subtitle_field",
+        "loopback only"
+      ],
+      "sources": [
+        "a service on 127.0.0.1 (Ollama model list as the example)"
+      ],
+      "edit": [
+        "utilities/localmodels.yaml"
+      ],
+      "check": "./bolt-apps lint kit/examples/local-service-template --personal",
+      "verified": "not verified in real Bolt",
+      "verified_note": "response shape from documentation, not recorded"
+    },
+    {
+      "id": "widget-gallery-2",
+      "need": "to see card, image grid and cards with images",
+      "layout": "one view per pane kind: card, image grid, cards with images",
+      "mode": "views",
+      "widgets": [
+        "card",
+        "image_grid",
+        "cards"
+      ],
+      "techniques": [
+        "inline data images",
+        "image_grid bind",
+        "card bind",
+        "8-view limit workaround"
+      ],
+      "sources": [
+        "sample data (generated swatches)"
+      ],
+      "edit": [
+        "scripts/widget-gallery-2__config.json",
+        "scripts/widget-gallery-2__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/widget-gallery-2",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "script-template",
+      "need": "a script app on the kit for an API or tool no engine template fits",
+      "layout": "overview tiles, list with a filter word, detail with Back",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/script-template__app.py",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "table",
+        "detail"
+      ],
+      "techniques": [
+        "views and nav",
+        "Back row",
+        "filter word",
+        "fresh and old cache in code",
+        "offline row",
+        "setup row",
+        "key from keychain or .env",
+        "key stripped from the answer",
+        "sample mode",
+        "--emit-yaml",
+        "KitError text"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/script-template__config.json",
+        "scripts/script-template__fixtures.json",
+        "scripts/script-template__app.py"
+      ],
+      "check": "./bolt-apps check kit/examples/script-template",
+      "verified": "not verified in real Bolt",
+      "edit_in_script": [
+        "scripts/script-template__app.py: n_items, http_get, build, emit_yaml"
+      ]
+    },
+    {
+      "id": "feed-template",
+      "need": "a feed from a list of ids or a result keyed by date, with a date range in the path",
+      "layout": "overview tiles, a story list fetched by id, a list of daily close approaches with a drill to the same day",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "hydrate: ids then one request per id",
+        "date tokens in a path",
+        "flatten: an object of lists keyed by date",
+        "id_field",
+        "parent_field",
+        "key as a query parameter",
+        "second host in allowed_hosts"
+      ],
+      "sources": [
+        "Hacker News API (no key)",
+        "NASA NeoWs (free key)"
+      ],
+      "edit": [
+        "scripts/feed-template__config.json",
+        "scripts/feed-template__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/feed-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "pulse-feed",
+      "need": "a trending feed where a topic word merges more public sources, with open, copy and narrow buttons",
+      "layout": "trending overview with a tile row, a topic word that merges two sources in parallel, a preview pane per story",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/pulse-feed__app.py",
+      "template": "script-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "hydrate: ids then one request per item in parallel",
+        "two sources merged by id",
+        "partial result row",
+        "tile row then rows",
+        "open-link arrow (url)",
+        "Open post, Copy quote and Narrow (utility chain) footer buttons",
+        "safety note in the markdown body",
+        "fresh and old cache",
+        "sample mode with a fixed clock"
+      ],
+      "sources": [
+        "Hacker News Firebase API (free, no key)",
+        "Hacker News Algolia search API (free, no key)"
+      ],
+      "edit": [
+        "scripts/pulse-feed__config.json",
+        "scripts/pulse-feed__fixtures.json",
+        "scripts/pulse-feed__app.py"
+      ],
+      "snippets": [
+        "scripts/pulse-feed__app.py: hydrate() and gather()",
+        "scripts/pulse-feed__app.py: story_row() with kit.action_chain",
+        "scripts/pulse-feed__app.py: emit_yaml() entity_preview bind"
+      ],
+      "check": "./bolt-apps check kit/examples/pulse-feed",
+      "verified": "list worked (live Hacker News stories); the right pane was broken, fixed in PR #19. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary",
+      "edit_in_script": [
+        "scripts/pulse-feed__app.py: n_firebase, n_algolia, story_row, emit_yaml"
+      ]
+    },
+    {
+      "id": "json-tree-browser",
+      "need": "show any JSON response as an expandable tree",
+      "layout": "a list of JSON documents, one collapsible tree per row",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "json_tree"
+      ],
+      "techniques": [
+        "json_tree pane",
+        "data_field",
+        "fixture mode"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/json-tree-browser__config.json",
+        "scripts/json-tree-browser__fixtures.json"
+      ],
+      "snippets": [
+        "scripts/json-tree-browser__config.json: views[0].item.data_field",
+        "scripts/json-tree-browser__config.json: views[0].widget json_tree"
+      ],
+      "check": "./bolt-apps check kit/examples/json-tree-browser",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "expense-tracker",
+      "need": "a spending summary with totals, a category drill and a chart",
+      "layout": "spending tiles with a budget meter, categories that drill to expenses, a daily bar chart",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview",
+        "chart"
+      ],
+      "techniques": [
+        "field_sum and field_max stats",
+        "badge rules",
+        "drill with children",
+        "bar chart",
+        "tile sparkline"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/expense-tracker__config.json",
+        "scripts/expense-tracker__fixtures.json"
+      ],
+      "snippets": [
+        "scripts/expense-tracker__config.json: stats field_sum",
+        "scripts/expense-tracker__config.json: views[0].children",
+        "scripts/expense-tracker__config.json: chart widget bind"
+      ],
+      "check": "./bolt-apps check kit/examples/expense-tracker",
+      "verified": "installed and ran; the first run showed only the API-key setup row, sample fallback is in PR #19. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
+    },
+    {
+      "id": "pipeline-board",
+      "need": "rows grouped by stage with a detail pane and a before and after diff",
+      "layout": "runs grouped by stage, a detail pane per run and a diff pane",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview",
+        "diff"
+      ],
+      "techniques": [
+        "grouped list with children",
+        "custom sort order",
+        "diff pane from multiline fields"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/pipeline-board__config.json",
+        "scripts/pipeline-board__fixtures.json"
+      ],
+      "snippets": [
+        "scripts/pipeline-board__config.json: stages view children",
+        "scripts/pipeline-board__config.json: diff widget bind with left and right"
+      ],
+      "check": "./bolt-apps check kit/examples/pipeline-board",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "unit-convert",
+      "need": "a typed form whose answer is a result detail",
+      "layout": "form (number and two selects), a result row and a detail pane, the same amount in other units",
+      "mode": "custom script on the flat kit",
+      "script": "scripts/unit-convert__app.py",
+      "template": "form-template",
+      "backing": "no network",
+      "widgets": [
+        "detail"
+      ],
+      "techniques": [
+        "inputs form in the app file",
+        "input checked again in the script",
+        "detail pane",
+        "Copy to composer",
+        "offline"
+      ],
+      "sources": [
+        "none: a unit table in config.json"
+      ],
+      "edit": [
+        "scripts/unit-convert__config.json",
+        "scripts/unit-convert__app.py"
+      ],
+      "snippets": [
+        "scripts/unit-convert__app.py: emit_yaml() inputs and submit",
+        "scripts/unit-convert__app.py: convert()"
+      ],
+      "check": "./bolt-apps check kit/examples/unit-convert",
+      "verified": "worked: list of conversions and a per-row detail pane (Result, Formula, Reverse, Kind). maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary",
+      "edit_in_script": [
+        "scripts/unit-convert__app.py: convert, build, emit_yaml"
+      ]
+    },
+    {
+      "id": "branch-explorer",
+      "need": "browse a tree level by level",
+      "layout": "a tree walked one level at a time with Back",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "self-referencing children",
+        "root arg",
+        "Back row",
+        "leaf message"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/branch-explorer__config.json",
+        "scripts/branch-explorer__fixtures.json"
+      ],
+      "snippets": [
+        "scripts/branch-explorer__config.json: views[0].children pointing at the same view",
+        "scripts/branch-explorer__config.json: overview row arg"
+      ],
+      "check": "./bolt-apps check kit/examples/branch-explorer",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "places-list",
+      "need": "a list of places where each row opens in a map",
+      "layout": "rows with an Open-in-map link, no map widget",
+      "mode": "views",
+      "template": "portal-template",
+      "backing": "remote HTTP API",
+      "widgets": [
+        "cards",
+        "entity_preview"
+      ],
+      "techniques": [
+        "url template from fields",
+        "https only link",
+        "sort by number"
+      ],
+      "sources": [
+        "a placeholder API (replace it)"
+      ],
+      "edit": [
+        "scripts/places-list__config.json",
+        "scripts/places-list__fixtures.json"
+      ],
+      "snippets": [
+        "scripts/places-list__config.json: views[0].item.url template"
+      ],
+      "check": "./bolt-apps check kit/examples/places-list",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "sky-watch",
+      "need": "live sky data from several keyless public sources at once, with a typed city",
+      "layout": "overview rows that drill into the ISS, launches, quakes and a city's weather; one preview pane shape (SOURCE, WHEN, KEY FIGURE, DATA)",
+      "mode": "script",
+      "script": "scripts/sky-watch__sky-watch.py",
+      "backing": "five keyless public APIs joined in one script, no engine",
+      "widgets": [
+        "entity_preview"
+      ],
+      "techniques": [
+        "several keyless sources in parallel",
+        "per-source cache with an old copy fallback",
+        "fixed host allowlist",
+        "same-host redirects only",
+        "typed text percent-encoded",
+        "free text as a city",
+        "demo word with labelled sample data"
+      ],
+      "sources": [
+        "api.wheretheiss.at",
+        "ll.thespacedevs.com",
+        "earthquake.usgs.gov",
+        "geocoding-api.open-meteo.com",
+        "api.open-meteo.com"
+      ],
+      "edit": [
+        "scripts/sky-watch__config.json",
+        "scripts/sky-watch__fixtures.json"
+      ],
+      "check": "kit/examples/sky-watch/check.json",
+      "verified": "not verified in real Bolt"
     }
   ],
   "side_by_side": "four kit apps (acme-dash, pulse-feed, expense-tracker, unit-convert) installed side by side with no owned_by_other: maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"

@@ -8,6 +8,6 @@ Write the data and the wiring; the kit does the formatting, the row structure an
 - `examples/portal-template/`: the copy-and-edit template for an app that shows a web API (config.json, fixtures, a generic engine). `examples/acme-dash/` is the public example built from it.
 - `examples/system-glance/`: a small app built with the kit, with fixtures and goldens for `bolt-apps check`.
 
-Design and limits: [docs/kit-design.md](../docs/kit-design.md). Tool: [toolkit/README.md](../toolkit/README.md).
+Start here: [examples/QUICKSTART.md](examples/QUICKSTART.md) (the quick path and the one rules table) and [examples/CAPABILITIES.md](examples/CAPABILITIES.md) (what works). Design: [docs/kit-design.md](../docs/kit-design.md). Tool: [toolkit/README.md](../toolkit/README.md).
 
 Script apps are tier 3, which the gallery does not accept, so the example lives here and not under `apps/`.

@@ -1,12 +1,12 @@
 # Pulse feed
 **What this shows:** a trending overview (a summary row, up to three Narrow rows, then one row per story with a trend icon and an open-link arrow), a topic word that merges two public sources in parallel, a preview pane with SOURCE, AUTHOR, AGE and SCORE plus a markdown body with a safety note, and footer buttons Open post, Copy quote and Narrow.
 **Edit these files:** `scripts/pulse-feed__config.json` (hosts, limits, cache), `scripts/pulse-feed__app.py` (`n_firebase`, `n_algolia`, `story_row`, `emit_yaml`) and `scripts/pulse-feed__fixtures.json` (sample answers of both APIs).
-**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/pulse-feed --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/pulse-feed
-node toolkit/bin/bolt-apps.mjs pack kit/examples/pulse-feed --personal --version 1.0.1 --out ../pulse-feed-1.0.1.boltpack
-node toolkit/bin/bolt-apps.mjs verify ../pulse-feed-1.0.1.boltpack
+./bolt-apps lint kit/examples/pulse-feed --personal
+./bolt-apps check kit/examples/pulse-feed
+./bolt-apps pack kit/examples/pulse-feed --personal --version 1.0.1 --out ../pulse-feed-1.0.1.boltpack
+./bolt-apps verify ../pulse-feed-1.0.1.boltpack
 ```
 
 ## Notes

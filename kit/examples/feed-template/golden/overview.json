@@ -1,0 +1,40 @@
+[
+  {
+    "title": "Top stories",
+    "subtitle": "3 stories, each fetched by id",
+    "icon": "globe",
+    "body": "",
+    "nav": {
+      "view": "news"
+    },
+    "actions": [],
+    "kpi_label": "Stories",
+    "kpi_value": 3,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "ids hydrated one request each",
+    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
+    "kpi_badge": "SAMPLE",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Asteroids this week",
+    "subtitle": "4 close approaches, grouped by day",
+    "icon": "globe",
+    "body": "",
+    "nav": {
+      "view": "asteroids"
+    },
+    "actions": [],
+    "kpi_label": "Approaches",
+    "kpi_value": 4,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "today minus 2 days to today",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  }
+]

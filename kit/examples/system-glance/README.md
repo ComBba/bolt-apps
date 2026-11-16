@@ -9,10 +9,10 @@ The command-probe archetype on the flat kit: three read-only probes (`df`, `upti
 - For wrapping a command with typed arguments, validation and a titled chart, see `../cli-wrapper-template`.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/system-glance
-node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance
-node toolkit/bin/bolt-apps.mjs lint kit/examples/system-glance --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/system-glance --personal --version 1.0.1 --out system-glance-1.0.1.boltpack
+./bolt-apps kit vendor --flat kit/examples/system-glance
+./bolt-apps check kit/examples/system-glance
+./bolt-apps lint kit/examples/system-glance --personal
+./bolt-apps pack kit/examples/system-glance --personal --version 1.0.1 --out system-glance-1.0.1.boltpack
 ```

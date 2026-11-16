@@ -1,12 +1,12 @@
 # Branch explorer
 **What this shows:** a tree walked one level at a time: a view whose `children` point at itself, so every Enter goes in and Back comes out
 **Edit these files:** `scripts/branch-explorer__config.json` (`views[0].children` and the root `arg` on the overview row) and `scripts/branch-explorer__fixtures.json` (`nodes` with an `id` and a `parent`).
-**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/branch-explorer --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/branch-explorer
-node toolkit/bin/bolt-apps.mjs pack kit/examples/branch-explorer --personal --version 1.0.1 --out ../branch-explorer-1.0.1.boltpack
-node toolkit/bin/bolt-apps.mjs verify ../branch-explorer-1.0.1.boltpack
+./bolt-apps lint kit/examples/branch-explorer --personal
+./bolt-apps check kit/examples/branch-explorer
+./bolt-apps pack kit/examples/branch-explorer --personal --version 1.0.1 --out ../branch-explorer-1.0.1.boltpack
+./bolt-apps verify ../branch-explorer-1.0.1.boltpack
 ```
 
 ## Notes

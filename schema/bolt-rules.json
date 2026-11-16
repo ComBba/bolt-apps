@@ -589,7 +589,11 @@
   "manifest_only_keys": [
    "flow",
    "confirm"
-  ]
+  ],
+  "scan_max": 24,
+  "insert_max": 10000,
+  "query_template_max": 512,
+  "chain_depth_max": 1
  },
  "http_local": {
   "reserved_ports": [
@@ -634,7 +638,8 @@
   "output_cap_bytes": 4194304,
   "cwd": [
    "home"
-  ]
+  ],
+  "stderr_cut_bytes": 2048
  },
  "pack": {
   "script_max_depth": 8,
@@ -658,12 +663,20 @@
   "label_cut": 24,
   "trend_keep": 30,
   "value_compact_over_chars": 12,
-  "unit_max": 4
+  "unit_max": 4,
+  "delta_max": 10
  },
  "rows": {
   "bolt_max": 2000,
   "kit_schema_max": 200,
-  "engine_max": 50
+  "engine_max": 50,
+  "badge_max": 4,
+  "badge_tones": [
+   "success",
+   "danger",
+   "warn",
+   "info"
+  ]
  },
  "runner_env": {
   "fixed": {
@@ -671,8 +684,8 @@
    "PYTHONDONTWRITEBYTECODE": "1",
    "PYTHONUNBUFFERED": "1",
    "GIT_CONFIG_NOSYSTEM": "1",
-   "GIT_OPTIONAL_LOCKS": "0",
-   "GIT_TERMINAL_PROMPT": "0"
+   "GIT_TERMINAL_PROMPT": "0",
+   "GIT_OPTIONAL_LOCKS": "0"
   },
   "allowlisted_from_host": [
    "HOME",
@@ -888,6 +901,56 @@
    "select",
    "toggle",
    "secret"
+  ]
+ },
+ "widgets": {
+  "row_cap": 500,
+  "tile_cap": 24,
+  "cell_max": 200,
+  "short_max": 80,
+  "number_limit": 1000000000000000,
+  "chart_unit_cut": 8,
+  "json_tree": {
+   "max_depth": 6,
+   "open_depth": 2
+  },
+  "images": {
+   "inline_max_chars": 1048576,
+   "budget_chars": 4194304,
+   "inline_types": [
+    "png",
+    "jpeg",
+    "jpg",
+    "gif",
+    "webp",
+    "avif",
+    "bmp"
+   ]
+  }
+ },
+ "links": {
+  "max_chars": 2048
+ },
+ "nav": {
+  "stack_max": 16,
+  "word_max_index": 8,
+  "token_pattern": "^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$"
+ },
+ "cache": {
+  "drill_entries": 8,
+  "drill_ttl_ms": 300000
+ },
+ "invoke": {
+  "limit_var": 24,
+  "vars": [
+   "query",
+   "args",
+   "inputs",
+   "home",
+   "scripts_dir",
+   "limit",
+   "press",
+   "outname"
   ]
  }
 }

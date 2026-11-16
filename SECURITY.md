@@ -15,7 +15,7 @@ Examples of what to report privately:
 - a secret or real personal data that was merged by mistake;
 - a flaw in how Bolt verifies, installs or runs a Boltpack.
 
-## How apps here are kept safe
+## How apps here are checked
 
 - The checker loads every app with Bolt's own code in a clean setup, recomputes its tier
   and permissions, and looks for secrets and personal data. A failing check blocks the merge.

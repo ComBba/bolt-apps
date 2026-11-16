@@ -74,31 +74,31 @@ working template, lints it, signs it and packs it into a `.boltpack` you can dro
 account and no dependencies; see [toolkit/README.md](toolkit/README.md).
 
 ```
-node toolkit/bin/bolt-apps.mjs new my-app --type transform
-node toolkit/bin/bolt-apps.mjs lint apps/my-app
-node toolkit/bin/bolt-apps.mjs keygen
-node toolkit/bin/bolt-apps.mjs pack apps/my-app
+./bolt-apps new my-app --type transform
+./bolt-apps lint apps/my-app
+./bolt-apps keygen
+./bolt-apps pack apps/my-app
 ```
 
 For apps that run a script (not accepted in the gallery), the [authoring kit](kit/) and its [design](docs/kit-design.md) take care of formatting, row structure and JSON output.
 
 ### A rich app for a web API, in minutes
 
-Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
+Short version: [kit/examples/QUICKSTART.md](kit/examples/QUICKSTART.md) (decision tree, four commands, ten rules). What works and what does not: [CAPABILITIES.md](kit/examples/CAPABILITIES.md). In this README `bolt-apps` means `./bolt-apps`, run from the root of the clone.
+
+Needs Node 18+ and Python 3.9+. Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
 [`kit/examples/portal-template`](kit/examples/portal-template), make a copy with `bolt-apps new` (it renames every file for your app; pick a distinctive app id, since two authors who both ship `weather` still collide), change data in
 `scripts/my-app__config.json` and `scripts/my-app__fixtures.json`, generate the YAML, then check and pack it for yourself:
 
 ```
-node <this repo>/toolkit/bin/bolt-apps.mjs new portal-template my-app --dir ~ && cd ~/my-app      # folder name = app id
-# edit scripts/my-app__config.json and scripts/my-app__fixtures.json
-python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
-node <this repo>/toolkit/bin/bolt-apps.mjs check .
-node <this repo>/toolkit/bin/bolt-apps.mjs pack . --personal --version 1.0.1 --out ../my-app-1.0.1.boltpack
+./bolt-apps new portal-template my-app --dir ~/my-apps
+# edit ~/my-apps/my-app/scripts/my-app__config.json and fixtures.json, then regenerate the app file:
+# cd ~/my-apps/my-app && python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
+./bolt-apps run ~/my-apps/my-app --sample
+./bolt-apps ship ~/my-apps/my-app
 ```
 
-Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows what it can do and asks you to
-confirm (it rates a personal app high risk, which is expected). Raise `--version` each time you pack
-again: Bolt refuses a pack that is not newer than the installed one, and a repack must use the same signing key. Keep packs outside the app folder. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
+Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows one review card (it rates a personal app high risk and says the pack is self-signed: both expected; install it), then Bolt's own "Install an unverified Bolt pack?" dialog (click Install). Then open Settings, Desktop, User Apps, expand the app and click Review and accept; every reship needs that again. `ship` raises the version each time (Bolt refuses a pack that is not newer than the installed one) and keeps one signing key. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
 [`kit/examples/acme-dash`](kit/examples/acme-dash) shows the same template with 8 views and three levels.
 Walkthrough with the row formats: <https://sparcle.app/docs/extend/rich-apps/>. Agents: [AGENTS.md](AGENTS.md) section 4c.
 

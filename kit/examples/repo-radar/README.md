@@ -49,13 +49,13 @@ Any app that stitches two or more APIs on a shared key: a company lookup, a pack
 `scripts/repo-radar__config.json`: `hosts`, `sources` (labels and TTLs), `weights`, `scoring`, `verdict`, `api` (timeouts, workers), `charts`. `scripts/repo-radar__fixtures.json`: recorded answers.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/repo-radar
+./bolt-apps kit vendor --flat kit/examples/repo-radar
 python3 kit/examples/repo-radar/scripts/repo-radar__radar.py --emit-yaml > kit/examples/repo-radar/utilities/radar.yaml
-node toolkit/bin/bolt-apps.mjs check kit/examples/repo-radar --update-golden
-node toolkit/bin/bolt-apps.mjs lint kit/examples/repo-radar --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/repo-radar --personal --version 1.0.1 --out repo-radar-1.0.1.boltpack
+./bolt-apps check kit/examples/repo-radar --update-golden
+./bolt-apps lint kit/examples/repo-radar --personal
+./bolt-apps pack kit/examples/repo-radar --personal --version 1.0.1 --out repo-radar-1.0.1.boltpack
 ```
 Use: `=repo-radar expressjs/express`, `=repo-radar fastify/fastify vs expressjs/express`, `=repo-radar owner/repo:npm-name`.
 

@@ -24,6 +24,7 @@ function sandbox(name, folder = name) {
 	fs.cpSync(path.join(REPO, 'kit', 'python'), path.join(root, 'kit', 'python'), { recursive: true, filter: (s) => !s.includes('__pycache__') });
 	for (const d of ['schema', 'conformance']) if (fs.existsSync(path.join(REPO, 'kit', d))) fs.cpSync(path.join(REPO, 'kit', d), path.join(root, 'kit', d), { recursive: true });
 	fs.cpSync(path.join(REPO, 'schema'), path.join(root, 'schema'), { recursive: true });
+	fs.copyFileSync(path.join(REPO, 'bolt-apps'), path.join(root, 'bolt-apps')); fs.chmodSync(path.join(root, 'bolt-apps'), 0o755);   // the repo-root launcher the READMEs now use
 	const app = path.join(root, 'kit', 'examples', folder);
 	fs.cpSync(path.join(EXAMPLES, name), app, { recursive: true, filter: (s) => !s.includes('__pycache__') });
 	const home = path.join(root, 'home'), bin = path.join(root, 'bin');

@@ -21,4 +21,4 @@ bolt-apps pack . --personal --version 1.0.1 --out ../acme-dash-1.0.1.boltpack
 - Raise the version every time: Bolt refuses a pack whose version is the same as, or older than, the one installed (`same_or_older_version`). Build with `pack --personal --version X --out ../<id>-<ver>.boltpack`, and keep the pack outside the folder.
 - Key storage: the system keychain, or `~/.config/<app id>/.env` (`chmod 600`). A key exported in your shell never reaches the script when Bolt runs it; see `../ENGINE.md`.
 
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.

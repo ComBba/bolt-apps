@@ -1,0 +1,123 @@
+{
+ "_about": "A pinned snapshot of the launcher constants at Bolt 0.1.181, read from its source (not run live). schema/bolt-rules.json must equal every value here; launcher-parity.test.mjs enforces it. When the launcher changes a constant, change this file and bolt-rules.json together.",
+ "bolt_version": "0.1.181",
+ "constants": {
+  "rows.bolt_max": 2000,
+  "rows.badge_max": 4,
+  "rows.badge_tones": [
+   "success",
+   "danger",
+   "warn",
+   "info"
+  ],
+  "bridge.output_cap_bytes": 4194304,
+  "bridge.stderr_cut_bytes": 2048,
+  "timeouts.default_s": 10,
+  "timeouts.min_s": 1,
+  "timeouts.max_s": 60,
+  "actions.footer_max_bolt": 6,
+  "actions.label_kept_bolt": 40,
+  "actions.label_shown": 14,
+  "actions.scan_max": 24,
+  "actions.insert_max": 10000,
+  "actions.query_template_max": 512,
+  "actions.chain_depth_max": 1,
+  "links.max_chars": 2048,
+  "nav.stack_max": 16,
+  "nav.word_max_index": 8,
+  "cache.drill_entries": 8,
+  "cache.drill_ttl_ms": 300000,
+  "invoke.limit_var": 24,
+  "views.max": 8,
+  "widgets.row_cap": 500,
+  "widgets.tile_cap": 24,
+  "widgets.cell_max": 200,
+  "widgets.short_max": 80,
+  "widgets.number_limit": 1000000000000000,
+  "widgets.chart_unit_cut": 8,
+  "widgets.json_tree.max_depth": 6,
+  "widgets.json_tree.open_depth": 2,
+  "widgets.images.inline_max_chars": 1048576,
+  "widgets.images.budget_chars": 4194304,
+  "tile.label_cut": 24,
+  "tile.trend_keep": 30,
+  "tile.value_compact_over_chars": 12,
+  "tile.unit_max": 4,
+  "tile.delta_max": 10,
+  "runner_env.fixed": {
+   "PYTHONNOUSERSITE": "1",
+   "PYTHONDONTWRITEBYTECODE": "1",
+   "PYTHONUNBUFFERED": "1",
+   "GIT_CONFIG_NOSYSTEM": "1",
+   "GIT_TERMINAL_PROMPT": "0",
+   "GIT_OPTIONAL_LOCKS": "0"
+  },
+  "invoke.vars": [
+   "query",
+   "args",
+   "inputs",
+   "home",
+   "scripts_dir",
+   "limit",
+   "press",
+   "outname"
+  ],
+  "actions.kinds": [
+   "url",
+   "composer",
+   "utility",
+   "run"
+  ],
+  "schema_versions": [
+   1,
+   2
+  ]
+ },
+ "sets": {
+  "widgets.images.inline_types": [
+   "png",
+   "jpeg",
+   "jpg",
+   "gif",
+   "webp",
+   "avif",
+   "bmp"
+  ],
+  "no_app_data_kinds": [
+   "image",
+   "color",
+   "weather",
+   "date",
+   "calc"
+  ],
+  "row_pane_kinds": [
+   "entity_preview",
+   "detail",
+   "markdown",
+   "json_tree",
+   "chart",
+   "table",
+   "card"
+  ],
+  "widget_kinds_count": 16,
+  "actions.icons_count": 37,
+  "actions.reserved_label_words_count": 12,
+  "actions.forbidden_ids_count": 13,
+  "env.benign_passthrough_count": 25
+ },
+ "chart_types": {
+  "launcher_native": [
+   "line",
+   "bar",
+   "sparkline"
+  ],
+  "note": "The PWA on main also draws pie, donut, area and series, but the native loader still refuses them, so they are not shipped."
+ },
+ "behaviours_from_source_not_run_live": [
+  "drill cache: last 8 lists for 5 minutes by typed input",
+  "a non-zero exit discards every row",
+  "presentation.searchable is read by nothing",
+  "presentation.widget with no right_widget opens an empty pane",
+  "image_url in a list row shows an initial letter"
+ ]
+}

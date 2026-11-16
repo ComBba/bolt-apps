@@ -34,12 +34,12 @@ Any app that reads one local file and explains it: a log summary, an expense exp
 `scripts/file-insights-template__fixtures.json`: the sample CSV (invented) and the demo files the tests use.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/file-insights-template
+./bolt-apps kit vendor --flat kit/examples/file-insights-template
 python3 kit/examples/file-insights-template/scripts/file-insights-template__insights.py --emit-yaml > kit/examples/file-insights-template/utilities/insights.yaml
-node toolkit/bin/bolt-apps.mjs check kit/examples/file-insights-template --update-golden
-node toolkit/bin/bolt-apps.mjs lint kit/examples/file-insights-template --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/file-insights-template --personal --version 1.0.1 --out file-insights-template-1.0.1.boltpack
+./bolt-apps check kit/examples/file-insights-template --update-golden
+./bolt-apps lint kit/examples/file-insights-template --personal
+./bolt-apps pack kit/examples/file-insights-template --personal --version 1.0.1 --out file-insights-template-1.0.1.boltpack
 ```
 Try the edge cases without a file: `=file-insights-template rows demo-hostile`, `=file-insights-template problems demo-ragged`, `demo-nonnumeric`, `demo-novalue`, `demo-empty`, `demo-huge`.

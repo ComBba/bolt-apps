@@ -1,12 +1,12 @@
 # Pipeline board
 **What this shows:** stages that drill into their runs, a detail pane with a meter per run, and a `detail` pane (Before, After, What changed) for what changed
 **Edit these files:** `scripts/pipeline-board__config.json` (`views`, `children`, the changes `detail` fields) and `scripts/pipeline-board__fixtures.json` (`stages`, `runs`, `changes`).
-**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/pipeline-board --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/pipeline-board
-node toolkit/bin/bolt-apps.mjs pack kit/examples/pipeline-board --personal --version 1.0.1 --out ../pipeline-board-1.0.1.boltpack
-node toolkit/bin/bolt-apps.mjs verify ../pipeline-board-1.0.1.boltpack
+./bolt-apps lint kit/examples/pipeline-board --personal
+./bolt-apps check kit/examples/pipeline-board
+./bolt-apps pack kit/examples/pipeline-board --personal --version 1.0.1 --out ../pipeline-board-1.0.1.boltpack
+./bolt-apps verify ../pipeline-board-1.0.1.boltpack
 ```
 
 ## Notes

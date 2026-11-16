@@ -1,0 +1,147 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "4 asteroids",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
+    "icon": "FileText",
+    "body": "Sample data: fixture mode, no key and no network.",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "2026 AA",
+    "subtitle": "2026-11-12 · misses by 1250000 km",
+    "icon": "globe",
+    "body": "## 2026 AA\n\nPasses on 2026-11-12.",
+    "nav": {
+      "view": "asteroids",
+      "arg": "3001"
+    },
+    "actions": [],
+    "pane": "asteroids",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "2026-11-12",
+    "f2": "1250000"
+  },
+  {
+    "title": "2026 BB",
+    "subtitle": "2026-11-13 · misses by 980001 km",
+    "icon": "globe",
+    "body": "## 2026 BB\n\nPasses on 2026-11-13.",
+    "nav": {
+      "view": "asteroids",
+      "arg": "3002"
+    },
+    "actions": [],
+    "pane": "asteroids",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "2026-11-13",
+    "f2": "980001"
+  },
+  {
+    "title": "2026 CC",
+    "subtitle": "2026-11-13 · misses by 3100000 km",
+    "icon": "globe",
+    "body": "## 2026 CC\n\nPasses on 2026-11-13.",
+    "nav": {
+      "view": "asteroids",
+      "arg": "3003"
+    },
+    "actions": [],
+    "pane": "asteroids",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "2026-11-13",
+    "f2": "3100000"
+  },
+  {
+    "title": "2026 DD",
+    "subtitle": "2026-11-14 · misses by 450001 km",
+    "icon": "globe",
+    "body": "## 2026 DD\n\nPasses on 2026-11-14.",
+    "nav": {
+      "view": "asteroids",
+      "arg": "3004"
+    },
+    "actions": [],
+    "pane": "asteroids",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "",
+    "f1": "2026-11-14",
+    "f2": "450001"
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "asteroids",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "asteroids",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

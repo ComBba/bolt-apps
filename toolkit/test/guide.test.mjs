@@ -17,8 +17,8 @@ const DOCS = ['AGENTS.md', 'CHECKER.md', 'CONTRIBUTING.md', 'toolkit/README.md']
 const read = (f) => fs.readFileSync(path.join(REPO, f), 'utf8');
 const CASES = JSON.parse(read('conformance/verify-cases.json'));
 const write = (f, c) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, c); };
-const SUBCOMMANDS = ['new', 'lint', 'check', 'keygen', 'pack', 'verify', 'kit'];
-const FLAGS = { new: ['--type', '--dir', '--author'], lint: ['--json', '--personal'], check: ['--json', '--os', '--case', '--update-golden'], keygen: ['--out'], pack: ['--key', '--out', '--version', '--notes', '--personal'], verify: ['--json'], kit: ['--flat'] };
+const SUBCOMMANDS = ['new', 'lint', 'check', 'keygen', 'pack', 'verify', 'kit', 'run', 'ship', 'doctor'];
+const FLAGS = { new: ['--type', '--dir', '--author'], lint: ['--json', '--personal'], check: ['--json', '--os', '--case', '--update-golden'], keygen: ['--out'], pack: ['--key', '--out', '--version', '--notes', '--personal'], verify: ['--json'], kit: ['--flat'], run: ['--sample', '--live', '--json'], ship: [], doctor: [] };
 
 // Every command line inside a fenced block of the guide.
 function commandLines() {
@@ -29,7 +29,7 @@ function commandLines() {
 			if (/^## /.test(line)) future = f === 'CHECKER.md' && /^## (Run it|Machine-readable)/.test(line); // documents the checker CLI that is not published yet
 			if (line.startsWith('```')) { fence = !fence; return; }
 			if (future) return;
-			const m = fence && /^\s*(?:node toolkit\/bin\/bolt-apps\.mjs|bolt-apps)\s+(.*?)\s*(?:#.*)?$/.exec(line);
+			const m = fence && /^\s*(?:\.\/bolt-apps|node toolkit\/bin\/bolt-apps\.mjs|bolt-apps)\s+(.*?)\s*(?:#.*)?$/.exec(line);
 			if (m) out.push({ doc: f, line: i + 1, text: m[0].trim(), args: m[1] });
 		});
 	}
@@ -69,7 +69,8 @@ test('every documented lint, pack, verify, keygen and new line runs and exits 0 
 	let ran = 0;
 	for (const l of LINES) {
 		const [sub] = l.args.split(/\s+/);
-		if (['check', 'kit'].includes(sub)) continue;
+		if (['check', 'kit', 'run', 'ship', 'doctor'].includes(sub)) continue;   // exercised by docs-drift.test.mjs (the runnable block) and kit.test.mjs
+		if (sub === 'new' && /^new [a-z0-9-]+-template |^new [a-z-]+ [a-z-]+ --dir/.test(l.args)) continue;
 		const personalPath = /--personal|<folder>|\.boltpack|<app-folder/.test(l.args);
 		const { d, sh } = workspace(personalPath);
 		let a = subst(l.args, personalPath).split(/\s+/);

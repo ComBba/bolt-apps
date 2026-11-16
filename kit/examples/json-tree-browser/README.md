@@ -1,12 +1,12 @@
 # JSON tree browser
 **What this shows:** a list of JSON documents, each drawn as a collapsible JSON tree in the right pane (`json_tree`, fed by `item.data_field`)
 **Edit these files:** `scripts/json-tree-browser__config.json` (`endpoints`, `views[0].item.data_field`) and `scripts/json-tree-browser__fixtures.json` (one `documents` response whose rows carry a `payload` object).
-**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
-node toolkit/bin/bolt-apps.mjs lint kit/examples/json-tree-browser --personal
-node toolkit/bin/bolt-apps.mjs check kit/examples/json-tree-browser
-node toolkit/bin/bolt-apps.mjs pack kit/examples/json-tree-browser --personal --version 1.0.1 --out ../json-tree-browser-1.0.1.boltpack
-node toolkit/bin/bolt-apps.mjs verify ../json-tree-browser-1.0.1.boltpack
+./bolt-apps lint kit/examples/json-tree-browser --personal
+./bolt-apps check kit/examples/json-tree-browser
+./bolt-apps pack kit/examples/json-tree-browser --personal --version 1.0.1 --out ../json-tree-browser-1.0.1.boltpack
+./bolt-apps verify ../json-tree-browser-1.0.1.boltpack
 ```
 
 ## Notes

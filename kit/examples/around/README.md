@@ -50,13 +50,13 @@ Any app that joins sources with no shared id except location or time: a trip pla
 `scripts/around__config.json`: `categories` (OSM filters), `bike_networks`, `radius_m`, `sources`, `score` (weights, comfort range, verdict labels), `auth_demo`, `api`. `scripts/around__fixtures.json`: recorded answers.
 
 ## Commands
-Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
+Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
-node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/around
+./bolt-apps kit vendor --flat kit/examples/around
 python3 kit/examples/around/scripts/around__around.py --emit-yaml > kit/examples/around/utilities/around.yaml
-node toolkit/bin/bolt-apps.mjs check kit/examples/around --update-golden
-node toolkit/bin/bolt-apps.mjs lint kit/examples/around --personal
-node toolkit/bin/bolt-apps.mjs pack kit/examples/around --personal --version 1.0.1 --out around-1.0.1.boltpack
+./bolt-apps check kit/examples/around --update-golden
+./bolt-apps lint kit/examples/around --personal
+./bolt-apps pack kit/examples/around --personal --version 1.0.1 --out around-1.0.1.boltpack
 ```
 Use: `=around Bryant Park, New York`. A map pane is not used: personal apps cannot show the map widget, so each row carries an Open in Maps action (OpenStreetMap).
 

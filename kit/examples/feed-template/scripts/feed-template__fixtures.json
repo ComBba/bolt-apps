@@ -1,0 +1,77 @@
+{
+  "_now": 1763078400,
+  "news": [
+    {
+      "id": 101,
+      "title": "Sample story one",
+      "by": "alice",
+      "score": 120
+    },
+    {
+      "id": 102,
+      "title": "Sample story two",
+      "by": "bob",
+      "score": 87
+    },
+    {
+      "id": 103,
+      "title": "Sample story three",
+      "by": "carol",
+      "score": 45
+    }
+  ],
+  "asteroids": {
+    "near_earth_objects": {
+      "2026-11-12": [
+        {
+          "name": "2026 AA",
+          "close_approach_data": [
+            {
+              "miss_distance": {
+                "kilometers": "1250000.4"
+              }
+            }
+          ],
+          "neo_reference_id": "3001"
+        }
+      ],
+      "2026-11-13": [
+        {
+          "name": "2026 BB",
+          "close_approach_data": [
+            {
+              "miss_distance": {
+                "kilometers": "980000.7"
+              }
+            }
+          ],
+          "neo_reference_id": "3002"
+        },
+        {
+          "name": "2026 CC",
+          "close_approach_data": [
+            {
+              "miss_distance": {
+                "kilometers": "3100000.2"
+              }
+            }
+          ],
+          "neo_reference_id": "3003"
+        }
+      ],
+      "2026-11-14": [
+        {
+          "name": "2026 DD",
+          "close_approach_data": [
+            {
+              "miss_distance": {
+                "kilometers": "450000.9"
+              }
+            }
+          ],
+          "neo_reference_id": "3004"
+        }
+      ]
+    }
+  }
+}
