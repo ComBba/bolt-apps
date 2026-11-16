@@ -30,7 +30,7 @@ const OK_IP = (ip) => /^(127\.\d+\.\d+\.\d+|0\.0\.0\.0|1\.1\.1\.1|1\.0\.0\.1|8\.
 // "sparcle" is allowed only: in an author block, inside a URL (github.com/SparcleHQ, sparcle.app), or in these public product phrases.
 // The project's own governance files may name the company that publishes it.
 const OK_SPARCLE_FILES = /^(\.github\/|[A-Z_]+\.md$|toolkit\/README\.md$)/;
-const OK_SPARCLE_PHRASES = [/signed by a Sparcle or company key/, /Sparcle or your company signed it/, /Sparcle-signed bundles/, /Reviewed by Sparcle/, /Sparcle maintainer/, /pull requests from outside Sparcle/, /Sparcle checked this version/];
+const OK_SPARCLE_PHRASES = [/signed by a Sparcle or company key/, /Sparcle or your company signed it/, /Sparcle-signed bundles/, /Reviewed by Sparcle/, /Sparcle maintainer/, /pull requests from outside Sparcle/, /Sparcle checked this version/, /signed by Sparcle\. This pack/];   // the last is the literal 181 install-dialog sentence
 const SUPPRESSED = [
 	[/Claude Code/, 'AGENTS.md addresses AI coding agents by product name; no device or fleet name'],
 ];

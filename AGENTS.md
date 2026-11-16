@@ -137,7 +137,7 @@ Rules a script app must follow, each one a `verify` code:
   (`script_name`); every file under `scripts/` starts with `<app id>__` (`script_not_namespaced`: Bolt installs all apps' scripts into one folder, so a bare `config.json` or `bolt_app_kit.py` stops a second app installing). The kit ships as one file, `scripts/<app id>__bolt_app_kit.py`, made by
   `bolt-apps kit vendor --flat <folder>`, which keeps the command's helper list short.
 - The app file's `chip` must equal its `id` (`chip_not_id`): the launcher looks apps up by id, so another chip is offered but never runs.
-- With no key an engine app starts in the state `api.on_missing_key` names: `sample` (labelled sample data, for a fictional-API demo) or `setup` (one row saying how to add the key, the default). After a drop the person sees one review card (it says the pack is self-signed: expected, install it; on macOS an unverified-developer prompt may follow), then Settings, Desktop, User Apps, expand the app, Review and accept; again after every reship; an empty list on Enter means not approved yet. Details: `kit/examples/QUICKSTART.md`.
+- With no key an engine app starts in the state `api.on_missing_key` names: `sample` (labelled sample data, for a fictional-API demo) or `setup` (one row saying how to add the key, the default). After a drop the person sees one review card (it says the pack is self-signed: expected, install it), then Bolt's own "Install an unverified Bolt pack?" dialog (click Install), then Settings, Desktop, User Apps, expand the app, Review and accept; again after every reship; an empty list on Enter means not approved yet. Details: `kit/examples/QUICKSTART.md`.
 - The command names the script as `{{scripts_dir}}/<name>`, bare, never in quotes
   (`command_variable_in_quotes`, `script_path_relative`, `script_missing`). Example:
   `macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"`.
@@ -194,12 +194,12 @@ version, verify). To do the steps yourself, `lint`, `verify`, `keygen` and `pack
 Raise `--version` on every pack: Bolt refuses a pack that is the same version or older than the
 installed one ("a pack is only replaced by a newer version"). Keep the pack outside the folder: a
 `.boltpack` left inside the app folder gets in the way, so write packs elsewhere. Repack with the same
-signing key you first used: a new keygen is a different signer and Bolt refuses with "already belongs to". The
+signing key you first used: a new keygen is a different signer, and Bolt may then refuse with "already belongs to" (from the 181 source, not seen live). The
 install prompt rates a personal app HIGH RISK: any app that runs a program (tier 3) is, and the template's Open
 button uses `{{row.open_url}}`, which adds "opens links that are not fixed https addresses". That is expected.
 
 **Before you hand it over:** lint, check, verify and pack as above, then install the pack in Bolt
-(drop it on the launcher or Bolt Apps, install at the one review card, then Settings, Desktop, User Apps, expand the app, Review and accept; type `=<chip>`) and confirm the overview shows rows. The tools cannot draw the
+(drop it on the launcher or Bolt Apps, install at the review card, click Install on Bolt's own "Install an unverified Bolt pack?" dialog, then Settings, Desktop, User Apps, expand the app, Review and accept; type `=<chip>`) and confirm the overview shows rows. The tools cannot draw the
 launcher, so the first run in Bolt is the proof. Say which steps you could not do.
 
 Every mention of `scripts_dir` in the app file, comments included, must be `{{scripts_dir}}/<file>`

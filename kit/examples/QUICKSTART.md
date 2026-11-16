@@ -32,7 +32,7 @@ Needs Node 18+ and Python 3.9+:
 ./bolt-apps ship ~/my-apps/my-tool                         # lint, check, pack, verify; prints the .boltpack
 ```
 
-Edit between `new` and `run`. After editing an engine app's `scripts/<id>__config.json`, regenerate its app file: `cd ~/my-apps/my-tool && python3 scripts/my-tool__engine.py --emit-yaml > utilities/my-tool.yaml`. Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the review card (self-signed is expected), install, then Settings, Desktop, User Apps, expand the app, Review and accept, and type `=my-tool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
+Edit between `new` and `run`. After editing an engine app's `scripts/<id>__config.json`, regenerate its app file: `cd ~/my-apps/my-tool && python3 scripts/my-tool__engine.py --emit-yaml > utilities/my-tool.yaml`. Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the review card (self-signed is expected), click Install, click Install again on Bolt's own "Install an unverified Bolt pack?" dialog, then Settings, Desktop, User Apps, expand the app, Review and accept, and type `=my-tool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
 
 ## 3. Ten hard rules
 
@@ -77,12 +77,12 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 | After a drop the dialog says `Installed ... Ready to use: your-app-id` | Type `=<chip>`. From the 181 source (not yet seen in a running 181), the list refreshes after a pack install. A file you saved into the User Apps folder by hand needs Reload. |
 | The chip is missing | Settings, Desktop App, User Apps, click Reload. A file that failed to load is listed there with the reason. |
 | "Not run. Needs your OK" | Press Enter on the app's run row, read what it can do, accept. First run only. |
-| What 181 shows after a drop | One review card (the self-signed warning is expected: install); on macOS an unverified-developer prompt may follow. Then Settings, Desktop, User Apps, expand the app, Review and accept: that is what lets it run. A reship needs it again. |
+| What 181 shows after a drop | One review card (the self-signed warning is expected: install), then Bolt's own "Install an unverified Bolt pack?" dialog (click Install; every OS). Then Settings, Desktop, User Apps, expand the app, Review and accept: that is what lets it run. A reship needs it again. |
 | HIGH RISK in the install prompt | Normal for a personal app that runs a script (tier 3). Read the permissions, confirm only code you have read. |
 | `Bolt did not install this pack because this version, or a newer one, is already installed. Nothing was changed.` (`same_or_older_version`) | `ship` already raises the version. If you packed by hand, pass a higher `--version`. To go back, remove the app first (see the Remove row). |
 | `Bolt did not install this pack because one of its files already belongs to another installed pack. Nothing was changed.` (`owned_by_other`; the log has the longer sentence naming the file) | Another installed app owns a script file with that name. Name every file `<id>__<name>` (`./bolt-apps new` does), or remove the other app first. |
 | `Bolt did not install this pack because one of its files is inside too many folders. Nothing was changed.` (`too_deep`: a script nested deeper than 8 folders) | Keep scripts flat, directly in `scripts/`. |
-| `This pack cannot be installed here. Nothing was changed.` (any refusal 181 has no wording for, such as `version_unreadable`) | The reason is in `bolt-startup.log`, search for `user_utils: install pack`. Run `./bolt-apps ship` again. |
+| `This pack cannot be installed here. Nothing was changed.` (a refusal with no wording, such as `version_unreadable`) | The reason is in `bolt-startup.log`, search for `user_utils: install pack`. Run `./bolt-apps ship` again. |
 | Empty list after install and Enter | Not approved yet: Settings, Desktop, User Apps, expand the app, Review and accept. Every reship changes the files, so approve again. 181 shows an empty list instead of saying so. |
 | `chip_not_id` from lint, verify or pack | Set `chip` in the app file (and in `config.json`, then regenerate) to the app's id: Bolt only runs an app whose chip equals its id. |
 | "Bundle rejected" | You dropped it in Admin settings. Drop it on the Bolt launcher or Bolt Apps. |

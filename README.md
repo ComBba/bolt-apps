@@ -98,7 +98,7 @@ Needs Node 18+ and Python 3.9+. Want tiles, drill down with Back, a detail panel
 ./bolt-apps ship ~/my-apps/my-app
 ```
 
-Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows one review card (it rates a personal app high risk and says the pack is self-signed: both expected; install it; on macOS an unverified-developer prompt may follow). Then open Settings, Desktop, User Apps, expand the app and click Review and accept; every reship needs that again. `ship` raises the version each time (Bolt refuses a pack that is not newer than the installed one) and keeps one signing key. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
+Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows one review card (it rates a personal app high risk and says the pack is self-signed: both expected; install it), then Bolt's own "Install an unverified Bolt pack?" dialog (click Install). Then open Settings, Desktop, User Apps, expand the app and click Review and accept; every reship needs that again. `ship` raises the version each time (Bolt refuses a pack that is not newer than the installed one) and keeps one signing key. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
 [`kit/examples/acme-dash`](kit/examples/acme-dash) shows the same template with 8 views and three levels.
 Walkthrough with the row formats: <https://sparcle.app/docs/extend/rich-apps/>. Agents: [AGENTS.md](AGENTS.md) section 4c.
 

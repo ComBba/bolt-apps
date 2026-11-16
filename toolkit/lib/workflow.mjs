@@ -215,9 +215,10 @@ export function ship(args) {
 	const chip = (() => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || app.id; } catch { return app.id; } })();
 	console.log(`\nShipped ${app.id} ${version}: ${out}\n\nInstall it:
   1. Drop ${q(out)} on the Bolt launcher (or on Bolt Apps; not Admin settings).
-  2. Bolt shows one review card. It says the pack is self-signed: that is expected, install it. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it. On macOS an unverified-developer prompt may follow: accept it.
-  3. Then open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept. Every reship changes the files, so you do this each time. An empty list when you press Enter means the app is not approved yet.
-  4. Open the launcher and type =${chip}.
+  2. Bolt shows one review card. It says the pack is self-signed: that is expected, install it. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it. Click Install.
+  3. Bolt's own "Install an unverified Bolt pack?" dialog follows, on every OS, for a pack you signed yourself. Click Install.
+  4. Then open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept. Every reship changes the files, so you do this each time. An empty list when you press Enter means the app is not approved yet.
+  5. Open the launcher and type =${chip}.
   ${startMode(dir) || 'Start mode: this app has no engine config, so it starts as its script says.'}
 To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.
 This app runs as you: only install code you have read.
