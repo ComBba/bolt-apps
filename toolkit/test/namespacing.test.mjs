@@ -231,6 +231,49 @@ test('every public example has chip equal to id, and a chip different from the i
 	for (const a of [['lint', path.join(d, 'chipcase'), '--personal'], ['verify', path.join(d, 'chipcase')], ['pack', path.join(d, 'chipcase'), '--personal', '--key', KEY]]) { const r = cli(home, d, ...a); assert.notEqual(r.status, 0, a[0]); assert.match(r.stdout + r.stderr, /chip_not_id/, a[0]); }
 });
 
+test('on_missing_key: sample shows the labelled data and a key hint; setup shows only the setup row; ship says the start mode', () => {
+	const d = tmp('ns-mode-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'portal-template', 'modeapp', '--dir', d).status, 0);
+	const app = path.join(d, 'modeapp'), cfgp = path.join(app, 'scripts', 'modeapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
+	assert.equal(cfg.api.on_missing_key, 'sample');
+	const run = (env) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'modeapp__engine.py'), 'overview'], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
+	let rows = JSON.parse(run({}).stdout);
+	assert.match(rows[0].title, /^SAMPLE DATA: add your .* API key to see live data$/); assert.match(rows[1].title, /^Add your .* API key$/); assert.ok(rows.length > 3, 'the sample data follows');
+	for (const r of rows.slice(0, 2)) { assert.ok(!r.kpi_label && !r.kpi_value && !r.pane, JSON.stringify(r)); }
+	cfg.api.on_missing_key = 'setup'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	rows = JSON.parse(run({}).stdout); assert.equal(rows.length, 1); assert.match(rows[0].title, /^Add your .* API key$/); assert.ok(!rows[0].pane && !rows[0].kpi_label);
+	rows = JSON.parse(run({ BOLT_APP_FIXTURE: '0' }).stdout); assert.equal(rows.length, 1);
+	const s = cli(home, d, 'doctor', app); assert.match(s.stdout, /Start mode: live when your key is found; with no key it shows only a row/);
+	cfg.api.on_missing_key = 'sample'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	assert.match(cli(home, d, 'doctor', app).stdout, /labelled SAMPLE DATA/);
+});
+
+test('check refuses what the launcher cannot draw in the right pane: row panes that name no preview, list_data or unsuitable views, and empty or oversized tile grids', async () => {
+	const { paneProblems, presentationOf } = await import('../lib/check.mjs');
+	const W = (kind, mode) => ({ kind, mode });
+	const pres = (top, views) => ({ top, views: new Map(Object.entries(views)), viewArg: 'view' });
+	const codes = (p, rows, v = 'overview') => paneProblems(p, rows, v).map((x) => x.code).sort();
+	const tiles = { kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'kpi_value' }, prev = W('entity_preview', 'selected_row');
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: prev }), [{ title: 't', kpi_value: 1, kpi_label: 'x', pane: 'a' }]), []);
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: null }), [{ title: 't', pane: 'a' }]), ['pane_no_widget']);
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: tiles }), [{ title: 't', pane: 'a' }]), ['pane_list_data']);
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: W('diff', 'selected_row') }), [{ title: 't', pane: 'a' }]), ['pane_kind']);
+	assert.deepEqual(codes(pres(tiles, { overview: null }), [{ title: 't', pane: 'nope' }]), ['pane_no_view']);
+	assert.deepEqual(codes(pres(tiles, { overview: null }), [{ title: 't', pane: 'overview', kpi_value: 1 }]), [], 'a pane naming the view the run is on is drawn by that view');
+	const stories = Array.from({ length: 30 }, (_, i) => ({ title: `s${i}` }));
+	assert.deepEqual(codes(pres(tiles, { overview: null }), stories), ['empty_tile_grid', 'tile_cap']);
+	const grid = { kind: 'cards', mode: 'list_data', layout: 'grid', valueField: 'kpi_value' };
+	assert.deepEqual(codes(pres(grid, { overview: null }), stories), [], 'a grid layout is not a tiles layout: 30 rows and no numbers are fine');
+	const custom = { ...tiles, valueField: 'count' };
+	assert.deepEqual(codes(pres(custom, { overview: null }), Array.from({ length: 10 }, (_, i) => ({ title: `r${i}`, count: i }))), [], 'the bound value field is the one tested');
+	assert.deepEqual(codes(pres(custom, { overview: null }), Array.from({ length: 10 }, (_, i) => ({ title: `r${i}`, kpi_value: i }))), ['empty_tile_grid']);
+	assert.deepEqual(codes(pres(null, { overview: prev }), stories), [], 'a selected_row preview takes any number of rows');
+	// the shipped pulse-feed declares a preview for every view that lists stories
+	const p = presentationOf(path.join(EX, 'pulse-feed'));
+	for (const v of ['overview', 'topic', 'stories']) assert.deepEqual([p.views.get(v).kind, p.views.get(v).mode], ['entity_preview', 'selected_row'], v);
+	assert.equal(p.top, null);
+});
+
 test('a row action that chains must name the app\'s own id (chain_target_not_self); pulse-feed chains to itself', async () => {
 	const { chainProblems } = await import('../lib/check.mjs');
 	const chain = (t) => ({ title: 'x', actions: [{ id: 'n', label: 'Narrow', kind: 'utility', target_chip: t, query: 'rust' }] });
@@ -240,4 +283,23 @@ test('a row action that chains must name the app\'s own id (chain_target_not_sel
 	const d = tmp('ns-chain-'), home = tmp('ns-home-');
 	assert.equal(cli(home, d, 'new', 'pulse-feed', 'my-pulse', '--dir', d).status, 0);
 	const c = cli(home, d, 'check', path.join(d, 'my-pulse')); assert.equal(c.status, 0, c.stdout);
+});
+
+test('on_missing_key: a loose key file keeps its setup row, an unknown value is a config error, chart views carry no label row', () => {
+	const d = tmp('ns-omk-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'portal-template', 'omkapp', '--dir', d).status, 0);
+	const app = path.join(d, 'omkapp'), cfgp = path.join(app, 'scripts', 'omkapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
+	const run = (args, env = {}) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'omkapp__engine.py'), ...args], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
+	const envf = path.join(home, 'loose.env'); fs.writeFileSync(envf, `${cfg.api.key_env}=abc\n`, { mode: 0o644 }); fs.chmodSync(envf, 0o644);
+	cfg.api.env_file = envf; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	let rows = JSON.parse(run(['overview']).stdout);
+	assert.match(rows[0].title, /Tighten the permissions/); assert.ok(!rows.some((r) => /SAMPLE DATA/.test(r.title)));
+	delete cfg.api.env_file; cfg.api.on_missing_key = 'maybe'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	rows = JSON.parse(run(['overview']).stdout); assert.match(rows[0].title, /not set up correctly/); assert.match(rows[0].subtitle, /on_missing_key must be setup or sample/);
+	// a chart or table data view gets no label row (it would be a plotted point); the overview does
+	const ct = path.join(EX, 'chart-template'), fx = path.join(ct, 'scripts', 'chart-template__engine.py');
+	const rn = (a) => JSON.parse(spawnSync('/usr/bin/python3', ['-I', fx, ...a], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } }).stdout);
+	assert.match(rn(['overview'])[0].title, /^SAMPLE DATA/);
+	const cj = JSON.parse(fs.readFileSync(path.join(ct, 'scripts', 'chart-template__config.json'), 'utf8')), dv = cj.views.find((v) => v.widget && v.widget.kind === 'chart');
+	assert.ok(dv, 'chart-template has a chart view'); assert.ok(!rn([dv.id]).some((r) => /SAMPLE DATA/.test(r.title)));
 });

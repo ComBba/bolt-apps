@@ -284,12 +284,12 @@ def build(view, cfg, source, a, notes, series, unit_name, grp, ngroups, sample, 
             tl = kit.tile("Total", total, "", None, note="all rows") if rid == "total" and a["recs"] else None
             rows.append(kit.row(title, sub, icon="Calculator" if rid == "total" else "Activity" if tone != "WATCH" else "AlertCircle", badge=tone, tile=tl))
         rows.append(kit.row("Trend", "%s, %s" % (unit_name or "no dates", kit.fmt_count(len(series), "period")), icon="line-chart",
-                            nav={"view": "trend"}, pane="trend", copy=False))
-        rows.append(kit.row("Breakdown", "%s" % kit.fmt_count(ngroups, "group"), icon="Layers", nav={"view": "breakdown"}, pane="breakdown", copy=False))
-        rows.append(kit.row("Rows", "first %d, as read" % lim["preview_rows"], icon="list", nav={"view": "rows"}, pane="rows", copy=False))
+                            nav={"view": "trend"}, copy=False))
+        rows.append(kit.row("Breakdown", "%s" % kit.fmt_count(ngroups, "group"), icon="Layers", nav={"view": "breakdown"}, copy=False))
+        rows.append(kit.row("Rows", "first %d, as read" % lim["preview_rows"], icon="list", nav={"view": "rows"}, copy=False))
         prob = a["skipped"] + a["bad_dates"] + notes["ragged"]
         rows.append(kit.row("Problems", "%d things worth knowing" % (prob + (1 if truncated or notes["capped_rows"] or notes["capped_cols"] else 0)),
-                            icon="AlertCircle", nav={"view": "problems"}, pane="problems", copy=False))
+                            icon="AlertCircle", nav={"view": "problems"}, copy=False))
         return rows
     if view == "trend":
         c = cfg["charts"]["trend"]
@@ -329,6 +329,11 @@ def build(view, cfg, source, a, notes, series, unit_name, grp, ngroups, sample, 
 
 # ------------------------------------------------------------------ yaml
 
+OVERVIEW_PANE = ["    overview:", "      right_widget:", "        kind: entity_preview", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"',
+                 "          tiles_above:", '            title: "{{row.kpi_label}}"', '            value: "{{row.kpi_value}}"', '            unit: "{{row.kpi_unit}}"', '            max: "{{row.kpi_max}}"',
+                 '            subtitle: "{{row.kpi_note}}"', '            badge: "{{row.kpi_badge}}"', '          body: "{{row.body}}"']   # the overview is a list of rows that drill into views: each row is drawn by this preview, and the views keep their own widgets
+
+
 def emit_yaml(cfg):
     app = cfg["app"]
     words = " ".join("{{scripts_dir}}/%s" % f for f in FILE_WORDS)
@@ -351,7 +356,7 @@ def emit_yaml(cfg):
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title",
           "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:", "    kind: cards", "    mode: list_data", "    bind:",
           '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", "    overview: {}"]
+          '      max: "{{row.kpi_max}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", *OVERVIEW_PANE]
     for vid, key in (("trend", "trend"), ("breakdown", "breakdown")):
         L += ["    %s:" % vid, "      right_widget:", "        kind: chart", "        mode: list_data", "        bind:",
               '          type: "%s"' % ch[key]["type"], '          x: "label"', '          y: "value"', '          label: %s' % json.dumps(ch[key]["title"])]

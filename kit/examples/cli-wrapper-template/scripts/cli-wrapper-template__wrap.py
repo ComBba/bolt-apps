@@ -184,9 +184,9 @@ def build(view, cfg, res, host, count, cmd, fromcache, age):
                                 trend=[ms for _, ms in st["replies"]] or None))
         rows.append(kit.row("Loss %s%%" % kit.fmt_num(st["loss"], 0), "%s of %s replies" % (st["received"], st["sent"]), icon="Percent",
                             tile=kit.tile("Loss", st["loss"], "%", 100, note="%s of %s" % (st["received"], st["sent"])), badge="" if st["loss"] == 0 else "LOSS"))
-        rows.append(kit.row("Replies", kit.fmt_count(len(st["replies"]), "reply", "replies"), icon="LineChart", nav={"view": "replies"}, pane="replies", copy=False))
+        rows.append(kit.row("Replies", kit.fmt_count(len(st["replies"]), "reply", "replies"), icon="LineChart", nav={"view": "replies"}, copy=False))
         rows.append(kit.row("Raw output", "exactly what ping printed", icon="Terminal", nav={"view": "raw"}, pane="raw", copy=False))
-        rows.append(kit.row("The command", "what ran on this %s" % OS, icon="SquareTerminal", nav={"view": "command"}, pane="command", copy=False))
+        rows.append(kit.row("The command", "what ran on this %s" % OS, icon="SquareTerminal", nav={"view": "command"}, copy=False))
         rows.append(kit.refresh_row("overview", title="Ping again", subtitle="Enter to run ping again (a result is reused for %d s)" % cfg["limits"]["result_ttl"]))
         if fromcache:
             rows.insert(1, kit.row("From a recent run", "%s ago" % kit.fmt_duration(age), icon="Clock", badge="CACHED", copy=False))
@@ -199,6 +199,11 @@ def build(view, cfg, res, host, count, cmd, fromcache, age):
         return [back(), kit.row("ping output", "%d lines" % len(res["out"].splitlines()), icon="Terminal", body="\n".join("    " + l for l in kit.clean_lines(res["out"], 40, cfg["limits"]["max_output"]).splitlines()), copy=False)]
     return [back(), kit.row("Command", shown, icon="SquareTerminal", body="    " + shown, copy=shown,
                             actions=[kit.action_copy("cmd", "Copy command", shown, safe=False)])]
+
+
+OVERVIEW_PANE = ["    overview:", "      right_widget:", "        kind: entity_preview", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"',
+                 "          tiles_above:", '            title: "{{row.kpi_label}}"', '            value: "{{row.kpi_value}}"', '            unit: "{{row.kpi_unit}}"', '            max: "{{row.kpi_max}}"', '            trend: "{{row.trend}}"',
+                 '            subtitle: "{{row.kpi_note}}"', '            badge: "{{row.kpi_badge}}"', '          body: "{{row.body}}"']   # the overview is a list of rows that drill into views: each row is drawn by this preview, and the views keep their own widgets
 
 
 def emit_yaml(cfg):
@@ -217,7 +222,7 @@ def emit_yaml(cfg):
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title",
           "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:", "    kind: cards", "    mode: list_data", "    bind:",
           '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", "    overview: {}",
+          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", *OVERVIEW_PANE,
           "    replies:", "      right_widget:", "        kind: chart", "        mode: list_data", "        bind:", '          type: "%s"' % cfg["chart"]["type"],
           '          x: "label"', '          y: "value"', '          label: %s' % json.dumps(cfg["chart"]["title"]),
           "    raw:", "      right_widget:", "        kind: markdown", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          body: "{{row.body}}"',

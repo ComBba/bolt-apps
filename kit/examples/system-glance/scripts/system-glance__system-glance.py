@@ -81,11 +81,11 @@ def read_all(deadline, cache):
 
 def disk_row(p):
     if p.unread:
-        return kit.row("Disk: not read", "Could not read the disk. Enter to try again", icon="hard-drive", pane="disk",
+        return kit.row("Disk: not read", "Could not read the disk. Enter to try again", icon="hard-drive",
                        nav={"view": "disk"}, copy=False)
     d = p.value
     return kit.row("Disk %s used" % kit.fmt_pct(d["pct"]), "%s of %s" % (kit.fmt_bytes(d["used"]), kit.fmt_bytes(d["total"])),
-                   icon="hard-drive", pane="disk", nav={"view": "disk"},
+                   icon="hard-drive", nav={"view": "disk"},
                    tile=kit.tile("Disk", d["pct"], "%", 100, note=kit.fmt_bytes(d["total"] - d["used"]) + " free"),
                    badge="FULL" if kit.rnd(d["pct"]) >= 90 else "")
 

@@ -13,6 +13,7 @@
   "key_env": "GALLERY2_API_KEY",
   "env_file": "~/.config/widget-gallery-2/.env",
   "fixture_default": false,
+  "on_missing_key": "sample",
   "fixture_file": "fixtures.json",
   "fixture_banner": false
  },

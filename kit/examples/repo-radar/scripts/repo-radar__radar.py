@@ -528,34 +528,34 @@ def overview_rows(ctx, m, since, new_snapshot_note):
     else:
         rows.append(kit.safe_row("GitHub: unavailable", m["raw"]["gh_repo"]["err"] or "no answer", icon="AlertCircle", badge="DOWN", copy=False))
     if since is not None:
-        rows.append(kit.safe_row("Since you last looked · %s" % kit.fmt_count(len(since), "change"), new_snapshot_note if since else "nothing changed", icon="Clock", nav={"view": "since"}, pane="since", copy=False))
+        rows.append(kit.safe_row("Since you last looked · %s" % kit.fmt_count(len(since), "change"), new_snapshot_note if since else "nothing changed", icon="Clock", nav={"view": "since"}, copy=False))
     else:
-        rows.append(kit.safe_row("Since you last looked", "first look at this repo: your next run shows the changes", icon="Clock", nav={"view": "since"}, pane="since", copy=False))
+        rows.append(kit.safe_row("Since you last looked", "first look at this repo: your next run shows the changes", icon="Clock", nav={"view": "since"}, copy=False))
     if m["releases"] is not None:
         n90 = sum(1 for x in m["releases"] if x["at"] and now - x["at"] < 90 * 86400)
         lt = m["releases"][0] if m["releases"] else None
-        rows.append(kit.safe_row("Releases · %d in 90 days (of the newest %d)" % (n90, len(m["releases"])), ("latest %s, %s" % (lt["tag"], ago_days(now, lt["at"]))) if lt else "none published", icon="GitMerge", nav={"view": "releases"}, pane="releases", copy=False))
+        rows.append(kit.safe_row("Releases · %d in 90 days (of the newest %d)" % (n90, len(m["releases"])), ("latest %s, %s" % (lt["tag"], ago_days(now, lt["at"]))) if lt else "none published", icon="GitMerge", nav={"view": "releases"}, copy=False))
     else:
-        rows.append(kit.safe_row("Releases · unavailable", m["raw"]["gh_releases"]["err"], icon="AlertCircle", nav={"view": "releases"}, pane="releases", copy=False))
+        rows.append(kit.safe_row("Releases · unavailable", m["raw"]["gh_releases"]["err"], icon="AlertCircle", nav={"view": "releases"}, copy=False))
     if m["week"] is not None:
         ch = trend_pct(m)
         rows.append(kit.safe_row("Downloads · %s a week" % kit.fmt_count(m["week"]), ("%s%.0f%% against the half-month before" % ("+" if ch >= 0 else "", ch)) if ch is not None else "npm package %s" % m["npm"]["name"],
-                            icon="Download", nav={"view": "downloads"}, pane="downloads", copy=False, tile=kit.tile("Weekly downloads", m["week"] / 1000.0, "k", None, note="npm %s" % m["npm"]["name"]),
+                            icon="Download", nav={"view": "downloads"}, copy=False, tile=kit.tile("Weekly downloads", m["week"] / 1000.0, "k", None, note="npm %s" % m["npm"]["name"]),
                             trend=[x for _, x in (m["days"] or [])][-30:] or None))
     else:
         why = {"other-repo": ("package %s points at %s, not this repo: not used" % (m["pkg"], m["npm_other"])) if m["npm_other"] else "package %s does not name its repository: not used" % m["pkg"], "none": "no npm package named %s (add :name to the query)" % m["pkg"]}.get(m["npm_state"], "npm did not answer")
-        rows.append(kit.safe_row("Downloads · not available", why, icon="Download", nav={"view": "downloads"}, pane="downloads", copy=False))
+        rows.append(kit.safe_row("Downloads · not available", why, icon="Download", nav={"view": "downloads"}, copy=False))
     if m["vulns_open"] is not None:
         o, a = m["vulns_open"], m["vulns_all"] or []
-        rows.append(kit.safe_row("Vulnerabilities · %d open" % len(o), "%d known in all versions; %d affect the latest" % (len(a), len(o)), icon="ShieldAlert" if o else "ShieldCheck", nav={"view": "vulns"}, pane="vulns", copy=False,
+        rows.append(kit.safe_row("Vulnerabilities · %d open" % len(o), "%d known in all versions; %d affect the latest" % (len(a), len(o)), icon="ShieldAlert" if o else "ShieldCheck", nav={"view": "vulns"}, copy=False,
                             tile=kit.tile("Open vulns", len(o), "", None, note="latest %s" % (m["npm"] or {}).get("version", "?")), badge="ATTENTION" if o else ""))
     else:
-        rows.append(kit.safe_row("Vulnerabilities · unavailable", ("OSV: " + m["raw"]["osv"]["err"]) if m["raw"]["osv"]["err"] else "needs a matching npm package", icon="AlertCircle", nav={"view": "vulns"}, pane="vulns", copy=False, badge="NOT CHECKED"))
+        rows.append(kit.safe_row("Vulnerabilities · unavailable", ("OSV: " + m["raw"]["osv"]["err"]) if m["raw"]["osv"]["err"] else "needs a matching npm package", icon="AlertCircle", nav={"view": "vulns"}, copy=False, badge="NOT CHECKED"))
     if m["hn"] is not None:
         top = max(m["hn"]["stories"], key=lambda s: s["points"], default=None)
-        rows.append(kit.safe_row("Discussion · %d threads" % m["hn"]["total"], ("top: %s" % top["title"][:70]) if top else "none on Hacker News", icon="MessageSquare", nav={"view": "discussion"}, pane="discussion", copy=False))
+        rows.append(kit.safe_row("Discussion · %d threads" % m["hn"]["total"], ("top: %s" % top["title"][:70]) if top else "none on Hacker News", icon="MessageSquare", nav={"view": "discussion"}, copy=False))
     else:
-        rows.append(kit.safe_row("Discussion · unavailable", m["raw"]["hn"]["err"], icon="AlertCircle", nav={"view": "discussion"}, pane="discussion", copy=False))
+        rows.append(kit.safe_row("Discussion · unavailable", m["raw"]["hn"]["err"], icon="AlertCircle", nav={"view": "discussion"}, copy=False))
     rows.append(kit.refresh_row("overview", title="Check again", subtitle="Enter to fetch fresh data past the per-source cache"))
     return rows
 
@@ -662,13 +662,18 @@ def compare_overview(ctx, ms):
         rows.append(kit.safe_row("%s · %s" % (m["spec"], ("%d of 100" % sc["total"]) if sc["total"] is not None else "no data"), sc["verdict"]["label"] if sc["verdict"] else "not enough data", icon="Activity",
                             tile=kit.tile("Health", sc["total"], "/100", 100, note=m["spec"][:40]) if sc["total"] is not None else None, badge=sc["verdict"]["badge"] if sc["verdict"] else "",
                             open_url=pin_url(ctx.cfg, "https://github.com/" + m["spec"]) or None, copy=m["spec"]))
-    rows.append(kit.safe_row("Side by side", "the metrics in a table", icon="List", nav={"view": "compare"}, pane="compare", copy=False))
+    rows.append(kit.safe_row("Side by side", "the metrics in a table", icon="List", nav={"view": "compare"}, copy=False))
     rows.append(kit.safe_row("Sources", " · ".join("%s %s" % (m["spec"], "ok" if m["repo"] else "GitHub down") for m in ms), icon="Globe", copy=False))
     rows.append(kit.refresh_row("overview", title="Check again", subtitle="Enter to fetch fresh data"))
     return rows
 
 
 # ------------------------------------------------------------------ yaml
+
+OVERVIEW_PANE = ["    overview:", "      right_widget:", "        kind: entity_preview", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"',
+                 "          tiles_above:", '            title: "{{row.kpi_label}}"', '            value: "{{row.kpi_value}}"', '            unit: "{{row.kpi_unit}}"', '            max: "{{row.kpi_max}}"', '            trend: "{{row.trend}}"',
+                 '            subtitle: "{{row.kpi_note}}"', '            badge: "{{row.kpi_badge}}"', '          body: "{{row.body}}"']   # the overview is a list of rows that drill into views: each row is drawn by this preview, and the views keep their own widgets
+
 
 def emit_yaml(cfg):
     app = cfg["app"]
@@ -685,7 +690,7 @@ def emit_yaml(cfg):
         L.append('    %s: "%s"' % (osn, cmd % py))
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:",
           "    kind: cards", "    mode: list_data", "    bind:", '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", "    overview: {}"]
+          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", *OVERVIEW_PANE]
     diff = ["      right_widget:", "        kind: diff", "        mode: selected_row", "        bind:", '          left: "{{row.left}}"', '          right: "{{row.right}}"']
     L += ["    releases:"] + diff + ['          leftLabel: "earlier"', '          rightLabel: "this release"']
     L += ["    since:"] + diff + ['          leftLabel: "last look"', '          rightLabel: "now"']

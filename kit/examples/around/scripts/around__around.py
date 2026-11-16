@@ -500,31 +500,31 @@ def overview(ctx, g, r, text):
     rows.append(badge_row(ctx, r))
     for c in ctx.cfg["categories"]:
         if plist is None:
-            rows.append(kit.safe_row("%s · unavailable" % c["label"], "Overpass: " + r["places"]["err"], icon="AlertCircle", nav={"view": "places"}, pane="places", copy=False))
+            rows.append(kit.safe_row("%s · unavailable" % c["label"], "Overpass: " + r["places"]["err"], icon="AlertCircle", nav={"view": "places"}, copy=False))
             break
     if plist is not None and r["places"]["data"]["limited"]:
         rows.append(kit.safe_row("Places limited to the first %d results" % ctx.cfg["places_limit"], "Overpass cuts a long answer by id, not by distance, so the nearest places may be missing", icon="AlertCircle", badge="LIMITED", copy=False))
     if plist is not None:
         for c in ctx.cfg["categories"]:
             L = [p for p in plist if p["cat"] == c["id"]]
-            rows.append(kit.safe_row("%s · %d within %d m" % (c["label"], len(L), ctx.cfg["radius_m"]), ("nearest: %s, %s" % (L[0]["name"], metres(L[0]["dist"]))) if L else "none found", icon=c["icon"], nav={"view": "places"}, pane="places", copy=False))
+            rows.append(kit.safe_row("%s · %d within %d m" % (c["label"], len(L), ctx.cfg["radius_m"]), ("nearest: %s, %s" % (L[0]["name"], metres(L[0]["dist"]))) if L else "none found", icon=c["icon"], nav={"view": "places"}, copy=False))
     if r["bikes"]["ok"] and docks:
         d = docks[0]
         age = max(0, int(ctx.now - d["at"])) if d["at"] else None
-        rows.append(kit.safe_row("Bike docks · %d bikes at the nearest" % d["bikes"], "%s, %s%s" % (d["name"], metres(d["dist"]), (" · updated %d s ago" % age) if age is not None else ""), icon="Navigation", nav={"view": "bikes"}, pane="bikes", copy=False,
+        rows.append(kit.safe_row("Bike docks · %d bikes at the nearest" % d["bikes"], "%s, %s%s" % (d["name"], metres(d["dist"]), (" · updated %d s ago" % age) if age is not None else ""), icon="Navigation", nav={"view": "bikes"}, copy=False,
                             badge="LIVE" if age is not None and age <= 120 else "", tile=kit.tile("Bikes at nearest dock", d["bikes"], "", None, note=("updated %d s ago" % age) if age is not None else "")))
     else:
-        rows.append(kit.safe_row("Bike docks · %s" % ("none nearby" if r["bikes"]["err"] == "no bike share network near here" or (r["bikes"]["ok"] and not docks) else "unavailable"), r["bikes"]["err"] or "no dock within %d m" % ctx.cfg["bike_max_m"], icon="Navigation", nav={"view": "bikes"}, pane="bikes", copy=False))
+        rows.append(kit.safe_row("Bike docks · %s" % ("none nearby" if r["bikes"]["err"] == "no bike share network near here" or (r["bikes"]["ok"] and not docks) else "unavailable"), r["bikes"]["err"] or "no dock within %d m" % ctx.cfg["bike_max_m"], icon="Navigation", nav={"view": "bikes"}, copy=False))
     if wx:
         rs = rain_start(wx)
         rows.append(kit.safe_row("Weather · %d C, %s" % (round(wx["temp"]), ("rain from %s" % rs) if rs else "dry"), "feels like %s C, wind %s km/h" % (round(wx["feels"]) if wx["feels"] is not None else "?", round(wx["wind"]) if wx["wind"] is not None else "?"),
-                            icon="CloudSun", nav={"view": "weather"}, pane="weather", copy=False, trend=[x[1] for x in window(wx)] or None, tile=kit.tile("Temperature", wx["temp"], "C", None, note="next 12 hours below")))
+                            icon="CloudSun", nav={"view": "weather"}, copy=False, trend=[x[1] for x in window(wx)] or None, tile=kit.tile("Temperature", wx["temp"], "C", None, note="next 12 hours below")))
     else:
-        rows.append(kit.safe_row("Weather · unavailable", r["weather"]["err"], icon="AlertCircle", nav={"view": "weather"}, pane="weather", copy=False))
+        rows.append(kit.safe_row("Weather · unavailable", r["weather"]["err"], icon="AlertCircle", nav={"view": "weather"}, copy=False))
     if wiki is not None:
-        rows.append(kit.safe_row("Landmarks · %d nearby" % len(wiki), ("nearest: %s, %s" % (wiki[0]["title"], metres(wiki[0]["dist"]))) if wiki else "none within 1 km", icon="Landmark", nav={"view": "landmarks"}, pane="landmarks", copy=False))
+        rows.append(kit.safe_row("Landmarks · %d nearby" % len(wiki), ("nearest: %s, %s" % (wiki[0]["title"], metres(wiki[0]["dist"]))) if wiki else "none within 1 km", icon="Landmark", nav={"view": "landmarks"}, copy=False))
     else:
-        rows.append(kit.safe_row("Landmarks · unavailable", r["wiki"]["err"], icon="AlertCircle", nav={"view": "landmarks"}, pane="landmarks", copy=False))
+        rows.append(kit.safe_row("Landmarks · unavailable", r["wiki"]["err"], icon="AlertCircle", nav={"view": "landmarks"}, copy=False))
     rows.append(kit.safe_row("Keys and sign-in styles", "how each API here asks for a key, and the one that needs yours", icon="Key", nav={"view": "keys"}, pane="keys", copy=False))
     rows.append(kit.safe_row("About the data", "Map data (c) OpenStreetMap contributors, ODbL. Weather by Open-Meteo.com (CC BY 4.0). Landmarks from Wikipedia (CC BY-SA). Bikes by CityBikes", icon="FileText", copy=False))
     rows.append(kit.refresh_row("overview", title="Check again", subtitle="Enter to fetch fresh data (bikes are kept 30 s)"))
@@ -605,6 +605,11 @@ def keys_rows(ctx, g):
     return out
 
 
+OVERVIEW_PANE = ["    overview:", "      right_widget:", "        kind: entity_preview", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"',
+                 "          tiles_above:", '            title: "{{row.kpi_label}}"', '            value: "{{row.kpi_value}}"', '            unit: "{{row.kpi_unit}}"', '            max: "{{row.kpi_max}}"', '            trend: "{{row.trend}}"',
+                 '            subtitle: "{{row.kpi_note}}"', '            badge: "{{row.kpi_badge}}"', '          body: "{{row.body}}"']   # the overview is a list of rows that drill into views: each row is drawn by this preview, and the views keep their own widgets
+
+
 def emit_yaml(cfg):
     app = cfg["app"]
     words = " ".join("{{scripts_dir}}/%s" % f for f in FILE_WORDS)
@@ -620,7 +625,7 @@ def emit_yaml(cfg):
         L.append('    %s: "%s"' % (osn, cmd % py))
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:",
           "    kind: cards", "    mode: list_data", "    bind:", '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", "    overview: {}"]
+          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", *OVERVIEW_PANE]
     L += ["    places:", "      right_widget:", "        kind: detail", "        mode: selected_row", "        bind:", '          title: "{{row.pname}}"', '          subtitle: "{{row.chain}}"', "          fields:",
           '            - { label: Distance, value: "{{row.dist}}" }', '            - { label: Hours, value: "{{row.hours}}" }', '            - { label: Nearest dock, value: "{{row.dock}}" }',
           '            - { label: Weather there, value: "{{row.wx}}" }', '            - { label: Source, value: "{{row.src}}" }']

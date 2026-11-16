@@ -5,8 +5,8 @@ id: pulse-feed
 chip: pulse-feed
 title: "Pulse"
 icon: trending-up
-description: "Trending Hacker News stories, or type a topic word to merge the front page with a search. Tiles, a preview pane per story, Open post, Copy quote and Narrow."
-placeholder_examples: ["Enter for trending", "rust", "weekly"]
+description: "Trending Hacker News stories, or type a topic word to merge the front page with a search. A preview pane per story, Open post, Copy quote and Narrow rows."
+placeholder_examples: ["Enter for trending", "topic rust", "topic weekly"]
 emits: Generic
 args:
   - { name: view, from: "query.word(0)", default: overview }
@@ -22,19 +22,39 @@ presentation:
   title_field: title
   subtitle_field: subtitle
   view_arg: view
-  right_widget:
-    kind: cards
-    mode: list_data
-    bind:
-      layout: "tiles"
-      title: "{{row.kpi_label}}"
-      value: "{{row.kpi_value}}"
-      unit: "{{row.kpi_unit}}"
-      subtitle: "{{row.kpi_note}}"
-      badge: "{{row.kpi_badge}}"
   views:
-    overview: {}
-    topic: {}
+    overview:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          fields:
+            - { label: SOURCE, value: "{{row.story_source}}" }
+            - { label: AUTHOR, value: "{{row.story_author}}" }
+            - { label: AGE, value: "{{row.story_age}}" }
+            - { label: SCORE, value: "{{row.story_score}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "copy"
+    topic:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          fields:
+            - { label: SOURCE, value: "{{row.story_source}}" }
+            - { label: AUTHOR, value: "{{row.story_author}}" }
+            - { label: AGE, value: "{{row.story_age}}" }
+            - { label: SCORE, value: "{{row.story_score}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "copy"
     stories:
       right_widget:
         kind: entity_preview

@@ -23,7 +23,6 @@
       "view": "disk"
     },
     "actions": [],
-    "pane": "disk",
     "kpi_label": "Disk",
     "kpi_value": 40,
     "kpi_unit": "%",
