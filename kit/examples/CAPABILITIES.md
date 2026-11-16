@@ -14,7 +14,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Pane: cards | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Layout tiles (a tile per row, at most 24 rows, and a row with no number draws an empty "-" tile) or the default grid (up to 500 cards, no number needed); tile label cut at 24 characters. The 24 cap applies only to bind.layout tiles. |
 | Pane: detail | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Label and value fields of the selected row. |
 | Pane: json_tree | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Reads a nested object from the row field named in bind.source. |
-| Pane: diff | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Two texts, line by line. |
+| Pane: diff | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Two texts, line by line. It draws only the text its bind gives it: left and right templates of the selected row, and in 181 it can show an empty Compare box when a row carries none. For what changed, prefer a detail pane (Before, After, Change). Verified in a launcher: not yet. |
 | Pane: image_grid | supported | [widget-gallery-2](widget-gallery-2) | `kit/examples/widget-gallery-2/check.json` | 1 to 8 columns. Inline data:image only (png, jpeg, gif, webp, avif, bmp), 1 MiB each and 4 MiB per render; remote images never load in a personal app. |
 | Panes: image, color, weather, date, calc | not supported | none | `toolkit/test/launcher-rules.test.mjs` | A personal app cannot show its own data in these panes: Bolt shows "This app asks for ... pane, which cannot show app data". |
 | Pane: map | not supported | none | `toolkit/test/launcher-rules.test.mjs` | Draws the launcher own map, not your rows; any bind key is refused. No message is shown. |
@@ -69,9 +69,10 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Sandbox: a script confined to what it declares | not supported | none | `toolkit/test/docs-drift.test.mjs` | Not shipped. A personal script runs as you, with your files and network. Confinement is planned. Install only code you have read. |
 | Windows | partial | see any example app file | `toolkit/test/kit.test.mjs` | Unproven: the command table accepts a windows entry and check can run fixtures labelled windows, but nothing has been run on Windows. |
 | Chip must equal id | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | The app file's chip must be its id (`chip_not_id` is an error in lint --personal, verify and pack). Bolt 181 and main look apps up by id, so a different chip is offered in the launcher but never runs: an empty list and no error. |
-| Three start states: live with a key, labelled sample data, setup row only | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | api.on_missing_key is setup (default: no key shows one setup row, no sample data) or sample (no key shows the labelled sample data, with the label and key hint on a tile in tile views). A key file with open permissions keeps its own row. BOLT_APP_FIXTURE=1 always shows sample data. |
+| Three start states: live with a key, labelled sample data, setup row only | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | api.on_missing_key is setup (default: no key shows one setup row, no sample data) or sample (no key shows the labelled sample data, with the label and key hint on a tile in tile views). A key file with open permissions keeps its own row. BOLT_APP_FIXTURE=1 always shows sample data. Sample label by pane kind: a tiles grid carries it on the first tile (badge, footer or note); an entity_preview or markdown list gets a visible SAMPLE DATA row and a key-hint row; chart, table, diff, json_tree, image_grid, detail and card views carry it in the first row's subtitle (a label row there would be a data point or a blank pane). |
 | Approval after every reship | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | A personal app is approved per set of files. Every reship changes the files, so approve again; the first run asks too. On 181 pressing Enter on an unapproved app shows an empty list (fixed on a later build). |
 | Share common code between apps | not supported | none | `toolkit/test/namespacing.test.mjs` | On 181 every app ships its own files under scripts/ID__name, kit included, so a kit fix needs a re-vendor and a reship of each app (a later upgrade-kit command is planned). A shared library installed once is a Bolt 182 feature, not available now. |
+| A first word that is not a view (a place, a repo, a host) | supported | [around](around) | `toolkit/test/namespacing.test.mjs` | The launcher draws such a run with the APP-LEVEL right_widget, not a view's, so that widget must tolerate rows with no value: use a selected_row entity_preview (tile on top), never a tiles grid over mixed rows. check runs your sample cases with a free-text first word and refuses a tiles grid there (tile_row_without_value). |
 
 ## Snippets
 
@@ -449,4 +450,10 @@ chip: portal-template
 
 ```
 Settings, Desktop, User Apps, expand the app, Review and accept
+```
+
+### A first word that is not a view (a place, a repo, a host) (`nav.free_text`)
+
+```
+=around 94087
 ```

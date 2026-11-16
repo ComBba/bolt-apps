@@ -1,20 +1,5 @@
 [
   {
-    "title": "Sample data",
-    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
-    "icon": "FileText",
-    "body": "",
-    "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "SAMPLE",
-    "copy_text": ""
-  },
-  {
     "title": "Example Co · Summary",
     "subtitle": "4 open tickets · 2 active projects",
     "icon": "globe",
@@ -24,7 +9,7 @@
     "kpi_value": 33,
     "kpi_unit": "%",
     "kpi_max": 100,
-    "kpi_note": "closed / all",
+    "kpi_note": "closed / all · sample data",
     "kpi_foot": "4 of 12 closed",
     "kpi_badge": "BEHIND",
     "copy_text": "- Example Co Summary - 4 open tickets 2 active projects",
@@ -85,25 +70,5 @@
     "kpi_badge": "",
     "copy_text": "- Documentation - example.com/docs. Enter opens the page",
     "open_url": "https://example.com/docs"
-  },
-  {
-    "title": "Refresh",
-    "subtitle": "Enter to fetch fresh data",
-    "icon": "RefreshCw",
-    "body": "",
-    "nav": {
-      "view": "overview",
-      "arg": "refresh"
-    },
-    "actions": [],
-    "pane": "overview",
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "",
-    "copy_text": ""
   }
 ]

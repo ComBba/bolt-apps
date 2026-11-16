@@ -1,6 +1,6 @@
 # Quick path: build a Bolt App
 
-Read this page only. It is the one place for the rules. Every command is `./bolt-apps <command>`, run from the root of the clone (a short launcher for `toolkit/bin/bolt-apps.mjs`). Nothing here is verified in real Bolt yet; Windows is unproven; there is no sandbox (a personal script runs as you). Need more: [CAPABILITIES.md](CAPABILITIES.md) (what works, one snippet each), [ENGINE.md](ENGINE.md) (every config option).
+Read this page only. It is the one place for the rules. Every command is `./bolt-apps <command>`, run from the root of the clone (a short launcher for `toolkit/bin/bolt-apps.mjs`). What was run in a real Bolt is in [index.json](index.json) (maintainer drop tests on a main build slightly ahead of 181, not the shipped 181 binary); Windows is unproven; there is no sandbox (a personal script runs as you). Need more: [CAPABILITIES.md](CAPABILITIES.md) (what works, one snippet each), [ENGINE.md](ENGINE.md) (every config option).
 
 ## 1. Pick the template
 
@@ -77,6 +77,7 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 | After a drop the dialog says `Installed ... Ready to use: your-app-id` | Type `=<chip>`. 181 refreshes its list after a pack install. A file you saved into the User Apps folder by hand needs Reload. |
 | The chip is missing | Settings, Desktop App, User Apps, click Reload. A file that failed to load is listed there with the reason. |
 | "Not run. Needs your OK" | Press Enter on the app's run row, read what it can do, accept. First run only. |
+| Two approvals after a drop | First the install card (and on macOS an unverified-developer prompt): accept both. Then Settings, Desktop, User Apps, expand the app, Review and accept: that is what lets it run. A reship needs it again. |
 | HIGH RISK in the install prompt | Normal for a personal app that runs a script (tier 3). Read the permissions, confirm only code you have read. |
 | "a pack is only replaced by a newer version" | `ship` already raises the version. If you packed by hand, pass a higher `--version`. To go back, remove the app first (see the Remove row). |
 | "one of its files already belongs to another installed pack" (`owned_by_other`) | Two apps shipped the same script file name. Name every file `<id>__<name>` (`./bolt-apps new` does), or remove the other app first. |
@@ -86,7 +87,7 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 | "Bundle rejected" | You dropped it in Admin settings. Drop it on the Bolt launcher or Bolt Apps. |
 | Remove | Remove the app in Settings, Desktop, User Apps (the Remove button is on the app's row in 181 (not yet seen on a running 181 build); newer builds also show it in the expanded panel next to Revoke approval). Do not delete files by hand: Bolt keeps an install record, and a hand-deleted file can leave `owned_by_other` behind. Remove deletes the app's YAML and, for a pack's last app, its scripts and install record. If you cannot find a Remove button on your build, tell us which Bolt version you have. If you built apps before a fix was announced for them: remove the app this way, then `./bolt-apps ship` it again. |
 
-Written from the 0.1.181 source, not seen in a running 181. Anything that needs a newer Bolt is marked "newer than 181" where it appears; none is promised here (for example, an install that needs no Reload even for hand-saved files, or an in-place Remove confirmation, are newer than 181).
+If something looks wrong in Bolt (an empty pane, a blank tile, a wrong row), send a screenshot with the app id and what you typed. Written from the 0.1.181 source, not seen in a running 181. Anything that needs a newer Bolt is marked "newer than 181" where it appears; none is promised here (for example, an install that needs no Reload even for hand-saved files, or an in-place Remove confirmation, are newer than 181).
 
 ## 6. What Bolt does with your rows and runs
 
@@ -98,6 +99,8 @@ From the Bolt 0.1.181 source; not run live unless stated. Tell the person what y
 | Empty | With typed text and no rows Bolt shows "No results". A bare run with no rows shows nothing: print your own row. |
 | Typing | Rows of the last run stay; typing filters them (every term in the title or subtitle) and adds a `Run <app> with "..."` row. Always on; `presentation.searchable` does nothing. |
 | Drill cache | The launcher keeps the last 8 lists for 5 minutes by typed input, so a drill, Back or Refresh to a recent input may not run your script again. Not verified live. |
+| First word | A first word that is not a declared view (a place, a repo, a host) is drawn by the app-level right pane, which must tolerate rows with no value (a `selected_row` preview). `check` runs one sample case like that. |
+| Compare (`diff`) | Draws only the text its bind gives it (empty with none). Show what changed in a `detail` pane: Before, After, Change. |
 | Nav needs | `view_arg` bound to `query.word(N)` with N at most 8, and every `query.word` arg before it needs a one-token default such as `none` (not `-`). Otherwise no row can drill, silently. |
 | Keys | Esc and Left go Back, Right drills (caret at the end), 16 deep. |
 | Variables | `{{limit}}` is always 24 and does not cap rows. `{{press}}` is the id of the clicked run action, else `-`. `{{outname}}` is for bundled apps only. A value that would begin an argument with `-` is refused, except after `--`. |

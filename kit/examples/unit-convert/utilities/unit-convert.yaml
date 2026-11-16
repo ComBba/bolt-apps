@@ -28,8 +28,8 @@ presentation:
     kind: detail
     mode: selected_row
     bind:
-      title: "{{row.title}}"
-      subtitle: "{{row.subtitle}}"
+      title: "Conversion"
+      subtitle: "{{row.title}}"
       fields:
         - { label: "Result", value: "{{row.conv_result}}", copy: true }
         - { label: "Formula", value: "{{row.conv_formula}}" }

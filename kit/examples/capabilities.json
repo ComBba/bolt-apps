@@ -120,7 +120,7 @@
       "example": "kit/examples/widget-gallery",
       "snippet": "{\"kind\": \"diff\", \"mode\": \"selected_row\", \"bind\": {\"left\": \"{{row.left}}\", \"right\": \"{{row.right}}\"}}",
       "test": "kit/examples/widget-gallery/check.json",
-      "limit": "Two texts, line by line.",
+      "limit": "Two texts, line by line. It draws only the text its bind gives it: left and right templates of the selected row, and in 181 it can show an empty Compare box when a row carries none. For what changed, prefer a detail pane (Before, After, Change). Verified in a launcher: not yet.",
       "kind": "diff",
       "also": [
         "pipeline-board",
@@ -828,7 +828,7 @@
       "example": "kit/examples/portal-template",
       "snippet": "\"on_missing_key\": \"sample\"",
       "test": "toolkit/test/namespacing.test.mjs",
-      "limit": "api.on_missing_key is setup (default: no key shows one setup row, no sample data) or sample (no key shows the labelled sample data, with the label and key hint on a tile in tile views). A key file with open permissions keeps its own row. BOLT_APP_FIXTURE=1 always shows sample data."
+      "limit": "api.on_missing_key is setup (default: no key shows one setup row, no sample data) or sample (no key shows the labelled sample data, with the label and key hint on a tile in tile views). A key file with open permissions keeps its own row. BOLT_APP_FIXTURE=1 always shows sample data. Sample label by pane kind: a tiles grid carries it on the first tile (badge, footer or note); an entity_preview or markdown list gets a visible SAMPLE DATA row and a key-hint row; chart, table, diff, json_tree, image_grid, detail and card views carry it in the first row's subtitle (a label row there would be a data point or a blank pane)."
     },
     {
       "id": "platform.reapprove",
@@ -848,6 +848,16 @@
       "snippet": "none: each pack is self-contained (its own copy of the kit)",
       "test": "toolkit/test/namespacing.test.mjs",
       "limit": "On 181 every app ships its own files under scripts/ID__name, kit included, so a kit fix needs a re-vendor and a reship of each app (a later upgrade-kit command is planned). A shared library installed once is a Bolt 182 feature, not available now."
+    },
+    {
+      "id": "nav.free_text",
+      "group": "navigation",
+      "name": "A first word that is not a view (a place, a repo, a host)",
+      "status": "supported",
+      "example": "kit/examples/around",
+      "snippet": "=around 94087",
+      "test": "toolkit/test/namespacing.test.mjs",
+      "limit": "The launcher draws such a run with the APP-LEVEL right_widget, not a view's, so that widget must tolerate rows with no value: use a selected_row entity_preview (tile on top), never a tiles grid over mixed rows. check runs your sample cases with a free-text first word and refuses a tiles grid there (tile_row_without_value)."
     }
   ]
 }

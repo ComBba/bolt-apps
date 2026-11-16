@@ -27,17 +27,20 @@ presentation:
   subtitle_field: subtitle
   view_arg: view
   right_widget:
-    kind: cards
-    mode: list_data
+    kind: entity_preview
+    mode: selected_row
     bind:
-      layout: "tiles"
-      title: "{{row.kpi_label}}"
-      value: "{{row.kpi_value}}"
-      unit: "{{row.kpi_unit}}"
-      max: "{{row.kpi_max}}"
-      trend: "{{row.trend}}"
-      subtitle: "{{row.kpi_note}}"
-      badge: "{{row.kpi_badge}}"
+      title: "{{row.title}}"
+      subtitle: "{{row.subtitle}}"
+      tiles_above:
+        title: "{{row.kpi_label}}"
+        value: "{{row.kpi_value}}"
+        unit: "{{row.kpi_unit}}"
+        max: "{{row.kpi_max}}"
+        trend: "{{row.trend}}"
+        subtitle: "{{row.kpi_note}}"
+        badge: "{{row.kpi_badge}}"
+      body: "{{row.body}}"
   views:
     overview:
       right_widget:
@@ -66,13 +69,16 @@ presentation:
           rightLabel: "this release"
     since:
       right_widget:
-        kind: diff
+        kind: detail
         mode: selected_row
         bind:
-          left: "{{row.left}}"
-          right: "{{row.right}}"
-          leftLabel: "last look"
-          rightLabel: "now"
+          title: "{{row.since_what}}"
+          subtitle: "{{row.since_change}}"
+          fields:
+            - { label: Before, value: "{{row.since_before}}" }
+            - { label: After, value: "{{row.since_after}}" }
+            - { label: Change, value: "{{row.since_change}}" }
+            - { label: What it is, value: "{{row.since_what}}" }
     vulns:
       right_widget:
         kind: detail

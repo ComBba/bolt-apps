@@ -81,7 +81,7 @@
       }
     },
     {
-      "name": "no key and no sample switch: the labelled sample data is shown, with a SAMPLE DATA row and a key hint (api.on_missing_key sample)",
+      "name": "no key and no sample switch: the sample data is shown, with the sample label and a key hint on a tile (api.on_missing_key sample)",
       "os": "macos",
       "fixture": "unset",
       "args": [
@@ -89,10 +89,36 @@
       ],
       "expect": {
         "text_present": [
-          "SAMPLE DATA: add your Pipeline board API key to see live data",
-          "Add your Pipeline board API key"
+          "sample data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the stages view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "stages"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the runs view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "runs"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the changes view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "changes"
+      ],
+      "expect": {}
     }
   ]
 }

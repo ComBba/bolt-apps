@@ -6,11 +6,11 @@ Joining several remote APIs into one verdict. `=repo-radar owner/repo` calls Git
 | View | Pane | What it shows |
 |---|---|---|
 | overview | cards (tiles) | verdict, source health badges, stars, issues, releases, downloads, vulnerabilities, discussion |
-| releases | diff | each release's notes against the one before |
+| releases | diff | each release's notes against the one before (real multi-line text; the diff pane is unverified for rows in 181) |
 | vulns | detail | each advisory: severity, open or fixed, fixed-in version, link to osv.dev |
 | downloads | line chart | daily npm downloads, last 30 days |
 | discussion | detail | Hacker News threads that link to the repo |
-| since | diff | what changed against the copy saved on your computer |
+| since | detail | what changed against the copy saved on your computer: Before, After, Change (signed, with a percent), What it is |
 | compare | table | `a/b vs c/d` side by side, leader per metric |
 
 That is 7 views including the overview, under the launcher limit of 8.

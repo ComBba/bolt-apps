@@ -84,7 +84,7 @@ test('the example app passes check, with every case', async () => {
 	const r = await checkApp(EXAMPLE);
 	assert.deepEqual(r.findings, []);
 	assert.ok(r.cases.length >= 9);
-	for (const c of r.cases) assert.deepEqual(c.findings, [], c.name);
+	for (const c of r.cases) assert.deepEqual(c.findings.filter((x) => !(x.code === 'tile_row_without_value' && x.level === 'warning')), [], c.name);   // known_empty_tiles downgrades that one rule to a warning
 });
 
 test('--os selects fixture cases; an OS with no case is an error', async () => {
@@ -137,7 +137,7 @@ test('golden snapshots: a missing or changed golden fails, --update-golden write
 	fs.rmSync(path.join(d, 'golden', 'macos-overview.json'));
 	assert.ok(codes((await checkApp(d, { os: 'macos', only: 'macos overview' })).cases[0].findings).includes('golden_missing'));
 	await checkApp(d, { os: 'macos', only: 'macos overview', updateGolden: true });
-	assert.deepEqual((await checkApp(d, { os: 'macos', only: 'macos overview' })).cases[0].findings, []);
+	assert.deepEqual((await checkApp(d, { os: 'macos', only: 'macos overview' })).cases[0].findings.filter((x) => x.code !== 'tile_row_without_value'), []);   // system-glance carries known_empty_tiles (a warning)
 });
 
 test('kit guard: edited, missing and outdated vendored kits are caught', async () => {

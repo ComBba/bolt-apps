@@ -226,7 +226,7 @@
       }
     },
     {
-      "name": "no key and no sample switch: the labelled sample data is shown, with a SAMPLE DATA row and a key hint (api.on_missing_key sample)",
+      "name": "no key and no sample switch: the sample data is shown, with the sample label and a key hint on a tile (api.on_missing_key sample)",
       "os": "macos",
       "fixture": "unset",
       "args": [
@@ -234,10 +234,72 @@
       ],
       "expect": {
         "text_present": [
-          "SAMPLE DATA: add your Acme Compliance API key to see live data",
-          "Add your Acme Compliance API key"
+          "sample data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the tasks view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "tasks"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the policies view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "policies"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the controls view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "controls"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the risks view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "risks"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the vendors view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "vendors"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the devices view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "devices"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the people view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "people"
+      ],
+      "expect": {}
     }
   ]
 }

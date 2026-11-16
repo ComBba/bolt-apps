@@ -32,9 +32,10 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- Run 303 - login form, line 12",
-    "left": "import { Form } from './form'\nexport function Login() {\nreturn <Form fields={fields} />\n}",
-    "right": "import { Form } from './form'\nimport { fields } from './fields'\nexport function Login() {\nreturn <Form fields={fields} />\n}",
-    "open_url": ""
+    "open_url": "",
+    "change_before": "import { Form } from './form' export function Login() { return <Form fields={fields} /> }",
+    "change_after": "import { Form } from './form' import { fields } from './fields' export function Login() { return <Form fields={fields} /> }",
+    "change_note": "login form, line 12"
   },
   {
     "title": "Run 305",
@@ -51,9 +52,10 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- Run 305 - readme intro",
-    "left": "# Sample app\nA small demo.\nRun it with make.",
-    "right": "# Sample app\nA small demo with a search box.\nRun it with make run.\nSee the docs folder.",
-    "open_url": ""
+    "open_url": "",
+    "change_before": "# Sample app A small demo. Run it with make.",
+    "change_after": "# Sample app A small demo with a search box. Run it with make run. See the docs folder.",
+    "change_note": "readme intro"
   },
   {
     "title": "Refresh",

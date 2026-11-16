@@ -1,6 +1,6 @@
 # Pipeline board
-**What this shows:** stages that drill into their runs, a detail pane with a meter per run, and a `diff` pane for what changed
-**Edit these files:** `scripts/pipeline-board__config.json` (`views`, `children`, the diff `bind`) and `scripts/pipeline-board__fixtures.json` (`stages`, `runs`, `changes`).
+**What this shows:** stages that drill into their runs, a detail pane with a meter per run, and a `detail` pane (Before, After, What changed) for what changed
+**Edit these files:** `scripts/pipeline-board__config.json` (`views`, `children`, the changes `detail` fields) and `scripts/pipeline-board__fixtures.json` (`stages`, `runs`, `changes`).
 **Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
 ./bolt-apps lint kit/examples/pipeline-board --personal
@@ -10,7 +10,7 @@
 ```
 
 ## Notes
-The diff reads two multi-line fields. A field named `left`, `right` or ending in `_lines` keeps its line breaks, which is why `item.extra` uses `left` and `right`.
+The changes view uses a `detail` pane with three bound fields. It was a `diff` (Compare) pane that drew an empty A/B box when a row was selected in a real launcher, so it no longer is: use `diff` only for real multi-line text, and check it in a launcher first (unverified for rows in 181).
 
 Sample data is invented. The app calls `https://api.example.com`, which does not exist: point `api.base_url` and `endpoints[].path` at your own API, or keep using fixture mode in `check.json`. See `../ENGINE.md` for every option.
 

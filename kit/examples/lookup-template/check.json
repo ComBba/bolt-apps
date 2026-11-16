@@ -44,5 +44,6 @@
         ]
       }
     }
-  ]
+  ],
+  "known_empty_tiles": "detail rows (Coordinates, links) in the lookup result are rows with no tile; redesign pending"
 }

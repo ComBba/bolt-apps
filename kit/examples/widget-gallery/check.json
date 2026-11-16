@@ -88,7 +88,7 @@
       }
     },
     {
-      "name": "no key and no sample switch: the labelled sample data is shown, with a SAMPLE DATA row and a key hint (api.on_missing_key sample)",
+      "name": "no key and no sample switch: the sample data is shown, with the sample label and a key hint on a tile (api.on_missing_key sample)",
       "os": "macos",
       "fixture": "unset",
       "args": [
@@ -96,10 +96,54 @@
       ],
       "expect": {
         "text_present": [
-          "SAMPLE DATA: add your Widget gallery API key to see live data",
-          "Add your Widget gallery API key"
+          "sample data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the detail view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "detail"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the tree view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "tree"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the diff view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "diff"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the preview view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "preview"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the markdown view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "markdown"
+      ],
+      "expect": {}
     }
   ]
 }

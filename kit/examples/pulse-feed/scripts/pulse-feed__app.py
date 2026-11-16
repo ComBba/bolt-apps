@@ -356,8 +356,8 @@ def mdsafe(s):
 def story_row(s, now, topic):
     age = kit.fmt_duration(max(0, now - s["ts"]))
     host = kit.host_label(s["url"]) if not s["url"].startswith("https://news.ycombinator.com/") else "news.ycombinator.com"
-    body = "%s points, %s comments, posted %s ago.\n\nLink: %s\n\n%s" % (kit.fmt_count(s["score"]), kit.fmt_count(s["comments"]), age, mdsafe(host), SAFETY)
-    return kit.safe_row(s["title"], "%s points, %s comments, %s ago" % (kit.fmt_count(s["score"]), kit.fmt_count(s["comments"]), age),
+    body = "%s, %s, posted %s ago.\n\nLink: %s\n\n%s" % (kit.fmt_count(s["score"], "point", "points"), kit.fmt_count(s["comments"], "comment", "comments"), age, mdsafe(host), SAFETY)
+    return kit.safe_row(s["title"], "%s, %s, %s ago" % (kit.fmt_count(s["score"], "point", "points"), kit.fmt_count(s["comments"], "comment", "comments"), age),
                         icon="trending-up", pane="stories", url=s["url"], open_url=s["url"],
                         copy='"%s" - %s on Hacker News, %s' % (s["title"], s["author"], s["url"]), body=body,
                         story_source=s["source"], story_author=s["author"], story_age=age, story_score=s["score"], badge=("BOTH" if s["source"] == "both" else ""))
@@ -381,7 +381,7 @@ def build(topic, stories, state, cfg, fixture, now):
         head = "Trending: %s" % kit.fmt_count(len(shown), "story", "stories")
         sub = "the Hacker News front page, by rank. Type =pulse-feed topic and a word to search"
     rows += banner(state, cfg)
-    rows.append(kit.row(head, sub, icon="TrendingUp", tile=kit.tile("Stories", len(shown), "", None, note="topic %s" % topic if topic else "front page"), copy=False))
+    rows.append(kit.row(head, sub, icon="TrendingUp", pane="stories", body=sub + ". Select a story below for its details, Open post and Copy quote.", tile=kit.tile("Stories", len(shown), "", None, note="topic %s" % topic if topic else "front page"), copy=False))
     if topic:
         rows.append(kit.row("Back to trending", "the front page without a topic", icon="arrow-left", nav={"view": "overview"}, copy=False))
     seen = []
@@ -389,7 +389,7 @@ def build(topic, stories, state, cfg, fixture, now):
         w = narrow_word(s["title"], topic)
         if w and w not in seen:
             seen.append(w)
-    rows += [kit.row("Narrow to %s" % w, "stories about %s: the front page and a search, merged" % w, icon="Search", nav={"view": "topic", "arg": w}, copy=False) for w in seen[:3]]
+    rows += [kit.row("Narrow to %s" % w, "stories about %s: the front page and a search, merged" % w, icon="Search", nav={"view": "topic", "arg": w}, pane="stories", body="Press Enter to narrow the list to stories about %s: the front page and a search, merged." % w, copy=False) for w in seen[:3]]
     if not shown:
         rows.append(kit.row("No story matches %s" % kit.clean_text(topic, 40), "Try a shorter word. Enter to go back to trending", icon="Search", nav={"view": "overview"}, copy=False))
     rows += [story_row(s, now, topic) for s in shown]
