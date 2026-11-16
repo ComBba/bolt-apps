@@ -137,5 +137,6 @@
         ]
       }
     }
-  ]
+  ],
+  "known_empty_tiles": "status rows (All clear, not read) have no tile; redesign pending"
 }

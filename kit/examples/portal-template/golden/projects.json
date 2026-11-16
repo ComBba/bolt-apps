@@ -18,21 +18,6 @@
     "copy_text": ""
   },
   {
-    "title": "Sample data",
-    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
-    "icon": "FileText",
-    "body": "",
-    "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "SAMPLE",
-    "copy_text": ""
-  },
-  {
     "title": "Mobile app beta",
     "subtitle": "Active · lead Luis G. · 3 tickets",
     "icon": "Layers",
@@ -48,7 +33,7 @@
     "kpi_unit": "%",
     "kpi_max": 100,
     "kpi_note": "of planned work",
-    "kpi_foot": "",
+    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
     "kpi_badge": "ACTIVE",
     "copy_text": "",
     "open_url": "https://app.example.com/projects/P-2",

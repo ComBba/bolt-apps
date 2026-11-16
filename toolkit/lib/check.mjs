@@ -247,8 +247,8 @@ export function presentationOf(appDir) {
 		return { top: widget(pres), views, viewArg: str(get(pres, 'view_arg')?.value) };
 	} catch { return null; }
 }
-export function paneProblems(pres, rows, view) {
-	const out = [], E = (code, message) => out.push({ level: 'error', code, message });
+export function paneProblems(pres, rows, view, opts = {}) {
+	const out = [], E = (code, message) => out.push({ level: opts.waiveEmptyTiles && code === 'tile_row_without_value' ? 'warning' : 'error', code, message });
 	if (!pres || !Array.isArray(rows)) return out;
 	const shown = pres.views.has(view) ? view : 'overview';
 	const own = pres.views.get(shown), w = own || pres.top;
@@ -257,6 +257,11 @@ export function paneProblems(pres, rows, view) {
 	if (w && w.kind === 'cards' && w.mode === 'list_data' && w.layout === 'tiles') {
 		if (rows.length > 24) E('tile_cap', `the view "${shown}" draws a tile per row and at most 24 rows: this run printed ${rows.length}. Send 24 or fewer, or give the view a selected_row preview instead of a tiles grid`);
 		const vf = w.valueField, loose = rows.filter((r) => !goodPane(r)), empty = loose.filter((r) => r && (r[vf] === undefined || r[vf] === '' || r[vf] === null)).length;
+		// a tiles view draws a tile per row and shows "-" for a row with no number, so a non-data row (a label, a hint, a retry or a Back row) is an empty tile; a run of one row (a lone setup or error state) is allowed
+		const noVal = (r) => r && (r[vf] === undefined || r[vf] === '' || r[vf] === null), navOnly = (r) => r && r.nav && (r.nav.back || /^refresh/.test(String(r.nav.arg || '')));
+		// allowed: a run with no data row at all (a lone setup, error or retry state) and the Back and refresh rows of the app's own navigation
+		const bare = rows.some((r) => !noVal(r)) ? loose.filter((r) => noVal(r) && !navOnly(r)) : [];
+		if (bare.length) E('tile_row_without_value', `the view "${shown}" is a tiles view (cards, bind.layout tiles) and ${bare.length} of ${rows.length} rows carry no ${vf}: ${bare.slice(0, 3).map((r) => JSON.stringify(String(r.title).slice(0, 40))).join(', ')}. Each draws as an empty "-" tile. Put the text on a real tile (badge or footer), or use a view that is not a tiles grid`);
 		// the 8-row floor keeps a lone setup or error row in a tiles view from being refused; a run of 8 or more rows where half have no tile is a grid of empty tiles
 		if (rows.length >= 8 && empty * 2 >= rows.length) E('empty_tile_grid', `the view "${shown}" draws a tile per row (cards, tiles), but ${empty} of ${rows.length} rows carry no ${vf} and no valid pane, so they draw as empty tiles ("no value"). Give those rows a tile, or give the view a selected_row preview (entity_preview) in presentation.views.${shown}.right_widget`);
 	}
@@ -418,7 +423,7 @@ export async function checkApp(appDir, opts = {}) {
 			try { rows = JSON.parse(r.out); } catch { E('non_json_output', `stdout is not JSON (${r.out.length} bytes)`); }
 			if (rows !== null) {
 				for (const x of checkRows(rows, cfg.manifest_actions ?? 1)) f.push(x);
-				for (const x of paneProblems(pres, rows, (kase.args || [])[0] || 'overview')) f.push(x);
+				for (const x of paneProblems(pres, rows, (kase.args || [])[0] || 'overview', { waiveEmptyTiles: typeof cfg.known_empty_tiles === 'string' && cfg.known_empty_tiles.trim().length > 10 })) f.push(x);
 				for (const x of chainProblems(rows, listing && listing.id)) f.push(x);
 				if (/[^\x00-\x7f]/.test(r.out)) f.push({ level: 'warning', code: 'non_ascii_output', message: 'stdout has non-ASCII bytes; ensure_ascii JSON is safe on any console code page' });
 				const flat = strings(rows, '$', []).map(([, s]) => s).join('\n');

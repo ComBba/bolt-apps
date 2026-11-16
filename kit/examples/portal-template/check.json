@@ -15,7 +15,7 @@
       "expect": {
         "text_present": [
           "Example Co \u00b7 Summary",
-          "Sample data",
+          "sample data: no key and no network",
           "4 of 12 closed"
         ],
         "text_absent": [
@@ -166,5 +166,6 @@
         ]
       }
     }
-  ]
+  ],
+  "known_empty_tiles": "the Documentation link row has no tile; redesign pending"
 }

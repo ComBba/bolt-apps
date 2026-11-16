@@ -992,25 +992,33 @@ def read_fixtures(cfg, cfg_path):
 SAMPLE_FALLBACK = [False]   # set by run(): no key was found and api.on_missing_key is "sample"
 
 
+def label_on_tile(rows, hint):
+    """In a tiles view a row with no number draws an empty "-" tile, so a label rides on a real tile: SAMPLE as its badge, the hint in a footer. False when no row has a tile."""
+    tiles = [r for r in rows if isinstance(r.get("kpi_value"), (int, float)) and not isinstance(r.get("kpi_value"), bool)]
+    if not tiles:
+        return False
+    for r in tiles:
+        if not r.get("kpi_badge"):
+            r["kpi_badge"] = "SAMPLE"
+            break
+    next((r for r in tiles if not r.get("kpi_foot")), tiles[0])["kpi_foot"] = hint[:80]
+    return True
+
+
 def sample_banner(cfg, rows, fx=True, quiet=False):
     at = 1 if rows and (rows[0].get("nav") or {}).get("back") else 0
+    app, api = cfg["app"], cfg.get("api") or {}
+    name = app.get("service", app["title"])
     if SAMPLE_FALLBACK[0] and quiet:   # a chart or table view plots or lists its rows: a label row would become a data point, so the label is only on the overview and list views
         return rows
     if SAMPLE_FALLBACK[0]:   # the labelled sample data is shown with a label and a key hint: never instead of the data
-        app, api = cfg["app"], cfg.get("api") or {}
-        name = app.get("service", app["title"])
-        tiles = [r for r in rows if isinstance(r.get("kpi_value"), (int, float)) and not isinstance(r.get("kpi_value"), bool)]
-        if tiles:   # a tiles view draws a tile per row and shows "-" for a row with no number, so the label rides on the first real tile (badge and footer), not on a row of its own
-            for r in tiles:
-                if not r.get("kpi_badge"):
-                    r["kpi_badge"] = "SAMPLE"
-                    break
-            target = next((r for r in tiles if not r.get("kpi_foot")), tiles[0])
-            target["kpi_foot"] = ("sample data: add your %s API key for live data" % name)[:80]
+        if label_on_tile(rows, "sample data: add your %s API key for live data" % name):
             return rows
         rows.insert(at, kit.row("SAMPLE DATA: add your %s API key to see live data" % name, "These rows are invented examples, not your data.", icon="FileText", copy=False, badge="SAMPLE"))
         rows.insert(at + 1, kit.row("Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), icon="Key", copy=False, badge="KEY"))
-    elif fx and (cfg.get("api") or {}).get("fixture_banner"):
+    elif fx and api.get("fixture_banner"):
+        if label_on_tile(rows, "sample data: no key and no network (api.fixture_default)"):
+            return rows
         rows.insert(at, kit.row("Sample data", "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
                                 icon="FileText", copy=False, badge="SAMPLE"))
     return rows

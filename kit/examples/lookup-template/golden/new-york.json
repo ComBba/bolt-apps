@@ -1,20 +1,5 @@
 [
   {
-    "title": "Sample data",
-    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
-    "icon": "FileText",
-    "body": "",
-    "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "SAMPLE",
-    "copy_text": ""
-  },
-  {
     "title": "New York · 3.1°C, Clear",
     "subtitle": "feels like -0.5°C · humidity 86% · local time 05:30",
     "icon": "cloud-sun",
@@ -68,8 +53,8 @@
     "kpi_unit": "°C",
     "kpi_max": "",
     "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "",
+    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
+    "kpi_badge": "SAMPLE",
     "copy_text": "- Feels like -0.5 C - wind 11.2 km/h rain now 0 mm",
     "open_url": ""
   },
