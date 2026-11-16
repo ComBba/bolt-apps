@@ -18,6 +18,21 @@
     "copy_text": ""
   },
   {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
     "title": "Showing 4 of 12",
     "subtitle": "Enter to clear the filter \"open\"",
     "icon": "Search",
@@ -49,7 +64,7 @@
     "kpi_unit": "",
     "kpi_max": 5,
     "kpi_note": "1 low, 5 urgent",
-    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
+    "kpi_foot": "",
     "kpi_badge": "URGENT",
     "copy_text": "- Crash on startup - Open Tom W. priority 5",
     "open_url": "https://app.example.com/tickets/TK-3",

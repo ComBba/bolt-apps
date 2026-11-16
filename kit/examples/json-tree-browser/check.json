@@ -74,6 +74,15 @@
           "sample data: add your JSON tree browser API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the docs view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "docs"
+      ],
+      "expect": {}
     }
   ]
 }

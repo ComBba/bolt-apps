@@ -70,25 +70,5 @@
     "kpi_badge": "",
     "copy_text": "- Documentation - example.com/docs. Enter opens the page",
     "open_url": "https://example.com/docs"
-  },
-  {
-    "title": "Refresh",
-    "subtitle": "Enter to fetch fresh data",
-    "icon": "RefreshCw",
-    "body": "",
-    "nav": {
-      "view": "overview",
-      "arg": "refresh"
-    },
-    "actions": [],
-    "pane": "overview",
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "",
-    "copy_text": ""
   }
 ]

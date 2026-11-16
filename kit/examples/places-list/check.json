@@ -75,6 +75,15 @@
           "sample data: add your Places list API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the places view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "places"
+      ],
+      "expect": {}
     }
   ]
 }

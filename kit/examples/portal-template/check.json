@@ -165,6 +165,24 @@
           "sample data: add your Example Service API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the projects view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "projects"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the tickets view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "tickets"
+      ],
+      "expect": {}
     }
   ],
   "known_empty_tiles": "the Documentation link row has no tile; redesign pending"

@@ -91,6 +91,15 @@
           "sample data: add your Branch explorer API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the node view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "node"
+      ],
+      "expect": {}
     }
   ]
 }

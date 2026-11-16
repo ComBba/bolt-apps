@@ -18,6 +18,21 @@
     "copy_text": ""
   },
   {
+    "title": "Sample data",
+    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
+    "icon": "FileText",
+    "body": "",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
     "title": "Website refresh",
     "subtitle": "Active · lead Maya R. · 3 tickets",
     "icon": "Layers",
@@ -30,7 +45,7 @@
     "kpi_unit": "%",
     "kpi_max": 100,
     "kpi_note": "of planned work",
-    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
+    "kpi_foot": "",
     "kpi_badge": "ACTIVE",
     "copy_text": "- Website refresh - Active lead Maya R. 3 tickets",
     "open_url": "https://app.example.com/projects/P-1",

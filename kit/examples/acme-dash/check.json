@@ -237,6 +237,69 @@
           "sample data: add your Acme Compliance API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the tasks view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "tasks"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the policies view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "policies"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the controls view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "controls"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the risks view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "risks"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the vendors view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "vendors"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the devices view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "devices"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the people view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "people"
+      ],
+      "expect": {}
     }
   ]
 }

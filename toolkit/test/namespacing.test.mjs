@@ -323,3 +323,31 @@ test('tile_row_without_value: the old sample behaviour (label rows in a tiles vi
 	// the shipped demos: every check case passes with no waiver except the four named in their check.json
 	for (const n of examples) { const cj = path.join(EX, n, 'check.json'); if (!fs.existsSync(cj)) continue; const c = JSON.parse(fs.readFileSync(cj, 'utf8')); if (c.known_empty_tiles) assert.ok(String(c.known_empty_tiles).length > 10, n); }
 });
+
+test('tile_row_without_value mutants: only a refresh nav arg and the exact Back row are exempt, and "n/a" or "-" is not a number', async () => {
+	const { paneProblems, widgetNumber, sampleVisibleProblems } = await import('../lib/check.mjs');
+	const pres = { top: { kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'kpi_value' }, views: new Map([['overview', null]]), viewArg: 'view' };
+	const tile = (n) => ({ title: `T${n}`, kpi_label: 'x', kpi_value: n });
+	const codes = (rows) => paneProblems(pres, rows, 'overview').map((x) => x.code);
+	assert.deepEqual(codes([tile(1), { title: 'Refresh', nav: { view: 'overview', arg: 'refresh' } }, { title: 'Again', nav: { view: 'overview', arg: 'refresh.x' } }, { title: 'Back to the overview', nav: { back: true } }]), []);
+	assert.deepEqual(codes([tile(1), { title: 'Refreshments 12', nav: { view: 'overview', arg: 'refreshments' } }]), ['tile_row_without_value'], 'a word that merely starts with refresh is data');
+	assert.deepEqual(codes([tile(1), { title: 'Total', nav: { back: true } }]), ['tile_row_without_value'], 'a data row with back:true is not the Back row');
+	assert.deepEqual(codes([tile(1), { title: 'Back', nav: { back: true, view: 'x' } }]), ['tile_row_without_value'], 'the Back row has only nav.back');
+	assert.deepEqual(codes([tile(1), { title: 'Open', kpi_label: 'x', kpi_value: 'n/a' }]), ['tile_row_without_value'], 'n/a is not a number');
+	assert.deepEqual(codes([tile(1), { title: 'Open', kpi_label: 'x', kpi_value: '-' }]), ['tile_row_without_value']);
+	assert.deepEqual([widgetNumber('1,234.5'), widgetNumber('-3%'), widgetNumber('$4'), widgetNumber('1e3'), widgetNumber(7), widgetNumber(true), widgetNumber('12 apples'), widgetNumber(NaN), widgetNumber(2e15)], [1234.5, -3, 4, 1000, 7, null, null, null, null]);
+	// a visible label: a list view needs a row that says sample, a tiles grid a badge, footer or note
+	const list = { top: null, views: new Map([['overview', { kind: 'entity_preview', mode: 'selected_row' }]]), viewArg: 'view' };
+	assert.equal(sampleVisibleProblems(list, [{ title: 'a' }, { title: 'b' }], 'overview')[0].code, 'sample_not_visible');
+	assert.deepEqual(sampleVisibleProblems(list, [{ title: 'SAMPLE DATA: add your key' }, { title: 'b' }], 'overview'), []);
+	assert.equal(sampleVisibleProblems(pres, [tile(1), tile(2)], 'overview')[0].code, 'sample_not_visible');
+	assert.deepEqual(sampleVisibleProblems(pres, [{ ...tile(1), kpi_badge: 'SAMPLE' }, tile(2)], 'overview'), []);
+	assert.deepEqual(sampleVisibleProblems({ ...pres, top: { kind: 'chart', mode: 'list_data' } }, [tile(1), tile(2)], 'overview'), [], 'a plotted view carries none');
+});
+
+test('known_empty_tiles exists only in the four examples that were not redesigned; every demo has a visible-label case per list view', () => {
+	const waived = examples.filter((n) => fs.existsSync(path.join(EX, n, 'check.json')) && JSON.parse(fs.readFileSync(path.join(EX, n, 'check.json'), 'utf8')).known_empty_tiles).sort();
+	assert.deepEqual(waived, ['lookup-template', 'portal-template', 'script-template', 'system-glance']);
+	const acme = JSON.parse(fs.readFileSync(path.join(EX, 'acme-dash', 'check.json'), 'utf8')).cases.filter((c) => c.fixture === 'unset').map((c) => c.args[0]);
+	for (const v of ['tasks', 'policies', 'controls', 'risks', 'vendors', 'devices', 'people']) assert.ok(acme.includes(v), `acme-dash ${v}`);
+});

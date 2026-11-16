@@ -106,6 +106,24 @@
           "sample data: add your Expense tracker API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the categories view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "categories"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the expenses view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "expenses"
+      ],
+      "expect": {}
     }
   ]
 }

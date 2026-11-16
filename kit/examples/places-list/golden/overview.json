@@ -17,25 +17,5 @@
     "kpi_badge": "SOME OPEN",
     "copy_text": "",
     "open_url": ""
-  },
-  {
-    "title": "Refresh",
-    "subtitle": "Enter to fetch fresh data",
-    "icon": "RefreshCw",
-    "body": "",
-    "nav": {
-      "view": "overview",
-      "arg": "refresh"
-    },
-    "actions": [],
-    "pane": "overview",
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "",
-    "copy_text": ""
   }
 ]

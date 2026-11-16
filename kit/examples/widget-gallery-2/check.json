@@ -82,6 +82,33 @@
           "sample data: add your Widget gallery API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the card view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "card"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the grid view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "grid"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the cardsimg view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "cardsimg"
+      ],
+      "expect": {}
     }
   ]
 }

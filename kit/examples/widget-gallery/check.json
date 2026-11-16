@@ -99,6 +99,51 @@
           "sample data: add your Widget gallery API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the detail view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "detail"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the tree view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "tree"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the diff view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "diff"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the preview view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "preview"
+      ],
+      "expect": {}
+    },
+    {
+      "name": "sample label is visible in the markdown view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "markdown"
+      ],
+      "expect": {}
     }
   ]
 }
