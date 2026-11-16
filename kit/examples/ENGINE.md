@@ -203,7 +203,7 @@ The view is read from query word 0 (`view_arg` bound to `query.word(0)`), so a s
 ## Three starting states (`api.key_env` and `api.on_missing_key`)
 
 1. **Live with a key.** The key is found (environment, keychain or `~/.config/<id>/.env`): the app calls its API and shows real data.
-2. **Sample fallback** (`"on_missing_key": "sample"`, for demos whose API is fictional): no key, so the app shows its labelled sample data, with a first row "SAMPLE DATA: add your ... API key to see live data" and a setup hint row. The hint row never replaces the data.
+2. **Sample fallback** (`"on_missing_key": "sample"`, for demos whose API is fictional): no key, so the app shows its labelled sample data. In a tiles view (a row with no number draws an empty "-" tile) the label and the key hint ride on a real tile: its badge says SAMPLE and its footer says "sample data: add your ... API key for live data". In other views a first row "SAMPLE DATA: add your ... API key to see live data" and a setup hint row are added. Neither ever replaces the data.
 3. **Setup only** (`"on_missing_key": "setup"`, the default, for a real app): no key, so the app shows one row that says how to add it. That row carries no tile and no pane.
 
 `BOLT_APP_FIXTURE=1` always shows sample data (with the SAMPLE row only when `api.fixture_banner` is set), `0` always goes live. The SAMPLE DATA and key-hint rows of state 2 are left out of chart and table views, where a label row would become a data point. A key file with open permissions keeps its own "tighten the permissions" row and is never replaced by sample data. `on_missing_key` must be `setup` or `sample`. `bolt-apps ship` and `bolt-apps doctor <folder>` say which state the app starts in.

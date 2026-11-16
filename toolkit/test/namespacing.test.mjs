@@ -238,8 +238,11 @@ test('on_missing_key: sample shows the labelled data and a key hint; setup shows
 	assert.equal(cfg.api.on_missing_key, 'sample');
 	const run = (env) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'modeapp__engine.py'), 'overview'], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
 	let rows = JSON.parse(run({}).stdout);
-	assert.match(rows[0].title, /^SAMPLE DATA: add your .* API key to see live data$/); assert.match(rows[1].title, /^Add your .* API key$/); assert.ok(rows.length > 3, 'the sample data follows');
-	for (const r of rows.slice(0, 2)) { assert.ok(!r.kpi_label && !r.kpi_value && !r.pane, JSON.stringify(r)); }
+	// the overview is a tiles view: no label rows (a row with no number draws an empty "-" tile); the label and the key hint ride on a real tile
+	assert.ok(!rows.some((r) => /^(SAMPLE DATA|Add your)/.test(r.title)), 'no label or hint row in a tiles view');
+	assert.ok(rows.some((r) => /^sample data: add your .* API key for live data$/.test(r.kpi_foot || '')), 'the key hint is on a tile footer');
+	assert.ok(rows.length > 3, 'the sample data is shown');
+	for (const r of rows) if (r.kpi_foot && /sample data/.test(r.kpi_foot)) assert.equal(typeof r.kpi_value, 'number', 'the hint is on a row that has a tile');
 	cfg.api.on_missing_key = 'setup'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
 	rows = JSON.parse(run({}).stdout); assert.equal(rows.length, 1); assert.match(rows[0].title, /^Add your .* API key$/); assert.ok(!rows[0].pane && !rows[0].kpi_label);
 	rows = JSON.parse(run({ BOLT_APP_FIXTURE: '0' }).stdout); assert.equal(rows.length, 1);
@@ -299,7 +302,7 @@ test('on_missing_key: a loose key file keeps its setup row, an unknown value is 
 	// a chart or table data view gets no label row (it would be a plotted point); the overview does
 	const ct = path.join(EX, 'chart-template'), fx = path.join(ct, 'scripts', 'chart-template__engine.py');
 	const rn = (a) => JSON.parse(spawnSync('/usr/bin/python3', ['-I', fx, ...a], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } }).stdout);
-	assert.match(rn(['overview'])[0].title, /^SAMPLE DATA/);
+	assert.ok(rn(['overview']).some((r) => /sample data: add your/.test(r.kpi_foot || '')));
 	const cj = JSON.parse(fs.readFileSync(path.join(ct, 'scripts', 'chart-template__config.json'), 'utf8')), dv = cj.views.find((v) => v.widget && v.widget.kind === 'chart');
 	assert.ok(dv, 'chart-template has a chart view'); assert.ok(!rn([dv.id]).some((r) => /SAMPLE DATA/.test(r.title)));
 });

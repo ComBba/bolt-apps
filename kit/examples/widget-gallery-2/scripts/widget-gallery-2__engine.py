@@ -996,9 +996,18 @@ def sample_banner(cfg, rows, fx=True, quiet=False):
     at = 1 if rows and (rows[0].get("nav") or {}).get("back") else 0
     if SAMPLE_FALLBACK[0] and quiet:   # a chart or table view plots or lists its rows: a label row would become a data point, so the label is only on the overview and list views
         return rows
-    if SAMPLE_FALLBACK[0]:   # the labelled sample data is shown, with a first row that says so and a setup hint row: never instead of the data
+    if SAMPLE_FALLBACK[0]:   # the labelled sample data is shown with a label and a key hint: never instead of the data
         app, api = cfg["app"], cfg.get("api") or {}
         name = app.get("service", app["title"])
+        tiles = [r for r in rows if isinstance(r.get("kpi_value"), (int, float)) and not isinstance(r.get("kpi_value"), bool)]
+        if tiles:   # a tiles view draws a tile per row and shows "-" for a row with no number, so the label rides on the first real tile (badge and footer), not on a row of its own
+            for r in tiles:
+                if not r.get("kpi_badge"):
+                    r["kpi_badge"] = "SAMPLE"
+                    break
+            target = next((r for r in tiles if not r.get("kpi_foot")), tiles[0])
+            target["kpi_foot"] = ("sample data: add your %s API key for live data" % name)[:80]
+            return rows
         rows.insert(at, kit.row("SAMPLE DATA: add your %s API key to see live data" % name, "These rows are invented examples, not your data.", icon="FileText", copy=False, badge="SAMPLE"))
         rows.insert(at + 1, kit.row("Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), icon="Key", copy=False, badge="KEY"))
     elif fx and (cfg.get("api") or {}).get("fixture_banner"):
