@@ -13,6 +13,7 @@
     "key_env": "PLACES_API_KEY",
     "env_file": "~/.config/places-list/.env",
     "fixture_default": false,
+    "on_missing_key": "sample",
     "fixture_file": "fixtures.json",
     "fixture_banner": false
   },

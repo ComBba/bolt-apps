@@ -72,7 +72,6 @@
       "view": "places"
     },
     "actions": [],
-    "pane": "places",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -91,7 +90,6 @@
       "view": "places"
     },
     "actions": [],
-    "pane": "places",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -110,7 +108,6 @@
       "view": "bikes"
     },
     "actions": [],
-    "pane": "bikes",
     "kpi_label": "Bikes at nearest dock",
     "kpi_value": 22,
     "kpi_unit": "",
@@ -129,7 +126,6 @@
       "view": "weather"
     },
     "actions": [],
-    "pane": "weather",
     "kpi_label": "Temperature",
     "kpi_value": 3.4,
     "kpi_unit": "C",
@@ -162,7 +158,6 @@
       "view": "landmarks"
     },
     "actions": [],
-    "pane": "landmarks",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",

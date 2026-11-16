@@ -128,7 +128,6 @@
       "view": "trend"
     },
     "actions": [],
-    "pane": "trend",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -147,7 +146,6 @@
       "view": "breakdown"
     },
     "actions": [],
-    "pane": "breakdown",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -166,7 +164,6 @@
       "view": "rows"
     },
     "actions": [],
-    "pane": "rows",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -185,7 +182,6 @@
       "view": "problems"
     },
     "actions": [],
-    "pane": "problems",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",

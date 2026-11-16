@@ -757,7 +757,7 @@ def stop_rows(L, view_id, arg):
     kind, title, sub, _ = L.stop
     icon = {"auth": "Key", "nokey": "Key"}.get(kind, "AlertCircle")
     badge = {"auth": "KEY", "nokey": "KEY", "offline": "OFFLINE"}.get(kind, "")
-    return [kit.row(title, sub, icon=icon, nav={"view": view_id, "arg": arg}, pane=view_id if view_id != "overview" else None, copy=False, badge=badge)]
+    return [kit.row(title, sub, icon=icon, nav={"view": view_id, "arg": arg}, copy=False, badge=badge)]   # no pane and no tile fields: a setup row must not draw an empty tile in the right pane
 
 
 def overview_rows(cfg, glob):
@@ -989,9 +989,19 @@ def read_fixtures(cfg, cfg_path):
         raise ConfigError("Fixture mode is on but %s could not be read" % os.path.basename(fp))
 
 
-def sample_banner(cfg, rows, fx=True):
-    if fx and (cfg.get("api") or {}).get("fixture_banner"):
-        at = 1 if rows and (rows[0].get("nav") or {}).get("back") else 0
+SAMPLE_FALLBACK = [False]   # set by run(): no key was found and api.on_missing_key is "sample"
+
+
+def sample_banner(cfg, rows, fx=True, quiet=False):
+    at = 1 if rows and (rows[0].get("nav") or {}).get("back") else 0
+    if SAMPLE_FALLBACK[0] and quiet:   # a chart or table view plots or lists its rows: a label row would become a data point, so the label is only on the overview and list views
+        return rows
+    if SAMPLE_FALLBACK[0]:   # the labelled sample data is shown, with a first row that says so and a setup hint row: never instead of the data
+        app, api = cfg["app"], cfg.get("api") or {}
+        name = app.get("service", app["title"])
+        rows.insert(at, kit.row("SAMPLE DATA: add your %s API key to see live data" % name, "These rows are invented examples, not your data.", icon="FileText", copy=False, badge="SAMPLE"))
+        rows.insert(at + 1, kit.row("Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), icon="Key", copy=False, badge="KEY"))
+    elif fx and (cfg.get("api") or {}).get("fixture_banner"):
         rows.insert(at, kit.row("Sample data", "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
                                 icon="FileText", copy=False, badge="SAMPLE"))
     return rows
@@ -1041,7 +1051,7 @@ def run_views(cfg, args, fx, fixtures):
                 rows = [n for n in notes if n.get("kpi_badge") in ("STALE", "PARTIAL")] + body
             else:
                 rows = head[:1] + notes + head[1:] + body + [refresh_row(view_id)]
-    kit.emit(sample_banner(cfg, rows, fx))
+    kit.emit(sample_banner(cfg, rows, fx, quiet=view_id != "overview" and (vs[view_id].get("widget") or {}).get("kind") in ("chart", "table")))
 
 
 def lookup_rows(cfg, items, query, glob):
@@ -1203,6 +1213,16 @@ def run(argv):
         sys.stdout.write(emit_yaml(cfg))
         sys.exit(0)
     fx = fixture_mode(cfg)
+    api = cfg.get("api") or {}
+    # api.on_missing_key: "setup" (default, a real app: one row that says how to add the key) or "sample" (a demo: show the labelled sample data and say a key makes it live)
+    omk = api.get("on_missing_key", "setup")
+    if omk not in ("setup", "sample"):
+        raise ConfigError("api.on_missing_key must be setup or sample, got %s" % json.dumps(omk)[:40])
+    if not fx and omk == "sample" and api.get("key_env") and os.environ.get("BOLT_APP_FIXTURE") != "0":
+        key, problem = find_key(cfg["app"], api)
+        if not key and not problem:   # a key file that is too open is a different problem: it keeps its own "tighten the permissions" row
+            fx = True
+            SAMPLE_FALLBACK[0] = True
     fixtures = read_fixtures(cfg, cfg_path) if fx else {}
     MAPS.update(cfg.get("maps") or {})
     mode = cfg.get("mode", "views")

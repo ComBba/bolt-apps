@@ -188,7 +188,7 @@ def setup_rows(cfg):
 
 def item_row(it, cfg):
     badge = cfg["status_badges"].get(it["status"], it["status"].upper()[:12])
-    return kit.safe_row(it["name"], "%s · %s" % (it["status"], kit.fmt_num(it["count"], 0)), icon="list", badge=badge, nav={"view": "item", "arg": it["id"]}, pane="item",
+    return kit.safe_row(it["name"], "%s · %s" % (it["status"], kit.fmt_num(it["count"], 0)), icon="list", badge=badge, nav={"view": "item", "arg": it["id"]},
                         item_name=it["name"], status=it["status"], count=it["count"], copy=False)
 
 
@@ -201,7 +201,7 @@ def build(view, arg, items, state, cfg, fixture):
         rows += banner(state, cfg)
         rows.append(kit.row("%s: %d" % (cfg["tiles"]["count_label"], len(items)), "%d late" % late, icon="Activity", badge="LATE" if late else "OK",
                             tile=kit.tile(cfg["tiles"]["count_label"], len(items), "", None, note="%d late" % late), copy=False))
-        rows.append(kit.row("All items", "the list, with a filter word", icon="list", nav={"view": "items"}, pane="items", copy=False))
+        rows.append(kit.row("All items", "the list, with a filter word", icon="list", nav={"view": "items"}, copy=False))
         rows.append(kit.refresh_row("overview", title="Check again", subtitle="Enter to fetch fresh data past the cache"))
         return rows
     if view == "items":

@@ -78,6 +78,20 @@
           "Could not connect"
         ]
       }
+    },
+    {
+      "name": "no key and no sample switch: the labelled sample data is shown, with a SAMPLE DATA row and a key hint (api.on_missing_key sample)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "overview"
+      ],
+      "expect": {
+        "text_present": [
+          "SAMPLE DATA: add your Branch explorer API key to see live data",
+          "Add your Branch explorer API key"
+        ]
+      }
     }
   ]
 }
