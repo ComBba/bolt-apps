@@ -24,42 +24,44 @@ Every refusal Bolt's installer and loader can give a personal pack, with the fix
 
 | Bolt says | Code | What to do |
 |---|---|---|
-| version X is already installed, and a pack is only replaced by a newer version | `same_or_older_version` | Run bolt-apps ship again: it picks a higher version by itself. If you passed --version, use a higher number than the one installed. |
-| it cannot tell whether this is newer than the installed version | `version_unreadable` | A version is numbers with dots, such as 1.0.5. Run bolt-apps ship without --version. |
-| Bolt did not install <name>: <file> already belongs to <other>. Remove that app first if you want this one instead. | `owned_by_other` | Two apps use the same script file name. Rebuild with the current bolt-apps: every file is named <app id>__<name>. Or remove the other app first. |
-| a file is already there and no pack installed it | `file_exists` | A file with that name in your scripts folder was added by hand or came with Bolt. Open it (Settings, Desktop, User Apps, Open folder) and delete it, or rename yours. |
-| a name is both a file and a folder | `file_and_folder` | Rename the file or the folder inside scripts/ so one name is not both. |
-| two names differ only in letter case | `case_collision` | Rename one of the two files: macOS and Windows treat them as one file. |
-| a script is nested more than 8 folders deep | `too_deep` | Keep scripts flat, directly in scripts/ (bolt-apps new does this). |
-| a script path is not safe | `unsafe_path` | Remove . or .. or odd characters from the script name; use letters, digits, . _ and -. |
-| a script cannot be placed because something else is in its way in your scripts folder | `in_the_way` | Open your folder (Settings, Desktop, User Apps, Open folder) and remove the file, folder or link that has the same name. |
-| a file named scripts is in your user apps folder | `scripts_is_a_file` | Move that file away from your user apps folder, then drop the pack again. |
-| it could not write a file | `write_failed` | Free some disk space or check you can write to your Bolt folder, then drop the pack again. |
-| its list of installed packs could not be read | `ledger_unreadable` | Do not delete anything. Ask for help with the file .boltpack-installs.json in your user apps folder. |
-| it could not confirm the pack's signature a second time | `signature_recheck` | Build the pack again with bolt-apps ship and drop the new file; do not copy a pack between folders while Bolt reads it. |
-| a file does not match the pack's signed listing / pack rejected | `unverified` | The pack was changed or damaged after signing. Run bolt-apps ship again and drop the new file; never edit a .boltpack. |
-| it lists a file outside the pack | `outside_pack` | Build the pack with bolt-apps ship, not by hand. |
-| Install cancelled: the pack is signed by its author, not by a key built into Bolt | `cancelled` | You chose Cancel, or did not approve the second prompt. Drop the pack again and approve both prompts if you trust the app. |
-| Your organization's policy on this device installs only packs signed with a key built into Bolt | `org_policy` | A company policy blocks personal apps on this computer. Nothing is wrong with the app; ask your admin, or use a computer without that policy. |
+| Bolt did not install this pack because this version, or a newer one, is already installed. Nothing was changed. To go back to an older version, remove the installed apps first. | `same_or_older_version` | Run bolt-apps ship again: it picks a higher version by itself. If you passed --version, use a higher number than the one installed. |
+| This pack cannot be installed here. Nothing was changed. (181 has no special wording for this; the reason is in the log: it cannot tell whether this is newer than the installed version.) | `version_unreadable` | A version is numbers with dots, such as 1.0.5. Run bolt-apps ship without --version. |
+| Bolt did not install this pack because one of its files already belongs to another installed pack. Nothing was changed. Remove that other app first if you want this one instead. | `owned_by_other` | Another installed app owns a script file with that name. Rebuild with the current bolt-apps: every file is named <app id>__<name>. Or remove the other app first. |
+| Bolt did not install this pack because a file with the same name as one of its scripts is already in your folder and no pack installed it. Nothing was changed. | `file_exists` | A file with that name in your scripts folder was added by hand or came with Bolt. Open it (Settings, Desktop, User Apps, Open folder) and delete it, or rename yours. |
+| Bolt did not install this pack because one name in it is used both as a file and as a folder, which no computer can store. Nothing was changed. | `file_and_folder` | Rename the file or the folder inside scripts/ so one name is not both. |
+| Bolt did not install this pack because two of its files differ only in capital letters, so one would replace the other on this computer. Nothing was changed. | `case_collision` | Rename one of the two files: macOS and Windows treat them as one file. |
+| Bolt did not install this pack because one of its files is inside too many folders. Nothing was changed. Use at most 8. | `too_deep` | Keep scripts flat, directly in scripts/ (bolt-apps new does this). |
+| Bolt did not install this pack because one of its files has a path that could reach outside the scripts folder. Nothing was changed. | `unsafe_path` | Remove . or .. or odd characters from the script name; use letters, digits, . _ and -. |
+| Bolt did not install this pack because something in your scripts folder is in the way of one of its files (a file where a folder is needed, a folder where a file goes, or a link). Nothing was changed. | `in_the_way` | Open your folder (Settings, Desktop, User Apps, Open folder) and remove the file, folder or link that has the same name. |
+| Bolt did not install this pack because a file named scripts sits in your user apps folder, so the scripts folder cannot be made. Nothing was changed. | `scripts_is_a_file` | Move that file away from your user apps folder, then drop the pack again. |
+| Bolt did not install this pack because it could not write one of its files to your user apps folder. Files it had already written for this install were removed; files from an earlier version of the pack may be unchanged. | `write_failed` | Free some disk space or check you can write to your Bolt folder, then drop the pack again. |
+| Bolt did not install this pack because its list of installed packs could not be read, and installing now could lose track of the packs already installed. Nothing was changed. | `ledger_unreadable` | Do not delete anything. Ask for help with the file .boltpack-installs.json in your user apps folder. |
+| This pack cannot be installed here. Nothing was changed. (181 has no special wording for this; the reason is in the log.) | `signature_recheck` | Build the pack again with bolt-apps ship and drop the new file; do not copy a pack between folders while Bolt reads it. |
+| This pack could not be verified: its contents do not match its signature. It was not installed. | `unverified` | The pack was changed or damaged after signing. Run bolt-apps ship again and drop the new file; never edit a .boltpack. |
+| This pack could not be verified, so it was not installed. Check that the file is a complete, unmodified .boltpack. | `outside_pack` | Build the pack with bolt-apps ship, not by hand. |
+| Install cancelled. Nothing was changed. | `cancelled` | You chose Cancel on the review card. Drop the pack again and choose Install if you trust the app. |
+| Your organization's policy on this device installs only packs signed by the company that makes Bolt (the dialog names it). This pack is signed by its author, so Bolt did not install it. Ask your IT team if you need it. Nothing was changed. | `org_policy` | A company policy blocks personal apps on this computer. Nothing is wrong with the app; ask your admin, or use a computer without that policy. |
 | Not loaded: this app's files do not match the signed pack Bolt recorded for it | `not_loaded_changed` | A script was edited after install. Run bolt-apps ship again and drop the new pack; it replaces the changed files. |
 | an empty list after install: nothing is shown when you press Enter on the app | `not_approved_yet` | The app is not approved yet (Bolt 181 shows an empty list instead of saying so). Open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept. Every reship changes the files, so you approve again. |
 | this app's command names a file in Bolt's scripts folder directly | `scripts_direct` | Write every script as {{scripts_dir}}/<app id>__<file> in the app file, never a full path. bolt-apps lint --personal shows the line. |
 | the app names its scripts in a form Bolt cannot resolve to one file each / is missing / is a link / is too large to check | `cannot_check` | Name each script once as {{scripts_dir}}/<app id>__<file>, keep each under 2 MB, no links, and make sure the file is in scripts/. bolt-apps verify names the file. |
-| pack rejected: it unpacks to more than 64 MB / holds more than 1024 files / the file is over 50 MB | `pack_too_big` | An app is small text and scripts. Remove big files from the app folder. |
-| pack rejected: the archive cannot be read | `pack_unreadable` | The file is not a .boltpack or is damaged. Run bolt-apps ship again and drop the new file. |
-| pack rejected: a file is not a valid app | `not_valid_app` | Run bolt-apps verify on the app folder: it names the line in the app file to fix. |
+| This pack could not be verified, so it was not installed. Check that the file is a complete, unmodified .boltpack. | `pack_too_big` | An app is small text and scripts. Remove big files from the app folder. |
+| This pack could not be verified, so it was not installed. Check that the file is a complete, unmodified .boltpack. | `pack_unreadable` | The file is not a .boltpack or is damaged. Run bolt-apps ship again and drop the new file. |
+| This pack could not be verified, so it was not installed. Check that the file is a complete, unmodified .boltpack. | `not_valid_app` | Run bolt-apps verify on the app folder: it names the line in the app file to fix. |
 
-### The exact words Bolt 0.1.181 uses
+### The backend sentences (log text)
+
+The install dialog in Bolt 0.1.181 does not show these. It rewrites each one to a fixed sentence (the table above, read from the 181 launcher's pack install error rewrite); a refusal it cannot place shows "This pack cannot be installed here. Nothing was changed." These are the sentences the desktop writes to `bolt-startup.log`, so search the log for them.
 
 `<name>`, `<new>`, `<old>`, `<file>` and `<other app>` stand for what Bolt fills in.
 
-| Code | Bolt's sentence |
+| Code | Backend sentence (log text) |
 |---|---|
 | `same_or_older_version` | Bolt did not install `<name>` `<new>`: version `<old>` is already installed, and a pack is only replaced by a newer version. To go back to an older version, remove the installed apps first. |
 | `version_unreadable` | Bolt did not install `<name>` `<new>`: it cannot tell whether this is newer than the installed version `<old>`. Remove the installed apps first to install this version. |
 | `owned_by_other` | Bolt did not install `<name>`: `<file>` already belongs to `<other app>`. Remove that app first if you want this one instead. |
 | `too_deep` | Bolt did not install `<name>`: `<file>` is nested more than 8 folders deep. Ask the pack's author to use fewer folders. |
-| `org_policy` | Your organization's policy on this device installs only packs signed with a key built into Bolt (...). `<name>` is signed only by its author, so Bolt did not install it. ... Ask your IT team if you need it. |
+| `org_policy` | Your organization's policy on this device installs only packs signed with a key built into Bolt (...). `<name>` is signed only by its author, so Bolt did not install it. ... Ask your IT team if you need it. (The dialog shows the fixed sentence above.) |
 
 Name lengths: Bolt accepts up to 128 characters per file or folder name and 512 for a whole path, and an app id is up to 64 characters. Every script starts with `<app id>__`, so `<app id>__<name>` must fit in 128. This toolkit packs a script name of at most 82 characters, because it writes the path `manifests/scripts/<name>` into a 100-character field.
 

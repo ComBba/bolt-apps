@@ -52,3 +52,20 @@ test('new prints the real file names to edit, not the template\'s', () => {
 	assert.match(r.stdout, /edit: scripts\/shiny-tool__config\.json, scripts\/shiny-tool__fixtures\.json/);
 	assert.doesNotMatch(r.stdout, /edit:[^\n]*portal-template/);
 });
+
+// One wording for the install: one review card, a possible macOS prompt, then Review and accept. No "second prompt".
+const walk = (d, out = []) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { if (['node_modules', '.git', 'golden', '__pycache__'].includes(e.name)) continue; const p = path.join(d, e.name); if (e.isDirectory()) walk(p, out); else if (/\.(md|mjs|json|yaml)$/.test(e.name) && !p.includes(`${path.sep}test${path.sep}`)) out.push(p); } return out; };
+test('no doc or tool tells the person to approve twice or "both prompts"', () => {
+	const bad = /second prompt|both prompts|asks once more|confirm the permissions|approve both/i;
+	for (const f of walk(REPO)) assert.doesNotMatch(fs.readFileSync(f, 'utf8'), bad, path.relative(REPO, f));
+});
+
+test('the Bolt-said table quotes the 181 dialog sentences, not the raw backend ones', async () => {
+	const { BOLT_SAYS } = await import('../lib/boltsays.mjs');
+	const said = Object.fromEntries(BOLT_SAYS.map((r) => [r[0], r[1]]));
+	assert.match(said.owned_by_other, /^Bolt did not install this pack because one of its files already belongs to another installed pack\. Nothing was changed\./);
+	assert.match(said.same_or_older_version, /this version, or a newer one, is already installed/);
+	assert.match(said.version_unreadable, /^This pack cannot be installed here\./);
+	assert.doesNotMatch(QS, /different signer/);
+	assert.match(QS, /one of its files already belongs to another installed pack/);
+});
