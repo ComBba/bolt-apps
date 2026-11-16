@@ -4,7 +4,7 @@
   "title": "Table template",
   "role": "Anyone building a list that needs sorting and totals",
   "saves": "Finding the table column options",
-  "summary": "Type =orders for a sortable table with totals and number formats. Runs on sample data.",
+  "summary": "Type =table-template for a sortable table with totals and number formats. Runs on sample data.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

@@ -4,7 +4,7 @@
   "title": "Branch explorer",
   "role": "Anyone browsing a tree of folders, teams or categories",
   "saves": "Writing tree navigation with a Back row",
-  "summary": "Type =branch, press Enter on a branch to go one level down, Back to come out.",
+  "summary": "Type =branch-explorer, press Enter on a branch to go one level down, Back to come out.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

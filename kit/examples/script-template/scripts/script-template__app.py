@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""=tpl [view] [word]: a blank script app on the Bolt Apps kit. Copy this folder, then edit the lines marked EDIT HERE.
+"""=script-template [view] [word]: a blank script app on the Bolt Apps kit. Copy this folder, then edit the lines marked EDIT HERE.
 
 What it shows, in code you can read top to bottom:
   - the views: overview (tiles), items (a list with a filter word), item (one record, with Back)

@@ -4,7 +4,7 @@
   "title": "Local service template",
   "role": "Anyone building an app over a service on their own computer",
   "saves": "Curl commands against a local API",
-  "summary": "Type =localmodels to list what a local service reports. Copy it for any loopback HTTP service: no script needed.",
+  "summary": "Type =local-service-template to list what a local service reports. Copy it for any loopback HTTP service: no script needed.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

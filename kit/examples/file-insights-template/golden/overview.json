@@ -1,7 +1,7 @@
 [
   {
     "title": "Sample data",
-    "subtitle": "Invented numbers, not your file. Type =insights and the path of a CSV to see yours",
+    "subtitle": "Invented numbers, not your file. Type =file-insights-template and the path of a CSV to see yours",
     "icon": "FileText",
     "body": "",
     "actions": [],

@@ -4,7 +4,7 @@
   "title": "Script template",
   "role": "Anyone writing a Bolt App as a script",
   "saves": "Working out the kit, the views, the cache and the checks from scratch",
-  "summary": "Type =tpl for a blank script app: overview, list with a filter word, detail, Back, cache and offline rows.",
+  "summary": "Type =script-template for a blank script app: overview, list with a filter word, detail, Back, cache and offline rows.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

@@ -1,7 +1,7 @@
 {
  "app": {
   "id": "widget-gallery-2",
-  "chip": "gallery2",
+  "chip": "widget-gallery-2",
   "title": "Widget gallery 2",
   "icon": "Image",
   "description": "The card pane, the image grid and the cards grid with images. Sample data: generated colour swatches as inline images.",

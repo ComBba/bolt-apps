@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: cli-wrapper-template
-chip: pingcheck
+chip: cli-wrapper-template
 title: "Ping check"
 icon: network
 description: "Type a host name: is it reachable, how fast, how much is lost. Wraps the system ping command, read-only."

@@ -1,7 +1,7 @@
 {
   "app": {
     "id": "portal-template",
-    "chip": "portal",
+    "chip": "portal-template",
     "title": "Example portal",
     "icon": "globe",
     "description": "Template: tiles, drill down and back, a detail panel, cache with stale fallback. Change config.json to point it at your API.",

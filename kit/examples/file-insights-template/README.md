@@ -12,7 +12,7 @@ A local-file app: the person types the path of a CSV, the app reads it with the 
 | problems | markdown | skipped rows, bad dates, uneven rows, every cap that cut the file |
 
 ## How it behaves (measured by the check cases and by hand, 2026-11-15)
-- `=insights ~/data/sales.csv`, or `=insights` alone for labelled sample data (a SAMPLE badge row, invented numbers). Up to four words are joined into one path, so a path with a few spaces works. A path whose first word is a view name (`trend`, `rows`) needs `./` in front.
+- `=file-insights-template ~/data/sales.csv`, or `=file-insights-template` alone for labelled sample data (a SAMPLE badge row, invented numbers). Up to four words are joined into one path, so a path with a few spaces works. A path whose first word is a view name (`trend`, `rows`) needs `./` in front.
 - The last good path is kept for an hour (the kit cache, `~/.bolt-apps/cache/file-insights-template`) so the Trend, Breakdown, Rows and Problems rows reopen the same file. A launcher row can carry only a plain word, never a path, so the path cannot travel in the row.
 - Caps (config `limits`): 5 MB read, 5,000 rows, 40 columns, 200 characters a cell. Each cap that cut the file is listed in Problems, never silent.
 - Only a regular file is opened. A folder, pipe or device gets one plain row. A binary file (NUL bytes) is refused. A missing file says so.
@@ -42,4 +42,4 @@ node toolkit/bin/bolt-apps.mjs check kit/examples/file-insights-template --updat
 node toolkit/bin/bolt-apps.mjs lint kit/examples/file-insights-template --personal
 node toolkit/bin/bolt-apps.mjs pack kit/examples/file-insights-template --personal --version 1.0.1 --out file-insights-template-1.0.1.boltpack
 ```
-Try the edge cases without a file: `=insights rows demo-hostile`, `=insights problems demo-ragged`, `demo-nonnumeric`, `demo-novalue`, `demo-empty`, `demo-huge`.
+Try the edge cases without a file: `=file-insights-template rows demo-hostile`, `=file-insights-template problems demo-ragged`, `demo-nonnumeric`, `demo-novalue`, `demo-empty`, `demo-huge`.

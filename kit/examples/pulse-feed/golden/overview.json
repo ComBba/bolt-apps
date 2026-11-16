@@ -16,7 +16,7 @@
   },
   {
     "title": "Trending: 30 stories",
-    "subtitle": "the Hacker News front page, by rank. Type a word after =pulse to search",
+    "subtitle": "the Hacker News front page, by rank. Type a word after =pulse-feed to search",
     "icon": "TrendingUp",
     "body": "",
     "actions": [],

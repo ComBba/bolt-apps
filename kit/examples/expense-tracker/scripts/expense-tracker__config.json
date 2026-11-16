@@ -1,7 +1,7 @@
 {
   "app": {
     "id": "expense-tracker",
-    "chip": "spend",
+    "chip": "expense-tracker",
     "title": "Expense tracker",
     "icon": "wallet",
     "description": "Spending summary tiles, expenses by category with a drill, a daily bar chart and a detail pane per expense. Invented sample data.",

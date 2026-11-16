@@ -1,5 +1,7 @@
 # The shared engine: every config option, once
 
+> **Chip equals id:** the app file's `chip` must be the app's `id` (the launcher looks apps up by id, in Bolt 181 and main); `lint` refuses anything else as `chip_not_id`.
+
 > **Apps built before this change:** remove the old app in Bolt (Settings, Desktop, User Apps; the Remove button is on the app's row on 181, and newer builds also show it in the expanded panel; do not delete files by hand), run `./bolt-apps new <template> <id>`, copy your own `config.json` and `fixtures.json` over the new ones, re-run `./bolt-apps check`, then `./bolt-apps ship`.
 
 All apps here run the same engine, kept as `scripts/<id>__engine.py` (Bolt keeps every app's scripts in one shared folder, so every file is named `<id>__<name>`). An app is `scripts/<id>__config.json` plus `scripts/<id>__fixtures.json`. Start a copy with `bolt-apps new <template> <id>`, which renames everything. Nothing else is edited. Regenerate the app file after any change:

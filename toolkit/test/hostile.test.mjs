@@ -54,7 +54,7 @@ const UNREADABLE = {
 	'block scalar in a command': BASE.replace('    macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"', '    macos: |\n      python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}'),
 	'quoted key': BASE.replace('\nruntime: bridge', '\n"runtime": bridge'),
 	'escape sequence': BASE.replace('title: "Eagle info"', 'title: "Eagle \\u0041 info"'),
-	'flow-style document': '{ schema_version: 1, runtime: bridge, id: eagle-info, chip: eagle, title: T, emits: Generic, bridge: { command: { macos: "python3 {{scripts_dir}}/eagle-info__eagle.py" }, parse: json }, presentation: { widget: list }, detect: { binary: git } }\n',
+	'flow-style document': '{ schema_version: 1, runtime: bridge, id: eagle-info, chip: eagle-info, title: T, emits: Generic, bridge: { command: { macos: "python3 {{scripts_dir}}/eagle-info__eagle.py" }, parse: json }, presentation: { widget: list }, detect: { binary: git } }\n',
 	'duplicate key': BASE + 'runtime: transform\n',
 	'merge key': BASE + '<<: *x\n',
 	'second document': BASE + '---\nruntime: bridge\n',

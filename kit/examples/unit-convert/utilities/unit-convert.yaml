@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: unit-convert
-chip: convert
+chip: unit-convert
 title: "Unit convert"
 icon: arrow-left-right
 description: "Type an amount, pick two units, get the result with the formula and the same amount in the other units of that kind. Offline, no network."

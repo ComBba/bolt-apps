@@ -27,7 +27,7 @@
  },
  "app": {
   "id": "lookup-template",
-  "chip": "forecast",
+  "chip": "lookup-template",
   "title": "Forecast lookup",
   "icon": "cloud-sun",
   "description": "Type a place, get its weather. One query in, tiles and rows out, from two keyless Open-Meteo calls.",
@@ -68,7 +68,7 @@
    "weather"
   ],
   "prompt_title": "Type a place",
-  "prompt_subtitle": "for example: =forecast New York",
+  "prompt_subtitle": "for example: =lookup-template New York",
   "none_title": "No such place",
   "examples": [
    "New York",

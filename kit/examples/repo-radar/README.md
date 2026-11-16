@@ -1,7 +1,7 @@
 # repo-radar
 
 ## What this teaches
-Joining several remote APIs into one verdict. `=radar owner/repo` calls GitHub, npm, OSV.dev and Hacker News in parallel (a thread pool, a per-call timeout and one overall deadline), joins them on the repository and its npm package, scores 0 to 100, and shows what changed since you last looked.
+Joining several remote APIs into one verdict. `=repo-radar owner/repo` calls GitHub, npm, OSV.dev and Hacker News in parallel (a thread pool, a per-call timeout and one overall deadline), joins them on the repository and its npm package, scores 0 to 100, and shows what changed since you last looked.
 
 | View | Pane | What it shows |
 |---|---|---|
@@ -57,7 +57,7 @@ node toolkit/bin/bolt-apps.mjs check kit/examples/repo-radar --update-golden
 node toolkit/bin/bolt-apps.mjs lint kit/examples/repo-radar --personal
 node toolkit/bin/bolt-apps.mjs pack kit/examples/repo-radar --personal --version 1.0.1 --out repo-radar-1.0.1.boltpack
 ```
-Use: `=radar expressjs/express`, `=radar fastify/fastify vs expressjs/express`, `=radar owner/repo:npm-name`.
+Use: `=repo-radar expressjs/express`, `=repo-radar fastify/fastify vs expressjs/express`, `=repo-radar owner/repo:npm-name`.
 
 ## Not covered
 Only npm packages (OSV supports other ecosystems). Not run in the real launcher. Windows was not tested. A repo with more than 8 releases shows the newest 8. The Hacker News total counts stories that link to the repo, not mentions in comments.

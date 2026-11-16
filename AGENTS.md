@@ -134,6 +134,7 @@ Rules a script app must follow, each one a `verify` code:
 - One app file per `utilities/<id>.yaml`; script names are plain
   (`script_name`); every file under `scripts/` starts with `<app id>__` (`script_not_namespaced`: Bolt installs all apps' scripts into one folder, so a bare `config.json` or `bolt_app_kit.py` stops a second app installing). The kit ships as one file, `scripts/<app id>__bolt_app_kit.py`, made by
   `bolt-apps kit vendor --flat <folder>`, which keeps the command's helper list short.
+- The app file's `chip` must equal its `id` (`chip_not_id`): the launcher looks apps up by id, so another chip is offered but never runs.
 - The command names the script as `{{scripts_dir}}/<name>`, bare, never in quotes
   (`command_variable_in_quotes`, `script_path_relative`, `script_missing`). Example:
   `macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"`.

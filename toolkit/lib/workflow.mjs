@@ -205,6 +205,7 @@ export function ship(args) {
   1. Drop ${q(out)} on the Bolt launcher (or on Bolt Apps; not Admin settings).
   2. Bolt shows a review card. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it.
   3. Approve. Bolt asks once more because you signed the pack yourself. Approve again.
+  3b. After you drop the pack, open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept (the first run asks too). Every reship changes the files, so you approve again. An empty list when you press Enter means the app is not approved yet.
   4. Open the launcher and type =${chip}.
 To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.
 This app runs as you: only install code you have read.

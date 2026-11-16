@@ -1,7 +1,7 @@
 {
   "app": {
     "id": "pulse-feed",
-    "chip": "pulse",
+    "chip": "pulse-feed",
     "title": "Pulse",
     "icon": "trending-up",
     "service": "Hacker News",

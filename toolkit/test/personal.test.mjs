@@ -14,7 +14,7 @@ const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
 const run = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8' });
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-personal-'));
 const write = (f, c) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, c); };
-const BRIDGE = `schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: "Eagle info"\nemits: Generic\nbridge:\n  command:\n    macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n`;
+const BRIDGE = `schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle-info\ntitle: "Eagle info"\nemits: Generic\nbridge:\n  command:\n    macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n`;
 // A script app laid out the way a tester's AI agent lays it out: listing, one User App, one flat script, author-side check files.
 function scriptApp(root, over = {}) {
 	const dir = path.join(root, 'apps', 'eagle-info');
@@ -88,7 +88,7 @@ test('--personal also packs an ordinary tier 2 app, and a local-service app says
 	const d = tmp(); run(d, 'new', 'up', '--type', 'transform');
 	assert.equal(run(d, 'pack', 'apps/up', '--personal', '--key', keyed(d), '--out', path.join(d, 'u.boltpack')).status, 0);
 	const dir = scriptApp(d); fs.rmSync(path.join(dir, 'scripts'), { recursive: true });
-	write(path.join(dir, 'utilities', 'eagle-info.yaml'), 'schema_version: 1\nruntime: http_local\nid: eagle-info\nchip: eagle\ntitle: T\nemits: Generic\nhttp:\n  port: 8080\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\npresentation:\n  widget: list\n');
+	write(path.join(dir, 'utilities', 'eagle-info.yaml'), 'schema_version: 1\nruntime: http_local\nid: eagle-info\nchip: eagle-info\ntitle: T\nemits: Generic\nhttp:\n  port: 8080\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\npresentation:\n  widget: list\n');
 	const r = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', path.join(d, 'k.pem'), '--out', path.join(d, 'h.boltpack'));
 	assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /service on this computer \(port 8080\)/);
 });

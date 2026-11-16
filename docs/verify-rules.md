@@ -42,6 +42,7 @@ Every refusal Bolt's installer and loader can give a personal pack, with the fix
 | Install cancelled: the pack is signed by its author, not by a key built into Bolt | `cancelled` | You chose Cancel, or did not approve the second prompt. Drop the pack again and approve both prompts if you trust the app. |
 | Your organization's policy on this device installs only packs signed with a key built into Bolt | `org_policy` | A company policy blocks personal apps on this computer. Nothing is wrong with the app; ask your admin, or use a computer without that policy. |
 | Not loaded: this app's files do not match the signed pack Bolt recorded for it | `not_loaded_changed` | A script was edited after install. Run bolt-apps ship again and drop the new pack; it replaces the changed files. |
+| an empty list after install: nothing is shown when you press Enter on the app | `not_approved_yet` | The app is not approved yet (Bolt 181 shows an empty list instead of saying so). Open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept. Every reship changes the files, so you approve again. |
 | this app's command names a file in Bolt's scripts folder directly | `scripts_direct` | Write every script as {{scripts_dir}}/<app id>__<file> in the app file, never a full path. bolt-apps lint --personal shows the line. |
 | the app names its scripts in a form Bolt cannot resolve to one file each / is missing / is a link / is too large to check | `cannot_check` | Name each script once as {{scripts_dir}}/<app id>__<file>, keep each under 2 MB, no links, and make sure the file is in scripts/. bolt-apps verify names the file. |
 | pack rejected: it unpacks to more than 64 MB / holds more than 1024 files / the file is over 50 MB | `pack_too_big` | An app is small text and scripts. Remove big files from the app folder. |
@@ -61,4 +62,9 @@ Every refusal Bolt's installer and loader can give a personal pack, with the fix
 | `org_policy` | Your organization's policy on this device installs only packs signed with a key built into Bolt (...). `<name>` is signed only by its author, so Bolt did not install it. ... Ask your IT team if you need it. |
 
 Name lengths: Bolt accepts up to 128 characters per file or folder name and 512 for a whole path, and an app id is up to 64 characters. Every script starts with `<app id>__`, so `<app id>__<name>` must fit in 128. This toolkit packs a script name of at most 82 characters, because it writes the path `manifests/scripts/<name>` into a 100-character field.
+
+### Rules the examples had to follow
+
+- Chip equals id (`chip_not_id`): the launcher looks apps up by id (Bolt 181 and main), so an app whose chip differs from its id is offered in the launcher but never runs: an empty list and no error. Set `chip` to the id.
+- First-run approval: the dialog lists "Mentions" lines (a web address with a user name or a backslash; the system keychain or the security command) for the vendored kit file of EVERY kit app, even one that never uses a key or the network. That is the kit's own text, not the app's logic; a kit provided by Bolt (planned for 182) removes it. After you drop a pack, open Settings, Desktop, User Apps, expand the app and click Review and accept; every reship changes the files, so you approve again.
 

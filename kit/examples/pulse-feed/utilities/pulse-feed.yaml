@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: pulse-feed
-chip: pulse
+chip: pulse-feed
 title: "Pulse"
 icon: trending-up
 description: "Trending Hacker News stories, or type a topic word to merge the front page with a search. Tiles, a preview pane per story, Open post, Copy quote and Narrow."

@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: json-tree-browser
-chip: jtree
+chip: json-tree-browser
 title: "JSON tree browser"
 icon: binary
 description: "Pick a document, browse any JSON as a collapsible tree. Replace the sample documents with the answer of any JSON API."

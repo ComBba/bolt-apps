@@ -1,7 +1,7 @@
 {
   "app": {
     "id": "places-list",
-    "chip": "places",
+    "chip": "places-list",
     "title": "Places list",
     "icon": "MapPin",
     "description": "Places as rows with an Open button that opens each one in an online map. No map widget: a personal app cannot draw one. Invented places.",

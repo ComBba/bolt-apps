@@ -33,6 +33,7 @@ export const FIXES = {
 	entry_kind_unknown: 'Bolt does not install this kind of file from a pack. Remove it from the app folder.',
 	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with bolt-apps pack.',
 	script_not_namespaced: 'Rename the file to <app id>__<name> (for example pulse-feed__engine.py), and write the same name after {{scripts_dir}}/ in the app file. Every app shares one scripts folder, so a bare name like bolt_app_kit.py or config.json stops a second app installing. bolt-apps new does it for new apps. Apps built before this change: remove the old app in Bolt (Settings, User Apps, Remove), run ./bolt-apps new <template> <id>, then copy your own config.json and fixtures.json over the new ones and re-run ./bolt-apps check.',
+	chip_not_id: 'Bolt only runs an app whose chip equals its id: the launcher looks apps up by id, so a different chip is offered in the launcher but never runs (an empty list, no error). Set chip to the id, in the app file (and in config.json if the app file is generated from it).',
 	description_chip_mismatch: 'Change the description (or placeholder_examples) so the =word it tells the person to type is this app\'s chip, or remove the =word.',
 	script_depth: 'Use at most 8 folder levels under scripts/.',
 	script_path: 'Remove the . or .. part from the script path.',
@@ -171,6 +172,7 @@ export function checkManifests(files, opts = {}) {
 		const root = a.tree, E = (code, msg, line) => add('error', code, msg, file, line || 1);
 		{ const cm = chipMismatch(root); if (cm) add('warning', 'description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, file, 1); }
 		const val = (m, k) => get(m, k)?.value, S = (m, k) => str(val(m, k)), ln = (m, k, d) => get(m, k)?.line ?? d;
+		{ const cid = S(root, 'id'), cch = S(root, 'chip'); if (cid && cch && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cch) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cid.trim()) && cid.trim() !== cch.trim()) E('chip_not_id', `chip "${cch}" is not the id "${cid}". Bolt only runs an app whose chip equals its id: set chip to ${cid}`, ln(root, 'chip')); }
 		for (const e of root.entries) {
 			if (!R.top_level_keys.includes(e.key)) E('yaml_key_unknown', `unknown key "${e.key}"; Bolt refuses the whole file`, e.line);
 			else if (R.admin_only_keys.includes(e.key)) E('yaml_admin_only_key', `"${e.key}" is for company-managed apps and is not allowed in a user app`, e.line);

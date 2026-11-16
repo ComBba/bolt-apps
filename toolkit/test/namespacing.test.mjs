@@ -222,3 +222,13 @@ test('the chip is the id (hyphens kept), an upgrade keeps it, and a changed chip
 	// the description rule follows the chip, hyphens included
 	const l = cli(home, d, 'lint', path.join(d, 'cdp-tabs'), '--personal'); assert.doesNotMatch(l.stdout, /description_chip_mismatch/);
 });
+
+test('every public example has chip equal to id, and a chip different from the id is refused', () => {
+	for (const n of examples) for (const y of fs.readdirSync(path.join(EX, n, 'utilities'))) {
+		const s = fs.readFileSync(path.join(EX, n, 'utilities', y), 'utf8'); assert.equal(/^chip: (\S+)/m.exec(s)[1], /^id: (\S+)/m.exec(s)[1], `${n}/${y}`);
+	}
+	const d = tmp('ns-chipid-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'chipcase', '--dir', d).status, 0);
+	const yf = path.join(d, 'chipcase', 'utilities', 'chipcase.yaml'); fs.writeFileSync(yf, fs.readFileSync(yf, 'utf8').replace(/^chip: .*$/m, 'chip: other'));
+	for (const a of [['lint', path.join(d, 'chipcase'), '--personal'], ['verify', path.join(d, 'chipcase')], ['pack', path.join(d, 'chipcase'), '--personal', '--key', KEY]]) { const r = cli(home, d, ...a); assert.notEqual(r.status, 0, a[0]); assert.match(r.stdout + r.stderr, /chip_not_id/, a[0]); }
+});

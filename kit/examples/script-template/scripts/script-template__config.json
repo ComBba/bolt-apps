@@ -1,7 +1,7 @@
 {
   "app": {
     "id": "script-template",
-    "chip": "tpl",
+    "chip": "script-template",
     "title": "Script template",
     "icon": "list",
     "description": "A blank script app on the kit: overview, a list with a filter word, a detail view, Back, cache with an old copy, offline row. Replace the API and the fields.",

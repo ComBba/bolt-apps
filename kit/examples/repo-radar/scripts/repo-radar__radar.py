@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""=radar owner/repo [vs owner/repo]: one verdict from GitHub, npm, OSV and Hacker News, fetched in parallel.
+"""=repo-radar owner/repo [vs owner/repo]: one verdict from GitHub, npm, OSV and Hacker News, fetched in parallel.
 
 An example of the Bolt Apps kit for joining several remote APIs. The sources are separate systems; they are joined on
 the repository (owner/repo) and its npm package, and the join is checked: an npm package whose repository field points
@@ -742,7 +742,7 @@ def main(argv):
     if not args:
         last = lastc.get("last")
         if not last:
-            kit.emit([kit.safe_row("Type owner/repo", "for example: =radar expressjs/express   or   =radar fastify/fastify vs expressjs/express", icon="Activity", copy=False)])
+            kit.emit([kit.safe_row("Type owner/repo", "for example: =repo-radar expressjs/express   or   =repo-radar fastify/fastify vs expressjs/express", icon="Activity", copy=False)])
         args = last["words"]
     specs, err = parse_specs(args)
     if err:

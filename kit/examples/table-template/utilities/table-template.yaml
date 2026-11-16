@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: table-template
-chip: orders
+chip: table-template
 title: "Table template"
 icon: list
 description: "A sortable table with totals, number formats and a share column. Sample data."

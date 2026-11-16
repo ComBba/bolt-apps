@@ -1,7 +1,7 @@
 {
  "app": {
   "id": "chart-template",
-  "chip": "charts",
+  "chip": "chart-template",
   "title": "Chart template",
   "icon": "line-chart",
   "description": "Line, bar and sparkline charts from rows or from a number series, plus a cards-only dashboard. Sample data.",

@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: repo-radar
-chip: radar
+chip: repo-radar
 title: "Repo radar"
 icon: activity
 description: "Type owner/repo: one verdict from GitHub, npm, OSV and Hacker News, fetched in parallel. Compare two with: a/b vs c/d."

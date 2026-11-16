@@ -4,7 +4,7 @@
   "title": "Pipeline board",
   "role": "Anyone watching builds, orders or tickets move through stages",
   "saves": "Grouping rows by stage and drawing a diff by hand",
-  "summary": "Type =pipeline for runs grouped by stage, a detail pane per run and a line diff of what changed in a run.",
+  "summary": "Type =pipeline-board for runs grouped by stage, a detail pane per run and a line diff of what changed in a run.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

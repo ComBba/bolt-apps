@@ -2,7 +2,7 @@
  "mode": "form",
  "app": {
   "id": "form-template",
-  "chip": "expense-form",
+  "chip": "form-template",
   "title": "Log expense (form template)",
   "icon": "wallet",
   "description": "A typed input form, then the recent log as a table. Copy it for any app that takes a few typed values.",

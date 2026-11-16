@@ -4,7 +4,7 @@
   "title": "Expense tracker",
   "role": "Anyone tracking spending from an API or a export",
   "saves": "Building totals, a category drill and a chart by hand",
-  "summary": "Type =spend for spending tiles against a budget, drill into categories, see every expense and a daily bar chart.",
+  "summary": "Type =expense-tracker for spending tiles against a budget, drill into categories, see every expense and a daily bar chart.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

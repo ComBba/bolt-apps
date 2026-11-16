@@ -4,7 +4,7 @@
   "title": "Repo radar",
   "role": "Anyone choosing or watching an open source dependency",
   "saves": "Opening GitHub, npm, a vulnerability database and Hacker News in four tabs",
-  "summary": "Type =radar owner/repo for one verdict from four sources. Copy it to join several APIs in one view.",
+  "summary": "Type =repo-radar owner/repo for one verdict from four sources. Copy it to join several APIs in one view.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

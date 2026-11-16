@@ -110,6 +110,7 @@ export function lintApp(dir, opts = {}) {
 			{ const cm = chipMismatch(a.tree); if (cm) W('description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, p); }
 			if (a.runtime === undefined) E('field_missing', 'runtime is required', p);
 			for (const pr of a.problems) add(pr.level || 'error', pr.code, pr.message, p);
+			{ const cch = a.tree ? (str(get(a.tree, 'chip')?.value) || '').trim() : ''; if (yid && cch && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cch) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(yid) && cch !== yid) E('chip_not_id', `chip "${cch}" is not the id "${yid}". Bolt only runs an app whose chip equals its id (the launcher looks apps up by id): set chip to ${yid}`, p); }
 			if (!yid) E('field_missing', 'id is required', p);
 			tier = Math.max(tier, a.tier); for (const x of a.permissions) perms.add(x);
 			continue;
@@ -366,7 +367,7 @@ function cmdVerify(args) {
 	if (fs.statSync(f).isDirectory()) {
 		kind = 'app';
 		const r = lintApp(f, { personal: true });
-		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
+		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch', 'chip_not_id'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
 		if (r.app) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });

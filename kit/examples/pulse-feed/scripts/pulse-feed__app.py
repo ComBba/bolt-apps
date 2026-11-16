@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""=pulse [topic]: trending Hacker News stories, or a topic that merges two public sources. A copyable layout example.
+"""=pulse-feed [topic]: trending Hacker News stories, or a topic that merges two public sources. A copyable layout example.
 
 What it shows, in code you can read top to bottom:
   - no word: the front page. One request for the list of ids, then one request per story ("hydrate") in parallel
@@ -383,7 +383,7 @@ def build(topic, stories, state, cfg, fixture, now):
         sub = "front page and search merged. The Narrow button on a story goes deeper"
     else:
         head = "Trending: %d stories" % len(shown)
-        sub = "the Hacker News front page, by rank. Type a word after =pulse to search"
+        sub = "the Hacker News front page, by rank. Type a word after =pulse-feed to search"
     rows += banner(state, cfg)
     rows.append(kit.row(head, sub, icon="TrendingUp", tile=kit.tile("Stories", len(shown), "", None, note="topic %s" % topic if topic else "front page"), copy=False))
     if topic:
@@ -436,7 +436,7 @@ def main(argv):
     if words and words[0] in VIEWS:
         view, rest = words[0], words[1:]
     else:
-        view, rest = "topic", words   # =pulse rust: a bare word is the topic
+        view, rest = "topic", words   # =pulse-feed rust: a bare word is the topic
     demos = [w for w in rest if w in ("demo-offline", "demo-stale", "demo-partial")]
     rest = [w for w in rest if w not in demos]
     refresh = bool(rest) and (rest[0] == "refresh" or rest[0].startswith("refresh."))
@@ -445,7 +445,7 @@ def main(argv):
         t = rest[0][len("refresh."):] if rest[0].startswith("refresh.") else ("" if rest[0] == "refresh" else rest[0])
         topic = t.lower()
         if topic and not TOKEN.match(topic):
-            kit.emit([kit.row("Use one plain word", "letters and digits only, for example =pulse rust", icon="Search", nav={"view": "overview"}, copy=False)])
+            kit.emit([kit.row("Use one plain word", "letters and digits only, for example =pulse-feed rust", icon="Search", nav={"view": "overview"}, copy=False)])
     elif view == "overview" and rest and rest[0] == "refresh":
         refresh = True
     env = os.environ.get("BOLT_APP_FIXTURE")
