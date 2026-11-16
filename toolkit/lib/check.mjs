@@ -115,8 +115,8 @@ export function inside(appDir, rel, name) {
 	if (realAnc !== realBase && !realAnc.startsWith(realBase + path.sep)) throw new Error(`"${rel}" resolves outside the app folder`);
 	return p;
 }
-// Flat mode: the whole kit as ONE file, scripts/bolt_app_kit.py, because Bolt installs scripts into one flat folder and a
-// package folder cannot be installed. The file holds the kit's own source strings and builds the same package in memory
+// Flat mode: the whole kit as ONE file, scripts/<app id>__bolt_app_kit.py, because Bolt installs scripts into one shared folder (so every file is named for its app)
+// and a package folder cannot be installed by older Bolt versions. The file holds the kit's own source strings and builds the same package in memory
 // when imported, so the code that runs is the code in kit/python/bolt_app_kit, byte for byte. The lock lives beside
 // check.json (author side, never packed).
 // A JSON value as a Python literal with single-quoted strings: no escaped double quotes, so a web address inside it is
@@ -131,6 +131,8 @@ function pyLit(v) {
 	return `{${Object.entries(v).map(([k, x]) => `${pyLit(k)}: ${pyLit(x)}`).join(', ')}}`;
 }
 export const FLAT_NAME = 'bolt_app_kit.py';
+// Bolt keeps every app's scripts in one shared folder, so the vendored kit is named for its app: <app id>__bolt_app_kit.py. The script loads it by that name.
+export function flatName(appDir) { try { const id = JSON.parse(fs.readFileSync(path.join(appDir, 'bolt-app.json'), 'utf8')).id; if (typeof id === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(id)) return `${id}__${FLAT_NAME}`; } catch { /* no listing: the plain name */ } return FLAT_NAME; }
 const ORDER = ['text', 'fmt', 'icons_data', 'schema', 'probe', 'cache', 'rows'];
 export function flatKitSource() {
 	const names = fs.readdirSync(KIT_PY).filter((f) => f.endsWith('.py') && f !== '__init__.py').map((f) => f.slice(0, -3)).sort();
@@ -178,11 +180,12 @@ export function vendorKit(appDir, opts = {}) {
 		const old = inside(appDir, cfg.kit || 'scripts/bolt_app_kit', 'bolt_app_kit');
 		if (fs.existsSync(old)) { if (!fs.lstatSync(old).isDirectory()) throw new Error('the kit path is not a directory; refusing'); fs.rmSync(old, { recursive: true }); }
 		fs.rmSync(`${old}.lock.json`, { force: true });
-		cfg.kit = path.posix.join(path.posix.dirname(cfg.script || 'scripts/x.py'), FLAT_NAME);
+		cfg.kit = path.posix.join(path.posix.dirname(cfg.script || 'scripts/x.py'), flatName(appDir));
 		fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2) + '\n');
 	}
+	if (kitIsFlat(cfg) && path.posix.basename(String(cfg.kit)) !== flatName(appDir)) throw new Error(`the kit is named ${path.posix.basename(String(cfg.kit))}, but every file of an app must be named <app id>__<name>. Apps built before this change: remove the old app in Bolt (Settings, User Apps, Remove), run ./bolt-apps new <template> <id>, then copy your own config.json and fixtures.json over the new ones and re-run ./bolt-apps check.`);
 	if (kitIsFlat(cfg)) {
-		const dest = inside(appDir, cfg.kit, FLAT_NAME);
+		const dest = inside(appDir, cfg.kit, flatName(appDir));
 		if (fs.existsSync(dest) && !fs.lstatSync(dest).isFile()) throw new Error('the kit path is not a file; refusing');
 		const body = flatKitSource();
 		fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -202,8 +205,8 @@ export function vendorKit(appDir, opts = {}) {
 function flatKitGuard(appDir, cfg) {
 	const out = [], E = (code, message) => out.push({ level: 'error', code, message, path: cfg.kit });
 	let dest;
-	try { dest = inside(appDir, cfg.kit, FLAT_NAME); } catch (e) { E('path_outside_app', e.message); return out; }
-	if (path.dirname(path.resolve(appDir, cfg.script || '')) !== path.dirname(dest)) { E('kit_not_beside_script', 'the kit that runs is the bolt_app_kit.py next to the script; check.json kit must name that file'); return out; }
+	try { dest = inside(appDir, cfg.kit, flatName(appDir)); } catch (e) { E('path_outside_app', e.message); return out; }
+	if (path.dirname(path.resolve(appDir, cfg.script || '')) !== path.dirname(dest)) { E('kit_not_beside_script', 'the kit that runs is the <app id>__bolt_app_kit.py next to the script; check.json kit must name that file'); return out; }
 	if (fs.existsSync(path.join(path.dirname(dest), 'bolt_app_kit'))) { E('kit_modified', 'a bolt_app_kit folder sits next to bolt_app_kit.py and Python would import the folder instead. Remove it'); return out; }
 	if (!fs.existsSync(dest) || !fs.existsSync(flatLockPath(appDir))) { E('kit_not_vendored', 'the kit is not vendored: run bolt-apps kit vendor --flat <app>'); return out; }
 	let lock; try { lock = JSON.parse(fs.readFileSync(flatLockPath(appDir), 'utf8')); } catch { E('kit_lock_unreadable', 'bolt_app_kit.lock.json is not JSON'); return out; }

@@ -1,9 +1,6 @@
 # Bolt Apps
 
-> **Known issue (Bolt 0.1.181): two kit-built apps cannot be installed together.**
-> Bolt installs every pack's scripts into one shared folder and refuses a file whose path already belongs to another pack (`owned_by_other`, shown as "one of its files already belongs to another installed pack"). Every app built from the kit, templates or examples ships the same file names (`scripts/bolt_app_kit.py`, `scripts/config.json`, `scripts/fixtures.json`, `scripts/engine.py`), so one installs fine and a second is refused until the first is removed. Apps whose script and helper files all have unique names are unaffected.
-> **Workaround:** install one kit-built app at a time and remove the previous one first (Settings, User Apps, Remove), or rename every script and helper file of your app to a name unique to your app id (and update the command and the engine and kit references) before packing.
-> Renaming is fiddly for kit apps. The permanent fix will make `./bolt-apps new` do it automatically; it needs no Bolt release, and there is no date yet.
+> **Apps built before this change:** remove the old app in Bolt (Settings, Desktop, User Apps; the Remove button is on the app's row on 181, and newer builds also show it in the expanded panel; do not delete files by hand), run `./bolt-apps new <template> <id>`, copy your own `config.json` and `fixtures.json` over the new ones, re-run `./bolt-apps check`, then `./bolt-apps ship`.
 
 Small things people add to [Bolt](https://sparcle.app/bolt/) to do their job faster: a
 snippet that cleans a list, a search prefix for a site you use every day, a launcher key
@@ -88,13 +85,13 @@ For apps that run a script (not accepted in the gallery), the [authoring kit](ki
 ### A rich app for a web API, in minutes
 
 Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
-[`kit/examples/portal-template`](kit/examples/portal-template), change data in `scripts/config.json` and
-`scripts/fixtures.json`, generate the YAML, then check and pack it for yourself:
+[`kit/examples/portal-template`](kit/examples/portal-template), make a copy with `bolt-apps new` (it renames every file for your app; pick a distinctive app id, since two authors who both ship `weather` still collide), change data in
+`scripts/my-app__config.json` and `scripts/my-app__fixtures.json`, generate the YAML, then check and pack it for yourself:
 
 ```
-cp -R kit/examples/portal-template ~/my-app && cd ~/my-app      # folder name = app id
-# edit scripts/config.json and fixtures.json; set "id" in bolt-app.json; delete utilities/portal-template.yaml
-python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
+node <this repo>/toolkit/bin/bolt-apps.mjs new portal-template my-app --dir ~ && cd ~/my-app      # folder name = app id
+# edit scripts/my-app__config.json and scripts/my-app__fixtures.json
+python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
 node <this repo>/toolkit/bin/bolt-apps.mjs check .
 node <this repo>/toolkit/bin/bolt-apps.mjs pack . --personal --version 1.0.1 --out ../my-app-1.0.1.boltpack
 ```

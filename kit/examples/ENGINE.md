@@ -1,14 +1,11 @@
 # The shared engine: every config option, once
 
-> **Known issue (Bolt 0.1.181): two kit-built apps cannot be installed together.**
-> Bolt installs every pack's scripts into one shared folder and refuses a file whose path already belongs to another pack (`owned_by_other`, shown as "one of its files already belongs to another installed pack"). Every app built from the kit, templates or examples ships the same file names (`scripts/bolt_app_kit.py`, `scripts/config.json`, `scripts/fixtures.json`, `scripts/engine.py`), so one installs fine and a second is refused until the first is removed. Apps whose script and helper files all have unique names are unaffected.
-> **Workaround:** install one kit-built app at a time and remove the previous one first (Settings, User Apps, Remove), or rename every script and helper file of your app to a name unique to your app id (and update the command and the engine and kit references) before packing.
-> Renaming is fiddly for kit apps. The permanent fix will make `./bolt-apps new` do it automatically; it needs no Bolt release, and there is no date yet.
+> **Apps built before this change:** remove the old app in Bolt (Settings, Desktop, User Apps; the Remove button is on the app's row on 181, and newer builds also show it in the expanded panel; do not delete files by hand), run `./bolt-apps new <template> <id>`, copy your own `config.json` and `fixtures.json` over the new ones, re-run `./bolt-apps check`, then `./bolt-apps ship`.
 
-All apps here run the same `scripts/engine.py`. An app is `scripts/config.json` plus `scripts/fixtures.json`. Nothing else is edited. Regenerate the app file after any change:
+All apps here run the same engine, kept as `scripts/<id>__engine.py` (Bolt keeps every app's scripts in one shared folder, so every file is named `<id>__<name>`). An app is `scripts/<id>__config.json` plus `scripts/<id>__fixtures.json`. Start a copy with `bolt-apps new <template> <id>`, which renames everything. Nothing else is edited. Regenerate the app file after any change:
 
 ```
-python3 scripts/engine.py --emit-yaml > utilities/<id>.yaml
+python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml
 ```
 
 The engine never connects to anything unless `api.fixture_default` is `false` (or `BOLT_APP_FIXTURE=1` is unset and the config says live).
@@ -59,7 +56,7 @@ Templates use `{field}` and `{field|filter}`: `human`, `day`, `hhmm`, `when` (an
 `endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `none_title`, `examples`.
 
 ## Files named in the command
-The app file lists `config.json`, `fixtures.json` and `bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
+The app file lists `<id>__config.json`, `<id>__fixtures.json` and `<id>__bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
 
 ## Commands
 
@@ -113,15 +110,18 @@ Launcher facts measured for these examples: a personal app cannot show data in `
 
 ## MCP: the workaround script
 
-Bolt has no native MCP runtime for a personal app. A `bridge` script can stand in: start the server the person already has installed, speak JSON-RPC over its pipes, call one tool, and print rows. It was run against a stand-in stdio server that answers `initialize` and `tools/call`; it has not been run against a real MCP server, so treat it as a starting point. Put `{"server": ["npx", "-y", "some-mcp-server"], "tool": "search", "arg": "query"}` in `scripts/config.json`, declare `runs_commands`, and name `config.json` and `bolt_app_kit.py` in the bridge command.
+Bolt has no native MCP runtime for a personal app. A `bridge` script can stand in: start the server the person already has installed, speak JSON-RPC over its pipes, call one tool, and print rows. It was run against a stand-in stdio server that answers `initialize` and `tools/call`; it has not been run against a real MCP server, so treat it as a starting point. Put `{"server": ["npx", "-y", "some-mcp-server"], "tool": "search", "arg": "query"}` in `scripts/<id>__config.json`, declare `runs_commands`, and name `config.json` and `bolt_app_kit.py` in the bridge command.
 
 ```python
 import json, os, subprocess, sys, threading
-import bolt_app_kit as kit
-cfg = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")))
+import importlib.util as _u
+_me = os.path.basename(__file__); _pfx = _me.partition("__")[0] + "__"     # <app id>__ : every file of this app starts with it
+_s = _u.spec_from_file_location("bolt_app_kit", os.path.join(os.path.dirname(os.path.abspath(__file__)), _pfx + "bolt_app_kit.py"))
+kit = _u.module_from_spec(_s); sys.modules["bolt_app_kit"] = kit; _s.loader.exec_module(kit)
+cfg = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _pfx + "config.json")))
 
 def main(argv):
-    word = " ".join(w for w in argv[1:] if w != "-" and not w.endswith(("config.json", "bolt_app_kit.py")))[:200]
+    word = " ".join(w for w in argv[1:] if w != "-" and not w.endswith(("config.json", "bolt_app_kit.py"))   # the helper files named in the command)[:200]
     if not word:
         kit.emit([kit.row("Type a query", "sent to the %s tool" % cfg["tool"], copy=False)])
     exe = kit.which(cfg["server"][0])
@@ -165,7 +165,7 @@ Limits: servers that need a login or a key are out of scope here (use `get_secre
 
 - `expected_text_missing` now prints the first rows that were found, so you can copy the real text.
 - If the script printed its own error row ("This app is not set up correctly", "This app could not run"), `check` reports `app_error_row` with that row's text, for example a bad icon name in `config.json`, before it looks at expected text.
-- Every `icon` in `config.json` (the app, overview rows, views, items) must be a name in `kit/schema/icons.json`. The engine refuses an unknown name with its place (`views[0].icon`), and `lint --personal` reports `icon_unknown`: an error for `scripts/config.json` (the kit refuses the row) and a warning for the app file's own `icon:` (the launcher draws a plain plug and still shows the app).
+- Every `icon` in `config.json` (the app, overview rows, views, items) must be a name in `kit/schema/icons.json`. The engine refuses an unknown name with its place (`views[0].icon`), and `lint --personal` reports `icon_unknown`: an error for `scripts/<id>__config.json` (the kit refuses the row) and a warning for the app file's own `icon:` (the launcher draws a plain plug and still shows the app).
 - A file in `golden/` that no case names is `golden_stale`. A copied template brings its goldens: keep the cases you want, delete the other goldens, then run `check --update-golden` once and read the files.
 - Stubs can answer by argument, so a tool called as `git status` and `git log` can be tested: `"stubs": {"git": {"stdout": "default", "by_args": [{"args": ["status", "--porcelain"], "file": "fixtures/macos/status.out"}, {"args": ["log"], "stdout": "abc123 first", "rc": 0}]}}`. The first rule whose words equal the first words of the command line answers; the stub's own `stdout` or `file` is the default. A case can set environment variables with `"env": {"MYVAR": "value"}` (names in capitals; `PATH` is always the stub folder and `HOME` a temporary folder).
 
@@ -184,15 +184,15 @@ Limits: servers that need a login or a key are out of scope here (use `get_secre
 
 | Template | You edit | You do not edit |
 |---|---|---|
-| portal-template, acme-dash, chart-template, table-template, lookup-template, widget-gallery, widget-gallery-2, form-template | `scripts/config.json`, `scripts/fixtures.json` | `scripts/engine.py` |
-| file-insights-template | `scripts/config.json` (columns, rules, charts); `insights.py` only to add a rule kind | `bolt_app_kit.py` |
-| cli-wrapper-template | `scripts/config.json` (command table, exit codes, regexes) and `build()` in `scripts/wrap.py`: for a CLI app you ARE expected to edit this script, because the rows depend on what your tool prints. `scripts/fixtures.json` holds a sample output so a copy works before the tool is installed (sample mode) | `bolt_app_kit.py` |
-| repo-radar | `scripts/config.json`; `urls()`, the `n_*` readers, `model()` and `score()` in `scripts/radar.py` | `bolt_app_kit.py` |
-| around | `scripts/config.json`; `gather()`, the `n_*` readers, `stitch()` and `verdict()` in `scripts/around.py` | `bolt_app_kit.py` |
+| portal-template, acme-dash, chart-template, table-template, lookup-template, widget-gallery, widget-gallery-2, form-template | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json` | `scripts/<id>__engine.py` |
+| file-insights-template | `scripts/<id>__config.json` (columns, rules, charts); `insights.py` only to add a rule kind | `<id>__bolt_app_kit.py` |
+| cli-wrapper-template | `scripts/<id>__config.json` (command table, exit codes, regexes) and `build()` in `scripts/<id>__wrap.py`: for a CLI app you ARE expected to edit this script, because the rows depend on what your tool prints. `scripts/<id>__fixtures.json` holds a sample output so a copy works before the tool is installed (sample mode) | `<id>__bolt_app_kit.py` |
+| repo-radar | `scripts/<id>__config.json`; `urls()`, the `n_*` readers, `model()` and `score()` in `scripts/<id>__radar.py` | `<id>__bolt_app_kit.py` |
+| around | `scripts/<id>__config.json`; `gather()`, the `n_*` readers, `stitch()` and `verdict()` in `scripts/<id>__around.py` | `<id>__bolt_app_kit.py` |
 | local-service-template | `utilities/*.yaml` only | |
-| system-glance | `scripts/system-glance.py` | `bolt_app_kit.py` |
+| system-glance | `scripts/<id>__system-glance.py` | `<id>__bolt_app_kit.py` |
 
-Never edit `bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --flat <app>`. Every script that lists a helper file in its command names it as `{{scripts_dir}}/<file>` (config.json, fixtures.json, bolt_app_kit.py) so Bolt shows it in the approval.
+Never edit `<id>__bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --flat <app>`. Every file in `scripts/` is named `<id>__<name>`: all installed apps share one scripts folder, and Bolt refuses a file another app already owns (`owned_by_other`). Every script that lists a helper file in its command names it as `{{scripts_dir}}/<id>__<file>` (`<id>__config.json`, `<id>__fixtures.json`, `<id>__bolt_app_kit.py`) so Bolt shows it in the approval.
 
 ## Typing free text and views in a script app
 

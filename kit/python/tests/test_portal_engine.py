@@ -30,7 +30,7 @@ def fake_emit(rows, **kw):
 
 
 def load_engine():
-    spec = importlib.util.spec_from_file_location("portal_engine", os.path.join(ROOT, "engine.py"))
+    spec = importlib.util.spec_from_file_location("portal_engine", os.path.join(ROOT, "portal-template__engine.py"))
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     return m
@@ -51,7 +51,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             self.send_response(Handler.status)
             self.end_headers()
             return
-        fx = json.load(open(os.path.join(ROOT, "fixtures.json")))
+        fx = json.load(open(os.path.join(ROOT, "portal-template__fixtures.json")))
         name = self.path.strip("/").split("/")[-1]
         body = json.dumps(fx["account" if name == "account" else name]).encode()
         self.send_response(200)
@@ -70,7 +70,7 @@ class EngineLive(unittest.TestCase):
         self.srv = http.server.HTTPServer(("127.0.0.1", 0), Handler)
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         Handler.status, Handler.hits, Handler.seen_keys = 200, [], []
-        cfg = json.load(open(os.path.join(ROOT, "config.json")))
+        cfg = json.load(open(os.path.join(ROOT, "portal-template__config.json")))
         cfg["api"]["base_url"] = "http://127.0.0.1:%d" % self.srv.server_port
         cfg["api"]["fixture_default"] = False
         cfg["api"]["env_file"] = os.path.join(self.home, "key.env")

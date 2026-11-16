@@ -1,8 +1,8 @@
 {
-  "script": "scripts/app.py",
+  "script": "scripts/pulse-feed__app.py",
   "interpreter": "python3",
   "manifest_actions": 2,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/pulse-feed__bolt_app_kit.py",
   "cases": [
     {
       "name": "trending: tile row and stories",

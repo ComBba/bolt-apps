@@ -1,8 +1,8 @@
 {
-  "script": "scripts/engine.py",
+  "script": "scripts/widget-gallery-2__engine.py",
   "interpreter": "python3",
   "manifest_actions": 2,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/widget-gallery-2__bolt_app_kit.py",
   "fixture": true,
   "cases": [
     {

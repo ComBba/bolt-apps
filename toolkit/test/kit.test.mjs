@@ -18,7 +18,7 @@ const codes = (f) => f.map((x) => x.code);
 // A copy of the example switched to the PACKAGE-FOLDER kit (the folder-mode guard tests need that shape; the shipped example is flat).
 const tmpCopy = () => {
 	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-test-')); fs.cpSync(EXAMPLE, d, { recursive: true });
-	fs.rmSync(path.join(d, 'scripts', 'bolt_app_kit.py')); fs.rmSync(path.join(d, 'bolt_app_kit.lock.json'));
+	fs.rmSync(path.join(d, 'scripts', 'system-glance__bolt_app_kit.py')); fs.rmSync(path.join(d, 'bolt_app_kit.lock.json'));
 	const cfg = JSON.parse(fs.readFileSync(path.join(d, 'check.json'), 'utf8')); cfg.kit = 'scripts/bolt_app_kit'; fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify(cfg));
 	vendorKit(d); return d;
 };
@@ -97,8 +97,8 @@ test('--os selects fixture cases; an OS with no case is an error', async () => {
 
 function brokenApp(scriptBody, kase = {}) {
 	const d = tmpCopy();
-	fs.writeFileSync(path.join(d, 'scripts', 'system-glance.py'), scriptBody);
-	fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify({ script: 'scripts/system-glance.py', interpreter: 'python3', kit: 'scripts/bolt_app_kit', cases: [{ name: 'broken', os: 'macos', args: [], ...kase }] }));
+	fs.writeFileSync(path.join(d, 'scripts', 'system-glance__system-glance.py'), scriptBody);
+	fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify({ script: 'scripts/system-glance__system-glance.py', interpreter: 'python3', kit: 'scripts/bolt_app_kit', cases: [{ name: 'broken', os: 'macos', args: [], ...kase }] }));
 	return d;
 }
 
@@ -156,7 +156,7 @@ test('kit guard: edited, missing and outdated vendored kits are caught', async (
 test('paths in check.json cannot leave the app folder (kit vendor never deletes outside it)', () => {
 	const d = tmpCopy();
 	for (const bad of ['.', '..', '../../x', '/etc']) assert.throws(() => inside(d, bad), /outside the app folder/);
-	fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify({ script: 'scripts/system-glance.py', interpreter: 'python3', kit: '..', cases: [] }));
+	fs.writeFileSync(path.join(d, 'check.json'), JSON.stringify({ script: 'scripts/system-glance__system-glance.py', interpreter: 'python3', kit: '..', cases: [] }));
 	assert.throws(() => vendorKit(d), /outside/);
 	assert.ok(fs.existsSync(path.join(d, 'scripts')));
 });
@@ -200,7 +200,7 @@ test('symlinks inside the app folder cannot redirect kit vendor or check outside
 });
 
 test('the vendored example kit equals the kit in this repo', () => {
-	assert.equal(fs.readFileSync(path.join(EXAMPLE, 'scripts', 'bolt_app_kit.py'), 'utf8'), flatKitSource());
+	assert.equal(fs.readFileSync(path.join(EXAMPLE, 'scripts', 'system-glance__bolt_app_kit.py'), 'utf8'), flatKitSource());
 });
 
 test('CLI: check exits 0 on the example and 1 on a broken app; plain apps keep the old message', () => {
@@ -225,12 +225,12 @@ const flatCopy = () => { const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-fl
 test('flat kit: the example is flat, in sync with the repo kit, and passes check', async () => {
 	const lock = JSON.parse(fs.readFileSync(path.join(ACME, 'bolt_app_kit.lock.json'), 'utf8'));
 	assert.equal(lock.flat, true);
-	assert.equal(fs.readFileSync(path.join(ACME, 'scripts', 'bolt_app_kit.py'), 'utf8'), flatKitSource());
+	assert.equal(fs.readFileSync(path.join(ACME, 'scripts', 'acme-dash__bolt_app_kit.py'), 'utf8'), flatKitSource());
 	assert.deepEqual((await checkApp(ACME, { only: 'overview' })).findings, []);
 });
 
 test('flat kit guard: edited, missing, shadowed and outdated are caught', async () => {
-	const d = flatCopy(), kit = path.join(d, 'scripts', 'bolt_app_kit.py');
+	const d = flatCopy(), kit = path.join(d, 'scripts', 'acme-dash__bolt_app_kit.py');
 	fs.appendFileSync(kit, '\n# edit\n');
 	assert.ok(codes((await checkApp(d, { only: 'overview' })).findings).includes('kit_modified'));
 	vendorKit(d);
@@ -252,7 +252,8 @@ test('flat kit guard: edited, missing, shadowed and outdated are caught', async 
 test('flat kit behaves like the package kit (same rows, same refusals)', () => {
 	const run = (dir, code) => spawnSync('python3', ['-c', code], { encoding: 'utf8', env: { PYTHONPATH: dir, PATH: process.env.PATH, PYTHONDONTWRITEBYTECODE: '1' } });
 	const code = 'import bolt_app_kit as k, json\nr=[k.row("a {{x}}", "b", tile=k.tile("T", 5, "%", 10), nav={"view":"v","arg":"a"}), k.back_row("x")]\nprint(json.dumps(r), k.validate_rows(r), k.__version__)\ntry:\n k.tile("T","x")\nexcept k.KitError as e:\n print("refused")\ntry:\n k.row("a", icon="nope")\nexcept k.KitError:\n print("icon refused")';
-	const a = run(path.join(ACME, 'scripts'), code), b = run(path.join(root, 'kit', 'python'), code);
+	const flatDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-flatdir-')); fs.copyFileSync(path.join(ACME, 'scripts', 'acme-dash__bolt_app_kit.py'), path.join(flatDir, 'bolt_app_kit.py'));
+	const a = run(flatDir, code), b = run(path.join(root, 'kit', 'python'), code);
 	assert.equal(a.status, 0, a.stderr); assert.equal(a.stdout, b.stdout); assert.match(a.stdout, /icon refused/);
 });
 
@@ -300,5 +301,5 @@ test('scripts_dir_form: lint --personal and verify refuse a comment mention; the
 		const r = spawnSync('node', [CLI, cmd, d, '--personal', '--json'], { encoding: 'utf8' });
 		assert.equal(r.status, 1, cmd); assert.match(r.stdout, /scripts_dir_form/);
 	}
-	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py)/g, '')));
+	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/[a-z0-9-]+__(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py)/g, '')));
 });

@@ -21,9 +21,9 @@ const copyExample = (name, dest) => { fs.cpSync(path.join(REPO, 'kit/examples', 
 function toolApp(root, cases) {
 	const dir = path.join(root, 'tool-app');
 	write(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'tool-app', title: 'Tool', role: 'Me', saves: 'A tool', summary: 'Tool.', author: { name: 'T' }, tier: 3, permissions: ['runs_commands'], platforms: ['macos', 'linux'] }));
-	write(path.join(dir, 'utilities', 'tool.yaml'), 'schema_version: 1\nruntime: bridge\nid: tool-app\nchip: tool\ntitle: "Tool"\nicon: terminal\ndescription: "Tool"\nemits: Generic\nargs:\n  - { name: view, from: "query.word(0)", default: overview }\nbridge:\n  command:\n    macos: "python3 {{scripts_dir}}/t.py {{view}} {{scripts_dir}}/bolt_app_kit.py"\n    linux: "python3 {{scripts_dir}}/t.py {{view}} {{scripts_dir}}/bolt_app_kit.py"\n  parse: json\n  timeout_seconds: 10\npresentation:\n  widget: list\n  title_field: title\n  view_arg: view\n  views:\n    overview: {}\n');
-	write(path.join(dir, 'scripts', 't.py'), 'import os, subprocess, sys\nimport bolt_app_kit as kit\nrows = [kit.row("sample=" + os.environ.get("BOLT_APP_FIXTURE", "unset"), "x")]\nfor sub in ("status", "log"):\n    r = kit.run(["mytool", sub], timeout=5)\n    rows.append(kit.row(sub + ": " + (r.out.strip() or "empty"), "rc %s" % r.rc))\nrows.append(kit.row("env=" + os.environ.get("MYVAR", "none"), "x"))\nkit.emit(rows)\n');
-	write(path.join(dir, 'check.json'), JSON.stringify({ script: 'scripts/t.py', interpreter: 'python3', manifest_actions: 1, kit: 'scripts/bolt_app_kit.py', cases }, null, 2));
+	write(path.join(dir, 'utilities', 'tool.yaml'), 'schema_version: 1\nruntime: bridge\nid: tool-app\nchip: tool\ntitle: "Tool"\nicon: terminal\ndescription: "Tool"\nemits: Generic\nargs:\n  - { name: view, from: "query.word(0)", default: overview }\nbridge:\n  command:\n    macos: "python3 {{scripts_dir}}/tool-app__t.py {{view}} {{scripts_dir}}/tool-app__bolt_app_kit.py"\n    linux: "python3 {{scripts_dir}}/tool-app__t.py {{view}} {{scripts_dir}}/tool-app__bolt_app_kit.py"\n  parse: json\n  timeout_seconds: 10\npresentation:\n  widget: list\n  title_field: title\n  view_arg: view\n  views:\n    overview: {}\n');
+	write(path.join(dir, 'scripts', 'tool-app__t.py'), 'import os, subprocess, sys\nimport importlib.util as u\ns = u.spec_from_file_location("bolt_app_kit", os.path.join(os.path.dirname(os.path.abspath(__file__)), "tool-app__bolt_app_kit.py"))\nkit = u.module_from_spec(s)\nsys.modules["bolt_app_kit"] = kit\ns.loader.exec_module(kit)\nrows = [kit.row("sample=" + os.environ.get("BOLT_APP_FIXTURE", "unset"), "x")]\nfor sub in ("status", "log"):\n    r = kit.run(["mytool", sub], timeout=5)\n    rows.append(kit.row(sub + ": " + (r.out.strip() or "empty"), "rc %s" % r.rc))\nrows.append(kit.row("env=" + os.environ.get("MYVAR", "none"), "x"))\nkit.emit(rows)\n');
+	write(path.join(dir, 'check.json'), JSON.stringify({ script: 'scripts/tool-app__t.py', interpreter: 'python3', manifest_actions: 1, kit: 'scripts/tool-app__bolt_app_kit.py', cases }, null, 2));
 	assert.equal(run(root, 'kit', 'vendor', '--flat', dir).status, 0);
 	return dir;
 }
@@ -55,7 +55,7 @@ test('check: a missing expected text prints the first rows that WERE found', () 
 
 test('check: a script that prints its own "not set up correctly" row is reported as that, not as missing text', () => {
 	const root = tmp(), d = copyExample('lookup-template', path.join(root, 'lookup-template'));
-	const cfgp = path.join(d, 'scripts/config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8')); cfg.overview = undefined; cfg.app.icon = 'no-such-icon'; fs.writeFileSync(cfgp, JSON.stringify(cfg));
+	const cfgp = path.join(d, 'scripts/lookup-template__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8')); cfg.overview = undefined; cfg.app.icon = 'no-such-icon'; fs.writeFileSync(cfgp, JSON.stringify(cfg));
 	const r = run(root, 'check', d, '--update-golden'); assert.equal(r.status, 1);
 	assert.match(r.stdout, /app_error_row/); assert.match(r.stdout, /icon "no-such-icon"/);
 	assert.doesNotMatch(r.stdout, /expected_text_missing/);
@@ -76,8 +76,8 @@ test('lint: an icon not in the launcher list is a warning in the app file and an
 	const y = path.join(d, 'utilities', 'lookup-template.yaml'); fs.writeFileSync(y, fs.readFileSync(y, 'utf8').replace(/^icon: .*$/m, 'icon: no-such-icon'));
 	let r = run(root, 'lint', d, '--personal'); assert.equal(r.status, 0, 'an unknown icon in the app file is a warning: the launcher draws a plug'); assert.match(r.stdout, /icon_unknown/); assert.match(r.stdout, /kit\/schema\/icons\.json/);
 	fs.writeFileSync(y, fs.readFileSync(y, 'utf8').replace(/^icon: .*$/m, 'icon: cloud-sun'));
-	const c = path.join(d, 'scripts', 'config.json'), cfg = JSON.parse(fs.readFileSync(c, 'utf8')); cfg.lookup.rows[0].icon = 'no-such-icon'; fs.writeFileSync(c, JSON.stringify(cfg));
-	r = run(root, 'lint', d, '--personal'); assert.equal(r.status, 1); assert.match(r.stdout, /scripts\/config\.json lookup\.rows\[0\]\.icon/);
+	const c = path.join(d, 'scripts', 'lookup-template__config.json'), cfg = JSON.parse(fs.readFileSync(c, 'utf8')); cfg.lookup.rows[0].icon = 'no-such-icon'; fs.writeFileSync(c, JSON.stringify(cfg));
+	r = run(root, 'lint', d, '--personal'); assert.equal(r.status, 1); assert.match(r.stdout, /scripts\/lookup-template__config\.json lookup\.rows\[0\]\.icon/);
 });
 
 test('lint: declared permissions that disagree with the computed ones warn, and say which wins', () => {
@@ -114,8 +114,9 @@ test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, wit
 	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'golden', 'left-over.json')));
 	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Alpha service/); assert.match(r.stdout, /right pane: table/);
 	const j = JSON.parse(sh('run', 'my-tool', '--sample', '--json').stdout); assert.ok(Array.isArray(j));
-	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.0/); assert.match(s1.stdout, /type =mytool/);
-	const s2 = sh('ship', 'my-tool'); assert.match(s2.stdout, /Shipped my-tool 1\.0\.1/);
+	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.\d+/); assert.match(s1.stdout, /type =mytool/);
+	const v1 = /Shipped my-tool (\S+):/.exec(s1.stdout)[1];
+	const s2 = sh('ship', 'my-tool'); const v2 = /Shipped my-tool (\S+):/.exec(s2.stdout)[1]; assert.ok(Number(v2.split('.')[2]) > Number(v1.split('.')[2]), `${v2} must be higher than ${v1}`);
 	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'scripts', '__pycache__')));
 });
 
@@ -132,7 +133,7 @@ test('workflow: run and ship refuse a folder that holds a real-looking key; doct
 test('check: text_on_disk fails a script that wrote an echoed key into its cache (script-template proves the kit strips it)', () => {
 	const root = tmp(), d = copyExample('script-template', path.join(root, 'script-template'));
 	assert.equal(run(root, 'check', d).status, 0);
-	const sp = path.join(d, 'scripts/app.py'), t = fs.readFileSync(sp, 'utf8');
+	const sp = path.join(d, 'scripts/script-template__app.py'), t = fs.readFileSync(sp, 'utf8');
 	fs.writeFileSync(sp, t.replace('raw = kit.redact_tree(raw, [self.key] if self.key else [], c["api"].get("auth_param"))', 'pass'));
 	const r = run(root, 'check', d); assert.equal(r.status, 1); assert.match(r.stdout, /text_on_disk/);
 });

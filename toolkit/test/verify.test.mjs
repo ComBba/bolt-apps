@@ -70,7 +70,7 @@ function buildPack(keyFile, manifests, over = {}, opts = {}) {
 	const bundle = Buffer.from(JSON.stringify(meta)), sig = crypto.sign(null, bundle, priv);
 	return zlib.gzipSync(Buffer.concat([tarFile('bundle.json', bundle), tarFile('signature.bin', sig), ...[...manifests].map(([p, c]) => tarFile(`manifests/${p}`, c)), Buffer.alloc(1024)]));
 }
-const goodManifests = () => new Map([['utilities/eagle-info.yaml', Buffer.from(CASES.base['utilities/eagle-info.yaml'])], ['scripts/eagle.py', Buffer.from(CASES.base['scripts/eagle.py'])]]);
+const goodManifests = () => new Map([['utilities/eagle-info.yaml', Buffer.from(CASES.base['utilities/eagle-info.yaml'])], ['scripts/eagle-info__eagle.py', Buffer.from(CASES.base['scripts/eagle-info__eagle.py'])]]);
 const packCases = [
 	['not a tar', 'pack_not_gzip_tar', (d) => Buffer.from('hello')],
 	['no bundle.json', 'bundle_missing', () => zlib.gzipSync(Buffer.concat([tarFile('signature.bin', Buffer.alloc(64)), Buffer.alloc(1024)]))],
@@ -81,7 +81,7 @@ const packCases = [
 	['a file edited after signing', 'content_hash_mismatch', (d, k) => { const raw = zlib.gunzipSync(buildPack(k, goodManifests())), at = raw.indexOf(Buffer.from("print('{}')")); raw[at] = 'P'.charCodeAt(0); return zlib.gzipSync(raw); }],
 	['entry hash wrong', 'entry_hash_mismatch', (d, k) => { const m = goodManifests(), es = [...m].map(([p, c]) => ({ path: `manifests/${p}`, kind: p.startsWith('s') ? 'script' : 'user_utility', id: 'x', sha256: '0'.repeat(64), requires_min_schema: 1 })); return buildPack(k, m, {}, { entries: es }); }],
 	['bundle schema_version 7', 'bundle_schema_version', (d, k) => buildPack(k, goodManifests(), { schema_version: 7 })],
-	['entry outside manifests/', 'entry_outside_manifests', (d, k) => { const m = goodManifests(), es = [{ path: 'evil/x.yaml', kind: 'user_utility', id: 'x', sha256: crypto.createHash('sha256').update(m.get('scripts/eagle.py')).digest('hex'), requires_min_schema: 1 }]; return buildPack(k, m, {}, { entries: es }); }],
+	['entry outside manifests/', 'entry_outside_manifests', (d, k) => { const m = goodManifests(), es = [{ path: 'evil/x.yaml', kind: 'user_utility', id: 'x', sha256: crypto.createHash('sha256').update(m.get('scripts/eagle-info__eagle.py')).digest('hex'), requires_min_schema: 1 }]; return buildPack(k, m, {}, { entries: es }); }],
 	['entry path with a space', 'entry_path_not_plain', (d, k) => { const m = goodManifests(); m.set('scripts/a b.py', Buffer.from('x')); return buildPack(k, m); }],
 	['a snippet in the pack', 'entry_kind_skipped', (d, k) => { const m = goodManifests(); m.set('snippets/s.json', Buffer.from('{}')); return buildPack(k, m); }],
 	['a file kind Bolt does not know', 'entry_kind_unknown', (d, k) => { const m = goodManifests(); m.set('misc/x.bin', Buffer.from('x')); return buildPack(k, m); }],
