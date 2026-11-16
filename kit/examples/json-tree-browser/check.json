@@ -63,7 +63,7 @@
       }
     },
     {
-      "name": "no key and no sample switch: the labelled sample data is shown, with a SAMPLE DATA row and a key hint (api.on_missing_key sample)",
+      "name": "no key and no sample switch: the sample data is shown, with the sample label and a key hint on a tile (api.on_missing_key sample)",
       "os": "macos",
       "fixture": "unset",
       "args": [
@@ -71,10 +71,18 @@
       ],
       "expect": {
         "text_present": [
-          "SAMPLE DATA: add your JSON tree browser API key to see live data",
-          "Add your JSON tree browser API key"
+          "sample data: add your JSON tree browser API key for live data"
         ]
       }
+    },
+    {
+      "name": "sample label is visible in the docs view (no key)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "docs"
+      ],
+      "expect": {}
     }
   ]
 }

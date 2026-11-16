@@ -152,5 +152,6 @@
         ]
       }
     }
-  ]
+  ],
+  "known_empty_tiles": "the Sample data banner and the list rows of this script template have no tile; redesign pending"
 }

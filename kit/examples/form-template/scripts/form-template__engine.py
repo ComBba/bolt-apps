@@ -992,16 +992,56 @@ def read_fixtures(cfg, cfg_path):
 SAMPLE_FALLBACK = [False]   # set by run(): no key was found and api.on_missing_key is "sample"
 
 
-def sample_banner(cfg, rows, fx=True, quiet=False):
+def is_tiles_grid(w):
+    return bool(w) and w.get("kind") == "cards" and (w.get("bind") or {}).get("layout") == "tiles"
+
+
+def view_widget_of(cfg, view_id):
+    """The right_widget the emitted app file gives this run (see emit_yaml): the form or lookup widget, the overview widget, or the view's own."""
+    mode = cfg.get("mode", "views")
+    if mode == "form":
+        return cfg["form"]["widget"]
+    if mode == "lookup":
+        return cfg["lookup"]["widget"]
+    if view_id == "overview":
+        return (cfg.get("overview") or {}).get("widget") or tiles_widget()
+    v = views_by_id(cfg).get(view_id)
+    return view_widget(v) if v else None
+
+
+def label_on_tile(rows, hint):
+    """In a tiles grid a row with no number draws an empty "-" tile, so the label rides on real tiles without clobbering their data: SAMPLE as the badge of a tile
+    that has none, the hint in the footer of a tile that has none, else added to the first tile's note. False when no row has a tile."""
+    tiles = [r for r in rows if isinstance(r.get("kpi_value"), (int, float)) and not isinstance(r.get("kpi_value"), bool)]
+    if not tiles:
+        return False
+    for r in tiles:
+        if not r.get("kpi_badge"):
+            r["kpi_badge"] = "SAMPLE"
+            break
+    free = next((r for r in tiles if not r.get("kpi_foot")), None)
+    if free is not None:
+        free["kpi_foot"] = hint[:80]
+    else:
+        tiles[0]["kpi_note"] = ((tiles[0].get("kpi_note") or "") + (" - " if tiles[0].get("kpi_note") else "") + hint)[:80]
+    return True
+
+
+def sample_banner(cfg, rows, fx=True, quiet=False, view_id="overview"):
     at = 1 if rows and (rows[0].get("nav") or {}).get("back") else 0
+    app, api = cfg["app"], cfg.get("api") or {}
+    name = app.get("service", app["title"])
     if SAMPLE_FALLBACK[0] and quiet:   # a chart or table view plots or lists its rows: a label row would become a data point, so the label is only on the overview and list views
         return rows
-    if SAMPLE_FALLBACK[0]:   # the labelled sample data is shown, with a first row that says so and a setup hint row: never instead of the data
-        app, api = cfg["app"], cfg.get("api") or {}
-        name = app.get("service", app["title"])
+    tiles = is_tiles_grid(view_widget_of(cfg, view_id))   # only a tiles grid draws a tile per row; every other view keeps visible rows
+    if SAMPLE_FALLBACK[0]:   # the labelled sample data is shown with a label and a key hint: never instead of the data
+        if tiles and label_on_tile(rows, "sample data: add your %s API key for live data" % name):
+            return rows
         rows.insert(at, kit.row("SAMPLE DATA: add your %s API key to see live data" % name, "These rows are invented examples, not your data.", icon="FileText", copy=False, badge="SAMPLE"))
         rows.insert(at + 1, kit.row("Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), icon="Key", copy=False, badge="KEY"))
-    elif fx and (cfg.get("api") or {}).get("fixture_banner"):
+    elif fx and api.get("fixture_banner"):
+        if tiles and label_on_tile(rows, "sample data: no key and no network (api.fixture_default)"):
+            return rows
         rows.insert(at, kit.row("Sample data", "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
                                 icon="FileText", copy=False, badge="SAMPLE"))
     return rows
@@ -1034,7 +1074,8 @@ def run_views(cfg, args, fx, fixtures):
     glob = dict(L.data)
     glob.update(compute_stats(cfg, L.data))
     if view_id == "overview":
-        rows = notice_rows(L, "overview", retry, ttl) + overview_rows(cfg, glob) + [refresh_row("overview")]
+        # a tiles grid draws a "-" tile for a row with no number, so its overview has no Refresh row (the answer is cached for a short time; type the app, then refresh, to re-read)
+        rows = notice_rows(L, "overview", retry, ttl) + overview_rows(cfg, glob) + ([] if is_tiles_grid(view_widget_of(cfg, "overview")) else [refresh_row("overview")])
     else:
         v = vs[view_id]
         flt = ""
@@ -1051,7 +1092,7 @@ def run_views(cfg, args, fx, fixtures):
                 rows = [n for n in notes if n.get("kpi_badge") in ("STALE", "PARTIAL")] + body
             else:
                 rows = head[:1] + notes + head[1:] + body + [refresh_row(view_id)]
-    kit.emit(sample_banner(cfg, rows, fx, quiet=view_id != "overview" and (vs[view_id].get("widget") or {}).get("kind") in ("chart", "table")))
+    kit.emit(sample_banner(cfg, rows, fx, quiet=view_id != "overview" and (vs[view_id].get("widget") or {}).get("kind") in ("chart", "table"), view_id=view_id))
 
 
 def lookup_rows(cfg, items, query, glob):

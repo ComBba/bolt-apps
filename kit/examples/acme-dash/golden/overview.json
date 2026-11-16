@@ -184,25 +184,5 @@
     "kpi_badge": "LIVE",
     "copy_text": "- Trust portal on - trust.example.com/acme-demo",
     "open_url": "https://trust.example.com/acme-demo"
-  },
-  {
-    "title": "Refresh",
-    "subtitle": "Enter to fetch fresh data",
-    "icon": "RefreshCw",
-    "body": "",
-    "nav": {
-      "view": "overview",
-      "arg": "refresh"
-    },
-    "actions": [],
-    "pane": "overview",
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "",
-    "copy_text": ""
   }
 ]
