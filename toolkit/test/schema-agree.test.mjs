@@ -50,7 +50,8 @@ test('actions: kinds, icons, id pattern, footer count and the label notes equal 
 	assert.deepEqual(sorted(a.properties.kind.enum), sorted(RULES.actions.kinds));
 	assert.deepEqual(sorted(a.properties.icon.enum), sorted(RULES.actions.icons));
 	assert.equal(a.properties.id.pattern, RULES.actions.id_pattern);
-	assert.equal(P.actions.maxItems, RULES.actions.footer_max_bolt);
+	assert.equal(P.actions.maxItems, undefined);   // the footer cap is stated in the description only: Bolt refuses neither more actions nor fewer, it shows up to the footer cap
+	assert.ok(String(P.actions.description).includes(String(RULES.actions.footer_max_bolt)));
 	assert.match(a.properties.label.description, new RegExp(`${RULES.actions.label_kept_bolt} characters`));
 	assert.match(a.properties.label.description, new RegExp(`first ${RULES.actions.label_shown}\\b`));
 	assert.deepEqual(sorted(Object.keys(a.properties)), sorted(RULES.keys['actions[]'].all.filter((k) => k !== 'flow' && k !== 'confirm')));

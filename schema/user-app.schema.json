@@ -97,7 +97,6 @@
     },
     "actions": {
       "type": "array",
-      "maxItems": 6,
       "items": {
         "$ref": "#/$defs/action"
       },
