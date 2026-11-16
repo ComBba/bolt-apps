@@ -169,7 +169,9 @@ export function runApp(args) {
 	let rows; try { rows = JSON.parse(r.stdout); } catch { die(`the script did not print JSON rows. It printed: ${r.stdout.slice(0, 300)}${r.stderr ? '\nstderr: ' + r.stderr.trim().slice(-300) : ''}`); }
 	if (flags.includes('--json')) { console.log(JSON.stringify(rows, null, 2)); return; }
 	const view = words[0] || 'overview';
-	console.log(`${path.basename(path.resolve(dir))} · view ${view} · ${env.BOLT_APP_FIXTURE === '1' ? 'sample data' : env.BOLT_APP_FIXTURE === '0' ? 'live' : "the app's default mode"} · right pane: ${paneOf(b.root, view)}\n`);
+	console.log(`${path.basename(path.resolve(dir))} · view ${view} · ${env.BOLT_APP_FIXTURE === '1' ? 'sample data' : env.BOLT_APP_FIXTURE === '0' ? 'live' : "the app's default mode"} · right pane: ${paneOf(b.root, view)}`);
+	const sm = startMode(dir), sampleNow = env.BOLT_APP_FIXTURE === '1' || (env.BOLT_APP_FIXTURE !== '0' && /^Start mode: sample data/.test(sm || ''));
+	console.log(sampleNow ? `author note (not shown to the person using the app): these rows come from fixtures.json. ${sm && /^Start mode: sample/.test(sm) ? sm : 'To ship live, api.fixture_default must be false in config.json.'}\n` : '');
 	rows.forEach((x, i) => {
 		const badges = [x.kpi_badge, ...((x.badges || []).map((q) => q.label))].filter(Boolean);
 		console.log(`${String(i + 1).padStart(2)}. ${x.title}${badges.length ? '  [' + badges.join(', ') + ']' : ''}${x.nav ? (x.nav.back ? '   <- Back' : `   -> ${x.nav.view}${x.nav.arg ? ' ' + x.nav.arg : ''}`) : ''}`);
@@ -190,6 +192,7 @@ export function runApp(args) {
 export function startMode(dir) {
 	try {
 		const app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')), c = JSON.parse(fs.readFileSync(path.join(dir, 'scripts', `${app.id}__config.json`), 'utf8')), api = c.api || {};
+		if (!Object.keys(api).length) return 'Start mode: sample data (this app has no api section), so it never contacts a service. Fine for an app that is sample-only by design.';
 		if (api.fixture_default === true) return `Start mode: sample data (api.fixture_default is true), so it never contacts a service.${api.key_env ? ` The config also names a key (api.key_env ${api.key_env}), but a sample-only app never reads it and never goes live: set api.fixture_default to false to ship it live, or leave key_env out if sample-only is what you want.` : ' Fine for an app that is sample-only by design (offline demo); a live app ships with it false.'}`;
 		if (!api.key_env) return 'Start mode: live. This app needs no key.';
 		return api.on_missing_key === 'sample'

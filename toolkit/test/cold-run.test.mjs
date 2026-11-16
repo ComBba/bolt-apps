@@ -129,3 +129,15 @@ test('sample-only app: doctor and ship print the same start mode; a key_env on a
 	c.api.key_env = 'LK_KEY'; fs.writeFileSync(cf, JSON.stringify(c, null, 2));
 	assert.match(line(sh(home, root, 'doctor', app).stdout), /never reads it and never goes live|never read|never goes live/);
 });
+
+test('ENGINE.md documents the 404 row, the noun key, every filter and the sample text rule; run keeps the author hint out of the app rows', () => {
+	const eng = fs.readFileSync(path.join(EX, 'ENGINE.md'), 'utf8');
+	for (const w of ['When the API answers 404', 'No such', 'demo-notfound', '| `whenday` |', '| `thousands` |', '| `day` |', '| `yes` |', 'This is sample data.', 'draws no Refresh row']) assert.ok(eng.includes(w), w);
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	assert.equal(sh(home, root, 'new', 'portal-template', 'pt').status, 0);
+	const out = sh(home, root, 'run', 'pt', 'projects', '--sample').stdout;
+	assert.match(out, /author note \(not shown to the person using the app\)/);
+	const rows = sh(home, root, 'run', 'pt', 'projects', '--sample', '--json').stdout;
+	assert.doesNotMatch(rows, /fixture_default|author note/);
+	assert.match(rows, /This is sample data\./);
+});

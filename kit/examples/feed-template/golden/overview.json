@@ -13,7 +13,7 @@
     "kpi_unit": "",
     "kpi_max": "",
     "kpi_note": "ids hydrated one request each",
-    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
+    "kpi_foot": "sample data",
     "kpi_badge": "SAMPLE",
     "copy_text": "",
     "open_url": ""

@@ -80,7 +80,7 @@ test('every config field ENGINE.md documents exists in engine.py, and every fiel
 	const spans = [...region.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
 	const pure = new Set(spans.filter((x) => /^[A-Za-z_]+$/.test(x))), anyWord = new Set(spans.flatMap((x) => x.match(/[A-Za-z_]+/g) || []));
 	// a lone backticked word that is a value, a template filter, a mode or an example, not a config key
-	const notFields = new Set(['setup', 'sample', '_lines', 'api_key', 'count', 'day', 'dots', 'header', 'hhmm', 'human', 'join', 'key', 'left', 'list_data', 'lower', 'query', 'right', 'round', 'true', 'unknown', 'upper', 'when', 'whenday', 'yes']);
+	const notFields = new Set(['setup', 'sample', '_lines', 'api_key', 'count', 'day', 'dots', 'header', 'hhmm', 'human', 'join', 'key', 'left', 'list_data', 'lower', 'query', 'right', 'round', 'thousands', 'true', 'unknown', 'upper', 'when', 'whenday', 'yes']);
 	// keys the engine reads that are row fields it builds, not config
 	const engineOnly = new Set(['back', 'kpi_badge', 'nav', 'bolt_app_kit', '__', 'layout', 'kpi_value', 'kpi_foot', 'kpi_note']);
 	assert.deepEqual([...pure].filter((w) => !E.has(w) && !notFields.has(w)), [], 'documented as a field but engine.py never reads it');
