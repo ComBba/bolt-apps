@@ -2,146 +2,329 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sparcle.app/schemas/user-app-v1.json",
   "title": "Bolt User App (utilities/<id>.yaml) v1",
-  "description": "Structure of a User App, matching what the Bolt desktop app accepts as of 2026-10-20. Unknown fields are refused, and so are the admin connector fields. The desktop app also checks rules a JSON Schema cannot express: no shell operators in a command, variables never inside quotes, recognize regexes must compile, per-runtime blocks. The gallery accepts runtime: transform only.",
+  "description": "The one schema for a Bolt User App file: utilities/<id>.yaml in an app folder, a User Apps folder or a .boltpack. It is documentation, not an enforcement boundary: Bolt itself refuses a file that breaks a rule, and Bolt also checks things a schema cannot say (a command is split into arguments and run without a shell, a {{variable}} is never inside quotes, a recognize regex must compile). Unknown fields are refused, and so are the company-admin connector fields. The limits below (kinds, view and action limits, patterns) are mirrored from schema/bolt-rules.json in the bolt-apps repository, and a test keeps them equal. The gallery accepts runtime: transform only; personal apps may use bridge and http_local. Guide: https://sparcle.app/docs/extend/agent-guide/",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "runtime", "id", "chip", "title", "emits", "presentation"],
+  "required": [
+    "schema_version",
+    "runtime",
+    "id",
+    "chip",
+    "title",
+    "emits",
+    "presentation"
+  ],
   "properties": {
-    "schema_version": { "enum": [1, 2], "description": "1 or 2. 2 makes right_widget bind problems errors for an app file; a pack is checked strictly either way." },
-    "runtime": { "enum": ["transform", "http_local", "bridge"] },
-    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
-    "chip": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$", "description": "The key typed after =." },
-    "title": { "type": "string", "minLength": 1 },
-    "icon": { "type": "string" },
-    "description": { "type": "string" },
-    "placeholder_examples": { "type": "array", "items": { "type": "string" } },
-    "emits": { "enum": ["Person", "Issue", "Document", "Event", "File", "Incident", "Account", "Place", "Generic"] },
+    "schema_version": {
+      "enum": [
+        1,
+        2
+      ],
+      "description": "1 or 2. 2 makes right_widget bind problems errors for an app file; a pack is checked strictly either way. (The listing bolt-app.json has its own schema_version, always 1.)"
+    },
+    "runtime": {
+      "enum": [
+        "transform",
+        "http_local",
+        "bridge"
+      ],
+      "description": "transform: reshape text, no command and no network. http_local: one GET or POST to a service on this computer. bridge: run one program and turn its output into rows."
+    },
+    "id": {
+      "$ref": "#/$defs/key",
+      "description": "Also the file name: <id>.yaml."
+    },
+    "chip": {
+      "$ref": "#/$defs/key",
+      "description": "The key typed after =."
+    },
+    "title": {
+      "type": "string",
+      "pattern": "\\S",
+      "minLength": 1
+    },
+    "icon": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "placeholder_examples": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "emits": {
+      "enum": [
+        "Person",
+        "Issue",
+        "Document",
+        "Event",
+        "File",
+        "Incident",
+        "Account",
+        "Place",
+        "Generic"
+      ],
+      "description": "File makes a row with an absolute path act as a file. Use Generic when unsure."
+    },
     "args": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["name", "from"],
+        "required": [
+          "name",
+          "from"
+        ],
         "properties": {
-          "name": { "type": "string" },
-          "from": { "type": "string", "pattern": "^query\\.word\\(\\d+\\)$" },
+          "name": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "from": {
+            "type": "string",
+            "pattern": "^\\s*query\\.word\\(\\s*\\d+\\s*\\)\\s*$",
+            "description": "Only query.word(N) exists: the Nth word typed after the key, counting from 0."
+          },
           "default": {}
         }
       }
     },
     "presentation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["widget"],
-      "properties": {
-        "widget": { "enum": ["list", "table", "cards", "detail"] },
-        "title_field": { "type": "string" },
-        "subtitle_field": { "type": "string" },
-        "searchable": { "type": "boolean" },
-        "right_widget": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["kind"],
-          "properties": {
-            "kind": {
-              "description": "Which pane the launcher draws on the right. Personal apps must not use image, color, weather, date or calc (Bolt shows \"cannot show app data\"); map reads the launcher's own state and takes no bind keys. Chart types are line, bar and sparkline. Source: the launcher ALLOWED_RIGHT_WIDGET_KIND and the launcher.",
-              "enum": ["card", "map", "image", "calc", "color", "weather", "date", "markdown", "entity_preview", "chart", "table", "cards", "detail", "json_tree", "diff", "image_grid"],
-              "oneOf": [
-              { "const": "card", "description": "A single card from bind: title, subtitle, actions." },
-              { "const": "map", "description": "The launcher's own map state: it reads nothing from bind, so any bind key is refused (an error from schema_version 2). It cannot show your rows. For a place, add a url action that opens it in Maps (Open in Maps link)." },
-              { "const": "image", "description": "Bolt shows \"This app asks for a image pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart (image_grid for pictures). A personal app should not use it (the launcher NO_APP_DATA)." },
-              { "const": "calc", "description": "Bolt shows \"This app asks for a calc pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
-              { "const": "color", "description": "Bolt shows \"This app asks for a color pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
-              { "const": "weather", "description": "Bolt shows \"This app asks for a weather pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
-              { "const": "date", "description": "Bolt shows \"This app asks for a date pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)." },
-              { "const": "markdown", "description": "Markdown body from bind: title, subtitle, body, actions." },
-              { "const": "entity_preview", "description": "Rich detail card: media, title, subtitle, label and value facts, optional body and tiles_above." },
-              { "const": "chart", "description": "A chart of the rows. bind.type is one of line, bar or sparkline; any other value is refused (an error from schema_version 2)." },
-              { "const": "table", "description": "A table of the rows, with columns, sort and totals." },
-              { "const": "cards", "description": "Cards or tiles from the rows (layout grid or tiles)." },
-              { "const": "detail", "description": "A label and value detail of the selected row." },
-              { "const": "json_tree", "description": "A collapsible JSON tree from bind.source." },
-              { "const": "diff", "description": "A text diff from bind.left and bind.right." },
-              { "const": "image_grid", "description": "A grid of pictures from bind.src (1 to 8 columns)." }
-              ]
-            },
-            "mode": { "enum": ["selected_row", "list_data"] },
-            "bind": { "description": "Keys the chosen pane reads. chart: type (line, bar or sparkline), x, y, values, label, unit, color. The map, image, calc, color, weather and date panes read nothing, so any key is refused from schema_version 2." }
-          }
-        }
-      }
+      "$ref": "#/$defs/presentation"
     },
     "actions": {
       "type": "array",
+      "maxItems": 6,
       "items": {
-        "type": "object",
-        "required": ["id", "kind"],
-        "properties": {
-          "id": { "type": "string" },
-          "kind": { "enum": ["url", "composer", "utility"] }
-        }
-      }
+        "$ref": "#/$defs/action"
+      },
+      "description": "Bolt shows at most 6 footer buttons; the authoring kit keeps to 3."
     },
     "dispatch": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "mode": { "const": "confirm" },
-        "confirm_label": { "type": "string" },
-        "confirm_hint": { "type": "string" },
+        "mode": {
+          "const": "confirm"
+        },
+        "confirm_label": {
+          "type": "string"
+        },
+        "confirm_hint": {
+          "type": "string"
+        },
         "choices": {
           "type": "array",
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["id", "label"],
+            "required": [
+              "id",
+              "label"
+            ],
             "properties": {
-              "id": { "type": "string" },
-              "label": { "type": "string" },
-              "hint": { "type": "string" },
-              "args": { "type": "object", "additionalProperties": { "type": "string" } }
+              "id": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "label": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "hint": {
+                "type": "string"
+              },
+              "args": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Each key must be the name of an entry in the top-level args."
+              }
             }
           }
+        }
+      },
+      "if": {
+        "required": [
+          "choices"
+        ],
+        "properties": {
+          "choices": {
+            "minItems": 1
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "confirm_label"
+              ]
+            },
+            {
+              "required": [
+                "confirm_hint"
+              ]
+            }
+          ]
         }
       }
     },
     "detect": {
       "type": "object",
-      "required": ["binary"],
+      "additionalProperties": false,
+      "required": [
+        "binary"
+      ],
       "properties": {
-        "binary": { "type": "string", "pattern": "^[^/\\\\]+$", "description": "A program name on PATH, never a path." },
-        "version_min": { "type": "string" },
-        "auth_check": {},
-        "config_hint": { "type": "array", "items": { "type": "string" } },
-        "refresh": { "enum": ["on_boot", "on_focus", "manual"] },
-        "setup": {}
+        "binary": {
+          "type": "string",
+          "pattern": "^[^/\\\\\\u0000\\s][^/\\\\\\u0000]*$",
+          "description": "A program name looked up on PATH, never a path."
+        },
+        "version_min": {
+          "type": "string"
+        },
+        "auth_check": {
+          "$ref": "#/$defs/osCommand"
+        },
+        "config_hint": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "refresh": {
+          "enum": [
+            "on_boot",
+            "on_focus",
+            "manual"
+          ]
+        },
+        "setup": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "unlock": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "signin": {
+              "$ref": "#/$defs/osText"
+            },
+            "install": {
+              "$ref": "#/$defs/osText"
+            }
+          }
+        }
       }
     },
     "inputs": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["name", "type", "label"],
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "type",
+          "label"
+        ],
         "properties": {
-          "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-          "type": { "enum": ["text", "number", "date", "select", "toggle", "secret"] },
-          "label": { "type": "string" },
-          "required": { "type": "boolean" },
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "type": {
+            "enum": [
+              "text",
+              "number",
+              "date",
+              "select",
+              "toggle",
+              "secret"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "pattern": "\\S"
+          },
+          "required": {
+            "type": "boolean"
+          },
           "default": {},
-          "placeholder": { "type": "string" },
-          "options": { "type": "array", "items": { "type": "string" } },
-          "min": { "type": "number" },
-          "max": { "type": "number" },
-          "step": { "type": "number" },
-          "max_length": { "type": "integer" },
-          "pattern": { "type": "string", "maxLength": 512 }
+          "placeholder": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          },
+          "step": {
+            "type": "number"
+          },
+          "max_length": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "pattern": {
+            "type": "string",
+            "pattern": "\\S",
+            "maxLength": 512
+          }
+        },
+        "if": {
+          "properties": {
+            "type": {
+              "const": "select"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "then": {
+          "required": [
+            "options"
+          ],
+          "properties": {
+            "options": {
+              "minItems": 1
+            }
+          }
         }
       }
     },
-    "submit": { "type": "object" },
+    "submit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "confirm": {
+          "type": "boolean"
+        }
+      }
+    },
     "recognize": {
       "type": "object",
-      "required": ["patterns"],
+      "additionalProperties": false,
+      "required": [
+        "patterns"
+      ],
       "properties": {
         "patterns": {
           "type": "array",
@@ -149,31 +332,82 @@
           "maxItems": 16,
           "items": {
             "type": "object",
-            "required": ["regex"],
+            "additionalProperties": false,
+            "required": [
+              "regex"
+            ],
             "properties": {
-              "regex": { "type": "string", "maxLength": 512 },
-              "flags": { "type": "string" },
-              "priority": { "type": "integer" }
+              "regex": {
+                "type": "string",
+                "pattern": "\\S",
+                "maxLength": 512
+              },
+              "flags": {
+                "type": "string",
+                "pattern": "^[imsu]*$",
+                "description": "Any of i, m, s, u. g and y are refused."
+              },
+              "priority": {
+                "type": "integer"
+              }
             }
           }
         },
-        "entity": { "type": "string" },
-        "confidence": { "enum": ["ambient", "high"] },
-        "anchors": { "type": "object" },
+        "entity": {
+          "$ref": "#/$defs/emits"
+        },
+        "confidence": {
+          "enum": [
+            "ambient",
+            "high"
+          ]
+        },
+        "anchors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "min_len": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "require": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "reps": {
           "type": "array",
           "maxItems": 12,
           "items": {
             "type": "object",
-            "required": ["label", "template"],
-            "properties": { "label": { "type": "string" }, "template": { "type": "string" } }
+            "additionalProperties": false,
+            "required": [
+              "label",
+              "template"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "pattern": "\\S"
+              },
+              "template": {
+                "type": "string",
+                "pattern": "\\S"
+              }
+            }
           }
         }
       }
     },
     "transform": {
       "type": "object",
-      "required": ["pipe"],
+      "additionalProperties": false,
+      "required": [
+        "pipe"
+      ],
       "properties": {
         "pipe": {
           "type": "array",
@@ -181,12 +415,280 @@
           "maxItems": 32,
           "items": {
             "oneOf": [
-              { "enum": ["lines", "sort", "dedupe", "reverse", "trim", "upper", "lower", "title", "camel", "snake", "kebab", "slug", "table", "markdown", "csv", "aligned", "sql", "json", "yaml", "toml", "env", "properties", "transpose", "flatten", "redact_secrets", "sanitize"] },
+              {
+                "enum": [
+                  "lines",
+                  "sort",
+                  "dedupe",
+                  "reverse",
+                  "trim",
+                  "upper",
+                  "lower",
+                  "title",
+                  "camel",
+                  "snake",
+                  "kebab",
+                  "slug",
+                  "table",
+                  "markdown",
+                  "csv",
+                  "aligned",
+                  "sql",
+                  "json",
+                  "yaml",
+                  "toml",
+                  "env",
+                  "properties",
+                  "transpose",
+                  "flatten",
+                  "redact_secrets",
+                  "sanitize"
+                ]
+              },
               {
                 "type": "object",
-                "minProperties": 1,
-                "maxProperties": 1,
-                "propertyNames": { "enum": ["split", "join", "filter", "head", "tail", "slice", "replace", "prefix", "suffix", "template", "sortcol", "dedupecol", "rename_cols", "pick", "omit"] }
+                "additionalProperties": false,
+                "required": [
+                  "split"
+                ],
+                "properties": {
+                  "split": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "join"
+                ],
+                "properties": {
+                  "join": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "prefix"
+                ],
+                "properties": {
+                  "prefix": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "suffix"
+                ],
+                "properties": {
+                  "suffix": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "template"
+                ],
+                "properties": {
+                  "template": {
+                    "type": "string",
+                    "description": "{value} is replaced with the current text."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "head"
+                ],
+                "properties": {
+                  "head": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "tail"
+                ],
+                "properties": {
+                  "tail": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "slice"
+                ],
+                "properties": {
+                  "slice": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "from": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "to": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "replace"
+                ],
+                "properties": {
+                  "replace": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "properties": {
+                      "from": {
+                        "type": "string",
+                        "maxLength": 512,
+                        "description": "A regular expression. Nested unbounded repeats such as (a+)+ are refused."
+                      },
+                      "to": {
+                        "type": "string"
+                      },
+                      "flags": {
+                        "type": "string",
+                        "pattern": "^[gimsu]*$",
+                        "description": "Default g."
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "filter"
+                ],
+                "properties": {
+                  "filter": {
+                    "type": "object",
+                    "minProperties": 1,
+                    "maxProperties": 1,
+                    "additionalProperties": false,
+                    "properties": {
+                      "contains": {
+                        "type": "string"
+                      },
+                      "not_contains": {
+                        "type": "string"
+                      },
+                      "matches": {
+                        "type": "string",
+                        "maxLength": 512
+                      },
+                      "not_matches": {
+                        "type": "string",
+                        "maxLength": 512
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sortcol"
+                ],
+                "properties": {
+                  "sortcol": {
+                    "type": [
+                      "string",
+                      "integer"
+                    ],
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "dedupecol"
+                ],
+                "properties": {
+                  "dedupecol": {
+                    "type": [
+                      "string",
+                      "integer"
+                    ],
+                    "minimum": 0
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "pick"
+                ],
+                "properties": {
+                  "pick": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "omit"
+                ],
+                "properties": {
+                  "omit": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "rename_cols"
+                ],
+                "properties": {
+                  "rename_cols": {}
+                }
               }
             ]
           }
@@ -196,59 +698,1564 @@
     "http": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["port", "request", "parse"],
+      "required": [
+        "port",
+        "request",
+        "parse"
+      ],
       "properties": {
-        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
-        "host": { "enum": ["127.0.0.1", "::1", "localhost"] },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "host": {
+          "enum": [
+            "127.0.0.1",
+            "::1",
+            "localhost"
+          ],
+          "description": "Loopback only. Defaults to 127.0.0.1. Ports 13017-13027 and 15432-15441 belong to Bolt and are refused."
+        },
         "request": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["path"],
-          "properties": { "method": { "enum": ["GET", "POST"] }, "path": { "type": "string" } }
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "method": {
+              "enum": [
+                "GET",
+                "POST",
+                "get",
+                "post"
+              ]
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^/(?!/)[^\\u0000-\\u001F\\u007F\\\\]*$",
+              "description": "Starts with / and must not start with // (a protocol-relative address), must not contain a backslash or a control character. {{var}} values are percent-encoded. Bolt must parse the final URL and require the hostname and the port to equal the configured loopback host and port, and must check every redirect target against the same loopback origin."
+            }
+          }
         },
-        "parse": { "enum": ["json", "lines", "raw"] },
-        "rows_path": { "type": "string" },
-        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 60 },
-        "headers": { "type": "object", "propertyNames": { "pattern": "^[A-Za-z0-9-]+$" }, "additionalProperties": { "type": "string", "anyOf": [ { "not": { "pattern": "\\$\\{" } }, { "pattern": "^\\$\\{env:(GH_HOST|GH_REPO|GITLAB_HOST|DOCKER_CONTEXT|DOCKER_TLS_VERIFY|AWS_PROFILE|AWS_REGION|AWS_DEFAULT_REGION|AWS_CA_BUNDLE|AWS_ENDPOINT_URL|CLOUDSDK_CORE_PROJECT|OKTA_CLIENT_ORGURL|SF_TARGET_ORG|SF_ORG_INSTANCE_URL|TWILIO_ACCOUNT_SID|TWILIO_REGION|TWILIO_EDGE|VERCEL_ORG_ID|VERCEL_PROJECT_ID|PGHOST|PGPORT|PGUSER|PGDATABASE|PGSERVICE|PGSSLMODE)\\}$" } ] } }
+        "parse": {
+          "enum": [
+            "json",
+            "lines",
+            "raw"
+          ]
+        },
+        "rows_path": {
+          "type": "string",
+          "description": "Dotted path to the array of rows inside a JSON reply, such as models or result.items."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "headers": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z0-9-]+$"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "description": "A literal with no ${ in it, or exactly one ${env:NAME} where NAME is on the allowed list (the same list as bridge.env_passthrough). Any other placeholder is refused.",
+            "anyOf": [
+              {
+                "not": {
+                  "pattern": "\\$\\{"
+                }
+              },
+              {
+                "pattern": "^\\$\\{env:(GH_HOST|GH_REPO|GITLAB_HOST|DOCKER_CONTEXT|DOCKER_TLS_VERIFY|AWS_PROFILE|AWS_REGION|AWS_DEFAULT_REGION|AWS_CA_BUNDLE|AWS_ENDPOINT_URL|CLOUDSDK_CORE_PROJECT|OKTA_CLIENT_ORGURL|SF_TARGET_ORG|SF_ORG_INSTANCE_URL|TWILIO_ACCOUNT_SID|TWILIO_REGION|TWILIO_EDGE|VERCEL_ORG_ID|VERCEL_PROJECT_ID|PGHOST|PGPORT|PGUSER|PGDATABASE|PGSERVICE|PGSSLMODE)\\}$"
+              }
+            ]
+          }
+        }
       }
     },
     "bridge": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["command", "parse"],
+      "required": [
+        "command",
+        "parse"
+      ],
       "properties": {
         "command": {
-          "type": "object",
-          "additionalProperties": false,
-          "minProperties": 1,
-          "properties": { "macos": { "type": "string" }, "linux": { "type": "string" }, "windows": { "type": "string" } }
+          "$ref": "#/$defs/bridgeCommand"
         },
-        "parse": { "enum": ["json", "lines", "raw"] },
-        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 60 },
+        "parse": {
+          "enum": [
+            "json",
+            "lines",
+            "raw"
+          ]
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60,
+          "description": "Default 10, 1 to 60."
+        },
         "env": {
           "description": "Each key is a variable the app may read (the env_passthrough list) and its value is exactly that variable: \"NAME\": \"${env:NAME}\". A gallery app cannot forward a variable under another name. Mirrors env_destination_refusal in the launcher.",
           "type": "object",
-          "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$", "not": { "anyOf": [ { "enum": ["PATH", "HOME", "USER", "LOGNAME", "TMPDIR", "SHELL", "IFS", "NODE_OPTIONS", "NODE_PATH", "PYTHONPATH", "PYTHONSTARTUP", "PYTHONHOME", "PYTHONINSPECT", "PYTHONUSERBASE", "PERL5OPT", "PERL5LIB", "RUBYOPT", "RUBYLIB", "BASH_ENV", "ENV", "GIT_SSH_COMMAND", "GIT_EXTERNAL_DIFF", "GIT_PAGER", "GIT_ASKPASS", "EDITOR", "VISUAL", "PAGER", "JAVA_TOOL_OPTIONS", "_JAVA_OPTIONS", "CLASSPATH", "GCONV_PATH", "SSLKEYLOGFILE", "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY", "COMSPEC", "PATHEXT", "OPENSSL_CONF", "OPENSSL_MODULES"] }, { "pattern": "^(LD_|DYLD_|BOLT_|ANTHROPIC_|OPENAI_|GIT_CONFIG|GIT_TRACE)" } ] } },
-          "properties": { "GH_HOST": { "const": "${env:GH_HOST}" }, "GH_REPO": { "const": "${env:GH_REPO}" }, "GITLAB_HOST": { "const": "${env:GITLAB_HOST}" }, "DOCKER_CONTEXT": { "const": "${env:DOCKER_CONTEXT}" }, "DOCKER_TLS_VERIFY": { "const": "${env:DOCKER_TLS_VERIFY}" }, "AWS_PROFILE": { "const": "${env:AWS_PROFILE}" }, "AWS_REGION": { "const": "${env:AWS_REGION}" }, "AWS_DEFAULT_REGION": { "const": "${env:AWS_DEFAULT_REGION}" }, "AWS_CA_BUNDLE": { "const": "${env:AWS_CA_BUNDLE}" }, "AWS_ENDPOINT_URL": { "const": "${env:AWS_ENDPOINT_URL}" }, "CLOUDSDK_CORE_PROJECT": { "const": "${env:CLOUDSDK_CORE_PROJECT}" }, "OKTA_CLIENT_ORGURL": { "const": "${env:OKTA_CLIENT_ORGURL}" }, "SF_TARGET_ORG": { "const": "${env:SF_TARGET_ORG}" }, "SF_ORG_INSTANCE_URL": { "const": "${env:SF_ORG_INSTANCE_URL}" }, "TWILIO_ACCOUNT_SID": { "const": "${env:TWILIO_ACCOUNT_SID}" }, "TWILIO_REGION": { "const": "${env:TWILIO_REGION}" }, "TWILIO_EDGE": { "const": "${env:TWILIO_EDGE}" }, "VERCEL_ORG_ID": { "const": "${env:VERCEL_ORG_ID}" }, "VERCEL_PROJECT_ID": { "const": "${env:VERCEL_PROJECT_ID}" }, "PGHOST": { "const": "${env:PGHOST}" }, "PGPORT": { "const": "${env:PGPORT}" }, "PGUSER": { "const": "${env:PGUSER}" }, "PGDATABASE": { "const": "${env:PGDATABASE}" }, "PGSERVICE": { "const": "${env:PGSERVICE}" }, "PGSSLMODE": { "const": "${env:PGSSLMODE}" } },
+          "propertyNames": {
+            "pattern": "^[A-Z_][A-Z0-9_]*$",
+            "not": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "PATH",
+                    "HOME",
+                    "USER",
+                    "LOGNAME",
+                    "TMPDIR",
+                    "SHELL",
+                    "IFS",
+                    "NODE_OPTIONS",
+                    "NODE_PATH",
+                    "PYTHONPATH",
+                    "PYTHONSTARTUP",
+                    "PYTHONHOME",
+                    "PYTHONINSPECT",
+                    "PYTHONUSERBASE",
+                    "PERL5OPT",
+                    "PERL5LIB",
+                    "RUBYOPT",
+                    "RUBYLIB",
+                    "BASH_ENV",
+                    "ENV",
+                    "GIT_SSH_COMMAND",
+                    "GIT_EXTERNAL_DIFF",
+                    "GIT_PAGER",
+                    "GIT_ASKPASS",
+                    "EDITOR",
+                    "VISUAL",
+                    "PAGER",
+                    "JAVA_TOOL_OPTIONS",
+                    "_JAVA_OPTIONS",
+                    "CLASSPATH",
+                    "GCONV_PATH",
+                    "SSLKEYLOGFILE",
+                    "HTTP_PROXY",
+                    "HTTPS_PROXY",
+                    "ALL_PROXY",
+                    "NO_PROXY",
+                    "COMSPEC",
+                    "PATHEXT",
+                    "OPENSSL_CONF",
+                    "OPENSSL_MODULES"
+                  ]
+                },
+                {
+                  "pattern": "^(LD_|DYLD_|BOLT_|ANTHROPIC_|OPENAI_|GIT_CONFIG|GIT_TRACE)"
+                }
+              ]
+            }
+          },
+          "properties": {
+            "GH_HOST": {
+              "const": "${env:GH_HOST}"
+            },
+            "GH_REPO": {
+              "const": "${env:GH_REPO}"
+            },
+            "GITLAB_HOST": {
+              "const": "${env:GITLAB_HOST}"
+            },
+            "DOCKER_CONTEXT": {
+              "const": "${env:DOCKER_CONTEXT}"
+            },
+            "DOCKER_TLS_VERIFY": {
+              "const": "${env:DOCKER_TLS_VERIFY}"
+            },
+            "AWS_PROFILE": {
+              "const": "${env:AWS_PROFILE}"
+            },
+            "AWS_REGION": {
+              "const": "${env:AWS_REGION}"
+            },
+            "AWS_DEFAULT_REGION": {
+              "const": "${env:AWS_DEFAULT_REGION}"
+            },
+            "AWS_CA_BUNDLE": {
+              "const": "${env:AWS_CA_BUNDLE}"
+            },
+            "AWS_ENDPOINT_URL": {
+              "const": "${env:AWS_ENDPOINT_URL}"
+            },
+            "CLOUDSDK_CORE_PROJECT": {
+              "const": "${env:CLOUDSDK_CORE_PROJECT}"
+            },
+            "OKTA_CLIENT_ORGURL": {
+              "const": "${env:OKTA_CLIENT_ORGURL}"
+            },
+            "SF_TARGET_ORG": {
+              "const": "${env:SF_TARGET_ORG}"
+            },
+            "SF_ORG_INSTANCE_URL": {
+              "const": "${env:SF_ORG_INSTANCE_URL}"
+            },
+            "TWILIO_ACCOUNT_SID": {
+              "const": "${env:TWILIO_ACCOUNT_SID}"
+            },
+            "TWILIO_REGION": {
+              "const": "${env:TWILIO_REGION}"
+            },
+            "TWILIO_EDGE": {
+              "const": "${env:TWILIO_EDGE}"
+            },
+            "VERCEL_ORG_ID": {
+              "const": "${env:VERCEL_ORG_ID}"
+            },
+            "VERCEL_PROJECT_ID": {
+              "const": "${env:VERCEL_PROJECT_ID}"
+            },
+            "PGHOST": {
+              "const": "${env:PGHOST}"
+            },
+            "PGPORT": {
+              "const": "${env:PGPORT}"
+            },
+            "PGUSER": {
+              "const": "${env:PGUSER}"
+            },
+            "PGDATABASE": {
+              "const": "${env:PGDATABASE}"
+            },
+            "PGSERVICE": {
+              "const": "${env:PGSERVICE}"
+            },
+            "PGSSLMODE": {
+              "const": "${env:PGSSLMODE}"
+            }
+          },
           "additionalProperties": false
         },
         "env_passthrough": {
-          "description": "Environment variables the command reads. Commands start with an empty environment plus a fixed set Bolt chooses; an app may add only these names (hosts, regions, profiles, config paths, public identifiers). Credentials, loader and interpreter settings, proxies and Bolt settings are never forwarded to a gallery app. Mirrors BENIGN_PASSTHROUGH_NAMES in the launcher and the launcher; keep all three in step.",
           "type": "array",
           "maxItems": 16,
           "uniqueItems": true,
-          "items": { "enum": ["GH_HOST", "GH_REPO", "GITLAB_HOST", "DOCKER_CONTEXT", "DOCKER_TLS_VERIFY", "AWS_PROFILE", "AWS_REGION", "AWS_DEFAULT_REGION", "AWS_CA_BUNDLE", "AWS_ENDPOINT_URL", "CLOUDSDK_CORE_PROJECT", "OKTA_CLIENT_ORGURL", "SF_TARGET_ORG", "SF_ORG_INSTANCE_URL", "TWILIO_ACCOUNT_SID", "TWILIO_REGION", "TWILIO_EDGE", "VERCEL_ORG_ID", "VERCEL_PROJECT_ID", "PGHOST", "PGPORT", "PGUSER", "PGDATABASE", "PGSERVICE", "PGSSLMODE"] }
+          "items": {
+            "enum": [
+              "GH_HOST",
+              "GH_REPO",
+              "GITLAB_HOST",
+              "DOCKER_CONTEXT",
+              "DOCKER_TLS_VERIFY",
+              "AWS_PROFILE",
+              "AWS_REGION",
+              "AWS_DEFAULT_REGION",
+              "AWS_CA_BUNDLE",
+              "AWS_ENDPOINT_URL",
+              "CLOUDSDK_CORE_PROJECT",
+              "OKTA_CLIENT_ORGURL",
+              "SF_TARGET_ORG",
+              "SF_ORG_INSTANCE_URL",
+              "TWILIO_ACCOUNT_SID",
+              "TWILIO_REGION",
+              "TWILIO_EDGE",
+              "VERCEL_ORG_ID",
+              "VERCEL_PROJECT_ID",
+              "PGHOST",
+              "PGPORT",
+              "PGUSER",
+              "PGDATABASE",
+              "PGSERVICE",
+              "PGSSLMODE"
+            ]
+          },
+          "description": "Environment variables the command reads. Commands start with an empty environment plus a fixed set Bolt chooses; an app may add only these names (hosts, regions, profiles, config paths, public identifiers). Credentials, loader and interpreter settings, proxies and Bolt settings are never forwarded to a gallery app. Mirrors BENIGN_PASSTHROUGH_NAMES in the launcher and the launcher; keep all three in step."
         },
         "cwd": {
-          "description": "Working directory. Absent: a fresh private folder per run. home: the user's home folder (needs the files permission).",
-          "enum": ["home"]
+          "enum": [
+            "home"
+          ],
+          "description": "Absent: a fresh private folder for each run."
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional declared permissions. Today they are shown at install and checked against what the app files use; they are NOT enforced at run time, and a personal script (tier 3) runs as you.",
+      "properties": {
+        "files": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "read": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileScope"
+              }
+            },
+            "write": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileScope"
+              }
+            }
+          }
+        },
+        "network": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "host"
+            ],
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "methods": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "PATCH",
+                    "DELETE"
+                  ]
+                }
+              },
+              "sends_input": {
+                "type": "boolean"
+              }
+            }
+          },
+          "description": "Sites the app code talks to. Declared and shown, not checked against the script."
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Sites a url action may open."
+        },
+        "exec": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string"
+              },
+              "args": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "arg"
+                        ],
+                        "properties": {
+                          "arg": {
+                            "type": "string"
+                          },
+                          "pattern": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "env": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pass": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "host"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "host": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "local_ports": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          }
         }
       }
     }
   },
   "allOf": [
-    { "if": { "properties": { "runtime": { "const": "transform" } } }, "then": { "required": ["transform"], "not": { "anyOf": [{ "required": ["bridge"] }, { "required": ["http"] }] } } },
-    { "if": { "properties": { "runtime": { "const": "http_local" } } }, "then": { "required": ["http"], "not": { "required": ["bridge"] } } },
-    { "if": { "properties": { "runtime": { "const": "bridge" } } }, "then": { "required": ["bridge"], "not": { "required": ["http"] } } }
-  ]
+    {
+      "if": {
+        "properties": {
+          "runtime": {
+            "const": "transform"
+          }
+        },
+        "required": [
+          "runtime"
+        ]
+      },
+      "then": {
+        "required": [
+          "transform"
+        ],
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "bridge"
+              ]
+            },
+            {
+              "required": [
+                "http"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "runtime": {
+            "const": "http_local"
+          }
+        },
+        "required": [
+          "runtime"
+        ]
+      },
+      "then": {
+        "required": [
+          "http"
+        ],
+        "not": {
+          "required": [
+            "bridge"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "runtime": {
+            "const": "bridge"
+          }
+        },
+        "required": [
+          "runtime"
+        ]
+      },
+      "then": {
+        "required": [
+          "bridge"
+        ],
+        "not": {
+          "required": [
+            "http"
+          ]
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+    },
+    "emits": {
+      "enum": [
+        "Person",
+        "Issue",
+        "Document",
+        "Event",
+        "File",
+        "Incident",
+        "Account",
+        "Place",
+        "Generic"
+      ]
+    },
+    "osText": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "macos": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "linux": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "windows": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      }
+    },
+    "argvString": {
+      "type": "string",
+      "pattern": "^(?:[^|{;&`$\\s]|\\s|&(?!&)|\\$(?!\\()|\\{(?!\\{)|\\{\\{.*?\\}\\})*$",
+      "description": "One program and its arguments. No ; && || | backtick or $( outside a {{variable}}. A {{variable}} is written bare, never inside quotes. No ~ expansion: use {{home}}."
+    },
+    "osCommand": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "macos": {
+          "$ref": "#/$defs/argvString"
+        },
+        "linux": {
+          "$ref": "#/$defs/argvString"
+        },
+        "windows": {
+          "$ref": "#/$defs/argvString"
+        }
+      }
+    },
+    "bridgeCommand": {
+      "$ref": "#/$defs/osCommand"
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,64}$"
+        },
+        "kind": {
+          "enum": [
+            "url",
+            "composer",
+            "utility",
+            "run"
+          ],
+          "description": "run: one click runs THIS app once with the fixed query_template (the same consent and run log as pressing Enter)."
+        },
+        "label": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Bolt keeps 40 characters of a label and the footer button shows the first 14. Words such as Allow, Approve, Delete, Confirm, Cancel, Deny, OK, Yes, No, Remove, Unlock and Sign in are refused."
+        },
+        "target": {
+          "type": "string",
+          "description": "row, or list (a utility action with target: list routes every row)."
+        },
+        "url_template": {
+          "type": "string",
+          "pattern": "^(?:https?://[^\\u0000-\\u001F\\u007F]*|\\{\\{[^{}\\u0000-\\u001F\\u007F]*\\}\\})$",
+          "description": "A web address template. It must be either a literal http:// or https:// address, or a single {{row.field}} placeholder. No other scheme can be written here: javascript:, data:, file: and vbscript: are refused, and control characters are refused. Bolt must still parse the rendered URL and refuse any scheme other than http or https."
+        },
+        "insert": {
+          "type": "string"
+        },
+        "target_chip": {
+          "type": "string"
+        },
+        "query_template": {
+          "type": "string"
+        },
+        "primary": {
+          "type": "boolean",
+          "description": "At most one action may be primary."
+        },
+        "icon": {
+          "enum": [
+            "star",
+            "bookmark",
+            "tag",
+            "flag",
+            "bell",
+            "calendar",
+            "clock",
+            "mail",
+            "message-square",
+            "phone",
+            "user",
+            "users",
+            "folder",
+            "file-text",
+            "list",
+            "list-checks",
+            "package",
+            "box",
+            "git-branch",
+            "git-merge",
+            "git-pull-request",
+            "git-commit",
+            "activity",
+            "chart-column",
+            "database",
+            "cloud",
+            "download",
+            "upload",
+            "pencil",
+            "plus",
+            "refresh-cw",
+            "play",
+            "map-pin",
+            "image",
+            "search",
+            "layout-grid",
+            "globe"
+          ],
+          "description": "Optional footer-button icon; a name outside this list is refused. Case matters."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "url"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "url_template"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "target_chip"
+                  ]
+                },
+                {
+                  "required": [
+                    "query_template"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "composer"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "insert"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "target_chip"
+                  ]
+                },
+                {
+                  "required": [
+                    "query_template"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "utility"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "target_chip"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "url_template"
+                  ]
+                },
+                {
+                  "required": [
+                    "insert"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "run"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "query_template"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "url_template"
+                  ]
+                },
+                {
+                  "required": [
+                    "insert"
+                  ]
+                },
+                {
+                  "required": [
+                    "target_chip"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 4096
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "body": {
+      "type": "string",
+      "maxLength": 16384
+    },
+    "actionIds": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "description": "Ids of entries in the top-level actions."
+    },
+    "presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "widget"
+      ],
+      "properties": {
+        "widget": {
+          "enum": [
+            "list",
+            "table",
+            "cards",
+            "detail"
+          ],
+          "description": "How the result list on the left looks."
+        },
+        "title_field": {
+          "type": "string",
+          "description": "Row field shown as the title. parse: lines rows have line and idx."
+        },
+        "subtitle_field": {
+          "type": "string"
+        },
+        "searchable": {
+          "type": "boolean",
+          "description": "Accepted and does nothing: Bolt always filters the rows of the last run as you type (title and subtitle)."
+        },
+        "view_arg": {
+          "type": "string",
+          "description": "Name of the declared arg (from query.word(N)) whose value selects a view. Required when views is present, and refused without views."
+        },
+        "views": {
+          "type": "object",
+          "maxProperties": 8,
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_-]{0,23}$"
+          },
+          "description": "At most 8 views, including the overview. A run whose view_arg value matches a key draws that view's right pane; any other run uses the top-level right_widget.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "right_widget": {
+                "$ref": "#/$defs/presentation/properties/right_widget"
+              },
+              "title_field": {
+                "type": "string"
+              },
+              "subtitle_field": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "right_widget": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ],
+          "properties": {
+            "kind": {
+              "description": "Which pane the launcher draws on the right. Personal apps must not use image, color, weather, date or calc (Bolt shows \"cannot show app data\"); map reads the launcher's own state and takes no bind keys. Chart types are line, bar and sparkline. Source: the launcher ALLOWED_RIGHT_WIDGET_KIND and the launcher.",
+              "enum": [
+                "card",
+                "map",
+                "image",
+                "calc",
+                "color",
+                "weather",
+                "date",
+                "markdown",
+                "entity_preview",
+                "chart",
+                "table",
+                "cards",
+                "detail",
+                "json_tree",
+                "diff",
+                "image_grid"
+              ],
+              "oneOf": [
+                {
+                  "const": "card",
+                  "description": "A single card from bind: title, subtitle, actions."
+                },
+                {
+                  "const": "map",
+                  "description": "The launcher's own map state: it reads nothing from bind, so any bind key is refused (an error from schema_version 2). It cannot show your rows. For a place, add a url action that opens it in Maps (Open in Maps link)."
+                },
+                {
+                  "const": "image",
+                  "description": "Bolt shows \"This app asks for an image pane, which cannot show app data. Use image_grid for pictures.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
+                },
+                {
+                  "const": "calc",
+                  "description": "Bolt shows \"This app asks for a calc pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
+                },
+                {
+                  "const": "color",
+                  "description": "Bolt shows \"This app asks for a color pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
+                },
+                {
+                  "const": "weather",
+                  "description": "Bolt shows \"This app asks for a weather pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
+                },
+                {
+                  "const": "date",
+                  "description": "Bolt shows \"This app asks for a date pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
+                },
+                {
+                  "const": "markdown",
+                  "description": "Markdown body from bind: title, subtitle, body, actions."
+                },
+                {
+                  "const": "entity_preview",
+                  "description": "Rich detail card: media, title, subtitle, label and value facts, optional body and tiles_above."
+                },
+                {
+                  "const": "chart",
+                  "description": "A chart of the rows. bind.type is one of line, bar or sparkline; any other value is refused (an error from schema_version 2)."
+                },
+                {
+                  "const": "table",
+                  "description": "A table of the rows, with columns, sort and totals."
+                },
+                {
+                  "const": "cards",
+                  "description": "Cards or tiles from the rows (layout grid or tiles)."
+                },
+                {
+                  "const": "detail",
+                  "description": "A label and value detail of the selected row."
+                },
+                {
+                  "const": "json_tree",
+                  "description": "A collapsible JSON tree from bind.source."
+                },
+                {
+                  "const": "diff",
+                  "description": "A text diff from bind.left and bind.right."
+                },
+                {
+                  "const": "image_grid",
+                  "description": "A grid of pictures from bind.src (1 to 8 columns)."
+                }
+              ]
+            },
+            "mode": {
+              "enum": [
+                "selected_row",
+                "list_data"
+              ],
+              "description": "selected_row: the highlighted row. list_data: all rows."
+            },
+            "bind": {
+              "type": "object",
+              "description": "Keys the chosen pane reads; each kind has its own bind schema below. map, image, calc, color, weather and date read nothing."
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "card"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindCard"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "markdown"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindMarkdown"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "entity_preview"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindEntityPreview"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "chart"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindChart"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "table"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindTable"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "cards"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindCards"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "detail"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindDetail"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "json_tree"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindJsonTree"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "diff"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindDiff"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "image_grid"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindImageGrid"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "bindCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "subtitle": {
+          "$ref": "#/$defs/text"
+        },
+        "actions": {
+          "$ref": "#/$defs/actionIds"
+        }
+      }
+    },
+    "bindMarkdown": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "subtitle": {
+          "$ref": "#/$defs/text"
+        },
+        "body": {
+          "$ref": "#/$defs/body"
+        },
+        "actions": {
+          "$ref": "#/$defs/actionIds"
+        }
+      }
+    },
+    "bindEntityPreview": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tiles_above": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value"
+          ],
+          "description": "One tile for the selected row, drawn above the facts. Same keys as the cards tiles layout.",
+          "properties": {
+            "title": {
+              "$ref": "#/$defs/text"
+            },
+            "subtitle": {
+              "$ref": "#/$defs/text"
+            },
+            "badge": {
+              "$ref": "#/$defs/text"
+            },
+            "footer": {
+              "$ref": "#/$defs/text"
+            },
+            "value": {
+              "$ref": "#/$defs/text"
+            },
+            "unit": {
+              "$ref": "#/$defs/text"
+            },
+            "delta": {
+              "$ref": "#/$defs/text"
+            },
+            "delta_label": {
+              "$ref": "#/$defs/text"
+            },
+            "max": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "maxLength": 4096
+            },
+            "min": {
+              "type": [
+                "string",
+                "number"
+              ],
+              "maxLength": 4096
+            },
+            "trend": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "subtitle": {
+          "$ref": "#/$defs/text"
+        },
+        "image_url": {
+          "$ref": "#/$defs/text"
+        },
+        "fields": {
+          "type": "array",
+          "maxItems": 40,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "$ref": "#/$defs/name"
+              },
+              "value": {
+                "$ref": "#/$defs/text"
+              },
+              "kind": {
+                "enum": [
+                  "text",
+                  "badge",
+                  "chips",
+                  "branch",
+                  "diff"
+                ]
+              },
+              "tone": {
+                "enum": [
+                  "merged",
+                  "open",
+                  "closed",
+                  "draft",
+                  "success",
+                  "warn",
+                  "danger",
+                  "neutral"
+                ]
+              }
+            }
+          }
+        },
+        "body": {
+          "$ref": "#/$defs/body"
+        },
+        "actions": {
+          "$ref": "#/$defs/actionIds"
+        }
+      }
+    },
+    "bindChart": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "line",
+            "bar",
+            "sparkline"
+          ]
+        },
+        "x": {
+          "$ref": "#/$defs/name"
+        },
+        "y": {
+          "$ref": "#/$defs/name"
+        },
+        "values": {
+          "$ref": "#/$defs/name"
+        },
+        "label": {
+          "$ref": "#/$defs/name"
+        },
+        "color": {
+          "enum": [
+            "accent",
+            "muted"
+          ]
+        },
+        "unit": {
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "bindTable": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "type": "array",
+          "maxItems": 40,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "field"
+            ],
+            "properties": {
+              "field": {
+                "$ref": "#/$defs/name"
+              },
+              "label": {
+                "$ref": "#/$defs/name"
+              },
+              "align": {
+                "enum": [
+                  "left",
+                  "right",
+                  "center"
+                ]
+              },
+              "total": {
+                "enum": [
+                  "sum",
+                  "avg",
+                  "min",
+                  "max",
+                  "count",
+                  "none"
+                ],
+                "description": "Rich widgets."
+              },
+              "format": {
+                "enum": [
+                  "text",
+                  "number",
+                  "percent",
+                  "currency",
+                  "date"
+                ],
+                "description": "Rich widgets."
+              },
+              "unit": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
+        },
+        "sort": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "field"
+          ],
+          "properties": {
+            "field": {
+              "$ref": "#/$defs/name"
+            },
+            "dir": {
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          "description": "Rich widgets."
+        },
+        "totals_label": {
+          "$ref": "#/$defs/name",
+          "description": "Rich widgets."
+        }
+      }
+    },
+    "bindCards": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "subtitle": {
+          "$ref": "#/$defs/text"
+        },
+        "badge": {
+          "$ref": "#/$defs/text"
+        },
+        "image": {
+          "$ref": "#/$defs/text"
+        },
+        "footer": {
+          "$ref": "#/$defs/text"
+        },
+        "layout": {
+          "enum": [
+            "grid",
+            "tiles"
+          ],
+          "description": "tiles needs value. Builds older than 2026-11-07 with the Rich widgets switch off draw the grid instead."
+        },
+        "value": {
+          "$ref": "#/$defs/text"
+        },
+        "unit": {
+          "$ref": "#/$defs/text"
+        },
+        "delta": {
+          "$ref": "#/$defs/text"
+        },
+        "delta_label": {
+          "$ref": "#/$defs/text"
+        },
+        "max": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096,
+          "description": "Draws a meter (gauge) from value to max."
+        },
+        "min": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096
+        },
+        "trend": {
+          "$ref": "#/$defs/text"
+        }
+      },
+      "if": {
+        "required": [
+          "layout"
+        ],
+        "properties": {
+          "layout": {
+            "const": "tiles"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "value"
+        ]
+      }
+    },
+    "bindDetail": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "subtitle": {
+          "$ref": "#/$defs/text"
+        },
+        "fields": {
+          "type": "array",
+          "maxItems": 40,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "$ref": "#/$defs/name"
+              },
+              "value": {
+                "$ref": "#/$defs/text"
+              },
+              "copy": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "bindJsonTree": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "bindDiff": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "$ref": "#/$defs/text"
+        },
+        "right": {
+          "$ref": "#/$defs/text"
+        },
+        "leftLabel": {
+          "$ref": "#/$defs/name"
+        },
+        "rightLabel": {
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "bindImageGrid": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "src": {
+          "$ref": "#/$defs/text"
+        },
+        "caption": {
+          "$ref": "#/$defs/text"
+        },
+        "alt": {
+          "$ref": "#/$defs/text"
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        }
+      }
+    },
+    "fileScope": {
+      "oneOf": [
+        {
+          "enum": [
+            "state",
+            "scripts",
+            "home",
+            "picked"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "arg"
+          ],
+          "properties": {
+            "arg": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  }
 }
