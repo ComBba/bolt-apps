@@ -73,6 +73,7 @@ class EngineLive(unittest.TestCase):
         cfg = json.load(open(os.path.join(ROOT, "portal-template__config.json")))
         cfg["api"]["base_url"] = "http://127.0.0.1:%d" % self.srv.server_port
         cfg["api"]["fixture_default"] = False
+        cfg["api"]["on_missing_key"] = "setup"   # these tests are about the real-app path: a missing key is one setup row
         cfg["api"]["env_file"] = os.path.join(self.home, "key.env")
         self.cfg_path = os.path.join(self.home, "config.json")
         json.dump(cfg, open(self.cfg_path, "w"))
