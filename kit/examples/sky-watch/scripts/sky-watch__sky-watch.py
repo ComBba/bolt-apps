@@ -7,6 +7,7 @@ a city is typed, its weather and sunrise and sunset (geocoding-api.open-meteo.co
 config.json, follows redirects only on the same host, sends no cookies or credentials, has a timeout and a 1 MB cap, and typed text is only
 percent-encoded into the query. Rows go through the kit (text safety, row contract). `demo` shows recorded sample answers, labelled."""
 import concurrent.futures as cf
+import http.client
 import json
 import os
 import re
@@ -67,14 +68,14 @@ class _Redirects(urllib.request.HTTPRedirectHandler):
 
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         u = urllib.parse.urlparse(newurl)
-        if u.scheme != "https" or u.hostname != urllib.parse.urlparse(req.full_url).hostname or u.hostname not in self.hosts:
+        if u.scheme != "https" or u.port not in (None, 443) or u.hostname != urllib.parse.urlparse(req.full_url).hostname or u.hostname not in self.hosts:
             raise Fail("redirected to another host: not followed")
         return urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
 
 
 def fetch(cfg, url, budget):
     u = urllib.parse.urlparse(url)
-    if u.scheme != "https" or u.hostname not in cfg["hosts"]:
+    if u.scheme != "https" or u.port not in (None, 443) or u.hostname not in cfg["hosts"]:
         raise Fail("host not allowed")
     _Redirects.hosts = tuple(cfg["hosts"])
     req = urllib.request.Request(url, headers={"User-Agent": cfg["api"]["user_agent"], "Accept": "application/json"})   # no cookies, no Authorization
@@ -83,6 +84,8 @@ def fetch(cfg, url, budget):
             raw = r.read(cfg["api"]["max_bytes"] + 1)
     except urllib.error.HTTPError as e:
         raise Fail("rate limited" if e.code == 429 else "answered %d" % e.code)
+    except http.client.HTTPException:   # IncompleteRead, BadStatusLine and the like: one flaky source never kills the overview
+        raise Fail("the answer was cut short")
     except (urllib.error.URLError, OSError, ValueError) as e:
         raise Fail("timed out" if "timed out" in str(e) else "could not connect")
     if len(raw) > cfg["api"]["max_bytes"]:
@@ -153,6 +156,8 @@ def when(ctx, ts):
     if t is None:
         return "unknown"
     s = ctx.now - t
+    if -10 < s < 0:   # a clock a few seconds apart is not "in 3 s"
+        return "just now"
     return ("%s ago" % kit.fmt_duration(s)) if s >= 0 else ("in %s" % kit.fmt_duration(-s))
 
 
@@ -185,20 +190,47 @@ def iss_row(ctx, d, note, nav=True):
                 nav={"view": "iss"} if nav else None, tile=kit.tile("Altitude", alt, "km", None, note=note or "now"))
 
 
-def launch_rows(ctx, d, limit):
+def text_of(*vals):
+    """The first non-empty text among strings or {name: text} dicts (the list shape of Launch Library 2 has flat strings, the detail shape has objects)."""
+    for v in vals:
+        if isinstance(v, dict):
+            v = v.get("name")
+        if isinstance(v, str) and v.strip():
+            return kit.clean_text(v, 60)
+    return ""
+
+
+DONE = ("failure", "success", "partial failure")
+
+
+def upcoming(ctx, d):
+    """The launches still to come: not before now, and not already a success or failure (the upcoming list can hold one that just flew)."""
     out = []
-    for x in (d.get("results") or [])[:limit]:
+    for x in (d.get("results") or []):
         if not isinstance(x, dict):
             continue
         net = iso_ts(x.get("net"))
-        pad = x.get("pad") or {}
-        loc = (pad.get("location") or {}).get("name", "") if isinstance(pad, dict) else ""
+        st = text_of((x.get("status") or {}).get("abbrev") if isinstance(x.get("status"), dict) else None, x.get("status")).lower()
+        if net is not None and net < ctx.now or st in DONE:
+            continue
+        out.append(x)
+    return out
+
+
+def launch_rows(ctx, d, limit):
+    out = []
+    for x in upcoming(ctx, d)[:limit]:
+        net = iso_ts(x.get("net"))
+        pad_obj = x.get("pad") if isinstance(x.get("pad"), dict) else {}
+        pad = text_of(x.get("pad") if isinstance(x.get("pad"), str) else pad_obj.get("name"))
+        loc = text_of(x.get("location") if isinstance(x.get("location"), str) else None, (pad_obj.get("location") or {}) if isinstance(pad_obj.get("location"), dict) else None)
+        lsp = text_of(x.get("lsp_name"), x.get("launch_service_provider"))
+        mission = text_of(x.get("mission"), x.get("mission_name"))
+        status = text_of(x.get("status"))
         key = "NET %s" % kit.clean_text(str(x.get("net", ""))[:16].replace("T", " "), 20)
-        stat = x.get("status") or {}
-        data = "%s, %s, %s" % (kit.clean_text(str(stat.get("name", "status unknown")), 30), kit.clean_text(str(pad.get("name", "pad unknown")) if isinstance(pad, dict) else "", 40), kit.clean_text(loc, 40))
-        lsp = x.get("launch_service_provider")
-        out.append(srow(x.get("name") or "Launch", "%s · %s" % (key, kit.clean_text(str(lsp if not isinstance(lsp, dict) else lsp.get("name", "")), 30)), "ll.thespacedevs.com", when(ctx, net), key, data,
-                        url=x.get("url") if str(x.get("url", "")).startswith("https://ll.thespacedevs.com/") else None, icon="Zap"))
+        data = ", ".join(s for s in (status, mission, pad, loc) if s) or "no more detail listed"
+        url = x.get("url") if str(x.get("url", "")).startswith("https://ll.thespacedevs.com/") else None
+        out.append(srow(text_of(x.get("name")) or "Launch", " · ".join(s for s in (key, lsp) if s), "ll.thespacedevs.com", when(ctx, net), key, data, url=url, icon="Zap"))
     return out
 
 
@@ -237,6 +269,21 @@ def weather_rows(ctx, city, g, w):
     return out or None
 
 
+def old_note(row, note):
+    """Say a copy is old on the row itself (subtitle, badge and pane body), whatever kind of row it is."""
+    if note and "old copy" in note:
+        row["subtitle"] = (kit.clean_text(row.get("subtitle", ""), 120) + " · old copy").strip(" ·")
+        row["badge"] = "OLD COPY"
+        row["kpi_badge"] = "OLD COPY" if row.get("kpi_value") not in (None, "") else row.get("kpi_badge", "")
+        row["body"] = "**Old copy:** %s.\n\n%s" % (note, row.get("body", ""))
+        row["sw_when"] = (row.get("sw_when", "") + " (old copy)").strip()
+    return row
+
+
+def old_rows(rows, note):
+    return [old_note(r, note) for r in rows]
+
+
 def label(rows):
     return [kit.row("SAMPLE DATA: recorded answers, not live", "Run =sky-watch with no word for the live sky", body="Sample data: these answers were recorded for the example. Type =sky-watch for live data.", icon="FileText", copy=False, badge="SAMPLE")] + rows
 
@@ -257,19 +304,19 @@ def overview(ctx):
         res = dict(zip(names, ex.map(lambda n: source(ctx, n), names)))
     rows, lim = [], ctx.cfg["limits"]
     d, note = res["iss"]
-    rows.append(iss_row(ctx, d, note) if d else fail_row("Space Station position", note))
+    rows.append(old_note(iss_row(ctx, d, note), note) if d else fail_row("Space Station position", note))
     d, note = res["launches"]
     first = launch_rows(ctx, d, 1) if d else []
     if first:
-        net = iso_ts(d["results"][0].get("net"))
-        rows.append(next_launch(ctx, first[0], (net - ctx.now) / 86400.0 if net else None))
+        net = iso_ts(upcoming(ctx, d)[0].get("net"))
+        rows.append(old_note(next_launch(ctx, first[0], (net - ctx.now) / 86400.0 if net else None), note))
     else:
         rows.append(fail_row("Launches", note or "no upcoming launches listed"))
     d, note = res["quakes"]
     qs = quake_rows(ctx, d, lim["quakes"]) if d else []
-    rows.append(srow("Earthquakes M4.5+ in the last day: %d" % len(qs) if qs else "Earthquakes", "%s listed · the biggest first below" % kit.fmt_count(len(qs), "quake", "quakes"), "earthquake.usgs.gov", "last 24 hours",
+    rows.append(old_note(srow("Earthquakes M4.5+ in the last day: %d" % len(qs) if qs else "Earthquakes", "%s listed · the biggest first below" % kit.fmt_count(len(qs), "quake", "quakes"), "earthquake.usgs.gov", "last 24 hours",
                      "%s M4.5+" % kit.fmt_count(len(qs), "quake", "quakes"), "from the USGS summary feed", url="https://earthquake.usgs.gov/earthquakes/map/", icon="Activity", nav={"view": "quakes"},
-                     tile=kit.tile("M4.5+ quakes", len(qs), "", None, note="last 24 h")) if d else fail_row("Earthquakes", note))
+                     tile=kit.tile("M4.5+ quakes", len(qs), "", None, note="last 24 h")), note) if d else fail_row("Earthquakes", note))
     rows.append(hint_row())
     return rows
 
@@ -287,15 +334,15 @@ def run_view(ctx, view, text):
         return overview(ctx)
     if view == "iss":
         d, note = source(ctx, "iss")
-        return [back()] + ([iss_row(ctx, d, note, nav=False)] if d else [fail_row("Space Station position", note)])
+        return [back()] + ([old_note(iss_row(ctx, d, note, nav=False), note)] if d else [fail_row("Space Station position", note)])
     if view == "launches":
         d, note = source(ctx, "launches")
         rows = launch_rows(ctx, d, lim["launches"]) if d else []
-        return [back()] + (rows or [fail_row("Launches", note or "no upcoming launches listed")])
+        return [back()] + (old_rows(rows, note) or [fail_row("Launches", note or "no upcoming launches listed")])
     if view == "quakes":
         d, note = source(ctx, "quakes")
         rows = quake_rows(ctx, d, lim["quakes"]) if d else []
-        return [back()] + (rows or [fail_row("Earthquakes", note or "no quakes of magnitude 4.5 or more in the last day")])
+        return [back()] + (old_rows(rows, note) or [fail_row("Earthquakes", note or "no quakes of magnitude 4.5 or more in the last day")])
     g, gnote = source(ctx, "geocode", text)
     if not g or not (g.get("results") or []):
         return [back(), kit.row("No such place", "Try another city name", icon="Search", body="The place finder knew no city called %s." % kit.clean_text(text, 40), copy=False)] if g is not None else [back(), fail_row("Place finder", gnote)]
@@ -305,7 +352,7 @@ def run_view(ctx, view, text):
         return [back(), fail_row("Place finder", "unexpected answer")]
     w, wnote = source(ctx, "weather", "%.4f,%.4f" % (lat, lon))
     rows = weather_rows(ctx, text, g, w) if w else None
-    return [back()] + (rows or [fail_row("Weather", wnote or "unexpected answer")])
+    return [back()] + (old_rows(rows, " ".join(n for n in (gnote, wnote) if n)) if rows else [fail_row("Weather", wnote or "unexpected answer")])
 
 
 def emit_yaml(cfg):
@@ -344,8 +391,8 @@ def main(argv):
     if demo:
         args = args[1:]
     view = "overview"
-    if args and args[0] in VIEWS:
-        view, args = args[0], args[1:]
+    if args and args[0].lower() in VIEWS:
+        view, args = args[0].lower(), args[1:]
     elif args:
         view = "weather"   # a first word that is not a view is a city
     text = kit.clean_text(" ".join(args), 80) if view == "weather" else ""

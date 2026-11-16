@@ -44,8 +44,16 @@
       "golden": "golden/launches.json",
       "expect": {
         "text_present": [
-          "Sample Mission A",
-          "Sample Mission B"
+          "Long March 2D",
+          "Falcon 9 Block 5",
+          "Taiyuan",
+          "SpaceX"
+        ],
+        "text_absent": [
+          "Vulcan",
+          "None",
+          "None,",
+          ", ,"
         ]
       }
     },
@@ -124,6 +132,33 @@
       "expect": {
         "text_present": [
           "Type a city"
+        ]
+      }
+    },
+    {
+      "name": "view words are case-insensitive: ISS and Quakes are views, not cities",
+      "os": "macos",
+      "args": [
+        "ISS"
+      ],
+      "expect": {
+        "text_present": [
+          "International Space Station"
+        ],
+        "text_absent": [
+          "Place finder"
+        ]
+      }
+    },
+    {
+      "name": "Quakes in capitals",
+      "os": "macos",
+      "args": [
+        "Quakes"
+      ],
+      "expect": {
+        "text_present": [
+          "M5.4"
         ]
       }
     }
