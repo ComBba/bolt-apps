@@ -51,6 +51,7 @@ presentation:
             value: "{{row.kpi_value}}"
             unit: "{{row.kpi_unit}}"
             max: "{{row.kpi_max}}"
+            trend: "{{row.trend}}"
             subtitle: "{{row.kpi_note}}"
             badge: "{{row.kpi_badge}}"
           body: "{{row.body}}"

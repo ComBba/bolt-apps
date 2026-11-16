@@ -375,10 +375,10 @@ def build(topic, stories, state, cfg, fixture, now):
         rows.append(kit.row("Sample data", "Fixture mode: no network. Unset BOLT_APP_FIXTURE for the live APIs", icon="FileText", badge="SAMPLE", copy=False))
     shown = stories[:cfg["limits"]["rows"]]
     if topic:
-        head = "Topic %s: %d stories" % (kit.clean_text(topic, 40), len(shown))
+        head = "Topic %s: %s" % (kit.clean_text(topic, 40), kit.fmt_count(len(shown), "story", "stories"))
         sub = "front page and search merged. The Narrow rows below go deeper"
     else:
-        head = "Trending: %d stories" % len(shown)
+        head = "Trending: %s" % kit.fmt_count(len(shown), "story", "stories")
         sub = "the Hacker News front page, by rank. Type =pulse-feed topic and a word to search"
     rows += banner(state, cfg)
     rows.append(kit.row(head, sub, icon="TrendingUp", tile=kit.tile("Stories", len(shown), "", None, note="topic %s" % topic if topic else "front page"), copy=False))

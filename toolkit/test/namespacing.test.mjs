@@ -253,7 +253,7 @@ test('check refuses what the launcher cannot draw in the right pane: row panes t
 	const W = (kind, mode) => ({ kind, mode });
 	const pres = (top, views) => ({ top, views: new Map(Object.entries(views)), viewArg: 'view' });
 	const codes = (p, rows, v = 'overview') => paneProblems(p, rows, v).map((x) => x.code).sort();
-	const tiles = W('cards', 'list_data'), prev = W('entity_preview', 'selected_row');
+	const tiles = { kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'kpi_value' }, prev = W('entity_preview', 'selected_row');
 	assert.deepEqual(codes(pres(tiles, { overview: null, a: prev }), [{ title: 't', kpi_value: 1, kpi_label: 'x', pane: 'a' }]), []);
 	assert.deepEqual(codes(pres(tiles, { overview: null, a: null }), [{ title: 't', pane: 'a' }]), ['pane_no_widget']);
 	assert.deepEqual(codes(pres(tiles, { overview: null, a: tiles }), [{ title: 't', pane: 'a' }]), ['pane_list_data']);
@@ -262,10 +262,15 @@ test('check refuses what the launcher cannot draw in the right pane: row panes t
 	assert.deepEqual(codes(pres(tiles, { overview: null }), [{ title: 't', pane: 'overview', kpi_value: 1 }]), [], 'a pane naming the view the run is on is drawn by that view');
 	const stories = Array.from({ length: 30 }, (_, i) => ({ title: `s${i}` }));
 	assert.deepEqual(codes(pres(tiles, { overview: null }), stories), ['empty_tile_grid', 'tile_cap']);
+	const grid = { kind: 'cards', mode: 'list_data', layout: 'grid', valueField: 'kpi_value' };
+	assert.deepEqual(codes(pres(grid, { overview: null }), stories), [], 'a grid layout is not a tiles layout: 30 rows and no numbers are fine');
+	const custom = { ...tiles, valueField: 'count' };
+	assert.deepEqual(codes(pres(custom, { overview: null }), Array.from({ length: 10 }, (_, i) => ({ title: `r${i}`, count: i }))), [], 'the bound value field is the one tested');
+	assert.deepEqual(codes(pres(custom, { overview: null }), Array.from({ length: 10 }, (_, i) => ({ title: `r${i}`, kpi_value: i }))), ['empty_tile_grid']);
 	assert.deepEqual(codes(pres(null, { overview: prev }), stories), [], 'a selected_row preview takes any number of rows');
 	// the shipped pulse-feed declares a preview for every view that lists stories
 	const p = presentationOf(path.join(EX, 'pulse-feed'));
-	for (const v of ['overview', 'topic', 'stories']) assert.deepEqual(p.views.get(v), prev, v);
+	for (const v of ['overview', 'topic', 'stories']) assert.deepEqual([p.views.get(v).kind, p.views.get(v).mode], ['entity_preview', 'selected_row'], v);
 	assert.equal(p.top, null);
 });
 
@@ -278,4 +283,23 @@ test('a row action that chains must name the app\'s own id (chain_target_not_sel
 	const d = tmp('ns-chain-'), home = tmp('ns-home-');
 	assert.equal(cli(home, d, 'new', 'pulse-feed', 'my-pulse', '--dir', d).status, 0);
 	const c = cli(home, d, 'check', path.join(d, 'my-pulse')); assert.equal(c.status, 0, c.stdout);
+});
+
+test('on_missing_key: a loose key file keeps its setup row, an unknown value is a config error, chart views carry no label row', () => {
+	const d = tmp('ns-omk-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'portal-template', 'omkapp', '--dir', d).status, 0);
+	const app = path.join(d, 'omkapp'), cfgp = path.join(app, 'scripts', 'omkapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
+	const run = (args, env = {}) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'omkapp__engine.py'), ...args], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
+	const envf = path.join(home, 'loose.env'); fs.writeFileSync(envf, `${cfg.api.key_env}=abc\n`, { mode: 0o644 }); fs.chmodSync(envf, 0o644);
+	cfg.api.env_file = envf; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	let rows = JSON.parse(run(['overview']).stdout);
+	assert.match(rows[0].title, /Tighten the permissions/); assert.ok(!rows.some((r) => /SAMPLE DATA/.test(r.title)));
+	delete cfg.api.env_file; cfg.api.on_missing_key = 'maybe'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	rows = JSON.parse(run(['overview']).stdout); assert.match(rows[0].title, /not set up correctly/); assert.match(rows[0].subtitle, /on_missing_key must be setup or sample/);
+	// a chart or table data view gets no label row (it would be a plotted point); the overview does
+	const ct = path.join(EX, 'chart-template'), fx = path.join(ct, 'scripts', 'chart-template__engine.py');
+	const rn = (a) => JSON.parse(spawnSync('/usr/bin/python3', ['-I', fx, ...a], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } }).stdout);
+	assert.match(rn(['overview'])[0].title, /^SAMPLE DATA/);
+	const cj = JSON.parse(fs.readFileSync(path.join(ct, 'scripts', 'chart-template__config.json'), 'utf8')), dv = cj.views.find((v) => v.widget && v.widget.kind === 'chart');
+	assert.ok(dv, 'chart-template has a chart view'); assert.ok(!rn([dv.id]).some((r) => /SAMPLE DATA/.test(r.title)));
 });

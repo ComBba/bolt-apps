@@ -241,7 +241,7 @@ export function presentationOf(appDir) {
 	try {
 		const ud = path.join(appDir, 'utilities'), y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); if (!y) return null;
 		const root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')), pres = get(root, 'presentation')?.value;
-		const widget = (n) => { const w = get(n, 'right_widget')?.value; return w ? { kind: str(get(w, 'kind')?.value), mode: str(get(w, 'mode')?.value) } : null; };
+		const widget = (n) => { const w = get(n, 'right_widget')?.value; if (!w) return null; const bind = get(w, 'bind')?.value, bound = str(get(bind, 'value')?.value), vf = /^\{\{\s*row\.([A-Za-z0-9_]+)\s*\}\}$/.exec(bound || ''); return { kind: str(get(w, 'kind')?.value), mode: str(get(w, 'mode')?.value), layout: str(get(bind, 'layout')?.value), valueField: vf ? vf[1] : 'kpi_value' }; };
 		const views = new Map(); const vs = get(pres, 'views')?.value;
 		for (const e of vs?.entries || []) views.set(e.key, widget(e.value) );
 		return { top: widget(pres), views, viewArg: str(get(pres, 'view_arg')?.value) };
@@ -253,10 +253,12 @@ export function paneProblems(pres, rows, view) {
 	const shown = pres.views.has(view) ? view : 'overview';
 	const own = pres.views.get(shown), w = own || pres.top;
 	const goodPane = (r) => r && typeof r.pane === 'string' && (r.pane !== shown && pres.views.has(r.pane)) && (() => { const pw = pres.views.get(r.pane); return pw && (pw.mode || 'selected_row') === 'selected_row' && ROW_PANE_KINDS.includes(pw.kind); })();
-	if (w && w.kind === 'cards' && w.mode === 'list_data') {
+	// Bolt applies the 24-tile cap and the "no value" tile only to a tiles layout (bind.layout: tiles). The default grid layout caps at 500 and needs no number.
+	if (w && w.kind === 'cards' && w.mode === 'list_data' && w.layout === 'tiles') {
 		if (rows.length > 24) E('tile_cap', `the view "${shown}" draws a tile per row and at most 24 rows: this run printed ${rows.length}. Send 24 or fewer, or give the view a selected_row preview instead of a tiles grid`);
-		const loose = rows.filter((r) => !goodPane(r)), empty = loose.filter((r) => r && (r.kpi_value === undefined || r.kpi_value === '' || r.kpi_value === null)).length;
-		if (rows.length >= 8 && empty * 2 >= rows.length) E('empty_tile_grid', `the view "${shown}" draws a tile per row (cards, list_data), but ${empty} of ${rows.length} rows carry no kpi_value and no valid pane, so they draw as empty tiles ("no value"). Give those rows a tile, or give the view a selected_row preview (entity_preview) in presentation.views.${shown}.right_widget`);
+		const vf = w.valueField, loose = rows.filter((r) => !goodPane(r)), empty = loose.filter((r) => r && (r[vf] === undefined || r[vf] === '' || r[vf] === null)).length;
+		// the 8-row floor keeps a lone setup or error row in a tiles view from being refused; a run of 8 or more rows where half have no tile is a grid of empty tiles
+		if (rows.length >= 8 && empty * 2 >= rows.length) E('empty_tile_grid', `the view "${shown}" draws a tile per row (cards, tiles), but ${empty} of ${rows.length} rows carry no ${vf} and no valid pane, so they draw as empty tiles ("no value"). Give those rows a tile, or give the view a selected_row preview (entity_preview) in presentation.views.${shown}.right_widget`);
 	}
 	const seen = new Set();
 	for (const r of rows) {

@@ -671,7 +671,7 @@ def compare_overview(ctx, ms):
 # ------------------------------------------------------------------ yaml
 
 OVERVIEW_PANE = ["    overview:", "      right_widget:", "        kind: entity_preview", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"',
-                 "          tiles_above:", '            title: "{{row.kpi_label}}"', '            value: "{{row.kpi_value}}"', '            unit: "{{row.kpi_unit}}"', '            max: "{{row.kpi_max}}"',
+                 "          tiles_above:", '            title: "{{row.kpi_label}}"', '            value: "{{row.kpi_value}}"', '            unit: "{{row.kpi_unit}}"', '            max: "{{row.kpi_max}}"', '            trend: "{{row.trend}}"',
                  '            subtitle: "{{row.kpi_note}}"', '            badge: "{{row.kpi_badge}}"', '          body: "{{row.body}}"']   # the overview is a list of rows that drill into views: each row is drawn by this preview, and the views keep their own widgets
 
 

@@ -992,8 +992,10 @@ def read_fixtures(cfg, cfg_path):
 SAMPLE_FALLBACK = [False]   # set by run(): no key was found and api.on_missing_key is "sample"
 
 
-def sample_banner(cfg, rows, fx=True):
+def sample_banner(cfg, rows, fx=True, quiet=False):
     at = 1 if rows and (rows[0].get("nav") or {}).get("back") else 0
+    if SAMPLE_FALLBACK[0] and quiet:   # a chart or table view plots or lists its rows: a label row would become a data point, so the label is only on the overview and list views
+        return rows
     if SAMPLE_FALLBACK[0]:   # the labelled sample data is shown, with a first row that says so and a setup hint row: never instead of the data
         app, api = cfg["app"], cfg.get("api") or {}
         name = app.get("service", app["title"])
@@ -1049,7 +1051,7 @@ def run_views(cfg, args, fx, fixtures):
                 rows = [n for n in notes if n.get("kpi_badge") in ("STALE", "PARTIAL")] + body
             else:
                 rows = head[:1] + notes + head[1:] + body + [refresh_row(view_id)]
-    kit.emit(sample_banner(cfg, rows, fx))
+    kit.emit(sample_banner(cfg, rows, fx, quiet=view_id != "overview" and (vs[view_id].get("widget") or {}).get("kind") in ("chart", "table")))
 
 
 def lookup_rows(cfg, items, query, glob):
@@ -1213,9 +1215,14 @@ def run(argv):
     fx = fixture_mode(cfg)
     api = cfg.get("api") or {}
     # api.on_missing_key: "setup" (default, a real app: one row that says how to add the key) or "sample" (a demo: show the labelled sample data and say a key makes it live)
-    if not fx and api.get("on_missing_key") == "sample" and api.get("key_env") and os.environ.get("BOLT_APP_FIXTURE") != "0" and not find_key(cfg["app"], api)[0]:
-        fx = True
-        SAMPLE_FALLBACK[0] = True
+    omk = api.get("on_missing_key", "setup")
+    if omk not in ("setup", "sample"):
+        raise ConfigError("api.on_missing_key must be setup or sample, got %s" % json.dumps(omk)[:40])
+    if not fx and omk == "sample" and api.get("key_env") and os.environ.get("BOLT_APP_FIXTURE") != "0":
+        key, problem = find_key(cfg["app"], api)
+        if not key and not problem:   # a key file that is too open is a different problem: it keeps its own "tighten the permissions" row
+            fx = True
+            SAMPLE_FALLBACK[0] = True
     fixtures = read_fixtures(cfg, cfg_path) if fx else {}
     MAPS.update(cfg.get("maps") or {})
     mode = cfg.get("mode", "views")
