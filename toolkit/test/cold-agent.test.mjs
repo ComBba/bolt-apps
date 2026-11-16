@@ -114,7 +114,7 @@ test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, wit
 	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'golden', 'left-over.json')));
 	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Alpha service/); assert.match(r.stdout, /right pane: table/);
 	const j = JSON.parse(sh('run', 'my-tool', '--sample', '--json').stdout); assert.ok(Array.isArray(j));
-	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.\d+/); assert.match(s1.stdout, /type =mytool/);
+	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.\d+/); assert.match(s1.stdout, /type =my-tool/);
 	const v1 = /Shipped my-tool (\S+):/.exec(s1.stdout)[1];
 	const s2 = sh('ship', 'my-tool'); const v2 = /Shipped my-tool (\S+):/.exec(s2.stdout)[1]; assert.ok(Number(v2.split('.')[2]) > Number(v1.split('.')[2]), `${v2} must be higher than ${v1}`);
 	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'scripts', '__pycache__')));

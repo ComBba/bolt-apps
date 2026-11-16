@@ -160,7 +160,7 @@ export function checkManifests(files, opts = {}) {
 	for (const np of namespaceProblems(files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, '')), opts.appId)) add('error', np.code, np.message, `scripts/${np.file}`);
 	for (const f of files.filter((x) => x.kind === 'script')) {
 		const rel = f.path.replace(/^scripts\//, '');
-		if (!rel.split('/').every(plainName)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
+		if (!rel.split('/').every(plainName)) add('error', 'script_name', `script name "${rel.slice(0, 60)}" ${rel.split('/').some((s) => s.length > 128) ? 'is longer than 128 characters (Bolt allows 128 per name, and every file starts with <app id>__, which counts)' : 'has characters or a shape Bolt refuses'}`, f.path);
 	}
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
@@ -215,7 +215,7 @@ export function checkManifests(files, opts = {}) {
 				// the value must be exactly one ${env:NAME}, NAME the same as the key, and the variable named inside must itself be allowed (a secret-looking name is refused under any key)
 				const m = e.value.t === 's' ? /^\$\{env:([A-Z][A-Z0-9_]{0,63})\}$/.exec(e.value.v) : null;
 				if (!m || m[1] !== e.key) E('env_inline_value', `bridge.env.${e.key} value must be exactly \${env:${e.key}}`, e.line ?? ln(bridge, 'env', bl));
-				if (m) { const nm = m[1]; if (BOLT_RULES.env.secret_name_parts.some((x) => nm.includes(x))) E('env_secret_name', `bridge.env.${e.key} passes on ${nm}, which looks like a secret; the launcher never forwards it. Keep keys in the keychain or ~/.config/<id>/.env`, e.line ?? ln(bridge, 'env', bl)); else if (!BOLT_RULES.env.benign_passthrough.includes(nm)) E('env_not_allowed', `bridge.env.${e.key} passes on ${nm}, which is not on the launcher's list of variables an app may read`, e.line ?? ln(bridge, 'env', bl)); }
+				if (m) { const nm = m[1]; if (BOLT_RULES.env.secret_name_parts.some((x) => nm.includes(x))) E('env_secret_name', `bridge.env.${e.key} passes on ${nm}, which Bolt treats as secret-bearing: it is forwarded only to apps shipped inside Bolt. Keep keys in the keychain or ~/.config/<id>/.env`, e.line ?? ln(bridge, 'env', bl)); else if (!BOLT_RULES.env.benign_passthrough.includes(nm)) E('env_not_allowed', `bridge.env.${e.key} passes on ${nm}, which is not on the launcher's list of variables an app may read`, e.line ?? ln(bridge, 'env', bl)); }
 			}
 		}
 		const args = val(root, 'args'); for (const it of args?.items || []) { const fr = S(it, 'from'); if (fr !== undefined && !/^query\.word\(\s*\d+\s*\)$/.test(fr.trim())) E('args_from_unsupported', `args[].from "${fr}" is not supported`, ln(root, 'args')); }
@@ -231,7 +231,8 @@ export function checkManifests(files, opts = {}) {
 	for (const n of usedAll) if (scripts.has(n) && !used.has(n)) add('warning', 'helper_not_hashed', `scripts/${n} is read by a script but no command names it as {{scripts_dir}}/${n}, so Bolt's approval hash does not cover it: it can change after the person approved the app without asking again`, `scripts/${n}`);
 	for (const n of scripts.keys()) if (!usedAll.has(n)) add('warning', 'script_unused', `scripts/${n} is not run by any app file`, `scripts/${n}`);
 	// what the install prompt's text search will list for the person installing: the manifests and the scripts they run
-	const scanned = [...usedAll].filter((n) => scripts.has(n) && /\.(py|sh|js|mjs|rb|ps1)$/.test(n)).map((n) => ({ name: n, text: scripts.get(n).toString('utf8') }));
+	// Bolt reads every file the app file names as {{scripts_dir}}/<file> (a .json helper as well as a script) and the app file itself; a file only imported or read by a script is not scanned
+	const scanned = [...used].filter((n) => scripts.has(n)).map((n) => ({ name: n, text: scripts.get(n).toString('utf8') }));
 	for (const f of files.filter((x) => x.kind === 'user_utility')) scanned.push({ name: path.basename(f.path), text: f.content.toString('utf8') });
 	for (const m of scanMentions(scanned)) add('warning', 'script_mentions', `the install prompt will list: ${m}. A courtesy search, not a verdict: change the text if it is not what the app does${/keychain/.test(m) && /bolt_app_kit\.py/.test(m) ? '. The vendored kit contains the keychain reader; it runs only if your script calls kit.get_secret. The prompt lists it either way, and that is true of what the file can do' : ''}`, 'scripts');
 	return { findings: dedupe(findings), apps, unknownAssess };

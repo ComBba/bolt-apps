@@ -57,8 +57,8 @@ export function lintApp(dir, opts = {}) {
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
 					else if (f.isDirectory()) walk(r);
 					else if (!f.isFile()) E('script_not_plain', `scripts/${r} is not a plain file (a folder-like, device or pipe entry). Bolt refuses it ("is not a plain file")`, `scripts/${r}`);
-					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes). Every script starts with <app id>__, so a long id leaves little room: shorten the file name or the app id (new refuses such an id at the start)', `scripts/${r}`);
-					else if (!r.split('/').every(plainName)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${r}`);
+					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', `the name is too long: <app id>__<name> is ${r.split('/').pop().length} characters. Bolt accepts up to 128 characters per name (ids are up to 64, and every file starts with <app id>__, which counts), and this toolkit can pack at most 82 for a script name (a pack path manifests/scripts/<name> may be 100 characters). Shorten the file name or the app id`, `scripts/${r}`);
+					else if (!r.split('/').every(plainName)) E('script_name', r.split('/').some((s) => s.length > 128) ? `the name is ${r.length} characters; Bolt allows at most 128 per name, and every file starts with <app id>__ (up to 64 characters), which counts. Shorten the file name or the app id` : 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${r}`);
 					else { scripts.push(r); try { sizes[r] = fs.statSync(path.join(dir, 'scripts', r)).size; } catch { /* listed above */ } }
 				}
 			};

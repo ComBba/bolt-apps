@@ -47,3 +47,18 @@ Every refusal Bolt's installer and loader can give a personal pack, with the fix
 | pack rejected: it unpacks to more than 64 MB / holds more than 1024 files / the file is over 50 MB | `pack_too_big` | An app is small text and scripts. Remove big files from the app folder. |
 | pack rejected: the archive cannot be read | `pack_unreadable` | The file is not a .boltpack or is damaged. Run bolt-apps ship again and drop the new file. |
 | pack rejected: a file is not a valid app | `not_valid_app` | Run bolt-apps verify on the app folder: it names the line in the app file to fix. |
+
+### The exact words Bolt 0.1.181 uses
+
+`<name>`, `<new>`, `<old>`, `<file>` and `<other app>` stand for what Bolt fills in.
+
+| Code | Bolt's sentence |
+|---|---|
+| `same_or_older_version` | Bolt did not install `<name>` `<new>`: version `<old>` is already installed, and a pack is only replaced by a newer version. To go back to an older version, remove the installed apps first. |
+| `version_unreadable` | Bolt did not install `<name>` `<new>`: it cannot tell whether this is newer than the installed version `<old>`. Remove the installed apps first to install this version. |
+| `owned_by_other` | Bolt did not install `<name>`: `<file>` already belongs to `<other app>`. Remove that app first if you want this one instead. |
+| `too_deep` | Bolt did not install `<name>`: `<file>` is nested more than 8 folders deep. Ask the pack's author to use fewer folders. |
+| `org_policy` | Your organization's policy on this device installs only packs signed with a key built into Bolt (...). `<name>` is signed only by its author, so Bolt did not install it. ... Ask your IT team if you need it. |
+
+Name lengths: Bolt accepts up to 128 characters per file or folder name and 512 for a whole path, and an app id is up to 64 characters. Every script starts with `<app id>__`, so `<app id>__<name>` must fit in 128. This toolkit packs a script name of at most 82 characters, because it writes the path `manifests/scripts/<name>` into a 100-character field.
+

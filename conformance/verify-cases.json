@@ -450,6 +450,29 @@
       "bolt_error_contains": "unsupported"
     },
     {
+      "name": "http_local without a parse mode (Bolt stops on the missing parse field before any other check)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: http_local"
+          ],
+          [
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"
+          ]
+        ]
+      },
+      "remove": [
+        "scripts/eagle-info__eagle.py"
+      ],
+      "expect": [
+        "missing_field",
+        "timeout_default"
+      ],
+      "bolt_error_contains": "missing field"
+    },
+    {
       "name": "http_local to a remote host",
       "edit": {
         "utilities/eagle-info.yaml": [
@@ -459,7 +482,7 @@
           ],
           [
             "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
-            "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"
+            "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n  parse: json\n"
           ]
         ]
       },
@@ -468,7 +491,6 @@
       ],
       "expect": [
         "http_host_not_loopback",
-        "missing_field",
         "timeout_default"
       ],
       "bolt_error_contains": "not a loopback address"
@@ -483,7 +505,7 @@
           ],
           [
             "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
-            "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n"
+            "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n  parse: json\n"
           ]
         ]
       },
@@ -493,7 +515,6 @@
       "expect": [
         "http_method_not_allowed",
         "http_path_invalid",
-        "missing_field",
         "timeout_default"
       ],
       "bolt_error_contains": "http.request"
@@ -585,7 +606,7 @@
       "expect": [
         "env_secret_name"
       ],
-      "bolt_error_contains": "never forwarded"
+      "bolt_error_contains": "is secret-bearing and is forwarded only to apps shipped inside Bolt"
     },
     {
       "name": "env value that is not exactly ${env:NAME}",
