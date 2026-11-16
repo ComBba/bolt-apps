@@ -227,20 +227,24 @@ def launch_rows(ctx, d, limit):
         lsp = text_of(x.get("lsp_name"), x.get("launch_service_provider"))
         mission = text_of(x.get("mission"), x.get("mission_name"))
         status = text_of(x.get("status"))
-        key = "NET %s" % kit.clean_text(str(x.get("net", ""))[:16].replace("T", " "), 20)
+        key = "NET %s" % (kit.clean_text(str(x.get("net"))[:16].replace("T", " "), 20) if x.get("net") else "unknown")
         data = ", ".join(s for s in (status, mission, pad, loc) if s) or "no more detail listed"
         url = x.get("url") if str(x.get("url", "")).startswith("https://ll.thespacedevs.com/") else None
         out.append(srow(text_of(x.get("name")) or "Launch", " · ".join(s for s in (key, lsp) if s), "ll.thespacedevs.com", when(ctx, net), key, data, url=url, icon="Zap"))
     return out
 
 
+def valid_quakes(d):
+    """The features with a real magnitude, the biggest first (a stable sort: equal magnitudes stay in feed order)."""
+    ok = [f for f in (d.get("features") or []) if isinstance(f, dict) and num(((f.get("properties") or {}).get("mag"))) is not None]
+    return sorted(ok, key=lambda f: -num(f["properties"]["mag"]))
+
+
 def quake_rows(ctx, d, limit):
     out = []
-    for f in (d.get("features") or [])[:limit]:
+    for f in valid_quakes(d)[:limit]:
         p = (f or {}).get("properties") or {}
         mag = num(p.get("mag"))
-        if mag is None:
-            continue
         t = num(p.get("time"))
         key = "M%.1f" % mag
         depth = num(((f.get("geometry") or {}).get("coordinates") or [None, None, None])[2])
@@ -314,9 +318,11 @@ def overview(ctx):
         rows.append(fail_row("Launches", note or "no upcoming launches listed"))
     d, note = res["quakes"]
     qs = quake_rows(ctx, d, lim["quakes"]) if d else []
-    rows.append(old_note(srow("Earthquakes M4.5+ in the last day: %d" % len(qs) if qs else "Earthquakes", "%s listed · the biggest first below" % kit.fmt_count(len(qs), "quake", "quakes"), "earthquake.usgs.gov", "last 24 hours",
-                     "%s M4.5+" % kit.fmt_count(len(qs), "quake", "quakes"), "from the USGS summary feed", url="https://earthquake.usgs.gov/earthquakes/map/", icon="Activity", nav={"view": "quakes"},
-                     tile=kit.tile("M4.5+ quakes", len(qs), "", None, note="last 24 h")), note) if d else fail_row("Earthquakes", note))
+    total = len(valid_quakes(d)) if d else 0
+    shown = "the %d biggest below" % len(qs) if total > len(qs) else "the biggest first below"
+    rows.append(old_note(srow("Earthquakes M4.5+ in the last day: %d" % total if total else "Earthquakes", "%s listed · %s" % (kit.fmt_count(total, "quake", "quakes"), shown), "earthquake.usgs.gov", "last 24 hours",
+                     "%s M4.5+" % kit.fmt_count(total, "quake", "quakes"), "from the USGS summary feed" + ("; the %d biggest are listed" % len(qs) if total > len(qs) else ""), url="https://earthquake.usgs.gov/earthquakes/map/", icon="Activity", nav={"view": "quakes"},
+                     tile=kit.tile("M4.5+ quakes", total, "", None, note="last 24 h")), note) if d else fail_row("Earthquakes", note))
     rows.append(hint_row())
     return rows
 
@@ -343,7 +349,12 @@ def run_view(ctx, view, text):
         d, note = source(ctx, "quakes")
         rows = quake_rows(ctx, d, lim["quakes"]) if d else []
         return [back()] + (old_rows(rows, note) or [fail_row("Earthquakes", note or "no quakes of magnitude 4.5 or more in the last day")])
-    g, gnote = source(ctx, "geocode", text)
+    # Open-Meteo matches a single place name: try the text as typed, then fewer words ("Paris France" falls back to Paris)
+    words, g, gnote = text.split(), None, ""
+    for n in range(len(words), 0, -1):
+        g, gnote = source(ctx, "geocode", " ".join(words[:n]))
+        if g and (g.get("results") or []):
+            break
     if not g or not (g.get("results") or []):
         return [back(), kit.row("No such place", "Try another city name", icon="Search", body="The place finder knew no city called %s." % kit.clean_text(text, 40), copy=False)] if g is not None else [back(), fail_row("Place finder", gnote)]
     r = g["results"][0]

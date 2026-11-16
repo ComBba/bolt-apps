@@ -131,3 +131,33 @@ class SkyWatch(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SkyWatchMore(SkyWatch):
+    def test_quake_count_is_the_feed_not_the_display_limit_and_the_list_is_biggest_first(self):
+        feats = [{"properties": {"mag": 4.5 + i * 0.1, "place": "P%d" % i, "time": (self.fx["_now"] - 100 * i) * 1000}, "geometry": {"coordinates": [0, 0, 10]}} for i in range(14)]
+        feats.insert(3, {"properties": {"mag": None, "place": "no magnitude"}, "geometry": {"coordinates": [0, 0, 1]}})
+        d = {"features": feats}
+        rows = self.m.quake_rows(self.ctx(), d, 10)
+        self.assertEqual(len(rows), 10)
+        mags = [float(r["sw_key"][1:]) for r in rows]
+        self.assertEqual(mags, sorted(mags, reverse=True))
+        self.assertEqual(len(self.m.valid_quakes(d)), 14)
+        self.fx["quakes"] = d
+        top = [r for r in self.m.overview(self.ctx()) if r.get("kpi_label") == "M4.5+ quakes"][0]
+        self.assertEqual(top["kpi_value"], 14)
+        self.assertIn("14 quakes", top["subtitle"]); self.assertIn("10 biggest", top["subtitle"])
+        # equal magnitudes keep feed order
+        eq = {"features": [{"properties": {"mag": 5.0, "place": n}, "geometry": {"coordinates": [0, 0, 1]}} for n in "abc"]}
+        self.assertEqual([r["title"] for r in self.m.quake_rows(self.ctx(), eq, 10)], ["a", "b", "c"])
+
+    def test_a_launch_with_no_net_says_unknown(self):
+        out = json.dumps(self.m.launch_rows(self.ctx(), {"results": [{"name": "No date", "net": None, "status": {"abbrev": "TBC"}}, {"name": "No key", "status": {"abbrev": "TBC"}}]}, 5))
+        self.assertNotIn("None", out)
+        self.assertIn("NET unknown", out)
+
+    def test_a_city_that_is_two_words_falls_back_to_the_first(self):
+        rows = self.m.run_view(self.ctx(), "weather", "Paris France")
+        self.assertTrue(any("Weather in Paris" in r["title"] for r in rows))
+        rows = self.m.run_view(self.ctx(), "weather", "Nowhereville Atlantis")
+        self.assertTrue(any("Place finder" in r["title"] or "No such place" in r["title"] for r in rows))

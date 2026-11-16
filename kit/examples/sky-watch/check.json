@@ -161,6 +161,22 @@
           "M5.4"
         ]
       }
+    },
+    {
+      "name": "two words that name no place fall back to the first word",
+      "os": "macos",
+      "args": [
+        "Paris",
+        "France"
+      ],
+      "expect": {
+        "text_present": [
+          "Weather in Paris, France"
+        ],
+        "text_absent": [
+          "No such place"
+        ]
+      }
     }
   ]
 }
