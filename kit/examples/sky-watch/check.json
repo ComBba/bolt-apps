@@ -1,0 +1,182 @@
+{
+  "script": "scripts/sky-watch__sky-watch.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/sky-watch__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview: ISS, next launch, quakes, a hint",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json",
+      "expect": {
+        "text_present": [
+          "International Space Station",
+          "Days to next launch",
+          "Earthquakes",
+          "Type a city"
+        ]
+      }
+    },
+    {
+      "name": "iss view",
+      "os": "macos",
+      "args": [
+        "iss"
+      ],
+      "golden": "golden/iss.json",
+      "expect": {
+        "text_present": [
+          "421",
+          "km up"
+        ]
+      }
+    },
+    {
+      "name": "launches view",
+      "os": "macos",
+      "args": [
+        "launches"
+      ],
+      "golden": "golden/launches.json",
+      "expect": {
+        "text_present": [
+          "Long March 2D",
+          "Falcon 9 Block 5",
+          "Taiyuan",
+          "SpaceX"
+        ],
+        "text_absent": [
+          "Vulcan",
+          "None",
+          "None,",
+          ", ,"
+        ]
+      }
+    },
+    {
+      "name": "quakes view",
+      "os": "macos",
+      "args": [
+        "quakes"
+      ],
+      "golden": "golden/quakes.json",
+      "expect": {
+        "text_present": [
+          "M5.4",
+          "Sampleville"
+        ]
+      }
+    },
+    {
+      "name": "a city is a first word that is not a view: weather and sunrise",
+      "os": "macos",
+      "args": [
+        "Paris"
+      ],
+      "golden": "golden/paris.json",
+      "expect": {
+        "text_present": [
+          "Weather in Paris, France",
+          "sunrise 07:40"
+        ]
+      }
+    },
+    {
+      "name": "the weather view by name",
+      "os": "macos",
+      "args": [
+        "weather",
+        "Paris"
+      ],
+      "expect": {
+        "text_present": [
+          "Sunrise and sunset in Paris"
+        ]
+      }
+    },
+    {
+      "name": "a city the sample does not know",
+      "os": "macos",
+      "args": [
+        "Nowhereville"
+      ],
+      "expect": {
+        "text_present": [
+          "Place finder unavailable"
+        ]
+      }
+    },
+    {
+      "name": "demo shows labelled sample data",
+      "os": "macos",
+      "args": [
+        "demo"
+      ],
+      "expect": {
+        "text_present": [
+          "SAMPLE DATA: recorded answers, not live",
+          "International Space Station"
+        ]
+      }
+    },
+    {
+      "name": "a one-letter city",
+      "os": "macos",
+      "args": [
+        "x"
+      ],
+      "expect": {
+        "text_present": [
+          "Type a city"
+        ]
+      }
+    },
+    {
+      "name": "view words are case-insensitive: ISS and Quakes are views, not cities",
+      "os": "macos",
+      "args": [
+        "ISS"
+      ],
+      "expect": {
+        "text_present": [
+          "International Space Station"
+        ],
+        "text_absent": [
+          "Place finder"
+        ]
+      }
+    },
+    {
+      "name": "Quakes in capitals",
+      "os": "macos",
+      "args": [
+        "Quakes"
+      ],
+      "expect": {
+        "text_present": [
+          "M5.4"
+        ]
+      }
+    },
+    {
+      "name": "two words that name no place fall back to the first word",
+      "os": "macos",
+      "args": [
+        "Paris",
+        "France"
+      ],
+      "expect": {
+        "text_present": [
+          "Weather in Paris, France"
+        ],
+        "text_absent": [
+          "No such place"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "app": {
+    "id": "sky-watch",
+    "chip": "sky-watch",
+    "title": "Sky Watch",
+    "icon": "globe",
+    "description": "Space and sky from five free public sources, no key: where the International Space Station is (api.wheretheiss.at), the next rocket launches (ll.thespacedevs.com), earthquakes of magnitude 4.5 and up in the last day (earthquake.usgs.gov), and, when you type a city, its weather and sunrise and sunset (geocoding-api.open-meteo.com and api.open-meteo.com). Read-only.",
+    "placeholder_examples": ["Enter for the sky now", "launches", "quakes", "Paris", "demo"],
+    "timeout": 25
+  },
+  "hosts": ["api.wheretheiss.at", "ll.thespacedevs.com", "earthquake.usgs.gov", "geocoding-api.open-meteo.com", "api.open-meteo.com"],
+  "api": {
+    "user_agent": "bolt-app-example/1.0 (sky-watch)",
+    "call_timeout_s": 8,
+    "total_budget_s": 14,
+    "max_bytes": 1000000,
+    "fixture_default": false
+  },
+  "sources": {
+    "iss": { "url": "https://api.wheretheiss.at/v1/satellites/25544", "ttl": 20 },
+    "launches": { "url": "https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=5&mode=list", "ttl": 600 },
+    "quakes": { "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson", "ttl": 300 },
+    "geocode": { "url": "https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name=", "ttl": 86400 },
+    "weather": { "url": "https://api.open-meteo.com/v1/forecast?current=temperature_2m,weather_code,wind_speed_10m&daily=sunrise,sunset&timezone=auto&forecast_days=1", "ttl": 600 }
+  },
+  "limits": { "quakes": 10, "launches": 5 }
+}

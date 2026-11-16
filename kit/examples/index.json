@@ -798,6 +798,39 @@
       ],
       "check": "./bolt-apps check kit/examples/places-list",
       "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "sky-watch",
+      "need": "live sky data from several keyless public sources at once, with a typed city",
+      "layout": "overview rows that drill into the ISS, launches, quakes and a city's weather; one preview pane shape (SOURCE, WHEN, KEY FIGURE, DATA)",
+      "mode": "script",
+      "script": "scripts/sky-watch__sky-watch.py",
+      "backing": "five keyless public APIs joined in one script, no engine",
+      "widgets": [
+        "entity_preview"
+      ],
+      "techniques": [
+        "several keyless sources in parallel",
+        "per-source cache with an old copy fallback",
+        "fixed host allowlist",
+        "same-host redirects only",
+        "typed text percent-encoded",
+        "free text as a city",
+        "demo word with labelled sample data"
+      ],
+      "sources": [
+        "api.wheretheiss.at",
+        "ll.thespacedevs.com",
+        "earthquake.usgs.gov",
+        "geocoding-api.open-meteo.com",
+        "api.open-meteo.com"
+      ],
+      "edit": [
+        "scripts/sky-watch__config.json",
+        "scripts/sky-watch__fixtures.json"
+      ],
+      "check": "kit/examples/sky-watch/check.json",
+      "verified": "not verified in real Bolt"
     }
   ],
   "side_by_side": "four kit apps (acme-dash, pulse-feed, expense-tracker, unit-convert) installed side by side with no owned_by_other: maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"

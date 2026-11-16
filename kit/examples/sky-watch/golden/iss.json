@@ -1,0 +1,41 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the sky now",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "International Space Station",
+    "subtitle": "12.35, -45.68 · 421 km up, 27580 km/h",
+    "icon": "globe",
+    "body": "**International Space Station**\n\n- Source: api.wheretheiss.at\n- When: 10 s ago\n- Key figure: 421 km up, 27580 km/h\n- Data: lat 12.35, lon -45.68, daylight\n\nPublic data, shown as is.",
+    "actions": [],
+    "url": "https://www.openstreetmap.org/?mlat=12.3456&mlon=-45.6789#map=3/12.35/-45.68",
+    "kpi_label": "Altitude",
+    "kpi_value": 421,
+    "kpi_unit": "km",
+    "kpi_max": "",
+    "kpi_note": "now",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- International Space Station: 421 km up, 27580 km/h [api.wheretheiss.at, 10 s ago]",
+    "open_url": "https://www.openstreetmap.org/?mlat=12.3456&mlon=-45.6789#map=3/12.35/-45.68",
+    "sw_source": "api.wheretheiss.at",
+    "sw_when": "10 s ago",
+    "sw_key": "421 km up, 27580 km/h",
+    "sw_data": "lat 12.35, lon -45.68, daylight"
+  }
+]

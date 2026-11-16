@@ -1,0 +1,181 @@
+{
+  "_now": 1794765600,
+  "iss": {
+    "latitude": 12.3456,
+    "longitude": -45.6789,
+    "altitude": 420.5,
+    "velocity": 27580.2,
+    "visibility": "daylight",
+    "timestamp": 1794765590
+  },
+  "launches": {
+    "count": 473,
+    "results": [
+      {
+        "id": "ef9850ad-1096-425b-9d27-f7bbd186e61a",
+        "url": "https://ll.thespacedevs.com/2.2.0/launch/ef9850ad-1096-425b-9d27-f7bbd186e61a/",
+        "slug": "vulcan-vc6l-amazon-leo-lv-01",
+        "name": "Vulcan VC6L | Amazon Leo (LV-01)",
+        "status": {
+          "id": 4,
+          "name": "Launch Failure",
+          "abbrev": "Failure"
+        },
+        "net": "2026-11-15T17:40:30Z",
+        "window_end": "2026-11-15T17:40:30Z",
+        "window_start": "2026-11-15T17:11:30Z",
+        "lsp_name": "United Launch Alliance",
+        "mission": "Amazon Leo (LV-01)",
+        "mission_type": "Communications",
+        "pad": "Space Launch Complex 41",
+        "location": "Cape Canaveral SFS, FL, USA",
+        "type": "list"
+      },
+      {
+        "id": "e0a11eb1-0bda-4872-b36b-140247fd5c60",
+        "url": "https://ll.thespacedevs.com/2.2.0/launch/e0a11eb1-0bda-4872-b36b-140247fd5c60/",
+        "slug": "long-march-2d-unknown-payload",
+        "name": "Long March 2D | Unknown Payload",
+        "status": {
+          "id": 1,
+          "name": "Go for Launch",
+          "abbrev": "Go"
+        },
+        "net": "2026-11-18T22:50:00Z",
+        "window_end": "2026-11-18T23:05:00Z",
+        "window_start": "2026-11-18T22:43:00Z",
+        "lsp_name": "China Aerospace Science and Technology Corporation",
+        "mission": "Unknown Payload",
+        "mission_type": "Unknown",
+        "pad": "Launch Complex 9",
+        "location": "Taiyuan Satellite Launch Center, People's Republic of China",
+        "type": "list"
+      },
+      {
+        "id": "76617033-4dc0-4448-b50c-e5b0d5a18539",
+        "url": "https://ll.thespacedevs.com/2.2.0/launch/76617033-4dc0-4448-b50c-e5b0d5a18539/",
+        "slug": "falcon-9-block-5-ussf-317",
+        "name": "Falcon 9 Block 5 | USSF-317",
+        "status": {
+          "id": 1,
+          "name": "Go for Launch",
+          "abbrev": "Go"
+        },
+        "net": "2026-11-19T03:00:00Z",
+        "window_end": "2026-11-19T07:00:00Z",
+        "window_start": "2026-11-19T03:00:00Z",
+        "lsp_name": "SpaceX",
+        "mission": "USSF-317",
+        "mission_type": "Government/Top Secret",
+        "pad": "Space Launch Complex 4E",
+        "location": "Vandenberg SFB, CA, USA",
+        "type": "list"
+      },
+      {
+        "id": "a2975167-7c6f-4403-99e1-b40df17c8140",
+        "url": "https://ll.thespacedevs.com/2.2.0/launch/a2975167-7c6f-4403-99e1-b40df17c8140/",
+        "slug": "long-march-8a-satnet-leo-group-tbd",
+        "name": "Long March 8A | SatNet LEO Group TBD?",
+        "status": {
+          "id": 8,
+          "name": "To Be Confirmed",
+          "abbrev": "TBC"
+        },
+        "net": "2026-11-20T11:00:00Z",
+        "window_end": "2026-11-20T14:00:00Z",
+        "window_start": "2026-11-20T11:00:00Z",
+        "lsp_name": "China Aerospace Science and Technology Corporation",
+        "mission": "SatNet LEO Group TBD?",
+        "mission_type": "Communications",
+        "pad": "Commercial LC-1",
+        "location": "Wenchang Space Launch Site, People's Republic of China",
+        "type": "list"
+      },
+      {
+        "id": "951a341f-236b-42fe-a667-4ab2fcf36eac",
+        "url": "https://ll.thespacedevs.com/2.2.0/launch/951a341f-236b-42fe-a667-4ab2fcf36eac/",
+        "slug": "falcon-9-block-5-nrol-136",
+        "name": "Falcon 9 Block 5 | NROL-136",
+        "status": {
+          "id": 1,
+          "name": "Go for Launch",
+          "abbrev": "Go"
+        },
+        "net": "2026-11-21T12:30:00Z",
+        "window_end": "2026-11-21T13:00:00Z",
+        "window_start": "2026-11-21T12:30:00Z",
+        "lsp_name": "SpaceX",
+        "mission": "NROL-136",
+        "mission_type": "Government/Top Secret",
+        "pad": "Space Launch Complex 4E",
+        "location": "Vandenberg SFB, CA, USA",
+        "type": "list"
+      }
+    ],
+    "_captured": "2026-11-15 from https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=5&mode=list (fields trimmed)"
+  },
+  "quakes": {
+    "features": [
+      {
+        "properties": {
+          "mag": 5.4,
+          "place": "120 km SW of Sampleville",
+          "time": 1794758400000,
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample1"
+        },
+        "geometry": {
+          "coordinates": [
+            -71.5,
+            -33.4,
+            35.0
+          ]
+        }
+      },
+      {
+        "properties": {
+          "mag": 4.7,
+          "place": "45 km N of Exampletown",
+          "time": 1794722400000,
+          "url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample2"
+        },
+        "geometry": {
+          "coordinates": [
+            140.2,
+            36.1,
+            12.0
+          ]
+        }
+      }
+    ]
+  },
+  "geocode": {
+    "paris": {
+      "results": [
+        {
+          "name": "Paris",
+          "latitude": 48.85341,
+          "longitude": 2.3488,
+          "country": "France",
+          "timezone": "Europe/Paris"
+        }
+      ]
+    }
+  },
+  "weather": {
+    "current": {
+      "temperature_2m": 11.2,
+      "weather_code": 3,
+      "wind_speed_10m": 14.4,
+      "time": "2026-11-15T12:00"
+    },
+    "daily": {
+      "sunrise": [
+        "2026-11-15T07:40"
+      ],
+      "sunset": [
+        "2026-11-15T17:15"
+      ]
+    },
+    "timezone": "Europe/Paris"
+  }
+}

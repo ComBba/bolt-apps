@@ -379,7 +379,8 @@
       "limit": "Config rows carry Open (url) and Copy (copy) only; more buttons need the app file actions.",
       "also": [
         "places-list",
-        "around"
+        "around",
+        "sky-watch"
       ]
     },
     {
@@ -436,7 +437,8 @@
         "pipeline-board",
         "branch-explorer",
         "places-list",
-        "json-tree-browser"
+        "json-tree-browser",
+        "sky-watch"
       ]
     },
     {
@@ -775,7 +777,8 @@
       "also": [
         "repo-radar",
         "around",
-        "pulse-feed"
+        "pulse-feed",
+        "sky-watch"
       ]
     },
     {
@@ -857,7 +860,10 @@
       "example": "kit/examples/around",
       "snippet": "=around 94087",
       "test": "toolkit/test/namespacing.test.mjs",
-      "limit": "The launcher draws such a run with the APP-LEVEL right_widget, not a view's, so that widget must tolerate rows with no value: use a selected_row entity_preview (tile on top), never a tiles grid over mixed rows. check runs your sample cases with a free-text first word and refuses a tiles grid there (tile_row_without_value)."
+      "limit": "The launcher draws such a run with the APP-LEVEL right_widget, not a view's, so that widget must tolerate rows with no value: use a selected_row entity_preview (tile on top), never a tiles grid over mixed rows. check runs your sample cases with a free-text first word and refuses a tiles grid there (tile_row_without_value).",
+      "also": [
+        "sky-watch"
+      ]
     }
   ]
 }
