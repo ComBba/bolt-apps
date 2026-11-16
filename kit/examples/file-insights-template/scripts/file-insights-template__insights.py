@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""=insights <path to a CSV file>: totals, a trend, a breakdown and what to watch. Read-only and local.
+"""=file-insights-template <path to a CSV file>: totals, a trend, a breakdown and what to watch. Read-only and local.
 
 An example of the Bolt Apps kit. This file is the generic reader and the rule runner. What changes per app lives in
 config.json: the column names to look for, the limits, the insight rules and the chart titles. No network."""
@@ -258,7 +258,7 @@ def run_rules(cfg, a, series, grp, ngroups):
 # ------------------------------------------------------------------ rows
 
 def sample_row():
-    return kit.row("Sample data", "Invented numbers, not your file. Type =insights and the path of a CSV to see yours",
+    return kit.row("Sample data", "Invented numbers, not your file. Type =file-insights-template and the path of a CSV to see yours",
                    icon="FileText", copy=False, badge="SAMPLE")
 
 

@@ -1,7 +1,7 @@
 schema_version: 1
 runtime: bridge
 id: eagle-info
-chip: eagle
+chip: eagle-info
 title: Eagle info
 description: Fixture app shaped like a real script app (helper package, several hosts)
 emits: Document

@@ -4,7 +4,7 @@
   "title": "Pulse feed",
   "role": "Anyone building a trending feed over public APIs",
   "saves": "Fetching, merging and drawing stories by hand",
-  "summary": "Type =pulse for the Hacker News front page, or =pulse and a word to merge the front page with a search. A preview per story with Open post, Copy quote and Narrow.",
+  "summary": "Type =pulse-feed for the Hacker News front page, or =pulse-feed and a word to merge the front page with a search. A preview per story with Open post, Copy quote and Narrow.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

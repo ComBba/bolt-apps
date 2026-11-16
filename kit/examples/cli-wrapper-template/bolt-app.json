@@ -4,7 +4,7 @@
   "title": "CLI wrapper template",
   "role": "Anyone building an app around a command-line tool",
   "saves": "Remembering flags and reading the tool's output",
-  "summary": "Type =pingcheck and a host name: reachable or not, how fast, how much is lost. Copy it to wrap any command.",
+  "summary": "Type =cli-wrapper-template and a host name: reachable or not, how fast, how much is lost. Copy it to wrap any command.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

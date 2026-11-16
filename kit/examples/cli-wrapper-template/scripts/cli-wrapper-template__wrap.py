@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""=pingcheck <host> [count]: is a host reachable, how fast, how much is lost. Wraps the system ping command.
+"""=cli-wrapper-template <host> [count]: is a host reachable, how fast, how much is lost. Wraps the system ping command.
 
 An example of the Bolt Apps kit for wrapping any command-line tool. This file is the generic wrapper; what changes per
 tool lives in config.json: the command for each OS, the exit codes, the regular expressions that read the output and the
@@ -250,7 +250,7 @@ def main(argv):
     if not host:
         last = lastc.get("last")
         if not last:
-            kit.emit([kit.row("Type a host name", "for example: =pingcheck one.one.one.one   or   =pingcheck example.com 5", icon="Terminal", copy=False)])
+            kit.emit([kit.row("Type a host name", "for example: =cli-wrapper-template one.one.one.one   or   =cli-wrapper-template example.com 5", icon="Terminal", copy=False)])
         host, count_word = last["host"], last.get("count")
     bad = check_host(host, cfg)
     count, bad_count = check_count(count_word, cfg)

@@ -1,7 +1,7 @@
 {
   "app": {
     "id": "pipeline-board",
-    "chip": "pipeline",
+    "chip": "pipeline-board",
     "title": "Pipeline board",
     "icon": "git-commit",
     "description": "Runs grouped by stage, a detail pane per run and a line diff of what changed. Invented sample data.",

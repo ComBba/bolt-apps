@@ -78,7 +78,7 @@ export function envProblems(root) {
 	if (pass.length > E.passthrough_max) out.push({ code: 'env_passthrough_max', message: `bridge.env_passthrough lists ${pass.length} names; at most ${E.passthrough_max} are allowed` });
 	const check = (name, where) => {
 		if (!new RegExp(E.name_pattern).test(name) || name.length > E.name_max_len) out.push({ code: 'env_name', message: `${where}: "${name}" must be 1 to ${E.name_max_len} uppercase letters, digits or _, starting with a letter` });
-		else if (isSecretName(name)) out.push({ code: 'env_secret_name', message: `${where}: "${name}" looks like a secret (it contains ${E.secret_name_parts.join(', ')}). The launcher never forwards it to a personal or packed app. Keep keys in the system keychain or ~/.config/<id>/.env and read them in the script` });
+		else if (isSecretName(name)) out.push({ code: 'env_secret_name', message: `${where}: "${name}" looks like a secret (it contains ${E.secret_name_parts.join(', ')}). Bolt treats it as secret-bearing and forwards it only to apps shipped inside Bolt. Keep keys in the system keychain or ~/.config/<id>/.env and read them in the script` });
 		else if (!E.benign_passthrough.includes(name)) out.push({ code: 'env_not_allowed', message: `${where}: "${name}" is not on the launcher's list of variables an app may read (${E.benign_passthrough.join(', ')})` });
 	};
 	const seenPass = new Set();

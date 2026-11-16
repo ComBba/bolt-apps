@@ -54,7 +54,7 @@ const UNREADABLE = {
 	'block scalar in a command': BASE.replace('    macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"', '    macos: |\n      python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}'),
 	'quoted key': BASE.replace('\nruntime: bridge', '\n"runtime": bridge'),
 	'escape sequence': BASE.replace('title: "Eagle info"', 'title: "Eagle \\u0041 info"'),
-	'flow-style document': '{ schema_version: 1, runtime: bridge, id: eagle-info, chip: eagle, title: T, emits: Generic, bridge: { command: { macos: "python3 {{scripts_dir}}/eagle-info__eagle.py" }, parse: json }, presentation: { widget: list }, detect: { binary: git } }\n',
+	'flow-style document': '{ schema_version: 1, runtime: bridge, id: eagle-info, chip: eagle-info, title: T, emits: Generic, bridge: { command: { macos: "python3 {{scripts_dir}}/eagle-info__eagle.py" }, parse: json }, presentation: { widget: list }, detect: { binary: git } }\n',
 	'duplicate key': BASE + 'runtime: transform\n',
 	'merge key': BASE + '<<: *x\n',
 	'second document': BASE + '---\nruntime: bridge\n',
@@ -119,7 +119,7 @@ test('a script name too long for a pack is a finding before pack, not a crash af
 	fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'eagle-info', title: 'E', role: 'r', saves: 's', author: { name: 'T' }, tier: 3, permissions: [] }));
 	fs.writeFileSync(path.join(dir, 'utilities', 'eagle-info.yaml'), BASE); fs.writeFileSync(path.join(dir, 'scripts', 'a'.repeat(95) + '.py'), 'x');
 	const j = JSON.parse(run(d, 'verify', 'apps/eagle-info', '--json').stdout);
-	assert.ok(j.findings.some((x) => x.code === 'app_file_name' && /at most 100/.test(x.message)));
+	assert.ok(j.findings.some((x) => x.code === 'app_file_name' && /may be 100 characters/.test(x.message)));
 });
 
 // ---- tar entries are fail-closed ----

@@ -1,13 +1,27 @@
 {
   "$comment": "Conformance cases for `bolt-apps verify` (YAML and script layout level). Each case edits the base app and names the finding codes verify must report. `bolt_error_contains` is the text Bolt's own parser puts in the load error shown under Settings, Desktop App, User Apps, so a launcher-side test can run the same cases through the real parser: the expected result there is Err containing that text, or Ok when expect is empty. Cases without bolt_error_contains are checked by the toolkit only (the launcher text is not recorded yet).",
   "base": {
-    "utilities/eagle-info.yaml": "schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: \"Eagle info\"\nemits: Generic\nargs:\n  - { name: view, from: \"query.word(0)\", default: overview }\nbridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n",
+    "utilities/eagle-info.yaml": "schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle-info\ntitle: \"Eagle info\"\nemits: Generic\nargs:\n  - { name: view, from: \"query.word(0)\", default: overview }\nbridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n",
     "scripts/eagle-info__eagle.py": "print('{}')\n"
   },
   "cases": [
     {
       "name": "the base app is clean",
       "expect": []
+    },
+    {
+      "name": "chip differs from id: Bolt offers the app in the launcher but never runs it (the launcher looks apps up by id)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "chip: eagle-info",
+            "chip: eagle"
+          ]
+        ]
+      },
+      "expect": [
+        "chip_not_id"
+      ]
     },
     {
       "name": "variable inside double quotes",
@@ -287,7 +301,7 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "chip: eagle\n",
+            "chip: eagle-info\n",
             ""
           ]
         ]
@@ -347,7 +361,7 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "chip: eagle",
+            "chip: eagle-info",
             "chip: \"my eagle\""
           ]
         ]
@@ -450,6 +464,29 @@
       "bolt_error_contains": "unsupported"
     },
     {
+      "name": "http_local without a parse mode (Bolt stops on the missing parse field before any other check)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "runtime: bridge",
+            "runtime: http_local"
+          ],
+          [
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"
+          ]
+        ]
+      },
+      "remove": [
+        "scripts/eagle-info__eagle.py"
+      ],
+      "expect": [
+        "missing_field",
+        "timeout_default"
+      ],
+      "bolt_error_contains": "missing field"
+    },
+    {
       "name": "http_local to a remote host",
       "edit": {
         "utilities/eagle-info.yaml": [
@@ -459,7 +496,7 @@
           ],
           [
             "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
-            "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"
+            "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n  parse: json\n"
           ]
         ]
       },
@@ -468,7 +505,6 @@
       ],
       "expect": [
         "http_host_not_loopback",
-        "missing_field",
         "timeout_default"
       ],
       "bolt_error_contains": "not a loopback address"
@@ -483,7 +519,7 @@
           ],
           [
             "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
-            "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n"
+            "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n  parse: json\n"
           ]
         ]
       },
@@ -493,7 +529,6 @@
       "expect": [
         "http_method_not_allowed",
         "http_path_invalid",
-        "missing_field",
         "timeout_default"
       ],
       "bolt_error_contains": "http.request"
@@ -585,7 +620,7 @@
       "expect": [
         "env_secret_name"
       ],
-      "bolt_error_contains": "never forwarded"
+      "bolt_error_contains": "is secret-bearing and is forwarded only to apps shipped inside Bolt"
     },
     {
       "name": "env value that is not exactly ${env:NAME}",

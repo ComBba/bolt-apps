@@ -4,7 +4,7 @@
   "title": "Widget gallery 2",
   "role": "Anyone building an app that needs a chart, table, tree, diff or detail pane",
   "saves": "Guessing which pane keys the launcher accepts",
-  "summary": "Type =gallery2 to see the card pane, the image grid and image cards. Runs on generated sample swatches.",
+  "summary": "Type =widget-gallery-2 to see the card pane, the image grid and image cards. Runs on generated sample swatches.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

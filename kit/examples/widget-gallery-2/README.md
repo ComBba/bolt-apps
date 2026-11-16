@@ -1,7 +1,7 @@
 # widget-gallery-2
 
 ## What this teaches
-The three panes `widget-gallery` has no room for, because a personal app may have at most 8 views including the overview and that gallery already uses all 8. Open `=gallery2` and press Enter on each row.
+The three panes `widget-gallery` has no room for, because a personal app may have at most 8 views including the overview and that gallery already uses all 8. Open `=widget-gallery-2` and press Enter on each row.
 
 | View | kind and mode | bind keys | row fields it reads |
 |---|---|---|---|

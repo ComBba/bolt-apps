@@ -57,7 +57,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "release"
       }
     ],
@@ -87,7 +87,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "keyboard"
       }
     ],
@@ -117,7 +117,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "writing"
       }
     ],
@@ -147,7 +147,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "ownership"
       }
     ],
@@ -177,7 +177,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "production"
       }
     ],
@@ -207,7 +207,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "impressions"
       }
     ],
@@ -237,7 +237,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "another"
       }
     ],
@@ -267,7 +267,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "example"
       }
     ],

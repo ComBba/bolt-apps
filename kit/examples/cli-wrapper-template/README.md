@@ -38,7 +38,7 @@ node toolkit/bin/bolt-apps.mjs check kit/examples/cli-wrapper-template --update-
 node toolkit/bin/bolt-apps.mjs lint kit/examples/cli-wrapper-template --personal
 node toolkit/bin/bolt-apps.mjs pack kit/examples/cli-wrapper-template --personal --version 1.0.1 --out cli-wrapper-template-1.0.1.boltpack
 ```
-Use: `=pingcheck one.one.one.one`, `=pingcheck example.com 5` (count 1 to 10), then the Replies, Raw output and The command rows.
+Use: `=cli-wrapper-template one.one.one.one`, `=cli-wrapper-template example.com 5` (count 1 to 10), then the Replies, Raw output and The command rows.
 
 ## Not covered
 Ping to a host that blocks ICMP looks like DOWN. IPv6-only hosts need `ping6` on some systems. Only the first four words of a typed query are read.

@@ -169,7 +169,10 @@ test('a pack path over 100 characters is refused by lint with the plain fix', ()
 	const d = tmp('ns-long-'), home = tmp('ns-home-');
 	assert.equal(cli(home, d, 'new', 'script-template', 'longer', '--dir', d).status, 0);
 	fs.writeFileSync(path.join(d, 'longer', 'scripts', `longer__${'x'.repeat(80)}.py`), 'x');
-	const l = cli(home, d, 'lint', path.join(d, 'longer'), '--personal'); assert.equal(l.status, 1); assert.match(l.stdout, /too long for a pack/); assert.match(l.stdout, /shorten the file name or the app id/);
+	const l = cli(home, d, 'lint', path.join(d, 'longer'), '--personal'); assert.equal(l.status, 1); assert.match(l.stdout, /too long/); assert.match(l.stdout, /up to 128 characters per name/); assert.match(l.stdout, /at most 82/); assert.match(l.stdout, /Shorten the file name or the app id/);
+	fs.rmSync(path.join(d, 'longer', 'scripts', `longer__${'x'.repeat(80)}.py`));
+	fs.writeFileSync(path.join(d, 'longer', 'scripts', `longer__${'y'.repeat(125)}.py`), 'x');
+	const l2 = cli(home, d, 'lint', path.join(d, 'longer'), '--personal'); assert.equal(l2.status, 1); assert.match(l2.stdout, /up to 128 characters per name/);
 });
 
 test('lint refuses ".." inside a script name (the launcher refuses any path part containing ..)', () => {
@@ -185,4 +188,56 @@ test('a script run under another name says what is wrong in one sentence, not a 
 	const sd = path.join(d, 'renamed', 'scripts'); fs.renameSync(path.join(sd, 'renamed__app.py'), path.join(sd, 'app.py'));
 	const r = spawnSync('/usr/bin/python3', ['-I', path.join(sd, 'app.py')], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } });
 	assert.notEqual(r.status, 0); assert.match(r.stderr, /script files must be named <app id>__<name>/); assert.doesNotMatch(r.stderr, /Traceback|ModuleNotFoundError/);
+});
+
+test('docs/verify-rules.md quotes the exact Bolt install sentences', () => {
+	const d = fs.readFileSync(path.join(REPO, 'docs', 'verify-rules.md'), 'utf8');
+	for (const s of ['a pack is only replaced by a newer version', 'it cannot tell whether this is newer than the installed version', 'already belongs to', 'is nested more than 8 folders deep', "Your organization's policy on this device installs only packs signed with a key built into Bolt", 'at most 82']) assert.ok(d.includes(s), s);
+});
+
+test('the install-prompt scan reads the .json files the app file names, as Bolt does', () => {
+	const d = tmp('ns-scan-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'scanned', '--dir', d).status, 0);
+	const fx = path.join(d, 'scanned', 'scripts', 'scanned__fixtures.json'), j = JSON.parse(fs.readFileSync(fx, 'utf8'));
+	j.note = 'Run open -a Safari to see it, or visit https://user:pw@example.com/x'; fs.writeFileSync(fx, JSON.stringify(j));
+	const v = JSON.parse(cli(home, d, 'verify', path.join(d, 'scanned'), '--json').stdout);
+	const m = v.findings.filter((f) => f.code === 'script_mentions').map((f) => f.message).join('\n');
+	assert.match(m, /open \(starts other programs or documents\) \(in scanned__fixtures\.json\)/); assert.match(m, /user name or a backslash in it \(in scanned__fixtures\.json\)/);
+});
+
+test('the chip is the id (hyphens kept), an upgrade keeps it, and a changed chip warns on ship', () => {
+	const d = tmp('ns-chip2-'), home = tmp('ns-home-');
+	for (const [tpl, id] of [['acme-dash', 'acme-dashx'], ['script-template', 'csv-insights'], ['portal-template', 'cdp-tabs']]) {
+		assert.equal(cli(home, d, 'new', tpl, id, '--dir', d).status, 0);
+		const y = fs.readFileSync(path.join(d, id, 'utilities', `${id}.yaml`), 'utf8');
+		assert.match(y, new RegExp(`^chip: ${id}$`, 'm'), `${id}: chip keeps its hyphens`);
+	}
+	const app = path.join(d, 'acme-dashx');
+	const s1 = cli(home, d, 'ship', app); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /type =acme-dashx/); assert.doesNotMatch(s1.stdout, /WARNING the chip changed/);
+	const s2 = cli(home, d, 'ship', app); assert.equal(s2.status, 0); assert.doesNotMatch(s2.stdout, /WARNING the chip changed/, 're-shipping keeps the chip, no warning');
+	const yf = path.join(app, 'utilities', 'acme-dashx.yaml'); fs.writeFileSync(yf, fs.readFileSync(yf, 'utf8').replace(/^chip: .*$/m, 'chip: acmedashx'));
+		const s3 = cli(home, d, 'ship', app); assert.notEqual(s3.status, 0, 'a chip that differs from the id is refused before anything is packed'); assert.match(s3.stdout + s3.stderr, /chip_not_id/);
+	// the description rule follows the chip, hyphens included
+	const l = cli(home, d, 'lint', path.join(d, 'cdp-tabs'), '--personal'); assert.doesNotMatch(l.stdout, /description_chip_mismatch/);
+});
+
+test('every public example has chip equal to id, and a chip different from the id is refused', () => {
+	for (const n of examples) for (const y of fs.readdirSync(path.join(EX, n, 'utilities'))) {
+		const s = fs.readFileSync(path.join(EX, n, 'utilities', y), 'utf8'); assert.equal(/^chip: (\S+)/m.exec(s)[1], /^id: (\S+)/m.exec(s)[1], `${n}/${y}`);
+	}
+	const d = tmp('ns-chipid-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'chipcase', '--dir', d).status, 0);
+	const yf = path.join(d, 'chipcase', 'utilities', 'chipcase.yaml'); fs.writeFileSync(yf, fs.readFileSync(yf, 'utf8').replace(/^chip: .*$/m, 'chip: other'));
+	for (const a of [['lint', path.join(d, 'chipcase'), '--personal'], ['verify', path.join(d, 'chipcase')], ['pack', path.join(d, 'chipcase'), '--personal', '--key', KEY]]) { const r = cli(home, d, ...a); assert.notEqual(r.status, 0, a[0]); assert.match(r.stdout + r.stderr, /chip_not_id/, a[0]); }
+});
+
+test('a row action that chains must name the app\'s own id (chain_target_not_self); pulse-feed chains to itself', async () => {
+	const { chainProblems } = await import('../lib/check.mjs');
+	const chain = (t) => ({ title: 'x', actions: [{ id: 'n', label: 'Narrow', kind: 'utility', target_chip: t, query: 'rust' }] });
+	assert.deepEqual(chainProblems([chain('pulse-feed')], 'pulse-feed'), []);
+	const bad = chainProblems([chain('pulse')], 'pulse-feed'); assert.equal(bad.length, 1); assert.equal(bad[0].code, 'chain_target_not_self'); assert.match(bad[0].message, /Use target_chip: pulse-feed/);
+	for (const g of fs.readdirSync(path.join(EX, 'pulse-feed', 'golden'))) for (const m of fs.readFileSync(path.join(EX, 'pulse-feed', 'golden', g), 'utf8').matchAll(/"target_chip": "([^"]+)"/g)) assert.equal(m[1], 'pulse-feed', g);
+	const d = tmp('ns-chain-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'pulse-feed', 'my-pulse', '--dir', d).status, 0);
+	const c = cli(home, d, 'check', path.join(d, 'my-pulse')); assert.equal(c.status, 0, c.stdout);
 });

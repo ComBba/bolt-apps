@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: file-insights-template
-chip: insights
+chip: file-insights-template
 title: "File insights"
 icon: line-chart
 description: "Type a path to a CSV file: totals, trend, breakdown and what to watch. Read-only, local. No path shows labelled sample data."

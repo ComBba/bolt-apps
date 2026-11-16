@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: http_local
 id: local-service-template
-chip: localmodels
+chip: local-service-template
 title: "Local service template"
 icon: package
 description: "Lists what a local service reports. This one reads the model list of an Ollama server on 127.0.0.1:11434."

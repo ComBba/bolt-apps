@@ -56,7 +56,9 @@ export function newFromTemplate(template, id, root) {
 	if (fs.existsSync(dir) || (() => { try { fs.lstatSync(dir); return true; } catch { return false; } })()) die(`${q(dir)} already exists (or is a link). Choose another id, or delete it first`);
 	const fail = (m) => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* nothing more to do */ } die(m); };   // never leave a half-made folder behind
 	try { fs.cpSync(src, dir, { recursive: true, filter: (f) => !/__pycache__|\.boltpack$|[\\/]golden([\\/]|$)/.test(f) }); } catch (e) { fail(`could not copy the template: ${e.message}`); }
-	const chip = id.replace(/[^a-z0-9]/g, '').slice(0, 20) || id.slice(0, 20);
+	// The chip is what the person types after =. Bolt's chip rule is the id rule (^[a-z0-9][a-z0-9-]{0,63}$), so the id itself is always a valid chip, hyphens included: a new
+	// version of the same app keeps the chip people already type. (Nothing is truncated: an id is at most 64 characters, the chip limit.)
+	const chip = id;
 	fs.rmSync(path.join(dir, 'golden'), { recursive: true, force: true });   // the template's goldens belong to the template; check --update-golden writes new ones
 	const title = id.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 	const edit = (f, fn) => { const p = path.join(dir, f); if (fs.existsSync(p)) fs.writeFileSync(p, fn(fs.readFileSync(p, 'utf8'))); };
@@ -80,7 +82,7 @@ export function newFromTemplate(template, id, root) {
 	// the template's README runs its commands from the repo root; the copy lives elsewhere, so they run from inside the folder
 	edit('README.md', (s) => s.split('node toolkit/bin/bolt-apps.mjs').join('bolt-apps').split(`kit/examples/${template}`).join('.'));
 	walkText(dir);
-	if (fs.existsSync(sd0)) { const longest = fs.readdirSync(sd0).map((f) => `manifests/scripts/${f}`).filter((n) => n.length > 100)[0]; if (longest) fail(`the id "${id}" is too long: ${longest.slice(10)} would not fit in a pack (a file path may be at most 100 characters and every file starts with <app id>__). Choose a shorter id.`); }
+	if (fs.existsSync(sd0)) { const longest = fs.readdirSync(sd0).map((f) => `manifests/scripts/${f}`).filter((n) => n.length > 100)[0]; if (longest) fail(`the id "${id}" is too long: ${longest.slice(10)} would not fit: Bolt allows 128 characters per name (every file starts with <app id>__, ids are up to 64), and this toolkit packs at most 82 for a script name. Choose a shorter id.`); }
 	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; return JSON.stringify(j, null, 2) + '\n'; });
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; } return JSON.stringify(j, null, 2) + '\n'; });
@@ -173,6 +175,9 @@ export function ship(args) {
 	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { die(`${q(path.join(dir, 'bolt-app.json'))} is not valid JSON (${e.message}). Fix it, then run ship again`); }
 	if (!app || typeof app !== 'object' || Array.isArray(app)) die(`${q(path.join(dir, 'bolt-app.json'))} must be a JSON object with an id, title and so on, not ${app === null ? 'null' : Array.isArray(app) ? 'a list' : typeof app}. Fix it, then run ship again`);
 	if (typeof app.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(app.id)) die(`bolt-app.json needs an "id" of lowercase letters, digits and hyphens (got ${JSON.stringify(app.id ?? null)})`);
+	const chipOf = () => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || null; } catch { return null; } };
+	const chipNow = chipOf(), chipsSeen = loadShip()['#chips'], chipBefore = chipsSeen && typeof chipsSeen === 'object' ? chipsSeen[app.id] : null;
+	if (chipNow && chipBefore && chipNow !== chipBefore) console.log(`WARNING the chip changed: your last build of ${app.id} used =${chipBefore}, this one uses =${chipNow}. Anyone typing =${chipBefore} will find nothing after they install it. Keep the chip unless you mean to change it (set it back in the app file, or in config.json and regenerate the app file).`);
 	const step = (name, r) => { if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
 	step('lint --personal', bolt(['lint', dir, '--personal']));
 	if (fs.existsSync(path.join(dir, 'check.json'))) step('check', bolt(['check', dir]));
@@ -194,12 +199,13 @@ export function ship(args) {
 	const out = path.join(STATE, 'packs', `${app.id}-${version}.boltpack`);
 	step(`pack ${version}`, bolt(['pack', dir, '--personal', '--version', version, '--out', out]));
 	step('verify', bolt(['verify', out]));
-	state[app.id] = version; fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(Object.fromEntries(Object.entries(state)), null, 2) + '\n');
+	state[app.id] = version; if (chipNow) state['#chips'] = { ...(state['#chips'] && typeof state['#chips'] === 'object' ? state['#chips'] : {}), [app.id]: chipNow }; fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.writeFileSync(path.join(STATE, 'ship.json'), JSON.stringify(Object.fromEntries(Object.entries(state)), null, 2) + '\n');
 	const chip = (() => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || app.id; } catch { return app.id; } })();
 	console.log(`\nShipped ${app.id} ${version}: ${out}\n\nInstall it:
   1. Drop ${q(out)} on the Bolt launcher (or on Bolt Apps; not Admin settings).
   2. Bolt shows a review card. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it.
   3. Approve. Bolt asks once more because you signed the pack yourself. Approve again.
+  3b. After you drop the pack, open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept (the first run asks too). Every reship changes the files, so you approve again. An empty list when you press Enter means the app is not approved yet.
   4. Open the launcher and type =${chip}.
 To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.
 This app runs as you: only install code you have read.

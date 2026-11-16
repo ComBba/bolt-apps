@@ -4,7 +4,7 @@
   "title": "Form template",
   "role": "Anyone building an app that takes a few typed values",
   "saves": "Writing the form, the checks and the log by hand",
-  "summary": "Type =expense-form, fill the form, press Log expense. The recent log shows as a table. Copy it for your own form.",
+  "summary": "Type =form-template, fill the form, press Log expense. The recent log shows as a table. Copy it for your own form.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

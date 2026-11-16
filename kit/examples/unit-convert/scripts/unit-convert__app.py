@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""=convert: type an amount, pick two units, get a result detail. A copyable layout example: typed input, result in a detail pane.
+"""=unit-convert: type an amount, pick two units, get a result detail. A copyable layout example: typed input, result in a detail pane.
 
 What it shows, in code you can read top to bottom:
   - a form in the app file (inputs: number and two selects) that the launcher passes to this script as words

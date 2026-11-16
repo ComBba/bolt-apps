@@ -2,7 +2,7 @@
 schema_version: 1
 runtime: bridge
 id: lookup-template
-chip: forecast
+chip: lookup-template
 title: "Forecast lookup"
 icon: cloud-sun
 description: "Type a place, get its weather. One query in, tiles and rows out, from two keyless Open-Meteo calls."

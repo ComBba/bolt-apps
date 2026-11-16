@@ -58,7 +58,7 @@ function workspace(script) {
 	if (script) {
 		const dir = path.join(d, 'apps', 'demo-app');
 		write(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'demo-app', title: 'Demo', role: 'Me', saves: 'Time', author: { name: 'T' }, tier: 3, permissions: ['runs_commands'] }));
-		write(path.join(dir, 'utilities', 'demo-app.yaml'), CASES.base['utilities/eagle-info.yaml'].replace(/eagle-info__eagle\.py/g, 'demo-app__demo.py').replace(/id: eagle-info/, 'id: demo-app'));
+		write(path.join(dir, 'utilities', 'demo-app.yaml'), CASES.base['utilities/eagle-info.yaml'].replace(/eagle-info__eagle\.py/g, 'demo-app__demo.py').replace(/id: eagle-info/, 'id: demo-app').replace(/chip: eagle-info/, 'chip: demo-app'));
 		write(path.join(dir, 'scripts', 'demo-app__demo.py'), "print('[]')\n");
 		assert.equal(sh('pack', 'apps/demo-app', '--personal').status, 0);
 	} else assert.equal(sh('new', 'demo-app', '--type', 'transform').status, 0);

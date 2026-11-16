@@ -4,7 +4,7 @@
   "title": "Chart template",
   "role": "Anyone building a dashboard or chart app",
   "saves": "Working out the chart bind keys and the two data modes",
-  "summary": "Type =charts for a tile dashboard, then open each chart type from rows or from a number series. Runs on sample data.",
+  "summary": "Type =chart-template for a tile dashboard, then open each chart type from rows or from a number series. Runs on sample data.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

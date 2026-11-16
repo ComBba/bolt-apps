@@ -57,8 +57,8 @@ export function lintApp(dir, opts = {}) {
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
 					else if (f.isDirectory()) walk(r);
 					else if (!f.isFile()) E('script_not_plain', `scripts/${r} is not a plain file (a folder-like, device or pipe entry). Bolt refuses it ("is not a plain file")`, `scripts/${r}`);
-					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes). Every script starts with <app id>__, so a long id leaves little room: shorten the file name or the app id (new refuses such an id at the start)', `scripts/${r}`);
-					else if (!r.split('/').every(plainName)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${r}`);
+					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', `the name is too long: <app id>__<name> is ${r.split('/').pop().length} characters. Bolt accepts up to 128 characters per name (ids are up to 64, and every file starts with <app id>__, which counts), and this toolkit can pack at most 82 for a script name (a pack path manifests/scripts/<name> may be 100 characters). Shorten the file name or the app id`, `scripts/${r}`);
+					else if (!r.split('/').every(plainName)) E('script_name', r.split('/').some((s) => s.length > 128) ? `the name is ${r.length} characters; Bolt allows at most 128 per name, and every file starts with <app id>__ (up to 64 characters), which counts. Shorten the file name or the app id` : 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${r}`);
 					else { scripts.push(r); try { sizes[r] = fs.statSync(path.join(dir, 'scripts', r)).size; } catch { /* listed above */ } }
 				}
 			};
@@ -110,6 +110,7 @@ export function lintApp(dir, opts = {}) {
 			{ const cm = chipMismatch(a.tree); if (cm) W('description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, p); }
 			if (a.runtime === undefined) E('field_missing', 'runtime is required', p);
 			for (const pr of a.problems) add(pr.level || 'error', pr.code, pr.message, p);
+			{ const cch = a.tree ? (str(get(a.tree, 'chip')?.value) || '').trim() : ''; if (yid && cch && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cch) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(yid) && cch !== yid) E('chip_not_id', `chip "${cch}" is not the id "${yid}". Bolt only runs an app whose chip equals its id (the launcher looks apps up by id): set chip to ${yid}`, p); }
 			if (!yid) E('field_missing', 'id is required', p);
 			tier = Math.max(tier, a.tier); for (const x of a.permissions) perms.add(x);
 			continue;
@@ -366,7 +367,7 @@ function cmdVerify(args) {
 	if (fs.statSync(f).isDirectory()) {
 		kind = 'app';
 		const r = lintApp(f, { personal: true });
-		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
+		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch', 'chip_not_id'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
 		if (r.app) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });

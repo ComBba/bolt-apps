@@ -124,7 +124,7 @@ test('a fixed https link with a port is a declarable permission; a long script n
 	const app = JSON.parse(fs.readFileSync(j, 'utf8')); app.permissions.push('opens_links:api.example.com:8443'); fs.writeFileSync(j, JSON.stringify(app));
 	assert.equal(run(d, 'lint', 'apps/g').status, 0, run(d, 'lint', 'apps/g').stdout);
 	fs.mkdirSync(path.join(dir, 'scripts')); fs.writeFileSync(path.join(dir, 'scripts', 'a'.repeat(90) + '.py'), 'x');
-	assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /at most 100 bytes/);
+	assert.match(run(d, 'lint', 'apps/g', '--personal').stdout, /up to 128 characters per name/);
 });
 
 test('an app file with no id is field_missing in both modes', () => {
