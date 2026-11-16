@@ -172,7 +172,7 @@ test('a pack path over 100 characters is refused by lint with the plain fix', ()
 	const l = cli(home, d, 'lint', path.join(d, 'longer'), '--personal'); assert.equal(l.status, 1); assert.match(l.stdout, /too long/); assert.match(l.stdout, /up to 128 characters per name/); assert.match(l.stdout, /at most 82/); assert.match(l.stdout, /Shorten the file name or the app id/);
 	fs.rmSync(path.join(d, 'longer', 'scripts', `longer__${'x'.repeat(80)}.py`));
 	fs.writeFileSync(path.join(d, 'longer', 'scripts', `longer__${'y'.repeat(125)}.py`), 'x');
-	const l2 = cli(home, d, 'lint', path.join(d, 'longer'), '--personal'); assert.equal(l2.status, 1); assert.match(l2.stdout, /at most 128 per name/);
+	const l2 = cli(home, d, 'lint', path.join(d, 'longer'), '--personal'); assert.equal(l2.status, 1); assert.match(l2.stdout, /up to 128 characters per name/);
 });
 
 test('lint refuses ".." inside a script name (the launcher refuses any path part containing ..)', () => {
@@ -216,9 +216,7 @@ test('the chip is the id (hyphens kept), an upgrade keeps it, and a changed chip
 	const s1 = cli(home, d, 'ship', app); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /type =acme-dashx/); assert.doesNotMatch(s1.stdout, /WARNING the chip changed/);
 	const s2 = cli(home, d, 'ship', app); assert.equal(s2.status, 0); assert.doesNotMatch(s2.stdout, /WARNING the chip changed/, 're-shipping keeps the chip, no warning');
 	const yf = path.join(app, 'utilities', 'acme-dashx.yaml'); fs.writeFileSync(yf, fs.readFileSync(yf, 'utf8').replace(/^chip: .*$/m, 'chip: acmedashx'));
-	const cfg = path.join(app, 'scripts', 'acme-dashx__config.json'), j = JSON.parse(fs.readFileSync(cfg, 'utf8')); j.app.chip = 'acmedashx'; fs.writeFileSync(cfg, JSON.stringify(j, null, 2) + '\n');
-	const s3 = cli(home, d, 'ship', app); assert.equal(s3.status, 0, s3.stdout + s3.stderr);
-	assert.match(s3.stdout, /WARNING the chip changed: your last build of acme-dashx used =acme-dashx, this one uses =acmedashx/); assert.match(s3.stdout, /Anyone typing =acme-dashx will find nothing/); assert.match(s3.stdout, /Keep the chip unless you mean to change it/);
+		const s3 = cli(home, d, 'ship', app); assert.notEqual(s3.status, 0, 'a chip that differs from the id is refused before anything is packed'); assert.match(s3.stdout + s3.stderr, /chip_not_id/);
 	// the description rule follows the chip, hyphens included
 	const l = cli(home, d, 'lint', path.join(d, 'cdp-tabs'), '--personal'); assert.doesNotMatch(l.stdout, /description_chip_mismatch/);
 });

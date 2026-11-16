@@ -125,7 +125,7 @@ test('check fails non-JSON output, a non-zero exit, and a clean-zero on a failed
 });
 
 test('the script runs with an empty environment and a temp HOME', async () => {
-	const body = `import os, json\nprint(json.dumps([{"title":"extra:" + str([k for k in os.environ if k not in ("HOME","PATH","USER","LOGNAME","PYTHONNOUSERSITE","PYTHONDONTWRITEBYTECODE","PYTHONUNBUFFERED","LC_CTYPE","__CF_USER_TEXT_ENCODING","CPATH","LIBRARY_PATH","MANPATH","SDKROOT")]) + " home:" + os.environ.get("HOME","")[:9]}]))`;
+	const body = `import os, json\nprint(json.dumps([{"title":"extra:" + str([k for k in os.environ if k not in ("HOME","PATH","USER","LOGNAME","PYTHONNOUSERSITE","PYTHONDONTWRITEBYTECODE","PYTHONUNBUFFERED","GIT_CONFIG_NOSYSTEM","GIT_OPTIONAL_LOCKS","GIT_TERMINAL_PROMPT","LC_CTYPE","__CF_USER_TEXT_ENCODING","CPATH","LIBRARY_PATH","MANPATH","SDKROOT")]) + " home:" + os.environ.get("HOME","")[:9]}]))`;
 	const r = await checkApp(brokenApp(body, { expect: { text_present: ['extra:[]', 'home:/'] } }));
 	assert.ok(!codes(r.cases[0].findings).includes('expected_text_missing'), JSON.stringify(r.cases[0].findings));
 });
