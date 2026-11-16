@@ -54,7 +54,7 @@
         "scripts/acme-dash__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/acme-dash",
-      "verified": "WORKS in sample mode (tiles, tasks drill, Back, placeholder_examples click-to-try) after install as an in-place upgrade. founder drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; not run on the shipped 181 binary"
+      "verified": "worked in sample mode (tiles, tasks drill, Back, placeholder_examples click-to-try) after install as an in-place upgrade. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
     },
     {
       "id": "widget-gallery",
@@ -467,7 +467,7 @@
         "scripts/pulse-feed__app.py: emit_yaml() entity_preview bind"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/pulse-feed",
-      "verified": "list works (live Hacker News stories), right pane broken until fixed. founder drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; not run on the shipped 181 binary"
+      "verified": "list worked (live Hacker News stories); the right pane was broken, fixed in PR #19. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
     },
     {
       "id": "json-tree-browser",
@@ -531,7 +531,7 @@
         "scripts/expense-tracker__config.json: chart widget bind"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/expense-tracker",
-      "verified": "installs and runs; the first run shows only the API-key setup row until the sample fallback lands. founder drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; not run on the shipped 181 binary"
+      "verified": "installed and ran; the first run showed only the API-key setup row, sample fallback is in PR #19. maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
     },
     {
       "id": "pipeline-board",
@@ -594,7 +594,7 @@
         "scripts/unit-convert__app.py: convert()"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/unit-convert",
-      "verified": "WORKS: list of conversions and a per-row detail pane (Result, Formula, Reverse, Kind). founder drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; not run on the shipped 181 binary"
+      "verified": "worked: list of conversions and a per-row detail pane (Result, Formula, Reverse, Kind). maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
     },
     {
       "id": "branch-explorer",
@@ -728,5 +728,5 @@
       "limits": "tested only against a stand-in server; the person needs the server installed; 15 s cap; one tool per app"
     }
   ],
-  "side_by_side": "four kit apps (acme-dash, pulse-feed, expense-tracker, unit-convert) installed side by side with no owned_by_other: founder drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; not run on the shipped 181 binary"
+  "side_by_side": "four kit apps (acme-dash, pulse-feed, expense-tracker, unit-convert) installed side by side with no owned_by_other: maintainer drop test on a main build (same launcher and install code as v0.1.181 for these paths), 2026-11-15; tested on the files before the chip change (chip now equals id), so not re-run on these files; not run on the shipped 181 binary"
 }

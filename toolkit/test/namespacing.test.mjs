@@ -268,3 +268,14 @@ test('check refuses what the launcher cannot draw in the right pane: row panes t
 	for (const v of ['overview', 'topic', 'stories']) assert.deepEqual(p.views.get(v), prev, v);
 	assert.equal(p.top, null);
 });
+
+test('a row action that chains must name the app\'s own id (chain_target_not_self); pulse-feed chains to itself', async () => {
+	const { chainProblems } = await import('../lib/check.mjs');
+	const chain = (t) => ({ title: 'x', actions: [{ id: 'n', label: 'Narrow', kind: 'utility', target_chip: t, query: 'rust' }] });
+	assert.deepEqual(chainProblems([chain('pulse-feed')], 'pulse-feed'), []);
+	const bad = chainProblems([chain('pulse')], 'pulse-feed'); assert.equal(bad.length, 1); assert.equal(bad[0].code, 'chain_target_not_self'); assert.match(bad[0].message, /Use target_chip: pulse-feed/);
+	for (const g of fs.readdirSync(path.join(EX, 'pulse-feed', 'golden'))) for (const m of fs.readFileSync(path.join(EX, 'pulse-feed', 'golden', g), 'utf8').matchAll(/"target_chip": "([^"]+)"/g)) assert.equal(m[1], 'pulse-feed', g);
+	const d = tmp('ns-chain-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'pulse-feed', 'my-pulse', '--dir', d).status, 0);
+	const c = cli(home, d, 'check', path.join(d, 'my-pulse')); assert.equal(c.status, 0, c.stdout);
+});
