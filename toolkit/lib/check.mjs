@@ -11,7 +11,7 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { isNavToken } from './assess.mjs';
-import { parseYaml, get, str } from './yamlsubset.mjs';
+import { parseYaml, get, str, notYamlHint } from './yamlsubset.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const KIT_ROOT = path.resolve(here, '..', '..', 'kit');
@@ -418,6 +418,9 @@ export async function checkApp(appDir, opts = {}) {
 	try { listing = JSON.parse(fs.readFileSync(path.join(appDir, 'bolt-app.json'), 'utf8')); } catch {}
 	if (listing) for (const x of platformFindings(listing)) report.findings.push(x);
 	report.findings.push(...kitGuard(appDir, cfg));
+	// lookup.rows (a chained lookup) are drawn like overview rows: a row's own `copy` is not read, so Copy puts the row text on the clipboard. Only an `item` (single endpoint) honours `copy`.
+	try { const sd = path.join(appDir, 'scripts'), cf = fs.readdirSync(sd).find((f) => f.endsWith('__config.json')); const ec = cf ? JSON.parse(fs.readFileSync(path.join(sd, cf), 'utf8')) : null; const ig = ec && ec.mode === 'lookup' && ec.lookup && Array.isArray(ec.lookup.rows) ? ec.lookup.rows.map((r, i) => (r && typeof r === 'object' && 'copy' in r ? `lookup.rows[${i}]` : null)).filter(Boolean) : []; if (ig.length) top('warning', 'config_copy_ignored', `${ig.join(', ')} in scripts/${cf} declare "copy", which lookup rows ignore: Copy puts the row's own text on the clipboard. Remove it, or use a lookup with a single endpoint and an "item", where "copy" works (ENGINE.md, "Buttons in lookup mode")`, `scripts/${cf}`); } catch { /* no engine config: nothing to say */ }
+	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) { const txt = fs.readFileSync(path.join(ud, y), 'utf8'); try { parseYaml(txt); } catch (e) { top('error', 'app_file_not_yaml', `utilities/${y} cannot be read as YAML (${String(e.message).slice(0, 100)}). ${notYamlHint(txt) || 'Write plain YAML (AGENTS.md section 2), or regenerate it: python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml'}`, `utilities/${y}`); } } } catch { /* no utilities folder: other checks say so */ }
 	if (host === 'windows') { top('error', 'host_unsupported', 'check v0.1 needs a POSIX host (sh stubs); run it on macOS or Linux', '.'); return report; }
 	const py = cfg.interpreter ? whichSync(cfg.interpreter) : null;
 	if (!py) { top('error', 'interpreter_missing', `${cfg.interpreter || 'interpreter'} was not found on this machine`, 'check.json'); return report; }
@@ -474,7 +477,7 @@ export async function checkApp(appDir, opts = {}) {
 					if (opts.updateGolden && f.some((x) => x.level === 'error')) E('golden_not_written', 'not writing a golden from a failing run');
 					else if (opts.updateGolden) { fs.mkdirSync(path.dirname(gp), { recursive: true }); fs.writeFileSync(gp, JSON.stringify(rows, null, 2) + '\n'); }
 					else if (!fs.existsSync(gp)) E('golden_missing', `${kase.golden} does not exist (run with --update-golden once, then review it)`);
-					else if (!deepEq(JSON.parse(fs.readFileSync(gp, 'utf8')), rows)) E('golden_mismatch', `output differs from ${kase.golden}`);
+					else if (!deepEq(JSON.parse(fs.readFileSync(gp, 'utf8')), rows)) E('golden_mismatch', `output differs from ${kase.golden}. If you changed the app's data or text on purpose, run: ./bolt-apps check <app-folder> --update-golden (it rewrites the goldens; read the change first)`);
 				}
 			}
 		} catch (e) { E('check_error', String(e.message || e)); }

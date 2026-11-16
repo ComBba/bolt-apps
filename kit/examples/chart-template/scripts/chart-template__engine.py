@@ -1292,7 +1292,24 @@ def run(argv):
         run_views(cfg, args, fx, fixtures)
 
 
+def emit_yaml_failed(e):
+    """--emit-yaml must never write an error row into the app file: say what is wrong on stderr, list the valid icons when one is wrong, exit 1."""
+    msg = str(e) if isinstance(e, ConfigError) else ("config.json: %s" % e if isinstance(e, kit.KitError) else "%s while building the app file" % e.__class__.__name__)
+    sys.stderr.write("--emit-yaml failed, no app file was written: %s\n" % msg)
+    if "icon" in msg:
+        sys.stderr.write("Valid icons: %s\n" % ", ".join(sorted(kit.icons_data.ICONS)))
+    sys.exit(1)
+
+
 def main(argv):
+    if "--emit-yaml" in argv:
+        try:
+            run(argv)
+        except SystemExit:
+            raise
+        except Exception as e:
+            emit_yaml_failed(e)
+        return
     try:
         run(argv)
     except ConfigError as e:
