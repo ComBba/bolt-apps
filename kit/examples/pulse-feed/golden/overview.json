@@ -39,7 +39,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "database"
       }
     ],
@@ -69,7 +69,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "monolith"
       }
     ],
@@ -99,7 +99,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "keyboard"
       }
     ],
@@ -129,7 +129,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "personal"
       }
     ],
@@ -159,7 +159,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "progress"
       }
     ],
@@ -189,7 +189,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "release"
       }
     ],
@@ -219,7 +219,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "writing"
       }
     ],
@@ -249,7 +249,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "browsers"
       }
     ],
@@ -279,7 +279,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "everyone"
       }
     ],
@@ -309,7 +309,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "spreadsheet"
       }
     ],
@@ -339,7 +339,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "learned"
       }
     ],
@@ -369,7 +369,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "approximate"
       }
     ],
@@ -399,7 +399,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "introduction"
       }
     ],
@@ -429,7 +429,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "photographing"
       }
     ],
@@ -459,7 +459,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "packaging"
       }
     ],
@@ -489,7 +489,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "technology"
       }
     ],
@@ -519,7 +519,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "shipped"
       }
     ],
@@ -549,7 +549,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "offline"
       }
     ],
@@ -579,7 +579,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "friendlier"
       }
     ],
@@ -609,7 +609,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "accessible"
       }
     ],
@@ -639,7 +639,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "spreadsheet"
       }
     ],
@@ -669,7 +669,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "impressions"
       }
     ],
@@ -699,7 +699,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "favourite"
       }
     ],
@@ -729,7 +729,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "quiet"
       }
     ],
@@ -759,7 +759,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "learning"
       }
     ],
@@ -789,7 +789,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "scratch"
       }
     ],
@@ -819,7 +819,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "dates"
       }
     ],
@@ -849,7 +849,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "terminal"
       }
     ],
@@ -879,7 +879,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "production"
       }
     ],
@@ -909,7 +909,7 @@
         "id": "narrow",
         "kind": "utility",
         "label": "Narrow",
-        "target_chip": "pulse",
+        "target_chip": "pulse-feed",
         "query_template": "reviews"
       }
     ],

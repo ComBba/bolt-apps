@@ -148,7 +148,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 - Property-based fuzzing beyond the fixed hostile payload; parallel case execution; the `pack` integration (below).
 - A fixture recorder.
 
-**Follow-up (founder, not done here):** the fleet has real Linux and Windows machines. The same fixtures can be replayed there live by running the app against the real tools and diffing the rows against the goldens, which turns "fixture-tested only" into "run on that system".
+**Follow-up (maintainer, not done here):** the fleet has real Linux and Windows machines. The same fixtures can be replayed there live by running the app against the real tools and diffing the rows against the goldens, which turns "fixture-tested only" into "run on that system".
 
 ## 6. How an app gets the kit
 

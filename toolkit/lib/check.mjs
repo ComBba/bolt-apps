@@ -292,6 +292,16 @@ const BAD_TEXT = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\u2028\u2029\u115f\u1160\u3164\uffa0\
 function strings(v, p, out) { if (typeof v === 'string') out.push([p, v]); else if (Array.isArray(v)) v.forEach((x, i) => strings(x, `${p}[${i}]`, out)); else if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) strings(x, `${p}.${k}`, out); return out; }
 const deepEq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
+// A row action that chains to another app (kind utility, target_chip) must name this app's own id: the launcher looks apps up by id, so a chip that is not an installed app's id resolves to nothing,
+// and a chain into somebody else's app is not something an example may do silently.
+export function chainProblems(rows, appId) {
+	const out = [];
+	if (!appId || !Array.isArray(rows)) return out;
+	const bad = new Set();
+	for (const r of rows) for (const a of (r && Array.isArray(r.actions) ? r.actions : [])) if (a && a.kind === 'utility' && typeof a.target_chip === 'string' && a.target_chip !== appId) bad.add(a.target_chip);
+	for (const c of bad) out.push({ level: 'error', code: 'chain_target_not_self', message: `a row action chains to "${c}", but this app's id is "${appId}". The launcher looks apps up by id, so a chain must name the app's own id (a chain into another app is not allowed in an example). Use target_chip: ${appId}` });
+	return out;
+}
 export function checkRows(rows, manifestActions = 1) {
 	const f = [], E = (code, message) => f.push({ level: 'error', code, message });
 	for (const m of schemaCheck(rows, SCHEMA)) E('schema_invalid', m);
@@ -367,6 +377,7 @@ export async function checkApp(appDir, opts = {}) {
 			try { rows = JSON.parse(r.out); } catch { E('non_json_output', `stdout is not JSON (${r.out.length} bytes)`); }
 			if (rows !== null) {
 				for (const x of checkRows(rows, cfg.manifest_actions ?? 1)) f.push(x);
+				for (const x of chainProblems(rows, listing && listing.id)) f.push(x);
 				if (/[^\x00-\x7f]/.test(r.out)) f.push({ level: 'warning', code: 'non_ascii_output', message: 'stdout has non-ASCII bytes; ensure_ascii JSON is safe on any console code page' });
 				const flat = strings(rows, '$', []).map(([, s]) => s).join('\n');
 				const bad = rows.find((r) => r && typeof r.title === 'string' && /^This app (is not set up correctly|could not run)$/.test(r.title));

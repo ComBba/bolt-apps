@@ -358,9 +358,9 @@ def story_row(s, now, topic):
     host = kit.host_label(s["url"]) if not s["url"].startswith("https://news.ycombinator.com/") else "news.ycombinator.com"
     body = "%s points, %s comments, posted %s ago.\n\nLink: %s\n\n%s" % (kit.fmt_count(s["score"]), kit.fmt_count(s["comments"]), age, mdsafe(host), SAFETY)
     acts = []
-    nw = narrow_word(s["title"], topic)
+    nw = narrow_word(s["title"], topic)   # the chain names the app's own id (APP): the launcher looks apps up by id
     if nw:
-        acts.append(kit.action_chain("narrow", "Narrow", "pulse", nw))
+        acts.append(kit.action_chain("narrow", "Narrow", APP, nw))
     return kit.safe_row(s["title"], "%s points, %s comments, %s ago" % (kit.fmt_count(s["score"]), kit.fmt_count(s["comments"]), age),
                         icon="trending-up", pane="stories", url=s["url"], open_url=s["url"], actions=acts,
                         copy='"%s" - %s on Hacker News, %s' % (s["title"], s["author"], s["url"]), body=body,
