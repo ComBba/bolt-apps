@@ -1,0 +1,89 @@
+[
+  {
+    "title": "International Space Station",
+    "subtitle": "12.35, -45.68 · 421 km up, 27580 km/h",
+    "icon": "globe",
+    "body": "**International Space Station**\n\n- Source: api.wheretheiss.at\n- When: 10 s ago\n- Key figure: 421 km up, 27580 km/h\n- Data: lat 12.35, lon -45.68, daylight\n\nPublic data, shown as is.",
+    "nav": {
+      "view": "iss"
+    },
+    "actions": [],
+    "url": "https://www.openstreetmap.org/?mlat=12.3456&mlon=-45.6789#map=3/12.35/-45.68",
+    "kpi_label": "Altitude",
+    "kpi_value": 421,
+    "kpi_unit": "km",
+    "kpi_max": "",
+    "kpi_note": "now",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "https://www.openstreetmap.org/?mlat=12.3456&mlon=-45.6789#map=3/12.35/-45.68",
+    "sw_source": "api.wheretheiss.at",
+    "sw_when": "10 s ago",
+    "sw_key": "421 km up, 27580 km/h",
+    "sw_data": "lat 12.35, lon -45.68, daylight"
+  },
+  {
+    "title": "Long March 2D | Unknown Payload",
+    "subtitle": "NET 2026-11-18 22:50 · China Aerospace Science and Technology Corporation",
+    "icon": "Zap",
+    "body": "**Long March 2D | Unknown Payload**\n\n- Source: ll.thespacedevs.com\n- When: in 3 d 5 h\n- Key figure: NET 2026-11-18 22:50\n- Data: Go for Launch, Unknown Payload, Launch Complex 9, Taiyuan Satellite Launch Center, People's Republic of China\n\nPublic data, shown as is.",
+    "actions": [],
+    "url": "https://ll.thespacedevs.com/2.2.0/launch/e0a11eb1-0bda-4872-b36b-140247fd5c60/",
+    "kpi_label": "Days to next launch",
+    "kpi_value": 3.2,
+    "kpi_unit": "d",
+    "kpi_max": "",
+    "kpi_note": "NET",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Long March 2D Unknown Payload: NET 2026-11-18 22:50 [ll.thespacedevs.com, in 3 d 5 h]",
+    "open_url": "https://ll.thespacedevs.com/2.2.0/launch/e0a11eb1-0bda-4872-b36b-140247fd5c60/",
+    "sw_source": "ll.thespacedevs.com",
+    "sw_when": "in 3 d 5 h",
+    "sw_key": "NET 2026-11-18 22:50",
+    "sw_data": "Go for Launch, Unknown Payload, Launch Complex 9, Taiyuan Satellite Launch Center, People's Republic of China",
+    "nav": {
+      "view": "launches"
+    }
+  },
+  {
+    "title": "Earthquakes M4.5+ in the last day: 2",
+    "subtitle": "2 quakes listed · the biggest first below",
+    "icon": "Activity",
+    "body": "**Earthquakes M4.5+ in the last day: 2**\n\n- Source: earthquake.usgs.gov\n- When: last 24 hours\n- Key figure: 2 quakes M4.5+\n- Data: from the USGS summary feed\n\nPublic data, shown as is.",
+    "nav": {
+      "view": "quakes"
+    },
+    "actions": [],
+    "url": "https://earthquake.usgs.gov/earthquakes/map/",
+    "kpi_label": "M4.5+ quakes",
+    "kpi_value": 2,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "last 24 h",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": "https://earthquake.usgs.gov/earthquakes/map/",
+    "sw_source": "earthquake.usgs.gov",
+    "sw_when": "last 24 hours",
+    "sw_key": "2 quakes M4.5+",
+    "sw_data": "from the USGS summary feed"
+  },
+  {
+    "title": "Weather and sunrise",
+    "subtitle": "Type a city: =sky-watch Paris",
+    "icon": "CloudSun",
+    "body": "Type =sky-watch and a city name for its weather and sunrise and sunset.",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  }
+]

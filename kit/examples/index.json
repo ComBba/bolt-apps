@@ -655,6 +655,38 @@
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/places-list",
       "verified": "not yet verified in real Bolt"
+    },
+    {
+      "id": "sky-watch",
+      "layout": "overview rows that drill into the ISS, launches, quakes and a city's weather; one preview pane shape (SOURCE, WHEN, KEY FIGURE, DATA)",
+      "mode": "script",
+      "script": "scripts/sky-watch__sky-watch.py",
+      "backing": "five keyless public APIs joined in one script, no engine",
+      "widgets": [
+        "entity_preview"
+      ],
+      "techniques": [
+        "several keyless sources in parallel",
+        "per-source cache with an old copy fallback",
+        "fixed host allowlist",
+        "same-host redirects only",
+        "typed text percent-encoded",
+        "free text as a city",
+        "demo word with labelled sample data"
+      ],
+      "sources": [
+        "api.wheretheiss.at",
+        "ll.thespacedevs.com",
+        "earthquake.usgs.gov",
+        "geocoding-api.open-meteo.com",
+        "api.open-meteo.com"
+      ],
+      "edit": [
+        "scripts/sky-watch__config.json",
+        "scripts/sky-watch__fixtures.json"
+      ],
+      "check": "kit/examples/sky-watch/check.json",
+      "verified": "not verified in real Bolt"
     }
   ],
   "coverage": {

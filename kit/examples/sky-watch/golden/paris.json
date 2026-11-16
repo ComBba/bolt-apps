@@ -1,0 +1,60 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the sky now",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Weather in Paris, France",
+    "subtitle": "11.2 °C, overcast",
+    "icon": "CloudSun",
+    "body": "**Weather in Paris, France**\n\n- Source: api.open-meteo.com\n- When: 2026-11-15 12:00\n- Key figure: 11.2 °C, overcast\n- Data: wind 14 km/h\n\nPublic data, shown as is.",
+    "actions": [],
+    "url": "https://open-meteo.com/en/docs",
+    "kpi_label": "Temperature",
+    "kpi_value": 11.2,
+    "kpi_unit": "°C",
+    "kpi_max": "",
+    "kpi_note": "Paris, France",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Weather in Paris, France: 11.2 C, overcast [api.open-meteo.com, 2026-11-15 12:00]",
+    "open_url": "https://open-meteo.com/en/docs",
+    "sw_source": "api.open-meteo.com",
+    "sw_when": "2026-11-15 12:00",
+    "sw_key": "11.2 °C, overcast",
+    "sw_data": "wind 14 km/h"
+  },
+  {
+    "title": "Sunrise and sunset in Paris, France",
+    "subtitle": "sunrise 07:40, sunset 17:15",
+    "icon": "cloud-sun",
+    "body": "**Sunrise and sunset in Paris, France**\n\n- Source: api.open-meteo.com\n- When: 2026-11-15\n- Key figure: sunrise 07:40, sunset 17:15\n- Data: local time, zone Europe/Paris\n\nPublic data, shown as is.",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Sunrise and sunset in Paris, France: sunrise 07:40, sunset 17:15 [api.open-meteo.com, 2026-11-15]",
+    "sw_source": "api.open-meteo.com",
+    "sw_when": "2026-11-15",
+    "sw_key": "sunrise 07:40, sunset 17:15",
+    "sw_data": "local time, zone Europe/Paris"
+  }
+]
