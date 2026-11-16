@@ -1,0 +1,62 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the sky now",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "120 km SW of Sampleville",
+    "subtitle": "M5.4 · 2 h 47 min ago",
+    "icon": "Activity",
+    "body": "**120 km SW of Sampleville**\n\n- Source: earthquake.usgs.gov\n- When: 2 h 47 min ago\n- Key figure: M5.4\n- Data: magnitude 5.4, depth 35 km\n\nPublic data, shown as is.",
+    "actions": [],
+    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample1",
+    "kpi_label": "Magnitude",
+    "kpi_value": 5.4,
+    "kpi_unit": "",
+    "kpi_max": 10,
+    "kpi_note": "USGS",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- 120 km SW of Sampleville: M5.4 [earthquake.usgs.gov, 2 h 47 min ago]",
+    "open_url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample1",
+    "sw_source": "earthquake.usgs.gov",
+    "sw_when": "2 h 47 min ago",
+    "sw_key": "M5.4",
+    "sw_data": "magnitude 5.4, depth 35 km"
+  },
+  {
+    "title": "45 km N of Exampletown",
+    "subtitle": "M4.7 · 13 h 53 min ago",
+    "icon": "Activity",
+    "body": "**45 km N of Exampletown**\n\n- Source: earthquake.usgs.gov\n- When: 13 h 53 min ago\n- Key figure: M4.7\n- Data: magnitude 4.7, depth 12 km\n\nPublic data, shown as is.",
+    "actions": [],
+    "url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample2",
+    "kpi_label": "Magnitude",
+    "kpi_value": 4.7,
+    "kpi_unit": "",
+    "kpi_max": 10,
+    "kpi_note": "USGS",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- 45 km N of Exampletown: M4.7 [earthquake.usgs.gov, 13 h 53 min ago]",
+    "open_url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample2",
+    "sw_source": "earthquake.usgs.gov",
+    "sw_when": "13 h 53 min ago",
+    "sw_key": "M4.7",
+    "sw_data": "magnitude 4.7, depth 12 km"
+  }
+]

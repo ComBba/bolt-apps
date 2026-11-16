@@ -1,0 +1,14 @@
+{
+  "_now": 1789000000,
+  "iss": { "latitude": 12.3456, "longitude": -45.6789, "altitude": 420.5, "velocity": 27580.2, "visibility": "daylight", "timestamp": 1788999990 },
+  "launches": { "results": [
+    { "name": "Falcon 9 Block 5 | Sample Mission A", "net": "2026-11-20T14:30:00Z", "status": { "name": "Go for Launch" }, "launch_service_provider": "SpaceX", "pad": { "name": "Space Launch Complex 40", "location": { "name": "Cape Canaveral, FL, USA" } }, "url": "https://ll.thespacedevs.com/2.2.0/launch/sample-a/" },
+    { "name": "Electron | Sample Mission B", "net": "2026-11-24T03:05:00Z", "status": { "name": "To Be Confirmed" }, "launch_service_provider": "Rocket Lab", "pad": { "name": "Launch Complex 1A", "location": { "name": "Mahia Peninsula, New Zealand" } }, "url": "https://ll.thespacedevs.com/2.2.0/launch/sample-b/" }
+  ] },
+  "quakes": { "features": [
+    { "properties": { "mag": 5.4, "place": "120 km SW of Sampleville", "time": 1788990000000, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample1" }, "geometry": { "coordinates": [-71.5, -33.4, 35.0] } },
+    { "properties": { "mag": 4.7, "place": "45 km N of Exampletown", "time": 1788950000000, "url": "https://earthquake.usgs.gov/earthquakes/eventpage/sample2" }, "geometry": { "coordinates": [140.2, 36.1, 12.0] } }
+  ] },
+  "geocode": { "paris": { "results": [ { "name": "Paris", "latitude": 48.85341, "longitude": 2.3488, "country": "France", "timezone": "Europe/Paris" } ] } },
+  "weather": { "current": { "temperature_2m": 11.2, "weather_code": 3, "wind_speed_10m": 14.4, "time": "2026-11-15T12:00" }, "daily": { "sunrise": ["2026-11-15T07:40"], "sunset": ["2026-11-15T17:15"] }, "timezone": "Europe/Paris" }
+}

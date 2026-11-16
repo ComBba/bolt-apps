@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "sky-watch",
+  "title": "Sky Watch",
+  "role": "Anyone curious about what is up in the sky and under the ground right now",
+  "saves": "Opening five sites to see where the space station is, when the next rocket flies, where the ground shook and what the weather is",
+  "summary": "Type =sky-watch: the ISS position, the next launches and the last day's M4.5+ earthquakes, no key. Type a city for its weather and sunrise and sunset. Copy it to join several free sources in one app.",
+  "author": { "name": "Bolt Apps examples", "link": "https://github.com/SparcleHQ/bolt-apps" },
+  "tier": 3,
+  "permissions": ["runs_commands", "network"],
+  "platforms": ["macos", "linux"],
+  "requires": [{ "interpreter": "python", "min_version": "3.9" }],
+  "tests": []
+}

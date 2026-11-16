@@ -1,0 +1,62 @@
+[
+  {
+    "title": "Back",
+    "subtitle": "Back to the sky now",
+    "icon": "arrow-left",
+    "body": "",
+    "nav": {
+      "back": true
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Falcon 9 Block 5 | Sample Mission A",
+    "subtitle": "NET 2026-11-20 14:30 · SpaceX",
+    "icon": "Zap",
+    "body": "**Falcon 9 Block 5 | Sample Mission A**\n\n- Source: ll.thespacedevs.com\n- When: in 71 d 14 h\n- Key figure: NET 2026-11-20 14:30\n- Data: Go for Launch, Space Launch Complex 40, Cape Canaveral, FL, USA\n\nPublic data, shown as is.",
+    "actions": [],
+    "url": "https://ll.thespacedevs.com/2.2.0/launch/sample-a/",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Falcon 9 Block 5 Sample Mission A: NET 2026-11-20 14:30 [ll.thespacedevs.com, in 71 d 14 h]",
+    "open_url": "https://ll.thespacedevs.com/2.2.0/launch/sample-a/",
+    "sw_source": "ll.thespacedevs.com",
+    "sw_when": "in 71 d 14 h",
+    "sw_key": "NET 2026-11-20 14:30",
+    "sw_data": "Go for Launch, Space Launch Complex 40, Cape Canaveral, FL, USA"
+  },
+  {
+    "title": "Electron | Sample Mission B",
+    "subtitle": "NET 2026-11-24 03:05 · Rocket Lab",
+    "icon": "Zap",
+    "body": "**Electron | Sample Mission B**\n\n- Source: ll.thespacedevs.com\n- When: in 75 d 3 h\n- Key figure: NET 2026-11-24 03:05\n- Data: To Be Confirmed, Launch Complex 1A, Mahia Peninsula, New Zealand\n\nPublic data, shown as is.",
+    "actions": [],
+    "url": "https://ll.thespacedevs.com/2.2.0/launch/sample-b/",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "- Electron Sample Mission B: NET 2026-11-24 03:05 [ll.thespacedevs.com, in 75 d 3 h]",
+    "open_url": "https://ll.thespacedevs.com/2.2.0/launch/sample-b/",
+    "sw_source": "ll.thespacedevs.com",
+    "sw_when": "in 75 d 3 h",
+    "sw_key": "NET 2026-11-24 03:05",
+    "sw_data": "To Be Confirmed, Launch Complex 1A, Mahia Peninsula, New Zealand"
+  }
+]
