@@ -26,7 +26,7 @@
    "example": "kit/examples/widget-gallery",
    "snippet": "{\"kind\": \"markdown\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"subtitle\": \"{{row.subtitle}}\", \"body\": \"{{row.body}}\", \"actions\": [\"copy\"]}}",
    "test": "kit/examples/widget-gallery/check.json",
-   "limit": "Body up to 16384 characters.",
+   "limit": "The bind.body template is limited to 16384 characters (the expanded body is not); the kit hands at most 8000 characters and 40 lines.",
    "kind": "markdown",
    "also": [
     "pulse-feed"
@@ -135,25 +135,37 @@
    "example": "kit/examples/widget-gallery-2",
    "snippet": "{\"kind\": \"image_grid\", \"mode\": \"list_data\", \"bind\": {\"src\": \"{{row.src}}\", \"caption\": \"{{row.name}}\", \"columns\": 3}}",
    "test": "kit/examples/widget-gallery-2/check.json",
-   "limit": "1 to 8 columns. Inline data images only in the examples.",
+   "limit": "1 to 8 columns. Inline data:image only (png, jpeg, gif, webp, avif, bmp), 1 MiB each and 4 MiB per render; remote images never load in a personal app.",
    "kind": "image_grid"
   },
   {
    "id": "widget.no_app_data",
    "group": "layout",
-   "name": "Panes: map, image, color, weather, date, calc",
+   "name": "Panes: image, color, weather, date, calc",
    "status": "not supported",
    "example": null,
-   "snippet": "(use a url action that opens Maps instead)",
+   "snippet": "(use table, detail, cards or chart; image_grid for pictures)",
    "test": "toolkit/test/launcher-rules.test.mjs",
-   "limit": "A personal app cannot show its own data in these panes: Bolt shows \"cannot show app data\". Use table, detail, cards or chart.",
+   "limit": "A personal app cannot show its own data in these panes: Bolt shows \"This app asks for ... pane, which cannot show app data\".",
    "kinds": [
-    "map",
     "image",
     "color",
     "weather",
     "date",
     "calc"
+   ]
+  },
+  {
+   "id": "widget.map",
+   "group": "layout",
+   "name": "Pane: map",
+   "status": "not supported",
+   "example": null,
+   "snippet": "(use a url action that opens the place in Maps)",
+   "test": "toolkit/test/launcher-rules.test.mjs",
+   "limit": "Draws the launcher own map, not your rows; any bind key is refused. No message is shown.",
+   "kinds": [
+    "map"
    ]
   },
   {
@@ -169,12 +181,12 @@
   {
    "id": "layout.list_widget",
    "group": "layout",
-   "name": "Left list: list, table, cards, detail",
-   "status": "supported",
+   "name": "presentation.widget (list, table, cards, detail)",
+   "status": "partial",
    "example": "kit/examples/portal-template",
    "snippet": "presentation:\n  widget: list",
    "test": "kit/examples/portal-template/check.json",
-   "limit": "presentation.widget is one of list, table, cards, detail."
+   "limit": "Only validated: it names the row layout and does not change the left list. With table, cards or detail and no right_widget the right panel opens empty (from the source, not run live). Use list."
   },
   {
    "id": "layout.views",
@@ -184,7 +196,7 @@
    "example": "kit/examples/acme-dash",
    "snippet": "\"views\": [{\"id\": \"tasks\", \"endpoint\": \"tasks\"}]",
    "test": "kit/examples/acme-dash/check.json",
-   "limit": "At most {rules:views.max} views including the overview; view ids match {rules:views.name_pattern}.",
+   "limit": "At most {rules:views.max} entries in presentation.views; the overview needs no entry (the engine uses 7 plus an overview entry); view ids match {rules:views.name_pattern}.",
    "also": [
     "pipeline-board"
    ]
@@ -197,7 +209,7 @@
    "example": "kit/examples/portal-template",
    "snippet": "{\"title\": \"Open tickets\", \"view\": \"tickets\", \"arg\": \"open\"}",
    "test": "kit/examples/portal-template/check.json",
-   "limit": "One Enter. A nav arg is one plain token matching {rules:nav_token_pattern}; no slash. A chain action (kind utility with target_chip) only pre-fills the next command and needs a second Enter: do not use it to drill."
+   "limit": "One Enter. A nav arg is one plain token matching {rules:nav_token_pattern}; no slash. A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. Use nav to drill."
   },
   {
    "id": "nav.back",
@@ -260,12 +272,12 @@
   {
    "id": "search.searchable",
    "group": "search",
-   "name": "Launcher filters rows as you type",
+   "name": "Rows are filtered as you type",
    "status": "supported",
    "example": "kit/examples/table-template",
-   "snippet": "\"app\": {\"searchable\": true}",
+   "snippet": "(nothing to set: Bolt always does this)",
    "test": "kit/examples/table-template/check.json",
-   "limit": "Set app.searchable to true; the launcher does the filtering on the rows shown."
+   "limit": "Bolt always filters the rows of the last run as you type: every term must be in the title or subtitle, and a Run row is added. presentation.searchable is accepted and does nothing."
   },
   {
    "id": "cache.fresh_stale",
@@ -338,9 +350,9 @@
    "name": "Footer button icon",
    "status": "supported",
    "example": null,
-   "snippet": "actions:\n  - { id: open, kind: url, label: Open, icon: globe, url_template: \"{{row.open_url}}\" }",
+   "snippet": "actions:\n  - { id: log, kind: composer, target: row, label: Copy log, icon: file-text, insert: \"{{row.copy_text}}\" }",
    "test": "toolkit/test/bolt-rules.test.mjs",
-   "limit": "Icon names are lowercase and case-sensitive, from the list in schema/bolt-rules.json (actions.icons); anything else is refused.",
+   "limit": "Icon names are lowercase and case-sensitive, from the list in schema/bolt-rules.json (actions.icons); anything else is refused at load. A url action never takes an icon: it always wears the open glyph.",
    "example_note": "no example yet; copy the snippet",
    "keys": [
     "action_icon"
@@ -610,6 +622,133 @@
    "snippet_note": true
   },
   {
+   "id": "rows.failure_channel",
+   "group": "rows",
+   "name": "Failure: exit code and stderr",
+   "status": "supported",
+   "example": null,
+   "snippet": "(print an error row and exit 0; write diagnostics to stderr)",
+   "test": "conformance/launcher-constants.json",
+   "limit": "A non-zero exit discards every printed row; the person sees `<chip> unavailable: exit code N:` and up to 2 KiB of stderr. From the source, not run live.",
+   "keys": [
+    "stderr_cut_bytes"
+   ],
+   "example_note": "see the kit error_row"
+  },
+  {
+   "id": "nav.binding",
+   "group": "navigation",
+   "name": "What nav needs to work",
+   "status": "supported",
+   "example": "kit/examples/portal-template",
+   "snippet": "view_arg: view   # bound to query.word(0)",
+   "test": "conformance/launcher-constants.json",
+   "limit": "view_arg bound to query.word(N) with N at most {rules:nav.word_max_index}; every query.word arg before it needs a one-token default (not -). Otherwise no row can drill, silently.",
+   "keys": [
+    "word_max_index"
+   ],
+   "example_keys": [
+    "view_arg"
+   ]
+  },
+  {
+   "id": "nav.keyboard",
+   "group": "navigation",
+   "name": "Back, Esc, Left and Right",
+   "status": "supported",
+   "example": "kit/examples/portal-template",
+   "snippet": "(automatic)",
+   "test": "conformance/launcher-constants.json",
+   "limit": "Esc and Left go Back, Right drills with the caret at the end, up to {rules:nav.stack_max} deep.",
+   "keys": [
+    "stack_max"
+   ],
+   "example_note": "automatic"
+  },
+  {
+   "id": "drill.cache",
+   "group": "navigation",
+   "name": "Recently shown lists are reused",
+   "status": "partial",
+   "example": null,
+   "snippet": "(automatic; give a Refresh row a distinct arg)",
+   "test": "conformance/launcher-constants.json",
+   "limit": "The launcher keeps the last {rules:cache.drill_entries} lists for 5 minutes by typed input, so a drill, Back or Refresh to a recent input may not run the script again. From the source, not verified live.",
+   "keys": [
+    "drill_ttl_ms"
+   ],
+   "example_note": "automatic"
+  },
+  {
+   "id": "runtime.vars",
+   "group": "api",
+   "name": "Command variables: limit, press, outname",
+   "status": "supported",
+   "example": null,
+   "snippet": "\"{{scripts_dir}}/app.py {{view}} {{arg}}\"",
+   "test": "conformance/launcher-constants.json",
+   "limit": "{{limit}} is always {rules:invoke.limit_var} and does not cap rows; {{press}} is the clicked run action id, else -; {{outname}} is for bundled apps only. A value that would begin an argument with - is refused except after --.",
+   "keys": [
+    "limit_var"
+   ],
+   "example_note": "see the engine app files"
+  },
+  {
+   "id": "rows.emits_file",
+   "group": "rows",
+   "name": "Rows that open as files",
+   "status": "supported",
+   "example": null,
+   "snippet": "emits: File (row path: ~/notes.txt)",
+   "test": "conformance/launcher-constants.json",
+   "limit": "Needs emits: File and a row path starting /, ~/ or a drive letter; a trailing slash is a folder; a UNC path is refused. From the source, not run live.",
+   "keys": [
+    "row_pane_kinds"
+   ],
+   "example_note": "no example yet"
+  },
+  {
+   "id": "actions.primary",
+   "group": "actions",
+   "name": "One action takes Enter (primary)",
+   "status": "supported",
+   "example": null,
+   "snippet": "actions:\n  - { id: open, kind: url, label: Open, primary: true, url_template: \"{{row.open_url}}\" }",
+   "test": "conformance/launcher-constants.json",
+   "limit": "At most one primary in the app file; it takes Enter on every row and the others go in the Tab menu.",
+   "keys": [
+    "scan_max"
+   ],
+   "example_note": "no example yet"
+  },
+  {
+   "id": "pane.chart_mixed",
+   "group": "panes",
+   "name": "Chart rows mixed with plain rows",
+   "status": "supported",
+   "example": "kit/examples/widget-gallery",
+   "snippet": "{\"kind\": \"chart\", \"mode\": \"list_data\", \"bind\": {\"type\": \"bar\", \"x\": \"label\", \"y\": \"value\", \"label\": \"label\"}}",
+   "test": "conformance/launcher-constants.json",
+   "limit": "A row without the y field is skipped, so one list can hold chart rows and plain rows. The unit is cut at {rules:widgets.chart_unit_cut} characters.",
+   "keys": [
+    "chart_unit_cut"
+   ]
+  },
+  {
+   "id": "run.isolation",
+   "group": "security",
+   "name": "What Bolt does limit about a run",
+   "status": "partial",
+   "example": null,
+   "snippet": "(automatic)",
+   "test": "conformance/launcher-constants.json",
+   "limit": "Each run gets a fresh private working folder (not the app folder) unless bridge.cwd is home, its process tree is killed on timeout, and there are CPU and process limits. Files and network are not confined. Bolt sets 6 variables: the 3 Python ones and GIT_CONFIG_NOSYSTEM, GIT_TERMINAL_PROMPT, GIT_OPTIONAL_LOCKS.",
+   "keys": [
+    "GIT_OPTIONAL_LOCKS"
+   ],
+   "example_note": "automatic"
+  },
+  {
    "id": "sample.mode",
    "group": "sample",
    "name": "Sample data: no key, no network",
@@ -647,7 +786,7 @@
    "example": null,
    "snippet": "permissions:\n  network:\n    - { host: api.example.com }",
    "test": "toolkit/test/cold-agent.test.mjs",
-   "limit": "Declared and shown at install and compared with what the files use (permissions_differ). Bolt does not enforce it at run time.",
+   "limit": "Declared and shown at install and compared with what the files use (permissions_differ). Bolt does not enforce it at run time (link host limits will start applying when the device wiring ships).",
    "example_note": "no example yet"
   },
   {

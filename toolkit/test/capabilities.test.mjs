@@ -34,7 +34,7 @@ test('a supported or partial row has an existing example (or says there is none)
 });
 
 test('a not-supported row names no example and does not claim a snippet that works', () => {
-	for (const r of caps.rows.filter((x) => x.status === 'not supported')) assert.ok(!r.example && /none|use a url action/.test(r.snippet), r.id);
+	for (const r of caps.rows.filter((x) => x.status === 'not supported')) assert.ok(!r.example && /none|use a url action|use table/.test(r.snippet), r.id);
 });
 
 // a JSON snippet taken from an example must really be in that example's config.json
@@ -61,9 +61,10 @@ test('widget kinds in the matrix equal the rules file', () => {
 	const kinds = caps.rows.flatMap((r) => (r.kind ? [r.kind] : r.kinds || []));
 	assert.deepEqual([...new Set(kinds)].sort(), [...RULES.widget_kinds].sort());
 	for (const r of caps.rows.filter((x) => x.kind)) { assert.equal(r.status, 'supported'); assert.ok(!RULES.no_app_data_kinds.includes(r.kind) && r.kind !== 'map', r.kind); }
-	const none = caps.rows.find((r) => r.id === 'widget.no_app_data');
-	assert.deepEqual([...none.kinds].sort(), [...RULES.no_app_data_kinds, 'map'].sort());
-	assert.equal(none.status, 'not supported');
+	const none = caps.rows.find((r) => r.id === 'widget.no_app_data'), map = caps.rows.find((r) => r.id === 'widget.map');
+	assert.deepEqual([...none.kinds].sort(), [...RULES.no_app_data_kinds].sort());
+	assert.deepEqual(map.kinds, ['map']);
+	assert.equal(none.status, 'not supported'); assert.equal(map.status, 'not supported');
 });
 
 test('limits come from the rules file: every placeholder resolves and the key limits are present', () => {
@@ -77,8 +78,8 @@ test('limits come from the rules file: every placeholder resolves and the key li
 });
 
 test('no row claims a sandbox, confinement or a widget that is not shipped', () => {
-	const bad = /\b(sandboxed|confined|pie|donut|heatmap|gauge)\b/i;
-	for (const r of caps.rows.filter((x) => x.status !== 'not supported')) assert.ok(!bad.test(r.name + ' ' + r.limit), r.id);
+	const bad = /\b(sandboxed|confined|pie|donut|heatmap|gauge)\b/i, strip = (x) => x.replace(/\bnot confined\b/gi, '');
+	for (const r of caps.rows.filter((x) => x.status !== 'not supported')) assert.ok(!bad.test(strip(r.name + ' ' + r.limit)), r.id);
 	assert.equal(caps.rows.find((r) => r.id === 'security.sandbox').status, 'not supported');
 	assert.equal(caps.rows.find((r) => r.id === 'platform.windows').status, 'partial');
 });

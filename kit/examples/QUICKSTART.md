@@ -42,7 +42,7 @@ Edit between `new` and `run`. After editing an engine app's `scripts/config.json
 4. Ship live: `api.fixture_default` is `false`. Tests use sample data: `"fixture": true` at the top of `check.json`.
 5. Use only the panes in the table below. Chart types are `line`, `bar` and `sparkline`. Others (pie, donut, area, heatmap, gauge) are not shipped.
 6. Icon names are case-sensitive and come from `kit/schema/icons.json` (footer-button icons from a shorter lowercase list).
-7. A nav arg is one plain token: no slash. Drill with `nav` (one Enter). A chain action (`kind: utility` with `target_chip`) only pre-fills the next command, so never use it to drill. A row's `pane` works when it names a view whose right pane has mode `selected_row` and kind entity_preview, detail, markdown, json_tree, chart, table or card; it is ignored for mode `list_data`, a view with no right pane, or kind diff, cards or image_grid.
+7. A nav arg is one plain token: no slash. Drill with `nav` (one Enter). A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. A row's `pane` works when it names a view whose right pane has mode `selected_row` and kind entity_preview, detail, markdown, json_tree, chart, table or card; it is ignored for mode `list_data`, a view with no right pane, or kind diff, cards or image_grid.
 8. A script app is tier 3: personal pack only, never the gallery. It runs as you. Install only code you have read.
 9. A list shows at most 50 rows; a failed call is never shown as zero; an old copy shows its age.
 10. Say what you did not verify. Today that is everything in real Bolt.
@@ -51,20 +51,21 @@ Edit between `new` and `run`. After editing an engine app's `scripts/config.json
 
 | Limit | Bolt | Kit or engine |
 |---|---|---|
-| Views per app, overview included | 8 | 8 (7 plus the overview) |
+| Entries in `presentation.views` | 8 (the overview needs no entry) | 8 (the engine uses 7 plus an overview entry) |
 | Footer buttons | 6 | 3 (Open and Copy count) |
 | Footer label | 40 kept, 14 shown | write 14 or fewer |
 | Rows in a list | 2000 | 200 in the row schema, 50 from the engine |
 | Script timeout | 1 to 60 s, default 10 | engine requests 10 s each, 14 s together |
 | Pane kinds with app data | card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid | same |
-| Panes that cannot show app data | map, image, color, weather, date, calc | do not use |
+| Panes that cannot show app data | image, color, weather, date, calc (Bolt shows "This app asks for ... pane, which cannot show app data") | do not use |
+| `map` pane | draws Bolt's own map, not your rows; any bind key is refused | do not use; open a place with a url action |
 | Footer action kinds | url, composer, utility, run | same |
 | App file `schema_version` | 1 or 2 (2 makes pane bind mistakes errors) | 1 |
 | Listing `bolt-app.json` `schema_version` | 1 | 1 |
-| Environment a script sees | HOME, PATH, USER, LOGNAME, LANG, TERM, TMPDIR, TZ, LC_*, XDG_*, SSL_CERT_FILE, SSL_CERT_DIR, REQUESTS_CA_BUNDLE, CURL_CA_BUNDLE, NODE_EXTRA_CA_CERTS; Bolt sets PYTHONNOUSERSITE, PYTHONDONTWRITEBYTECODE, PYTHONUNBUFFERED | no names containing TOKEN, KEY, SECRET, PASS, PWD, CRED, AUTH, PRIVATE, SESSION, COOKIE |
+| Environment a script sees | HOME, PATH, USER, LOGNAME, LANG, TERM, TMPDIR, TZ, LC_*, XDG_*, SSL_CERT_FILE, SSL_CERT_DIR, REQUESTS_CA_BUNDLE, CURL_CA_BUNDLE, NODE_EXTRA_CA_CERTS; Bolt sets PYTHONNOUSERSITE, PYTHONDONTWRITEBYTECODE, PYTHONUNBUFFERED, GIT_CONFIG_NOSYSTEM, GIT_TERMINAL_PROMPT, GIT_OPTIONAL_LOCKS | no names containing TOKEN, KEY, SECRET, PASS, PWD, CRED, AUTH, PRIVATE, SESSION, COOKIE |
 | Keys in API answers | Bolt does not scan them | the kit removes the key (as written, URL-encoded, hex, base64, any letter case), `user:password@` in addresses and credential-named query values (`token`, `api_key`, `sig`, `secret`...) from an answer before it is cached or shown |
 | What the kit cannot hide | | HTTP Basic base64 at another alignment, HTML entities, colon-separated hex, a key split across lines, a key held as a JSON number, a value URL-encoded twice; a key under 3 characters is refused |
-| Sandbox | not shipped | not shipped |
+| Sandbox | not shipped: a script runs as you, with your files and network. Bolt does give each run a fresh private working folder (not the app folder), kills its process tree on timeout, and sets CPU and process limits | not shipped |
 
 The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal to it.
 
@@ -83,6 +84,25 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 
 Written from the 0.1.181 source, not seen in a running 181. Anything that needs a newer Bolt is marked "newer than 181" where it appears; none is promised here (for example, an install that needs no Reload even for hand-saved files, or an in-place Remove confirmation, are newer than 181).
 
-## 6. Where things stand
+## 6. What Bolt does with your rows and runs
+
+From the Bolt 0.1.181 source; not run live unless stated. Tell the person what you could not prove.
+
+| Topic | What happens |
+|---|---|
+| Failure | A non-zero exit discards every row you printed. The person sees `<chip> unavailable: exit code N:` and up to 2 KiB of stderr. To show your own message, print an error row and exit 0; write diagnostics to stderr. |
+| Empty | With typed text and no rows Bolt shows "No results". A bare run with no rows shows nothing: print your own row. |
+| Typing | Rows of the last run stay; typing filters them (every term in the title or subtitle) and adds a `Run <app> with "..."` row. Always on; `presentation.searchable` does nothing. |
+| Drill cache | The launcher keeps the last 8 lists for 5 minutes by typed input, so a drill, Back or Refresh to a recent input may not run your script again. Not verified live. |
+| Nav needs | `view_arg` bound to `query.word(N)` with N at most 8, and every `query.word` arg before it needs a one-token default such as `none` (not `-`). Otherwise no row can drill, silently. |
+| Keys | Esc and Left go Back, Right drills (caret at the end), 16 deep. |
+| Variables | `{{limit}}` is always 24 and does not cap rows. `{{press}}` is the id of the clicked run action, else `-`. `{{outname}}` is for bundled apps only. A value that would begin an argument with `-` is refused, except after `--`. |
+| Files | `emits: File` plus a row `path` starting `/`, `~/` or a drive letter opens as a file (a trailing slash is a folder; a UNC path is refused). |
+| Detail pane | With no `bind.fields` it lists every key of the row, including `nav`, `actions` and `kpi_*`. Always give `fields`. |
+| Entity preview | `fields[].kind` is text, badge, chips, branch or diff; `tiles_above` draws only for a number. `primary: true` on one action takes Enter (at most one in the app file). A run action may carry an `icon`; a url action never does. |
+| Chart | A row without the `y` field is skipped, so one pane can mix chart rows and plain rows. |
+| Badges | In the list, tone `success`, `danger`, `warn` or `info` is coloured and any other tone is grey; at most 4 per row. `category` only re-selects the row after Back. |
+
+## 7. Where things stand
 
 Sample mode: `run --sample` and `check` need no key and no network. Live mode: put the key in the keychain or the `.env` file, then `run --live`. Not shipped: confinement of scripts, native MCP (a script can call one tool over stdio, tested only against a stand-in), Windows runs. The `permissions` block in an app file is shown at install and not enforced.

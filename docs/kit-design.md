@@ -31,7 +31,7 @@ Why: the same defects keep coming back when each app reimplements these things. 
 
 | Part | Fields | Rule |
 |---|---|---|
-| Row | `title` (required, 160), `subtitle` (200), `body` (markdown, 8000), `icon`, `pane`, `category`, `url` (http/https), `copy_text` | Free extra fields are scalars (string, number, boolean) a manifest binds as `{{row.x}}`. |
+| Row | `title` (required, 160), `subtitle` (200), `body` (markdown, 8000), `icon`, `pane`, `category` (Bolt uses it only to re-select the row after Back; it draws no group heading), `url` (http/https), `copy_text` | Free extra fields are scalars (string, number, boolean) a manifest binds as `{{row.x}}`. |
 | Tile | `kpi_label`, `kpi_value`, `kpi_unit` (4), `kpi_max`, `kpi_note`, `kpi_foot` (80), `kpi_badge` | `kpi_value` and `kpi_max` are a JSON number or `""`. A tile with a label but no number is invalid. |
 | Badges | `badges`: up to 4 of `{label, tone}` | |
 | Actions | `actions`: kinds `url`, `composer`, `utility`, `run`. A `url_template` must start with `http://` or `https://` and a literal host, so a placeholder never supplies the scheme or host | Footer count and label length: [the rules table](../kit/examples/QUICKSTART.md#4-the-rules-table) (the kit's own limit, below Bolt's); a row adds at most the kit limit minus `manifest_actions`. |
@@ -46,7 +46,7 @@ Pure standard library, Python 3.9+, no environment-driven behaviour. CI tests 3.
 
 | Area | API |
 |---|---|
-| Output | `emit(rows)` validates against the schema, prints compact ASCII JSON, exits without waiting for stray threads. An invalid payload prints one error row and exits 3. `validate_rows(rows)` returns the problems. |
+| Output | `emit(rows)` validates against the schema, prints compact ASCII JSON, exits without waiting for stray threads. An invalid payload prints one error row and exits 3. Under Bolt that row is never seen: a non-zero exit discards every printed row and the person sees `<chip> unavailable: exit code 3:` followed by whatever the script wrote to stderr. The row is what `check` and a terminal show. `validate_rows(rows)` returns the problems. |
 | Builders | `row` (with `badges`), `tile`, `back_row`, `refresh_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
 | Formatters | `rnd`, `fmt_num`, `fmt_pct`, `fmt_bytes`, `fmt_duration`, `fmt_count`, `fmt_time`. One rounding rule: `floor(x + 0.5)`. A missing value is the word `unknown`, never `0`. |
 | Text | `clean_text` (control, format, bidi, zero-width, tag, surrogate, private-use, line separators, blank fillers removed; stacked marks capped), `clean_lines`, `neutralise_braces`, `text`, `elide_end`, `elide_left`, `host_label`, `safe_text`, `safe_copy`, `copy_ok`. |

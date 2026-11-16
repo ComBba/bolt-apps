@@ -19,7 +19,7 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 | `lookup` | One word in, one detail card out | `endpoints`, `lookup` |
 
 ## `app`
-`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (true lets the launcher filter rows as you type), `timeout` (seconds, 1 to 60).
+`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (accepted and does nothing: Bolt always filters the rows of the last run as you type, matching the title and subtitle only), `timeout` (seconds, 1 to 60).
 
 ## `api` (views and lookup)
 `base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.

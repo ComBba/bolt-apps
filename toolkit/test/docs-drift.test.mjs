@@ -22,21 +22,24 @@ const sorted = (a) => [...a].sort();
 const QS = read('kit/examples/QUICKSTART.md');
 test('QUICKSTART.md stays small: a cold agent reads one short page', () => {
 	const words = QS.split(/\s+/).filter(Boolean).length, lines = QS.split('\n').length;
-	assert.ok(words <= 1500, `${words} words (budget 1500)`);
-	assert.ok(lines <= 130, `${lines} lines (budget 130)`);
+	// Budget raised from 1500 words and 130 lines to 2000 and 150 when section 6 (what Bolt does with rows and runs) was added from the
+	// launcher audit: authors hit those behaviours, and it is still one page.
+	assert.ok(words <= 2000, `${words} words (budget 2000)`);
+	assert.ok(lines <= 150, `${lines} lines (budget 150)`);
 	assert.ok((QS.match(/^\d+\. /gm) || []).length >= 10, 'ten hard rules');
 });
 
 test('the rules table in QUICKSTART.md equals schema/bolt-rules.json', () => {
 	const row = (label) => { const m = QS.split('\n').find((l) => l.startsWith(`| ${label}`)); assert.ok(m, `row ${label}`); return m.split('|').map((c) => c.trim()); };
 	const A = RULES.actions;
-	assert.equal(row('Views per app')[2], String(RULES.views.max));
+	assert.match(row('Entries in `presentation.views`')[2], new RegExp(`^${RULES.views.max} `));
 	assert.match(row('Footer buttons')[2], new RegExp(`^${A.footer_max_bolt}$`)); assert.match(row('Footer buttons')[3], new RegExp(`^${A.footer_max_kit} `));
 	assert.match(row('Footer label')[2], new RegExp(`${A.label_kept_bolt} kept, ${A.label_shown} shown`));
 	assert.match(row('Rows in a list')[2], new RegExp(`^${RULES.rows.bolt_max}$`)); assert.match(row('Rows in a list')[3], new RegExp(`${RULES.rows.kit_schema_max} .*${RULES.rows.engine_max}`));
 	assert.match(row('Script timeout')[2], new RegExp(`${RULES.timeouts.min_s} to ${RULES.timeouts.max_s} s, default ${RULES.timeouts.default_s}`));
 	assert.deepEqual(sorted(row('Pane kinds with app data')[2].split(', ')), sorted(RULES.widget_kinds.filter((k) => !RULES.no_app_data_kinds.includes(k) && k !== 'map')));
-	assert.deepEqual(sorted(row('Panes that cannot show app data')[2].split(', ')), sorted([...RULES.no_app_data_kinds, 'map']));
+	assert.deepEqual(sorted(row('Panes that cannot show app data')[2].split(' (')[0].split(', ')), sorted(RULES.no_app_data_kinds));
+	assert.match(row('`map` pane')[2], /own map/);
 	assert.deepEqual(row('Footer action kinds')[2].split(', '), A.kinds);
 	assert.match(row('App file `schema_version`')[2], new RegExp(`^${RULES.schema_versions.join(' or ')} `));
 	const env = row('Environment a script sees')[2];
@@ -44,7 +47,7 @@ test('the rules table in QUICKSTART.md equals schema/bolt-rules.json', () => {
 	for (const n of [...RULES.runner_env.ca_bundle, ...Object.keys(RULES.runner_env.fixed)]) assert.ok(env.includes(n), `env row lacks ${n}`);
 	for (const p of RULES.runner_env.allowlisted_prefixes) assert.ok(env.includes(p + '*'), `env row lacks ${p}*`);
 	for (const p of RULES.env.secret_name_parts) assert.ok(row('Environment a script sees')[3].includes(p), `secret part ${p}`);
-	assert.match(row('Sandbox')[2], /not shipped/);
+	assert.match(row('Sandbox')[2], /not shipped/); assert.match(row('Sandbox')[2], /private working folder/);
 	const cannot = row('What the kit cannot hide')[3];
 	for (const w of ['Basic base64', 'HTML entities', 'colon-separated hex', 'split across lines', 'JSON number', 'URL-encoded twice']) assert.ok(cannot.includes(w), `redaction limit missing: ${w}`);
 	const min = /^MIN_REDACT = (\d+)/m.exec(read('kit/python/bolt_app_kit/secrets.py'))[1];
@@ -176,7 +179,7 @@ test('no doc says 181 cannot do per-row panes or one-Enter drilling; the rules s
 	const wrong = /(cannot|can't|does not|doesn't|no) (do |draw |show |support )?(list[- ]view )?(per-row|row) panes?|(cannot|can't|does not|doesn't) (do )?(one-Enter|drill)/i;
 	for (const f of DOCS) read(f).split('\n').forEach((l, i) => assert.ok(!wrong.test(l), `${f}:${i + 1} ${l.slice(0, 140)}`));
 	const qs = read('kit/examples/QUICKSTART.md');
-	assert.match(qs, /Drill with `nav` \(one Enter\)/); assert.match(qs, /only pre-fills the next command/);
+	assert.match(qs, /Drill with `nav` \(one Enter\)/); assert.match(qs, /only pre-fills the next command/); assert.match(qs, /same app written in the app file runs directly/);
 	assert.match(qs, /mode `selected_row` and kind entity_preview, detail, markdown, json_tree, chart, table or card/);
 	assert.match(qs, /ignored for mode `list_data`, a view with no right pane, or kind diff, cards or image_grid/);
 });

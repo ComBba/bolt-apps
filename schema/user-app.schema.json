@@ -1526,7 +1526,8 @@
           "type": "string"
         },
         "searchable": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Accepted and does nothing: Bolt always filters the rows of the last run as you type (title and subtitle)."
         },
         "view_arg": {
           "type": "string",
@@ -1593,23 +1594,23 @@
                 },
                 {
                   "const": "image",
-                  "description": "Bolt shows \"This app asks for a image pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart (image_grid for pictures). A personal app should not use it (the launcher NO_APP_DATA)."
+                  "description": "Bolt shows \"This app asks for an image pane, which cannot show app data. Use image_grid for pictures.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
                 },
                 {
                   "const": "calc",
-                  "description": "Bolt shows \"This app asks for a calc pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)."
+                  "description": "Bolt shows \"This app asks for a calc pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
                 },
                 {
                   "const": "color",
-                  "description": "Bolt shows \"This app asks for a color pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)."
+                  "description": "Bolt shows \"This app asks for a color pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
                 },
                 {
                   "const": "weather",
-                  "description": "Bolt shows \"This app asks for a weather pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)."
+                  "description": "Bolt shows \"This app asks for a weather pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
                 },
                 {
                   "const": "date",
-                  "description": "Bolt shows \"This app asks for a date pane, which cannot show app data\" instead of your rows. The pane reads its own state and ignores bind. Use table, detail, cards or chart. A personal app should not use it (the launcher NO_APP_DATA)."
+                  "description": "Bolt shows \"This app asks for a date pane, which cannot show app data. Use table, detail, cards or chart.\" instead of your rows. The pane reads its own state and ignores bind. A personal app must not use it."
                 },
                 {
                   "const": "markdown",
