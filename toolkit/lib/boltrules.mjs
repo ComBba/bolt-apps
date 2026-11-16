@@ -234,7 +234,7 @@ export function layoutProblems(files) {
 	for (const f of files) {
 		const parts = f.split('/');
 		if (parts.length > depth + 1) out.push({ code: 'script_depth', message: `scripts/${f} is nested more than ${depth} folders deep; the launcher refuses it` });
-		if (parts.some((p) => p === '..' || p === '.' || p === '')) out.push({ code: 'script_path', message: `scripts/${f} has a "." or ".." part; the launcher refuses it` });
+		if (parts.some((p) => p === '..' || p === '.' || p === '' || p.includes('..'))) out.push({ code: 'script_path', message: `scripts/${f} has a "." part or ".." inside a name; the launcher refuses it` });
 		const l = f.toLowerCase(); if (lower.has(l) && lower.get(l) !== f) out.push({ code: 'script_case_clash', message: `scripts/${lower.get(l)} and scripts/${f} differ only in letter case; one would replace the other on macOS and Windows` }); lower.set(l, f);
 	}
 	const set = new Set(files.map((f) => f.toLowerCase()));
@@ -243,8 +243,9 @@ export function layoutProblems(files) {
 }
 
 // ---- 11: script namespacing. Bolt installs every pack's scripts into ONE shared folder and refuses a file whose path already belongs to another
-// installed pack (owned_by_other). App ids are unique, so every file an app ships starts with "<app id>__" (two ids can never give the same name:
-// an id holds no underscore, so the first "__" always ends the id). An app with a bare bolt_app_kit.py or config.json collides with the next app.
+// installed pack (owned_by_other). Every file an app ships starts with "<app id>__" (an id holds no underscore, so the first "__" always ends the id, and two
+// different ids can never give the same name). Bolt tells apps apart by id: two apps with the same id replace each other, and two authors who both ship
+// `weather` still collide, so the id must be distinctive. A bare bolt_app_kit.py or config.json collides with the next app.
 export const nsPrefix = (id) => `${id}__`;
 export function namespaceProblems(paths, id) {
 	const out = [], known = typeof id === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(id);
@@ -253,7 +254,7 @@ export function namespaceProblems(paths, id) {
 	for (const f of paths) {
 		const want = known ? nsPrefix(id) : null, m = /^([a-z0-9][a-z0-9-]*)__./.exec(first(f));
 		const ok = known ? first(f).startsWith(want) && first(f).length > want.length : !!m && prefixes.size === 1;
-		if (!ok) out.push({ code: 'script_not_namespaced', file: f, message: `scripts/${f} is not named for this app. Bolt keeps every installed app's scripts in one shared folder and refuses an app whose script has the same name as another app's (error code owned_by_other), so a shared name such as ${first(f)} would stop a second app installing. Name it ${known ? nsPrefix(id) : '<app id>__'}${known ? '' : first(f)}${known ? first(f).replace(/^.*?__/, '') : ''}` });
+		if (!ok) out.push({ code: 'script_not_namespaced', file: f, message: `scripts/${f} is not named for this app. Bolt keeps every installed app's scripts in one shared folder and refuses an app whose script has the same name as another app's (error code owned_by_other), so a shared name such as ${first(f)} would stop a second app installing. Fix: run bolt-apps migrate <app folder> (it renames every script to ${known ? nsPrefix(id) : '<app id>__'}<name> and fixes each reference), or rename by hand and use the same names after {{scripts_dir}}/` });
 	}
 	return out;
 }

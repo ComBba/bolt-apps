@@ -54,7 +54,8 @@ export function newFromTemplate(template, id, root) {
 	if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) die('the id is lowercase letters, digits and hyphens, at most 64 characters, for example my-tool');
 	const dir = path.join(root, id);
 	if (fs.existsSync(dir) || (() => { try { fs.lstatSync(dir); return true; } catch { return false; } })()) die(`${q(dir)} already exists (or is a link). Choose another id, or delete it first`);
-	fs.cpSync(src, dir, { recursive: true, filter: (f) => !/__pycache__|\.boltpack$|[\\/]golden([\\/]|$)/.test(f) });
+	const fail = (m) => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* nothing more to do */ } die(m); };   // never leave a half-made folder behind
+	try { fs.cpSync(src, dir, { recursive: true, filter: (f) => !/__pycache__|\.boltpack$|[\\/]golden([\\/]|$)/.test(f) }); } catch (e) { fail(`could not copy the template: ${e.message}`); }
 	const chip = id.replace(/[^a-z0-9]/g, '').slice(0, 20) || id.slice(0, 20);
 	fs.rmSync(path.join(dir, 'golden'), { recursive: true, force: true });   // the template's goldens belong to the template; check --update-golden writes new ones
 	const title = id.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
@@ -65,19 +66,21 @@ export function newFromTemplate(template, id, root) {
 	try { const y = fs.readdirSync(tud).find((f) => /\.ya?ml$/.test(f)); const root = parseYaml(fs.readFileSync(path.join(tud, y), 'utf8')); oldChip = str(get(root, 'chip')?.value); oldTitle = str(get(root, 'title')?.value); } catch { /* no readable app file: only the id is rewritten */ }
 	// Bolt keeps every installed app's scripts in ONE shared folder, so each script file is named <app id>__<name>. A copy renames them all.
 	const sd0 = path.join(dir, 'scripts');
-	if (fs.existsSync(sd0)) for (const f of fs.readdirSync(sd0)) if (f.startsWith(`${template}__`)) fs.renameSync(path.join(sd0, f), path.join(sd0, `${id}__${f.slice(template.length + 2)}`));
+	if (template !== id && fs.existsSync(sd0)) for (const f of fs.readdirSync(sd0)) if (f.startsWith(`${template}__`)) fs.renameSync(path.join(sd0, f), path.join(sd0, `${id}__${f.slice(template.length + 2)}`));
 	const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	// Words the template used for itself, in every text file of the copy: its file prefix, "=chip" (what the person types), its id and its title as a whole word. A bare chip is not replaced
 	// (it can be an ordinary word, such as branch); only the =chip form is.
-	const reword = (s) => {
-		let o = s.split(`${template}__`).join(`${id}__`);
-		if (oldChip && oldChip !== chip) o = o.replace(new RegExp(`=${esc(oldChip)}(?![A-Za-z0-9_-])`, 'g'), `=${chip}`);
-		if (template !== id) o = o.replace(new RegExp(`(?<![A-Za-z0-9_-])${esc(template)}(?![A-Za-z0-9_]|-[a-z])`, 'g'), id);
-		if (oldTitle && oldTitle !== title) o = o.replace(new RegExp(`(?<![A-Za-z0-9_-])${esc(oldTitle)}(?![A-Za-z0-9_-])`, 'g'), title);
-		return o;
-	};
+	// ONE pass over each text, longest meaning first, so a new text is never rewritten again (an id such as <template>-2 contains the template's own name).
+	const parts = [`(?<![A-Za-z0-9_-])${esc(template)}__`, `(?<![A-Za-z0-9_-])${esc(template)}(?![A-Za-z0-9_]|-(?!\\d+\\.\\d+\\.\\d+\\.boltpack)[A-Za-z0-9])`];
+	if (oldChip && oldChip !== chip) parts.push(`=${esc(oldChip)}(?![A-Za-z0-9_-])`);
+	if (oldTitle && oldTitle !== title) parts.push(`(?<![A-Za-z0-9_-])${esc(oldTitle)}(?![A-Za-z0-9_-])`);
+	const oneRe = new RegExp(parts.map((x) => `(${x})`).join('|'), 'g');
+	const reword = (s) => (template === id ? s : s.replace(oneRe, (m, g1, g2, g3, g4) => (g1 ? `${id}__` : g2 ? id : g3 ? `=${chip}` : title)));
 	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = reword(s); if (r !== s) fs.writeFileSync(f, r); } } };
+	// the template's README runs its commands from the repo root; the copy lives elsewhere, so they run from inside the folder
+	edit('README.md', (s) => s.split('node toolkit/bin/bolt-apps.mjs').join('bolt-apps').split(`kit/examples/${template}`).join('.'));
 	walkText(dir);
+	if (fs.existsSync(sd0)) { const longest = fs.readdirSync(sd0).map((f) => `manifests/scripts/${f}`).filter((n) => n.length > 100)[0]; if (longest) fail(`the id "${id}" is too long: ${longest.slice(10)} would not fit in a pack (a file path may be at most 100 characters and every file starts with <app id>__). Choose a shorter id.`); }
 	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; return JSON.stringify(j, null, 2) + '\n'; });
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; } return JSON.stringify(j, null, 2) + '\n'; });
@@ -87,12 +90,12 @@ export function newFromTemplate(template, id, root) {
 	const ud = path.join(dir, 'utilities');
 	if (emitter) {
 		const r = spawnSync('python3', [`scripts/${emitter}`, '--emit-yaml'], { cwd: dir, encoding: 'utf8' });
-		if (r.status !== 0) die(`could not generate the app file: ${r.stderr.slice(-300)}`);
+		if (r.status !== 0) fail(`could not generate the app file: ${String(r.stderr || (r.error && r.error.message) || 'python3 was not found').slice(-300)}. Install Python 3.9 or newer`);
 		for (const y of fs.readdirSync(ud)) fs.rmSync(path.join(ud, y));
 		fs.writeFileSync(path.join(ud, `${id}.yaml`), r.stdout);
 	} else if (fs.existsSync(ud)) for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
 	// the vendored kit is named for its app: re-vendor it under the new name (the template's lock and file name carry the old id)
-	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { die(`could not vendor the kit: ${e.message}`); } }
+	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { fail(`could not vendor the kit: ${e.message}`); } }
 	let note = '';
 	if (fs.existsSync(path.join(dir, 'check.json'))) {   // goldens were not copied: record them for the new app and show that it passes
 		const r = bolt(['check', dir, '--update-golden']);

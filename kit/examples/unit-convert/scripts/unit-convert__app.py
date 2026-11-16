@@ -20,9 +20,11 @@ if kit is None and _os.path.exists(_spec.origin):
     kit = _ilu.module_from_spec(_spec)
     _sys.modules["bolt_app_kit"] = kit
     _spec.loader.exec_module(kit)
-elif kit is None:   # no vendored single file: a bolt_app_kit package folder beside the script
+elif kit is None and _os.path.isdir(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "bolt_app_kit")):   # a bolt_app_kit package folder beside the script
     _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
     import bolt_app_kit as kit
+elif kit is None:
+    raise SystemExit("script files must be named <app id>__<name>: this one is %s and %s was not found beside it. Rename the files back (bolt-apps migrate <folder> does it), and do not run the script through a link." % (_SELF, _PFX + "bolt_app_kit.py"))
 
 import decimal
 import json

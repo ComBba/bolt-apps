@@ -32,7 +32,7 @@ export const FIXES = {
 	entry_kind_skipped: 'Dropping a pack on the launcher installs User Apps and scripts only. Install snippets and search engines from Bolt Apps instead.',
 	entry_kind_unknown: 'Bolt does not install this kind of file from a pack. Remove it from the app folder.',
 	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with bolt-apps pack.',
-	script_not_namespaced: 'Rename the file to <app id>__<name> (for example pulse-feed__engine.py), and write the same name after {{scripts_dir}}/ in the app file. Every app shares one scripts folder, so a bare name like bolt_app_kit.py or config.json stops a second app installing. bolt-apps new does this for you; for the kit run bolt-apps kit vendor --flat <app>.',
+	script_not_namespaced: 'Rename the file to <app id>__<name> (for example pulse-feed__engine.py), and write the same name after {{scripts_dir}}/ in the app file. Every app shares one scripts folder, so a bare name like bolt_app_kit.py or config.json stops a second app installing. For an app made before this rule run bolt-apps migrate <app folder>; bolt-apps new does it for new apps.',
 	description_chip_mismatch: 'Change the description (or placeholder_examples) so the =word it tells the person to type is this app\'s chip, or remove the =word.',
 	script_depth: 'Use at most 8 folder levels under scripts/.',
 	script_path: 'Remove the . or .. part from the script path.',
@@ -117,7 +117,7 @@ export const FIXES = {
 	right_widget_bind_unread: 'Remove the bind key: the map, image, calc, color, weather and date panes read nothing from bind. For a chart, type is line, bar or sparkline.',
 	run_action_template: 'Give the run action a fixed query_template with no {{ }} (for example refresh), or remove the action.',
 	script_too_large: 'Bolt hashes a script only up to 2 MB and will not run an app that names a larger file. Keep scripts small; put big data outside the app.',
-	helper_not_hashed: 'Name the file in the command (for example python3 {{scripts_dir}}/engine.py {{scripts_dir}}/config.json). Bolt\'s approval hash covers only the manifest and the scripts named as {{scripts_dir}}/<file>, so an unnamed helper can change without asking again.',
+	helper_not_hashed: 'Name the file in the command (for example python3 {{scripts_dir}}/my-app__engine.py {{scripts_dir}}/my-app__config.json). Bolt\'s approval hash covers only the manifest and the scripts named as {{scripts_dir}}/<file>, so an unnamed helper can change without asking again.',
 	pack_duplicate_entry: 'The archive lists the same file name twice. Build the pack again with bolt-apps pack.',
 };
 const fixFor = (code) => FIXES[code] || 'See the message.';

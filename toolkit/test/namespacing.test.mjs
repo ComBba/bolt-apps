@@ -42,7 +42,7 @@ test('every public example ships only files named for its own app id', () => {
 	assert.ok(examples.length >= 21, `expected all 21 examples, found ${examples.length}`);
 });
 
-test('any two public examples are pairwise disjoint (this is the owned_by_other the founder hit)', () => {
+test('any two public examples are pairwise disjoint (Bolt would refuse the second install with owned_by_other)', () => {
 	const out = tmp('ns-pairs-');
 	const sets = examples.map((n) => [n, installedScripts(packOf(path.join(EX, n), path.join(out, `${n}.boltpack`)))]);
 	let pairs = 0;
@@ -86,7 +86,7 @@ test('a copy made with `new` keeps none of the template\'s chip, id or title in 
 		for (const f of files) {
 			const text = fs.readFileSync(f, 'utf8'), rel = path.relative(path.join(d, id), f);
 			if (oldChip !== newChip) assert.ok(!new RegExp(`=${oldChip}(?![A-Za-z0-9_-])`).test(text), `${t}: ${rel} still tells the person to type =${oldChip}`);
-			assert.ok(!new RegExp(`(?<![A-Za-z0-9_-])${t}(?![A-Za-z0-9_]|-[a-z])`).test(text) || /README\.md$/.test(rel) === false, `${t}: ${rel} still names the template ${t}`);
+			assert.ok(!new RegExp(`(?<![A-Za-z0-9_-])${t}(?![A-Za-z0-9_]|-[A-Za-z0-9])`).test(text) || /README\.md$/.test(rel) === false, `${t}: ${rel} still names the template ${t}`);
 			assert.ok(!text.includes(`${t}__`), `${t}: ${rel} still has the template's file prefix`);
 		}
 		const lint = cli(home, d, 'lint', path.join(d, id), '--personal'); assert.equal(lint.status, 0, lint.stdout);
@@ -145,4 +145,73 @@ test('"Bolt said X, do Y": every code has a plain fix, and the table for the doc
 
 test('docs/verify-rules.md holds the same "Bolt said X, do Y" table the toolkit prints', () => {
 	assert.ok(fs.readFileSync(path.join(REPO, 'docs', 'verify-rules.md'), 'utf8').includes(markdownTable()));
+});
+
+test('`new` with an id that contains the template name (X-2, X-2-a, X itself, a prefix, a suffix) never doubles a name', () => {
+	const d = tmp('ns-ids-'), home = tmp('ns-home-');
+	for (const id of ['script-template-2', 'script-template-2-a', 'script-template', 'script', 'template', 'x-script-template']) {
+		const r = cli(home, d, 'new', 'script-template', id, '--dir', d); assert.equal(r.status, 0, `${id}\n${r.stdout}${r.stderr}`);
+		const files = fs.readdirSync(path.join(d, id, 'scripts'));
+		assert.ok(files.length && files.every((f) => f.startsWith(`${id}__`) && !f.slice(id.length + 2).includes('__')), `${id}: ${files}`);
+		const l = cli(home, d, 'lint', path.join(d, id), '--personal'); assert.equal(l.status, 0, `${id}\n${l.stdout}`);
+		for (const f of fs.readdirSync(path.join(d, id), { recursive: true })) { const p = path.join(d, id, f); if (fs.statSync(p).isFile() && /\.(md|json|yaml)$/.test(f) && !/fixtures\.json$/.test(f) && !f.includes('golden')) assert.ok(!new RegExp(`${id}-\\d+__|${id}-${id}`).test(fs.readFileSync(p, 'utf8')), `${id}: ${f}`); }
+	}
+});
+
+test('`new` removes the half-made folder when it fails (no python to generate the app file)', () => {
+	const d = tmp('ns-fail-'), id = 'half-made';
+	const r = spawnSync(process.execPath, [CLI, 'new', 'portal-template', id, '--dir', d], { encoding: 'utf8', env: { HOME: d, PATH: '/nonexistent' } });
+	assert.notEqual(r.status, 0); assert.match(r.stderr, /could not generate/);
+	assert.ok(!fs.existsSync(path.join(d, id)), 'no half-made folder is left');
+});
+
+test('a pack path over 100 characters is refused by lint with the plain fix', () => {
+	const d = tmp('ns-long-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'longer', '--dir', d).status, 0);
+	fs.writeFileSync(path.join(d, 'longer', 'scripts', `longer__${'x'.repeat(80)}.py`), 'x');
+	const l = cli(home, d, 'lint', path.join(d, 'longer'), '--personal'); assert.equal(l.status, 1); assert.match(l.stdout, /too long for a pack/); assert.match(l.stdout, /shorten the file name or the app id/);
+});
+
+test('lint refuses ".." inside a script name (the launcher refuses any path part containing ..)', () => {
+	const d = tmp('ns-dots-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'dots', '--dir', d).status, 0);
+	fs.writeFileSync(path.join(d, 'dots', 'scripts', 'dots__a..b.py'), 'x');
+	const l = cli(home, d, 'lint', path.join(d, 'dots'), '--personal'); assert.equal(l.status, 1); assert.match(l.stdout, /script_path/);
+});
+
+test('a script run under another name says what is wrong in one sentence, not a traceback', () => {
+	const d = tmp('ns-rename-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'renamed', '--dir', d).status, 0);
+	const sd = path.join(d, 'renamed', 'scripts'); fs.renameSync(path.join(sd, 'renamed__app.py'), path.join(sd, 'app.py'));
+	const r = spawnSync('/usr/bin/python3', ['-I', path.join(sd, 'app.py')], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin' } });
+	assert.notEqual(r.status, 0); assert.match(r.stderr, /script files must be named <app id>__<name>/); assert.doesNotMatch(r.stderr, /Traceback|ModuleNotFoundError/);
+});
+
+// An app laid out the old way, taken from this repo's history, comes across with migrate and then lints, checks and packs clean.
+test('migrate: an old-layout example (from git history) is renamed, its references fixed, and it passes lint, check and pack', (t) => {
+	const old = tmp('ns-old-'); const ar = spawnSync('sh', ['-c', `git -C "${REPO}" archive 88ee8b1 kit/examples/pulse-feed kit/examples/portal-template | tar -x -C "${old}"`], { encoding: 'utf8' });
+	if (ar.status !== 0) return t.skip('the repo history before the namespacing change is not available (shallow clone)');
+	const home = tmp('ns-home-');
+	for (const a of ['pulse-feed', 'portal-template']) {
+		const dir = path.join(old, 'kit', 'examples', a);
+		const before = cli(home, old, 'lint', dir, '--personal'); assert.equal(before.status, 1); assert.match(before.stdout, /script_not_namespaced/); assert.match(before.stdout, /bolt-apps migrate/);
+		const dry = cli(home, old, 'migrate', dir, '--dry-run'); assert.equal(dry.status, 0); assert.ok(fs.existsSync(path.join(dir, 'scripts', 'bolt_app_kit.py')), 'dry run changes nothing');
+		const m = cli(home, old, 'migrate', dir); assert.equal(m.status, 0, m.stdout + m.stderr);
+		assert.ok(fs.readdirSync(path.join(dir, 'scripts')).every((f) => f.startsWith(`${a}__`)));
+		assert.equal(cli(home, old, 'lint', dir, '--personal').status, 0);
+		const c = cli(home, old, 'check', dir); assert.equal(c.status, 0, c.stdout);
+		packOf(dir, path.join(old, `${a}.boltpack`));
+		assert.match(cli(home, old, 'migrate', dir).stdout, /Nothing to do/);
+	}
+	// a conflict refuses and changes nothing
+	const d2 = path.join(old, 'conflict'); fs.cpSync(path.join(EX, 'script-template'), d2, { recursive: true });
+	const b = JSON.parse(fs.readFileSync(path.join(d2, 'bolt-app.json'), 'utf8')); b.id = 'conflict'; fs.writeFileSync(path.join(d2, 'bolt-app.json'), JSON.stringify(b));
+	fs.writeFileSync(path.join(d2, 'scripts', 'conflict__config.json'), '{}');
+	const x = cli(home, old, 'migrate', d2); assert.equal(x.status, 1); assert.match(x.stderr, /already exists/);
+});
+
+test('kit vendor --flat on an old-layout app gives a sentence that points at migrate, not a stack trace', (t) => {
+	const old = tmp('ns-oldkit-'); if (spawnSync('sh', ['-c', `git -C "${REPO}" archive 88ee8b1 kit/examples/system-glance | tar -x -C "${old}"`]).status !== 0) return t.skip('no history');
+	const r = cli(tmp('ns-home-'), old, 'kit', 'vendor', '--flat', path.join(old, 'kit', 'examples', 'system-glance'));
+	assert.notEqual(r.status, 0); assert.match(r.stderr, /bolt-apps migrate/); assert.doesNotMatch(r.stderr, /\n\s+at /);
 });

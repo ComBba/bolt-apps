@@ -1,5 +1,5 @@
 // "Bolt said X, do Y": every refusal Bolt's installer and loader can give a personal pack, with the fix in plain words. Read from the installer's own
-// messages (pack install and pack check); `code` is the short failure code Bolt logs and shows for support. A test keeps this table and docs/QUICKSTART.md equal.
+// messages (pack install and pack check); `code` is the short failure code Bolt logs and shows for support. A test keeps this table and docs/verify-rules.md equal.
 export const BOLT_SAYS = [
 	['same_or_older_version', 'version X is already installed, and a pack is only replaced by a newer version', 'Run bolt-apps ship again: it picks a higher version by itself. If you passed --version, use a higher number than the one installed.'],
 	['version_unreadable', 'it cannot tell whether this is newer than the installed version', 'A version is numbers with dots, such as 1.0.5. Run bolt-apps ship without --version.'],

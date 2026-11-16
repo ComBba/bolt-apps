@@ -49,7 +49,7 @@ repository.
 program or a script for themselves, do not tell them it is impossible and do not hand them a
 tar.gz. Build it outside `apps/` and run `bolt-apps lint <folder> --personal`, then
 `bolt-apps pack <folder> --personal`. Rules Bolt enforces on such a pack: scripts are single
-files directly in `scripts/`, each named `<app id>__<name>` (every installed app shares ONE scripts folder, and Bolt refuses a file another app already owns, `owned_by_other`; the kit is the single file `scripts/<app id>__bolt_app_kit.py`), with letters,
+files directly in `scripts/`, each named `<app id>__<name>` (every installed app shares ONE scripts folder, and Bolt refuses a file another app already owns, `owned_by_other`; the kit is the single file `scripts/<app id>__bolt_app_kit.py`; pick a distinctive app id, because Bolt tells apps apart by id and two authors who both ship `weather` still collide; an app made before this rule is fixed with `bolt-apps migrate <folder>`), with letters,
 digits, `.`, `_` and `-`; every `{{scripts_dir}}/<name>` in the app file must exist; `runtime`
 is `transform`, `bridge` or `http_local`; action `kind` is `url`, `composer`, `utility` or
 `run`. Write the app YAML in plain form: bare keys with the colon touching them, values on one line (quoted or plain, `\"` and `\\` the only escapes), block lists and maps indented with spaces, no anchors, aliases, tags, block scalars (`|` `>`), duplicate keys or tabs. The tools read only that form; anything else is reported as `yaml_unreadable_here` and its tier as unknown. The person installs it by dropping the `.boltpack` on the Bolt launcher or Bolt Apps

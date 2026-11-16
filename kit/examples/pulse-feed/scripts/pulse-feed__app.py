@@ -7,7 +7,7 @@ What it shows, in code you can read top to bottom:
   - a tile row on top ("Trending: 30 stories"), then one row per story with a trend icon and an open-link arrow
   - a preview pane per story (SOURCE, AUTHOR, AGE, SCORE and a markdown body with a safety note)
   - footer buttons: Open post (a link), Copy quote (into the composer), Narrow (runs this app again with a topic)
-  - sample mode: BOLT_APP_FIXTURE=1 reads scripts/fixtures.json, no network (this is what `bolt-apps check` runs)
+  - sample mode: BOLT_APP_FIXTURE=1 reads scripts/<app id>__fixtures.json, no network (this is what `bolt-apps check` runs)
 No key is needed. Both APIs are free and public. Everything the person sees goes through kit rows."""
 import os as _os
 import sys as _sys
@@ -22,9 +22,11 @@ if kit is None and _os.path.exists(_spec.origin):
     kit = _ilu.module_from_spec(_spec)
     _sys.modules["bolt_app_kit"] = kit
     _spec.loader.exec_module(kit)
-elif kit is None:   # no vendored single file: a bolt_app_kit package folder beside the script
+elif kit is None and _os.path.isdir(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "bolt_app_kit")):   # a bolt_app_kit package folder beside the script
     _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
     import bolt_app_kit as kit
+elif kit is None:
+    raise SystemExit("script files must be named <app id>__<name>: this one is %s and %s was not found beside it. Rename the files back (bolt-apps migrate <folder> does it), and do not run the script through a link." % (_SELF, _PFX + "bolt_app_kit.py"))
 
 import concurrent.futures as cf
 import html

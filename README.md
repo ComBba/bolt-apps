@@ -83,7 +83,7 @@ For apps that run a script (not accepted in the gallery), the [authoring kit](ki
 ### A rich app for a web API, in minutes
 
 Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
-[`kit/examples/portal-template`](kit/examples/portal-template), make a copy with `bolt-apps new` (it renames every file for your app), change data in
+[`kit/examples/portal-template`](kit/examples/portal-template), make a copy with `bolt-apps new` (it renames every file for your app; pick a distinctive app id, since two authors who both ship `weather` still collide), change data in
 `scripts/my-app__config.json` and `scripts/my-app__fixtures.json`, generate the YAML, then check and pack it for yourself:
 
 ```

@@ -18,6 +18,7 @@ import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUs
 import { iconProblem, chipMismatch } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
 import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor } from '../lib/workflow.mjs';
+import { migrate } from '../lib/migrate.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
@@ -57,7 +58,7 @@ export function lintApp(dir, opts = {}) {
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
 					else if (f.isDirectory()) walk(r);
 					else if (!f.isFile()) E('script_not_plain', `scripts/${r} is not a plain file (a folder-like, device or pipe entry). Bolt refuses it ("is not a plain file")`, `scripts/${r}`);
-					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes)', `scripts/${r}`);
+					else if (`manifests/scripts/${r}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/scripts/<name> must be at most 100 bytes). Every script starts with <app id>__, so a long id leaves little room: shorten the file name or the app id (new refuses such an id at the start)', `scripts/${r}`);
 					else if (!r.split('/').every(plainName)) E('script_name', 'a script name may use only letters, digits, . _ and -, and may not start or end with a dot (Bolt refuses the whole pack otherwise)', `scripts/${r}`);
 					else { scripts.push(r); try { sizes[r] = fs.statSync(path.join(dir, 'scripts', r)).size; } catch { /* listed above */ } }
 				}
@@ -411,6 +412,7 @@ const HELP = `bolt-apps: author toolkit for Bolt Apps
   lint [path] [--personal] [--json]                       offline shape checks (--personal: your own tier 3 or script app)
   check <app-folder> [--os macos|linux|windows] [--case text] [--update-golden] [--json]
                                                           run a script app's check.json cases against stubbed commands and goldens
+  migrate <app-folder> [--dry-run]                        rename an older app's scripts to <app id>__<name> and fix every reference
   kit vendor [--flat] <app-folder>                        copy the current bolt_app_kit into an app with a check.json
   keygen [--out file]                                     make your signing key (default ~/.bolt-apps/key.pem); run once before the first pack
   pack <app-folder> [--key file] [--out file] [--version X] [--notes text] [--personal]
@@ -437,10 +439,22 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 	const cmdKit = (args) => {
 		const target = args.slice(1).find((x) => !x.startsWith('--'));
 		if (args[0] !== 'vendor' || !target || !fs.existsSync(path.join(target, 'check.json'))) die('usage: bolt-apps kit vendor [--flat] <app-folder with check.json>');
-		const { dest, lock } = vendorKit(target, { flat: args.includes('--flat') });
+		let dest, lock; try { ({ dest, lock } = vendorKit(target, { flat: args.includes('--flat') })); } catch (e) { die(e.message); }
 		console.log(`vendored ${lock.name} ${lock.version} (sha256 ${lock.sha256.slice(0, 16)}...) into ${dest}`);
 	};
-	const cmds = { check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify, run: (a) => runApp(a), ship: (a) => ship(a), doctor: (a) => doctor(a) };
+	const cmdMigrate = (args) => {
+		const target = args.find((x) => !x.startsWith('--'));
+		if (!target || !fs.existsSync(path.join(target, 'bolt-app.json'))) die('usage: bolt-apps migrate <app-folder> [--dry-run]');
+		const dry = args.includes('--dry-run'), r = migrate(target, { apply: !dry });
+		if (r.conflicts.length) { for (const c of r.conflicts) console.error(`  ${c}`); die('nothing was changed. Fix the line(s) above, then run migrate again', 1); }
+		if (!r.plan.length) { console.log(`${target} already names every script file <app id>__<name>. Nothing to do.`); return; }
+		console.log(`${dry ? 'Would rename' : 'Renamed'} (every installed app shares one scripts folder, so each file is named for its app, ${r.id}):`);
+		for (const [o, n] of r.plan) console.log(`  scripts/${o}  ->  scripts/${n}`);
+		console.log(dry ? '\nNothing changed (--dry-run). Run it without --dry-run to apply: it also fixes the app file, check.json, the README and the scripts\' own lookups.' : `\nAlso fixed: the app file's command words, check.json, README.md, the scripts' file lookups, the kit file.`);
+		for (const w of r.warnings) console.log(`  check by hand: ${w}`);
+		if (!dry) console.log(`\nNext: bolt-apps lint ${target} --personal, then bolt-apps check ${target}, then bolt-apps ship ${target}. Regenerate the app file if it came from --emit-yaml.`);
+	};
+	const cmds = { migrate: cmdMigrate, check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify, run: (a) => runApp(a), ship: (a) => ship(a), doctor: (a) => doctor(a) };
 	if (cmds[cmd]) await cmds[cmd](rest);
 	else if (cmd === '--version' || cmd === 'version') console.log(JSON.parse(fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'package.json'), 'utf8')).version);
 	else if (!cmd || cmd === 'help' || cmd === '--help') console.log(HELP);
