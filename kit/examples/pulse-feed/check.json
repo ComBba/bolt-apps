@@ -23,9 +23,10 @@
       }
     },
     {
-      "name": "a bare word is a topic: two sources merged",
+      "name": "topic word: two sources merged",
       "os": "macos",
       "args": [
+        "topic",
         "rust"
       ],
       "golden": "golden/topic-rust.json",
@@ -59,6 +60,7 @@
       "name": "topic: HTML and markdown in a post are shown as plain words, an impossible score is dropped",
       "os": "macos",
       "args": [
+        "topic",
         "rust"
       ],
       "expect": {
@@ -90,6 +92,7 @@
       "name": "topic, front page unreadable: the other source and a PARTIAL row",
       "os": "macos",
       "args": [
+        "topic",
         "rust",
         "demo-partial"
       ],
@@ -108,6 +111,7 @@
       "name": "a topic with no match",
       "os": "macos",
       "args": [
+        "topic",
         "zzzz"
       ],
       "golden": "golden/topic-none.json",
@@ -122,6 +126,7 @@
       "name": "a word that is not one plain word",
       "os": "macos",
       "args": [
+        "topic",
         "{{x}}"
       ],
       "expect": {
@@ -158,6 +163,22 @@
         "text_present": [
           "Showing an old copy",
           "Trending: 30 stories"
+        ]
+      }
+    },
+    {
+      "name": "a bare first word is not a view: one row says to type topic and the word",
+      "os": "macos",
+      "args": [
+        "rust"
+      ],
+      "expect": {
+        "text_present": [
+          "Type topic and a word",
+          "=pulse-feed topic rust"
+        ],
+        "text_absent": [
+          "Rust ownership"
         ]
       }
     }

@@ -6,7 +6,7 @@
     "icon": "trending-up",
     "service": "Hacker News",
     "timeout": 20,
-    "description": "Trending Hacker News stories, or type a topic word to merge the front page with a search. Tiles, a preview pane per story, Open post, Copy quote and Narrow."
+    "description": "Trending Hacker News stories, or type a topic word to merge the front page with a search. A preview pane per story, Open post, Copy quote and Narrow rows."
   },
   "api": {
     "user_agent": "bolt-app-example/1.0 (pulse-feed)",
