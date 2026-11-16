@@ -240,9 +240,9 @@ test('on_missing_key: sample shows the labelled data and a key hint; setup shows
 	let rows = JSON.parse(run({}).stdout);
 	// the overview is a tiles view: no label rows (a row with no number draws an empty "-" tile); the label and the key hint ride on a real tile
 	assert.ok(!rows.some((r) => /^(SAMPLE DATA|Add your)/.test(r.title)), 'no label or hint row in a tiles view');
-	assert.ok(rows.some((r) => /^sample data: add your .* API key for live data$/.test(r.kpi_foot || '')), 'the key hint is on a tile footer');
+	assert.ok(rows.some((r) => /sample data/.test(`${r.kpi_foot || ''} ${r.kpi_note || ''}`)), 'the label is on a tile footer or note');
 	assert.ok(rows.length > 3, 'the sample data is shown');
-	for (const r of rows) if (r.kpi_foot && /sample data/.test(r.kpi_foot)) assert.equal(typeof r.kpi_value, 'number', 'the hint is on a row that has a tile');
+	for (const r of rows) if (/sample data/.test(`${r.kpi_foot || ''} ${r.kpi_note || ''}`)) assert.equal(typeof r.kpi_value, 'number', 'the label is on a row that has a tile');
 	cfg.api.on_missing_key = 'setup'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
 	rows = JSON.parse(run({}).stdout); assert.equal(rows.length, 1); assert.match(rows[0].title, /^Add your .* API key$/); assert.ok(!rows[0].pane && !rows[0].kpi_label);
 	rows = JSON.parse(run({ BOLT_APP_FIXTURE: '0' }).stdout); assert.equal(rows.length, 1);
@@ -342,7 +342,9 @@ test('tile_row_without_value mutants: only a refresh nav arg and the exact Back 
 	assert.deepEqual(sampleVisibleProblems(list, [{ title: 'SAMPLE DATA: add your key' }, { title: 'b' }], 'overview'), []);
 	assert.equal(sampleVisibleProblems(pres, [tile(1), tile(2)], 'overview')[0].code, 'sample_not_visible');
 	assert.deepEqual(sampleVisibleProblems(pres, [{ ...tile(1), kpi_badge: 'SAMPLE' }, tile(2)], 'overview'), []);
-	assert.deepEqual(sampleVisibleProblems({ ...pres, top: { kind: 'chart', mode: 'list_data' } }, [tile(1), tile(2)], 'overview'), [], 'a plotted view carries none');
+	const chart = { ...pres, top: { kind: 'chart', mode: 'list_data' } };
+	assert.equal(sampleVisibleProblems(chart, [tile(1), tile(2)], 'overview')[0].code, 'sample_not_visible', 'a plotted view says it in the first row subtitle');
+	assert.deepEqual(sampleVisibleProblems(chart, [{ ...tile(1), subtitle: '3 ms - sample data' }, tile(2)], 'overview'), []);
 });
 
 test('known_empty_tiles exists only in the four examples that were not redesigned; every demo has a visible-label case per list view', () => {
