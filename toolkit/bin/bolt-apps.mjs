@@ -447,12 +447,12 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 		if (!target || !fs.existsSync(path.join(target, 'bolt-app.json'))) die('usage: bolt-apps migrate <app-folder> [--dry-run]');
 		const dry = args.includes('--dry-run'), r = migrate(target, { apply: !dry });
 		if (r.conflicts.length) { for (const c of r.conflicts) console.error(`  ${c}`); die('nothing was changed. Fix the line(s) above, then run migrate again', 1); }
-		if (!r.plan.length) { console.log(`${target} already names every script file <app id>__<name>. Nothing to do.`); return; }
-		console.log(`${dry ? 'Would rename' : 'Renamed'} (every installed app shares one scripts folder, so each file is named for its app, ${r.id}):`);
+		if (!r.changed.length) { console.log(`${target} already names every script file <app id>__<name>, and its app file, check.json, README and scripts agree. Nothing to do.`); return; }
+		console.log(`${dry ? 'Would change' : 'Changed'} (every installed app shares one scripts folder, so each file is named for its app, ${r.id}):`);
 		for (const [o, n] of r.plan) console.log(`  scripts/${o}  ->  scripts/${n}`);
-		console.log(dry ? '\nNothing changed (--dry-run). Run it without --dry-run to apply: it also fixes the app file, check.json, the README and the scripts\' own lookups.' : `\nAlso fixed: the app file's command words, check.json, README.md, the scripts' file lookups, the kit file.`);
-		for (const w of r.warnings) console.log(`  check by hand: ${w}`);
-		if (!dry) console.log(`\nNext: bolt-apps lint ${target} --personal, then bolt-apps check ${target}, then bolt-apps ship ${target}. Regenerate the app file if it came from --emit-yaml.`);
+		console.log(`  files rewritten or added: ${r.changed.join(', ')}`);
+		for (const w of r.warnings) console.log(`  ${dry ? 'would need' : 'check by hand'}: ${w}`);
+		console.log(dry ? "\nNothing changed (--dry-run). Run it without --dry-run to apply." : `\nYour old folder is kept at ${r.backup} (delete it when you are happy). Next: bolt-apps lint ${target} --personal, then bolt-apps check ${target}, then bolt-apps ship ${target}. Regenerate the app file if it came from --emit-yaml.`);
 	};
 	const cmds = { migrate: cmdMigrate, check: cmdCheck, kit: cmdKit, new: cmdNew, lint: cmdLint, keygen: cmdKeygen, pack: cmdPack, verify: cmdVerify, run: (a) => runApp(a), ship: (a) => ship(a), doctor: (a) => doctor(a) };
 	if (cmds[cmd]) await cmds[cmd](rest);

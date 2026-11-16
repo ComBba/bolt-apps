@@ -4,6 +4,7 @@
 // the README, the scripts' own file lookups), re-vendors the kit, shows the plan first and refuses when something is in the way.
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { vendorKit, flatName } from './check.mjs';
 
 const SHIM = `_SELF = _os.path.basename(__file__)
@@ -39,50 +40,112 @@ export function transformScript(t) {
 	return o;
 }
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const HANDLED = new Set(['config.json', 'fixtures.json', 'bolt_app_kit.py']);   // the names the migrated scripts look up by prefix on their own
+const plain = (e) => String((e && e.message) || e).replace(/^[A-Z]+: /, '').replace(/, (rename|open|copyfile|mkdir|unlink|lstat|stat|scandir|symlink)\b.*$/, '').slice(0, 200);
+const decode = (buf) => { try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch { return null; } };
 
-// Returns { id, plan: [[old, new]], conflicts: [], warnings: [] }. apply: false only plans.
-export function migrate(dir, { apply = true } = {}) {
-	const out = { id: null, plan: [], conflicts: [], warnings: [], applied: false };
-	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { out.conflicts.push(`bolt-app.json is missing or not JSON (${e.message})`); return out; }
-	if (!app || typeof app.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(app.id)) { out.conflicts.push('bolt-app.json needs an "id" of lowercase letters, digits and hyphens'); return out; }
-	const id = app.id; out.id = id;
+// Every path inside the app folder, lstat only: a link anywhere is refused, because a rename or a rewrite could land outside the folder.
+function links(dir) {
+	const bad = [];
+	const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isSymbolicLink()) bad.push(path.relative(dir, f)); else if (e.isDirectory()) walk(f); } };
+	walk(dir);
+	return bad;
+}
+function sameTree(a, b) {
+	const list = (d) => { const o = new Map(); const walk = (x) => { for (const e of fs.readdirSync(x, { withFileTypes: true })) { const f = path.join(x, e.name); if (e.isDirectory()) walk(f); else o.set(path.relative(d, f), fs.readFileSync(f)); } }; walk(d); return o; };
+	const x = list(a), y = list(b), changed = [];
+	for (const [k, v] of x) if (!y.has(k) || !y.get(k).equals(v)) changed.push(k);
+	for (const k of y.keys()) if (!x.has(k)) changed.push(k);
+	return changed.sort();
+}
+
+// Does the whole job inside `dir` (a private copy of the app). Records what it did in `out`; throws on a failure.
+function run(dir, id, out) {
 	const sd = path.join(dir, 'scripts');
-	if (!fs.existsSync(sd)) return out;
+	if (!fs.existsSync(sd)) return;
 	const names = fs.readdirSync(sd).filter((n) => !n.startsWith('.') && n !== '__pycache__');
 	const target = (n) => { const m = PREFIXED.exec(n); return m && m[1] === id ? n : `${id}__${m ? m[2] : n}`; };
-	const seen = new Map();
+	const seen = new Map(), map = new Map();
 	for (const n of names) {
-		const t = target(n);
-		if (t === n) continue;
-		if (seen.has(t) || fs.existsSync(path.join(sd, t))) out.conflicts.push(`scripts/${t} already exists, so scripts/${n} cannot be renamed to it. Move one of them away first`);
-		if (`manifests/scripts/${t}`.length > 100) out.conflicts.push(`scripts/${t} would be longer than a pack allows (100 characters); shorten the file name or the app id`);
-		seen.set(t, n); out.plan.push([n, t]);
+		const tg = target(n);
+		if (tg === n) continue;
+		if (seen.has(tg) || names.includes(tg)) { out.conflicts.push(`scripts/${tg} already exists, so scripts/${n} cannot be renamed to it. Move one of them away first`); continue; }
+		if (`manifests/scripts/${tg}`.length > 100) out.conflicts.push(`scripts/${tg} would be longer than a pack allows (100 characters); shorten the file name or the app id`);
+		seen.set(tg, n); map.set(n, tg); out.plan.push([n, tg]);
 	}
-	if (out.conflicts.length || !out.plan.length || !apply) return out;
-	const map = new Map(out.plan);
-	for (const [o, n] of out.plan) fs.renameSync(path.join(sd, o), path.join(sd, n));
-	// every place that names a renamed file
-	const rewrite = (f, fn) => { const p = path.join(dir, f); if (!fs.existsSync(p)) return; const s = fs.readFileSync(p, 'utf8'), r = fn(s); if (r !== s) fs.writeFileSync(p, r); };
+	if (out.conflicts.length) return;
+	// a bare name whose prefixed twin is already there (files migrated, content not): the references still need the prefix
+	const refs = new Map(map);
+	for (const n of names) if (n.startsWith(`${id}__`) && !map.has(n)) { const bare = n.slice(id.length + 2); if (bare && !names.includes(bare) && !refs.has(bare)) refs.set(bare, n); }
+	for (const [o, n] of map) { if (fs.statSync(path.join(sd, o)).isDirectory() && o !== 'bolt_app_kit') out.warnings.push(`scripts/${o} is a folder, now scripts/${n}. Nothing rewrites an import of it: change those imports (or sys.path lines) by hand`); fs.renameSync(path.join(sd, o), path.join(sd, n)); }
+	const rewrite = (f, fn, what) => {
+		const p = path.join(dir, f); if (!fs.existsSync(p)) return;
+		const s = decode(fs.readFileSync(p)); if (s === null) { out.warnings.push(`${f} is not valid UTF-8 text, so it was left alone: check it for names of the renamed files`); return; }
+		const r = fn(s); if (r !== s) fs.writeFileSync(p, r);
+	};
 	const ud = path.join(dir, 'utilities');
-	for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((x) => /\.ya?ml$/.test(x)) : []) rewrite(`utilities/${y}`, (s) => s.replace(/\{\{scripts_dir\}\}\/([A-Za-z0-9._-]+)/g, (m, f) => (map.has(f) ? `{{scripts_dir}}/${map.get(f)}` : m)));
-	rewrite('check.json', (s) => { try { const j = JSON.parse(s); for (const k of ['script', 'kit']) if (typeof j[k] === 'string') { const m = /^scripts\/([^/]+)(\/.*)?$/.exec(j[k]); if (m && map.has(m[1])) j[k] = `scripts/${map.get(m[1])}${m[2] || ''}`; } return JSON.stringify(j, null, 2) + '\n'; } catch { return s; } });
-	rewrite('README.md', (s) => s.replace(/scripts\/([A-Za-z0-9._-]+)/g, (m, f) => (map.has(f) ? `scripts/${map.get(f)}` : m)));
-	for (const [, n] of out.plan) if (n.endsWith('.py') && !n.endsWith('__bolt_app_kit.py')) rewrite(`scripts/${n}`, transformScript);
-	// a package-folder kit cannot be installed by every Bolt; the single-file kit is
-	const hasCheck = fs.existsSync(path.join(dir, 'check.json'));
-	if (hasCheck) {
+	for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((x) => /\.ya?ml$/.test(x)) : []) rewrite(`utilities/${y}`, (s) => s.replace(/\{\{scripts_dir\}\}\/([A-Za-z0-9._-]+)/g, (m, f) => (refs.has(f) ? `{{scripts_dir}}/${refs.get(f)}` : m)));
+	// the README names files in prose: a name ends before a sentence period, and must not be the tail of a longer path
+	rewrite('README.md', (s) => s.replace(/(?<![\w./-])scripts\/([A-Za-z0-9._-]+)/g, (m, tok) => { const core = tok.replace(/[.-]+$/, ''), tail = tok.slice(core.length); return refs.has(core) ? `scripts/${refs.get(core)}${tail}` : m; }));
+	const cj = path.join(dir, 'check.json');
+	if (fs.existsSync(cj)) {
+		const s = decode(fs.readFileSync(cj));
+		let ok = s !== null; if (ok) { try { JSON.parse(s); } catch { ok = false; } }
+		if (!ok) out.warnings.push('check.json is not valid JSON, so it was not changed: set "script" and "kit" in it to the new file names by hand');
+		else {
+			let r = s.replace(/("(?:script|kit)"\s*:\s*"scripts\/)([^/"]+)/g, (m, pre, f) => (refs.has(f) ? `${pre}${refs.get(f)}` : m));
+			r = r.replace(/("kit"\s*:\s*"scripts\/)[^"]*(")/, (m, a, b) => `${a}${flatName(dir)}${b}`);
+			if (r !== s) fs.writeFileSync(cj, r);
+		}
+	}
+	const after = fs.readdirSync(sd).filter((n) => !n.startsWith('.') && n !== '__pycache__');
+	for (const n of after) if (n.endsWith('.py') && !n.endsWith('__bolt_app_kit.py')) rewrite(`scripts/${n}`, transformScript);
+	if (fs.existsSync(cj) && (after.includes(flatName(dir)) || fs.existsSync(path.join(sd, 'bolt_app_kit')))) {
 		try {
-			const old = path.join(sd, `${id}__bolt_app_kit`);
-			if (fs.existsSync(old) && fs.lstatSync(old).isDirectory()) fs.rmSync(old, { recursive: true });
-			const cfg = JSON.parse(fs.readFileSync(path.join(dir, 'check.json'), 'utf8'));
-			if (typeof cfg.script === 'string') cfg.kit = path.posix.join(path.posix.dirname(cfg.script), flatName(dir));
-			fs.writeFileSync(path.join(dir, 'check.json'), JSON.stringify(cfg, null, 2) + '\n');
-			fs.rmSync(path.join(dir, 'scripts', 'bolt_app_kit.lock.json'), { force: true });
+			for (const nm of ['bolt_app_kit', `${id}__bolt_app_kit`]) { const old = path.join(sd, nm); if (fs.existsSync(old) && fs.statSync(old).isDirectory()) fs.rmSync(old, { recursive: true }); }
+			const kit = path.join(sd, flatName(dir));
+			if (fs.existsSync(kit)) out.warnings.push(`scripts/${flatName(dir)} is replaced by the current kit: an edit you made to your copy of the kit is lost (the kit is never edited by hand)`);
+			fs.rmSync(path.join(sd, 'bolt_app_kit.lock.json'), { force: true });
 			vendorKit(dir, { flat: true });
-		} catch (e) { out.warnings.push(`the kit could not be re-vendored (${e.message}); run bolt-apps kit vendor --flat ${dir}`); }
+		} catch (e) { out.warnings.push(`the kit could not be re-vendored (${plain(e)}); run bolt-apps kit vendor --flat <folder>`); }
 	}
 	// anything else that still spells an old name
-	for (const [o] of out.plan) for (const f of fs.readdirSync(sd).filter((x) => /\.(py|json|sh)$/.test(x) && !x.endsWith('__bolt_app_kit.py'))) { const s = fs.readFileSync(path.join(sd, f), 'utf8'); if (s.includes('_PFX')) continue; s.split('\n').forEach((ln, i) => { if (new RegExp(`["']${esc(o)}["']`).test(ln) && !/_PFX/.test(ln)) out.warnings.push(`scripts/${f}:${i + 1} still spells "${o}" (the file is now ${map.get(o)}): ${ln.trim().slice(0, 100)}`); }); }
-	out.applied = true;
+	for (const [o] of refs) for (const f of fs.readdirSync(sd).filter((x) => /\.(py|json|sh)$/.test(x) && !x.endsWith('__bolt_app_kit.py'))) {
+		const s = decode(fs.readFileSync(path.join(sd, f))); if (s === null) continue;
+		if (HANDLED.has(o) && s.includes('_PFX')) continue;
+		s.split('\n').forEach((ln, i) => { if (new RegExp(`["']${esc(o)}["']`).test(ln) && !/_PFX/.test(ln)) out.warnings.push(`scripts/${f}:${i + 1} still spells "${o}" (the file is now ${refs.get(o)}): ${ln.trim().slice(0, 100)}`); });
+	}
+}
+
+// Returns { id, plan: [[old, new]], conflicts: [], warnings: [], applied, backup, changed }. Nothing in the app folder is touched until the whole job has
+// worked on a private copy; then the folder is swapped (the old one kept as <folder>.before-migrate), and put back if the swap fails.
+export function migrate(dir0, { apply = true } = {}) {
+	const out = { id: null, plan: [], conflicts: [], warnings: [], applied: false, backup: null, changed: [] };
+	const C = (m) => { out.conflicts.push(m); return out; };
+	let dir; try { const st = fs.lstatSync(dir0); if (st.isSymbolicLink()) return C(`${dir0} is a link. migrate does not follow links: use the real folder`); if (!st.isDirectory()) return C(`${dir0} is not a folder`); dir = path.resolve(dir0); } catch (e) { return C(`cannot read ${dir0}: ${plain(e)}`); }
+	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { return C(`bolt-app.json is missing or not JSON (${plain(e)})`); }
+	if (!app || typeof app.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(app.id)) return C('bolt-app.json needs an "id" of lowercase letters, digits and hyphens');
+	const id = out.id = app.id;
+	let bad; try { bad = links(dir); } catch (e) { return C(`cannot read inside ${dir0}: ${plain(e)}`); }
+	if (bad.length) return C(`${bad.slice(0, 4).join(', ')} ${bad.length > 1 ? 'are links' : 'is a link'}. migrate does not follow links, because a rename or a rewrite could land outside the folder: replace each with the real file or folder`);
+	const backup = `${dir}.before-migrate`;
+	const stage = path.join(path.dirname(dir), `.${path.basename(dir)}.migrate-${process.pid}-${Date.now()}`);
+	try {
+		fs.cpSync(dir, stage, { recursive: true, errorOnExist: true });
+		if (process.env.BOLT_APPS_TEST_MIGRATE_FAIL === 'stage') throw new Error('injected failure while rewriting');
+		run(stage, id, out);
+	} catch (e) { fs.rmSync(stage, { recursive: true, force: true }); out.plan = []; return C(`could not prepare the change (${plain(e)}). Nothing in ${dir0} was changed`); }
+	if (out.conflicts.length) { fs.rmSync(stage, { recursive: true, force: true }); return out; }
+	out.changed = sameTree(dir, stage);
+	if (!out.changed.length || !apply) { fs.rmSync(stage, { recursive: true, force: true }); return out; }
+	if (fs.existsSync(backup)) { fs.rmSync(stage, { recursive: true, force: true }); out.plan = []; return C(`${backup} already exists (a copy kept by an earlier migrate). Move it away, then run migrate again; nothing in ${dir0} was changed`); }
+	try {
+		fs.renameSync(dir, backup);
+		try {
+			if (process.env.BOLT_APPS_TEST_MIGRATE_FAIL === 'swap') throw new Error('injected failure while swapping');
+			fs.renameSync(stage, dir);
+		} catch (e) { fs.renameSync(backup, dir); throw e; }
+	} catch (e) { fs.rmSync(stage, { recursive: true, force: true }); out.plan = []; return C(`could not put the migrated folder in place (${plain(e)}). ${dir0} is exactly as it was`); }
+	out.applied = true; out.backup = backup;
 	return out;
 }

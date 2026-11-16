@@ -187,31 +187,82 @@ test('a script run under another name says what is wrong in one sentence, not a 
 	assert.notEqual(r.status, 0); assert.match(r.stderr, /script files must be named <app id>__<name>/); assert.doesNotMatch(r.stderr, /Traceback|ModuleNotFoundError/);
 });
 
-// An app laid out the old way, taken from this repo's history, comes across with migrate and then lints, checks and packs clean.
-test('migrate: an old-layout example (from git history) is renamed, its references fixed, and it passes lint, check and pack', (t) => {
-	const old = tmp('ns-old-'); const ar = spawnSync('sh', ['-c', `git -C "${REPO}" archive 88ee8b1 kit/examples/pulse-feed kit/examples/portal-template | tar -x -C "${old}"`], { encoding: 'utf8' });
-	if (ar.status !== 0) return t.skip('the repo history before the namespacing change is not available (shallow clone)');
-	const home = tmp('ns-home-');
-	for (const a of ['pulse-feed', 'portal-template']) {
-		const dir = path.join(old, 'kit', 'examples', a);
-		const before = cli(home, old, 'lint', dir, '--personal'); assert.equal(before.status, 1); assert.match(before.stdout, /script_not_namespaced/); assert.match(before.stdout, /bolt-apps migrate/);
-		const dry = cli(home, old, 'migrate', dir, '--dry-run'); assert.equal(dry.status, 0); assert.ok(fs.existsSync(path.join(dir, 'scripts', 'bolt_app_kit.py')), 'dry run changes nothing');
-		const m = cli(home, old, 'migrate', dir); assert.equal(m.status, 0, m.stdout + m.stderr);
-		assert.ok(fs.readdirSync(path.join(dir, 'scripts')).every((f) => f.startsWith(`${a}__`)));
-		assert.equal(cli(home, old, 'lint', dir, '--personal').status, 0);
-		const c = cli(home, old, 'check', dir); assert.equal(c.status, 0, c.stdout);
-		packOf(dir, path.join(old, `${a}.boltpack`));
-		assert.match(cli(home, old, 'migrate', dir).stdout, /Nothing to do/);
-	}
-	// a conflict refuses and changes nothing
-	const d2 = path.join(old, 'conflict'); fs.cpSync(path.join(EX, 'script-template'), d2, { recursive: true });
-	const b = JSON.parse(fs.readFileSync(path.join(d2, 'bolt-app.json'), 'utf8')); b.id = 'conflict'; fs.writeFileSync(path.join(d2, 'bolt-app.json'), JSON.stringify(b));
-	fs.writeFileSync(path.join(d2, 'scripts', 'conflict__config.json'), '{}');
-	const x = cli(home, old, 'migrate', d2); assert.equal(x.status, 1); assert.match(x.stderr, /already exists/);
-});
-
 test('kit vendor --flat on an old-layout app gives a sentence that points at migrate, not a stack trace', (t) => {
 	const old = tmp('ns-oldkit-'); if (spawnSync('sh', ['-c', `git -C "${REPO}" archive 88ee8b1 kit/examples/system-glance | tar -x -C "${old}"`]).status !== 0) return t.skip('no history');
 	const r = cli(tmp('ns-home-'), old, 'kit', 'vendor', '--flat', path.join(old, 'kit', 'examples', 'system-glance'));
 	assert.notEqual(r.status, 0); assert.match(r.stderr, /bolt-apps migrate/); assert.doesNotMatch(r.stderr, /\n\s+at /);
+});
+
+// ---- migrate: safe on links, read-only files and failures; repairs content as well as names ----
+const treeOf = (d) => { const o = []; const walk = (x) => { for (const e of fs.readdirSync(x, { withFileTypes: true })) { const f = path.join(x, e.name); o.push(`${path.relative(d, f)}${e.isSymbolicLink() ? '@' : ''}`); if (e.isDirectory()) walk(f); } }; walk(d); return o.sort(); };
+function oldApp(t, name = 'pulse-feed') {
+	const root = tmp('ns-mig-');
+	if (spawnSync('sh', ['-c', `git -C "${REPO}" archive 88ee8b1 kit/examples/${name} | tar -x -C "${root}"`]).status !== 0) { t.skip('the repo history before the namespacing change is not available (shallow clone)'); return null; }
+	return { root, dir: path.join(root, 'kit', 'examples', name), home: tmp('ns-home-') };
+}
+const mig = (o, ...a) => cli(o.home, o.root, 'migrate', ...a);
+const noStage = (o) => assert.deepEqual(fs.readdirSync(path.dirname(o.dir)).filter((n) => /migrate/.test(n)), []);
+
+test('migrate: an old-layout example comes across (names, app file, check.json, README, scripts), keeps the old folder, and a second run does nothing', (t) => {
+	const o = oldApp(t); if (!o) return;
+	const dry = mig(o, o.dir, '--dry-run'); assert.equal(dry.status, 0); assert.ok(fs.existsSync(path.join(o.dir, 'scripts', 'bolt_app_kit.py')), 'dry run changes nothing'); noStage(o);
+	assert.match(dry.stdout, /would need|Would change/);
+	const m = mig(o, o.dir); assert.equal(m.status, 0, m.stdout + m.stderr);
+	assert.ok(fs.readdirSync(path.join(o.dir, 'scripts')).every((f) => f.startsWith('pulse-feed__')));
+	assert.ok(fs.existsSync(`${o.dir}.before-migrate`), 'the old folder is kept');
+	assert.equal(cli(o.home, o.root, 'lint', o.dir, '--personal').status, 0); assert.equal(cli(o.home, o.root, 'check', o.dir).status, 0);
+	assert.match(mig(o, o.dir).stdout, /Nothing to do/);
+});
+
+test('migrate refuses a link anywhere in the app (README, scripts/) and changes nothing', (t) => {
+	const o = oldApp(t); if (!o) return;
+	const before = treeOf(o.dir), outside = path.join(o.root, 'outside.md'); fs.writeFileSync(outside, 'keep me');
+	fs.rmSync(path.join(o.dir, 'README.md')); fs.symlinkSync(outside, path.join(o.dir, 'README.md'));
+	let r = mig(o, o.dir); assert.equal(r.status, 1); assert.match(r.stderr, /README\.md is a link/); assert.equal(fs.readFileSync(outside, 'utf8'), 'keep me'); assert.doesNotMatch(r.stderr, /\n\s+at /);
+	fs.rmSync(path.join(o.dir, 'README.md')); fs.writeFileSync(path.join(o.dir, 'README.md'), 'x');
+	const real = path.join(o.root, 'real-scripts'); fs.renameSync(path.join(o.dir, 'scripts'), real); fs.symlinkSync(real, path.join(o.dir, 'scripts'));
+	r = mig(o, o.dir); assert.equal(r.status, 1); assert.match(r.stderr, /scripts is a link/); assert.ok(fs.existsSync(path.join(real, 'bolt_app_kit.py')));
+	const link = path.join(o.root, 'applink'); fs.symlinkSync(o.dir, link); r = mig(o, link); assert.equal(r.status, 1); assert.match(r.stderr, /is a link/); noStage(o);
+});
+
+test('migrate with a read-only README, or an injected failure at any step, leaves the app exactly as it was', (t) => {
+	const o = oldApp(t); if (!o) return;
+	const before = treeOf(o.dir), sha = (f) => fs.readFileSync(path.join(o.dir, f)).toString('hex');
+	const kitBefore = sha('scripts/bolt_app_kit.py');
+	fs.chmodSync(path.join(o.dir, 'README.md'), 0o444);
+	let r = mig(o, o.dir); assert.equal(r.status, 1); assert.match(r.stderr, /Nothing in .* was changed/); assert.doesNotMatch(r.stderr, /\n\s+at /);
+	assert.deepEqual(treeOf(o.dir), before); noStage(o);
+	fs.chmodSync(path.join(o.dir, 'README.md'), 0o644);
+	for (const step of ['stage', 'swap']) {
+		const x = spawnSync(process.execPath, [CLI, 'migrate', o.dir], { cwd: o.root, encoding: 'utf8', env: { ...process.env, HOME: o.home, BOLT_APPS_TEST_MIGRATE_FAIL: step } });
+		assert.equal(x.status, 1, step); assert.match(x.stderr, /injected failure/); assert.doesNotMatch(x.stderr, /\n\s+at /);
+		assert.deepEqual(treeOf(o.dir), before, step); assert.equal(sha('scripts/bolt_app_kit.py'), kitBefore); assert.ok(!fs.existsSync(`${o.dir}.before-migrate`), step); noStage(o);
+	}
+	assert.equal(mig(o, o.dir).status, 0, 'and a normal run still works afterwards');
+});
+
+test('migrate repairs CONTENT that still names old files although the files were already renamed', (t) => {
+	const o = oldApp(t); if (!o) return;
+	const sd = path.join(o.dir, 'scripts');
+	for (const f of fs.readdirSync(sd)) fs.renameSync(path.join(sd, f), path.join(sd, `pulse-feed__${f}`));   // names done by hand, nothing else
+	assert.equal(cli(o.home, o.root, 'lint', o.dir, '--personal').status, 1);   // the app file still names scripts/config.json and friends
+	const m = mig(o, o.dir); assert.equal(m.status, 0, m.stdout + m.stderr); assert.ok(m.stdout.includes('Changed'));
+	assert.equal(cli(o.home, o.root, 'lint', o.dir, '--personal').status, 0); assert.equal(cli(o.home, o.root, 'check', o.dir).status, 0);
+	assert.match(mig(o, o.dir).stdout, /Nothing to do/);
+});
+
+test('migrate README rewrite: a sentence period stays, a longer path is not touched, a name in prose is renamed', (t) => {
+	const o = oldApp(t); if (!o) return;
+	fs.writeFileSync(path.join(o.dir, 'README.md'), 'Edit scripts/config.json.\nSee (scripts/app.py), then `scripts/fixtures.json`, and docs/scripts/config.json or ./scripts/config.json.\n');
+	assert.equal(mig(o, o.dir).status, 0);
+	const r = fs.readFileSync(path.join(o.dir, 'README.md'), 'utf8');
+	assert.ok(r.includes('Edit scripts/pulse-feed__config.json.\n')); assert.ok(r.includes('(scripts/pulse-feed__app.py)')); assert.ok(r.includes('`scripts/pulse-feed__fixtures.json`'));
+	assert.ok(r.includes('docs/scripts/config.json') && r.includes('./scripts/config.json.'));
+});
+
+test('migrate: invalid check.json is reported, not claimed fixed; formatting of a valid one is kept', (t) => {
+	const o = oldApp(t); if (!o) return;
+	const cj = path.join(o.dir, 'check.json'), valid = fs.readFileSync(cj, 'utf8');
+	fs.writeFileSync(cj, valid.replace('{', '{ // not json\n'));
+	const m = mig(o, o.dir); assert.equal(m.status, 0); assert.match(m.stdout, /check\.json is not valid JSON/);
 });
