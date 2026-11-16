@@ -1,20 +1,5 @@
 [
   {
-    "title": "Sample data",
-    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
-    "icon": "FileText",
-    "body": "",
-    "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "SAMPLE",
-    "copy_text": ""
-  },
-  {
     "title": "Top stories",
     "subtitle": "3 stories, each fetched by id",
     "icon": "globe",
@@ -28,8 +13,8 @@
     "kpi_unit": "",
     "kpi_max": "",
     "kpi_note": "ids hydrated one request each",
-    "kpi_foot": "",
-    "kpi_badge": "",
+    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
+    "kpi_badge": "SAMPLE",
     "copy_text": "",
     "open_url": ""
   },
@@ -51,25 +36,5 @@
     "kpi_badge": "",
     "copy_text": "",
     "open_url": ""
-  },
-  {
-    "title": "Refresh",
-    "subtitle": "Enter to fetch fresh data",
-    "icon": "RefreshCw",
-    "body": "",
-    "nav": {
-      "view": "overview",
-      "arg": "refresh"
-    },
-    "actions": [],
-    "pane": "overview",
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "",
-    "copy_text": ""
   }
 ]
