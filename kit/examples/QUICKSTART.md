@@ -42,7 +42,7 @@ Edit between `new` and `run`. After editing an engine app's `scripts/config.json
 4. Ship live: `api.fixture_default` is `false`. Tests use sample data: `"fixture": true` at the top of `check.json`.
 5. Use only the panes in the table below. Chart types are `line`, `bar` and `sparkline`. Others (pie, donut, area, heatmap, gauge) are not shipped.
 6. Icon names are case-sensitive and come from `kit/schema/icons.json` (footer-button icons from a shorter lowercase list).
-7. A nav arg is one plain token: no slash.
+7. A nav arg is one plain token: no slash. Drill with `nav` (one Enter). A chain action (`kind: utility` with `target_chip`) only pre-fills the next command, so never use it to drill. A row's `pane` works when it names a view whose right pane has mode `selected_row` and kind entity_preview, detail, markdown, json_tree, chart, table or card; it is ignored for mode `list_data`, a view with no right pane, or kind diff, cards or image_grid.
 8. A script app is tier 3: personal pack only, never the gallery. It runs as you. Install only code you have read.
 9. A list shows at most 50 rows; a failed call is never shown as zero; an old copy shows its age.
 10. Say what you did not verify. Today that is everything in real Bolt.

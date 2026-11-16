@@ -171,3 +171,12 @@ test('every doc that tells a person to Remove an app carries the 181 qualificati
 	const row = read('kit/examples/QUICKSTART.md').split('\n').find((l) => l.startsWith('| Remove |'));
 	for (const w of ["on the app's row in 181", 'not yet seen on a running 181', 'next to Revoke approval', 'Do not delete files by hand', 'owned_by_other', "its scripts and install record", 'tell us which Bolt version']) assert.ok(row.includes(w), `Remove row lacks: ${w}`);
 });
+
+test('no doc says 181 cannot do per-row panes or one-Enter drilling; the rules say how (selected_row views, nav)', () => {
+	const wrong = /(cannot|can't|does not|doesn't|no) (do |draw |show |support )?(list[- ]view )?(per-row|row) panes?|(cannot|can't|does not|doesn't) (do )?(one-Enter|drill)/i;
+	for (const f of DOCS) read(f).split('\n').forEach((l, i) => assert.ok(!wrong.test(l), `${f}:${i + 1} ${l.slice(0, 140)}`));
+	const qs = read('kit/examples/QUICKSTART.md');
+	assert.match(qs, /Drill with `nav` \(one Enter\)/); assert.match(qs, /only pre-fills the next command/);
+	assert.match(qs, /mode `selected_row` and kind entity_preview, detail, markdown, json_tree, chart, table or card/);
+	assert.match(qs, /ignored for mode `list_data`, a view with no right pane, or kind diff, cards or image_grid/);
+});

@@ -197,7 +197,7 @@
    "example": "kit/examples/portal-template",
    "snippet": "{\"title\": \"Open tickets\", \"view\": \"tickets\", \"arg\": \"open\"}",
    "test": "kit/examples/portal-template/check.json",
-   "limit": "A nav arg is one plain token matching {rules:nav_token_pattern}; no slash."
+   "limit": "One Enter. A nav arg is one plain token matching {rules:nav_token_pattern}; no slash. A chain action (kind utility with target_chip) only pre-fills the next command and needs a second Enter: do not use it to drill."
   },
   {
    "id": "nav.back",
@@ -285,7 +285,7 @@
    "example": "kit/examples/portal-template",
    "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\"}",
    "test": "kit/examples/portal-template/check.json",
-   "limit": "Each view has its own pane through `presentation.views.<id>.right_widget`.",
+   "limit": "Works when the row `pane` names a declared view whose right_widget has mode selected_row and kind entity_preview, detail, markdown, json_tree, chart, table or card. Ignored for mode list_data, a view with no right_widget, or kind diff, cards or image_grid.",
    "also": [
     "pipeline-board"
    ]
