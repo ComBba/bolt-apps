@@ -230,3 +230,20 @@ test('every public example has chip equal to id, and a chip different from the i
 	const yf = path.join(d, 'chipcase', 'utilities', 'chipcase.yaml'); fs.writeFileSync(yf, fs.readFileSync(yf, 'utf8').replace(/^chip: .*$/m, 'chip: other'));
 	for (const a of [['lint', path.join(d, 'chipcase'), '--personal'], ['verify', path.join(d, 'chipcase')], ['pack', path.join(d, 'chipcase'), '--personal', '--key', KEY]]) { const r = cli(home, d, ...a); assert.notEqual(r.status, 0, a[0]); assert.match(r.stdout + r.stderr, /chip_not_id/, a[0]); }
 });
+
+test('on_missing_key: sample shows the labelled data and a key hint; setup shows only the setup row; ship says the start mode', () => {
+	const d = tmp('ns-mode-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'portal-template', 'modeapp', '--dir', d).status, 0);
+	const app = path.join(d, 'modeapp'), cfgp = path.join(app, 'scripts', 'modeapp__config.json'), cfg = JSON.parse(fs.readFileSync(cfgp, 'utf8'));
+	assert.equal(cfg.api.on_missing_key, 'sample');
+	const run = (env) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'modeapp__engine.py'), 'overview'], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
+	let rows = JSON.parse(run({}).stdout);
+	assert.match(rows[0].title, /^SAMPLE DATA: add your .* API key to see live data$/); assert.match(rows[1].title, /^Add your .* API key$/); assert.ok(rows.length > 3, 'the sample data follows');
+	for (const r of rows.slice(0, 2)) { assert.ok(!r.kpi_label && !r.kpi_value && !r.pane, JSON.stringify(r)); }
+	cfg.api.on_missing_key = 'setup'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	rows = JSON.parse(run({}).stdout); assert.equal(rows.length, 1); assert.match(rows[0].title, /^Add your .* API key$/); assert.ok(!rows[0].pane && !rows[0].kpi_label);
+	rows = JSON.parse(run({ BOLT_APP_FIXTURE: '0' }).stdout); assert.equal(rows.length, 1);
+	const s = cli(home, d, 'doctor', app); assert.match(s.stdout, /Start mode: live when your key is found; with no key it shows only a row/);
+	cfg.api.on_missing_key = 'sample'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
+	assert.match(cli(home, d, 'doctor', app).stdout, /labelled SAMPLE DATA/);
+});

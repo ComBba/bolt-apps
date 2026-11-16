@@ -14,6 +14,7 @@
     "auth_header": "Authorization",
     "auth_prefix": "Bearer ",
     "fixture_default": false,
+    "on_missing_key": "sample",
     "fixture_file": "fixtures.json",
     "fixture_banner": true
   },

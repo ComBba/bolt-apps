@@ -159,6 +159,18 @@ export function runApp(args) {
 	if (rows.some((x) => x.title === 'This app could not run' || x.title === 'This app is not set up correctly')) console.log('\nThe app printed its own error row (above). BOLT_APP_DEBUG=1 is set, so the script wrote the real error to its error output; run with --json to see it as data.');
 }
 
+// What the app shows the first time it runs, read from its config: live with a key, labelled sample data when there is no key, or only a setup row.
+export function startMode(dir) {
+	try {
+		const app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')), c = JSON.parse(fs.readFileSync(path.join(dir, 'scripts', `${app.id}__config.json`), 'utf8')), api = c.api || {};
+		if (api.fixture_default === true) return 'Start mode: sample data (api.fixture_default is true), so it never contacts a service.';
+		if (!api.key_env) return 'Start mode: live. This app needs no key.';
+		return api.on_missing_key === 'sample'
+			? 'Start mode: live when your key is found; with no key it shows labelled SAMPLE DATA with a row that says how to add one (api.on_missing_key is sample).'
+			: 'Start mode: live when your key is found; with no key it shows only a row that says how to add one, no sample data (api.on_missing_key is setup). Set it to sample for a demo.';
+	} catch { return null; }
+}
+
 // ---------------------------------------------------------------- ship
 const notLink = (f) => { try { if (fs.lstatSync(f).isSymbolicLink()) die(`${f} is a link, which is not followed. Replace it with a real file or folder you own`); } catch (e) { if (e.code !== 'ENOENT') throw e; } };
 const loadShip = () => { try { const j = JSON.parse(fs.readFileSync(path.join(STATE, 'ship.json'), 'utf8')); return j && typeof j === 'object' && !Array.isArray(j) ? Object.assign(Object.create(null), j) : Object.create(null); } catch { return Object.create(null); } };
@@ -207,6 +219,7 @@ export function ship(args) {
   3. Approve. Bolt asks once more because you signed the pack yourself. Approve again.
   3b. After you drop the pack, open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept (the first run asks too). Every reship changes the files, so you approve again. An empty list when you press Enter means the app is not approved yet.
   4. Open the launcher and type =${chip}.
+  ${startMode(dir) || 'Start mode: this app has no engine config, so it starts as its script says.'}
 To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.
 This app runs as you: only install code you have read.
 
@@ -231,6 +244,7 @@ export function doctor(args) {
 		if (typeof id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) { chk(false, 'bolt-app.json has an id', 'Add "id": "my-tool" (lowercase letters, digits, hyphens) to bolt-app.json.'); console.log(`\n${bad} thing(s) to fix.`); process.exit(1); }
 		const env = path.join(os.homedir(), '.config', id, '.env');
 		if (fs.existsSync(env)) chk((fs.statSync(env).mode & 0o077) === 0, `~/.config/${id}/.env is private`, `Run: chmod 600 ${q(env)}`);
+		if (startMode(dir)) console.log(`     ${startMode(dir)}`);
 		const hits = keyLooking(dir); chk(!hits.length, 'no real-looking key in the app folder', `Remove the key from ${hits.map(q).join(', ')}; keys go in the keychain or ~/.config/${id}/.env.`);
 		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: bolt-apps lint ${q(dir)} --personal   and fix each line it prints.`);
 		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: bolt-apps verify ${q(dir)}   and fix each line it prints.`); }

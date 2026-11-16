@@ -356,7 +356,7 @@ export async function checkApp(appDir, opts = {}) {
 			makeStubs(stubDir, appDir, osName, kase, files);
 			// Sample mode: a case (or check.json as a whole) sets "fixture": true, so the script runs on its recorded answers while the shipped app stays live.
 			const sample = kase.fixture ?? cfg.fixture;
-			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...(sample === undefined ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
+			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
 			const ex = kase.expect || {};
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;

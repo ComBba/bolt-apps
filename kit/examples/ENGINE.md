@@ -24,7 +24,7 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 `id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (accepted and does nothing: once the app has rows, Bolt filters them as you type, matching the title and subtitle only; an app with `dispatch.choices` shows its confirm choices instead), `timeout` (seconds, 1 to 60).
 
 ## `api` (views and lookup)
-`base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row).
+`on_missing_key` (`setup` or `sample`; see "Three starting states" below), `base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row).
 
 ## `cache`
 `ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero.
@@ -199,3 +199,12 @@ Never edit `<id>__bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --fl
 ## Typing free text and views in a script app
 
 The view is read from query word 0 (`view_arg` bound to `query.word(0)`), so a script app that also takes free text treats the first word as a view only when it is one of its view names and otherwise reads every word as text (`=insights ~/data.csv`, `=insights trend`). A text that starts with a view name needs a leading `./` or a different spelling. Words before the view word would need plain-word defaults (lint `view_arg_lead_default`); a default of `-` is fine for words after it. A nav row carries no actions and cannot carry text with a slash; keep the last typed text in the kit cache. To give a drilled-in view a button, add an ordinary row with `kit.action_chain(id, label, target_chip, query)` pointing at the app's own chip: a utility action to itself. That is not yet proven in the launcher.
+
+## Three starting states (`api.key_env` and `api.on_missing_key`)
+
+1. **Live with a key.** The key is found (environment, keychain or `~/.config/<id>/.env`): the app calls its API and shows real data.
+2. **Sample fallback** (`"on_missing_key": "sample"`, for demos whose API is fictional): no key, so the app shows its labelled sample data, with a first row "SAMPLE DATA: add your ... API key to see live data" and a setup hint row. The hint row never replaces the data.
+3. **Setup only** (`"on_missing_key": "setup"`, the default, for a real app): no key, so the app shows one row that says how to add it. That row carries no tile and no pane.
+
+`BOLT_APP_FIXTURE=1` always shows sample data, `0` always goes live. `bolt-apps ship` and `bolt-apps doctor <folder>` say which state the app starts in.
+
