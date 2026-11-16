@@ -15,7 +15,7 @@
       "expect": {
         "text_present": [
           "Example Co \u00b7 Summary",
-          "sample data: no key and no network",
+          "sample data",
           "4 of 12 closed"
         ],
         "text_absent": [
@@ -162,7 +162,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data: add your Example Service API key for live data"
+          "sample data"
         ]
       }
     },

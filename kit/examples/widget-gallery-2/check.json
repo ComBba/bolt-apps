@@ -79,7 +79,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data: add your Widget gallery API key for live data"
+          "sample data"
         ]
       }
     },

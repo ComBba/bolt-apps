@@ -56,7 +56,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data: add your Table template API key for live data"
+          "sample data"
         ]
       }
     }

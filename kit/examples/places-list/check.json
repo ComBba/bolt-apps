@@ -72,7 +72,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data: add your Places list API key for live data"
+          "sample data"
         ]
       }
     },

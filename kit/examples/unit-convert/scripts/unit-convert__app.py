@@ -143,7 +143,7 @@ def emit_yaml(cfg):
     for osn, py in (("macos", "python3"), ("linux", "python3")):
         L.append(('    %s: "%s {{scripts_dir}}/' + _SELF + ' {{amount}} {{unit_from}} {{unit_to}} %s"') % (osn, py, words))
     L += ["  parse: json", "  timeout_seconds: 10", "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  right_widget:",
-          "    kind: detail", "    mode: selected_row", "    bind:", '      title: "{{row.title}}"', '      subtitle: "{{row.subtitle}}"', "      fields:",
+          "    kind: detail", "    mode: selected_row", "    bind:", '      title: "Conversion"', '      subtitle: "{{row.title}}"', "      fields:",
           '        - { label: "Result", value: "{{row.conv_result}}", copy: true }', '        - { label: "Formula", value: "{{row.conv_formula}}" }',
           '        - { label: "Reverse", value: "{{row.conv_reverse}}" }', '        - { label: "Kind", value: "{{row.conv_kind}}" }',
           "actions:", '  - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }']

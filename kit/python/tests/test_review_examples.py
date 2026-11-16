@@ -38,6 +38,20 @@ class Radar(unittest.TestCase):
     def setUpClass(cls):
         cls.r = load("repo-radar", "radar.py")
 
+    def test_npm_zero_days_inside_a_busy_range_are_missing_days_not_zero_downloads(self):
+        raw = {"downloads": [{"day": "2026-10-%02d" % d, "downloads": n} for d, n in
+                             [(10, 15000000), (11, 15100000), (12, 27000000), (13, 32000000), (14, 0), (15, 0), (16, 29000000), (17, 15000000), (18, 15200000), (19, 0), (20, 0), (21, 33000000)]]}
+        out = self.r.n_month(raw)
+        self.assertEqual(out["gaps"], ["2026-10-14", "2026-10-15", "2026-10-19", "2026-10-20"])
+        self.assertTrue(all(n > 0 for _, n in out["days"]))
+        # a package that is really at zero stays honest, and so does a long run of zeros
+        flat = self.r.n_month({"downloads": [{"day": "2026-10-%02d" % d, "downloads": 0} for d in range(1, 11)]})
+        self.assertEqual((len(flat["days"]), flat["gaps"]), (10, []))
+        edge = self.r.n_month({"downloads": [{"day": "2026-10-01", "downloads": 0}, {"day": "2026-10-02", "downloads": 5}]})
+        self.assertEqual((len(edge["days"]), edge["gaps"]), (2, []))
+        long_run = self.r.n_month({"downloads": [{"day": "2026-10-%02d" % d, "downloads": (0 if 2 <= d <= 6 else 9)} for d in range(1, 10)]})
+        self.assertEqual(long_run["gaps"], [])
+
     def test_numbers_are_checked_not_converted(self):
         for bad in (float("inf"), 1e999, "12", None, True):
             with self.assertRaises(ValueError):

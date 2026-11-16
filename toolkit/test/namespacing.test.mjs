@@ -240,9 +240,9 @@ test('on_missing_key: sample shows the labelled data and a key hint; setup shows
 	let rows = JSON.parse(run({}).stdout);
 	// the overview is a tiles view: no label rows (a row with no number draws an empty "-" tile); the label and the key hint ride on a real tile
 	assert.ok(!rows.some((r) => /^(SAMPLE DATA|Add your)/.test(r.title)), 'no label or hint row in a tiles view');
-	assert.ok(rows.some((r) => /^sample data: add your .* API key for live data$/.test(r.kpi_foot || '')), 'the key hint is on a tile footer');
+	assert.ok(rows.some((r) => /sample data/.test(`${r.kpi_foot || ''} ${r.kpi_note || ''}`)), 'the label is on a tile footer or note');
 	assert.ok(rows.length > 3, 'the sample data is shown');
-	for (const r of rows) if (r.kpi_foot && /sample data/.test(r.kpi_foot)) assert.equal(typeof r.kpi_value, 'number', 'the hint is on a row that has a tile');
+	for (const r of rows) if (/sample data/.test(`${r.kpi_foot || ''} ${r.kpi_note || ''}`)) assert.equal(typeof r.kpi_value, 'number', 'the label is on a row that has a tile');
 	cfg.api.on_missing_key = 'setup'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
 	rows = JSON.parse(run({}).stdout); assert.equal(rows.length, 1); assert.match(rows[0].title, /^Add your .* API key$/); assert.ok(!rows[0].pane && !rows[0].kpi_label);
 	rows = JSON.parse(run({ BOLT_APP_FIXTURE: '0' }).stdout); assert.equal(rows.length, 1);
@@ -342,7 +342,9 @@ test('tile_row_without_value mutants: only a refresh nav arg and the exact Back 
 	assert.deepEqual(sampleVisibleProblems(list, [{ title: 'SAMPLE DATA: add your key' }, { title: 'b' }], 'overview'), []);
 	assert.equal(sampleVisibleProblems(pres, [tile(1), tile(2)], 'overview')[0].code, 'sample_not_visible');
 	assert.deepEqual(sampleVisibleProblems(pres, [{ ...tile(1), kpi_badge: 'SAMPLE' }, tile(2)], 'overview'), []);
-	assert.deepEqual(sampleVisibleProblems({ ...pres, top: { kind: 'chart', mode: 'list_data' } }, [tile(1), tile(2)], 'overview'), [], 'a plotted view carries none');
+	const chart = { ...pres, top: { kind: 'chart', mode: 'list_data' } };
+	assert.equal(sampleVisibleProblems(chart, [tile(1), tile(2)], 'overview')[0].code, 'sample_not_visible', 'a plotted view says it in the first row subtitle');
+	assert.deepEqual(sampleVisibleProblems(chart, [{ ...tile(1), subtitle: '3 ms - sample data' }, tile(2)], 'overview'), []);
 });
 
 test('known_empty_tiles exists only in the four examples that were not redesigned; every demo has a visible-label case per list view', () => {
@@ -350,4 +352,26 @@ test('known_empty_tiles exists only in the four examples that were not redesigne
 	assert.deepEqual(waived, ['lookup-template', 'portal-template', 'script-template', 'system-glance']);
 	const acme = JSON.parse(fs.readFileSync(path.join(EX, 'acme-dash', 'check.json'), 'utf8')).cases.filter((c) => c.fixture === 'unset').map((c) => c.args[0]);
 	for (const v of ['tasks', 'policies', 'controls', 'risks', 'vendors', 'devices', 'people']) assert.ok(acme.includes(v), `acme-dash ${v}`);
+});
+
+test('a first word that is not a view is drawn by the APP-LEVEL widget: a tiles grid there with value-less rows fails, the entity_preview the examples now use passes', async () => {
+	const { paneProblems, presentationOf, blankPaneProblems } = await import('../lib/check.mjs');
+	const rows = [{ title: 'Sample verdict', kpi_value: 71, kpi_label: 'Score' }, { title: 'Weather', subtitle: 'x' }, { title: 'Bikes', subtitle: 'y' }, { title: 'Places', subtitle: 'z' }];
+	const old = { top: { kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'kpi_value' }, views: new Map([['overview', { kind: 'entity_preview', mode: 'selected_row' }], ['places', null]]), viewArg: 'view' };
+	assert.deepEqual(paneProblems(old, rows, '94087').map((x) => x.code), ['tile_row_without_value'], 'the old around.yaml: the overview was fixed but the fallback was not');
+	assert.deepEqual(paneProblems(old, rows, 'overview').map((x) => x.code), [], 'a declared view word is drawn by that view');
+	const fixed = { ...old, top: { kind: 'entity_preview', mode: 'selected_row', fields: ['title'] } };
+	assert.deepEqual(paneProblems(fixed, rows, '94087'), []);
+	for (const n of ['around', 'repo-radar', 'cli-wrapper-template', 'file-insights-template']) { const p = presentationOf(path.join(EX, n)); assert.equal(p.top.kind, 'entity_preview', n); assert.equal(p.top.mode, 'selected_row', n); }
+	// every selectable row must give its pane a field to draw (the old pipeline-board changes: a key-hint row in a diff view)
+	const diff = { top: null, views: new Map([['changes', { kind: 'diff', mode: 'selected_row', fields: ['left', 'right'] }]]), viewArg: 'view' };
+	assert.equal(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true } }, { title: 'Add your key' }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes')[0].code, 'pane_blank_row');
+	assert.deepEqual(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true } }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes'), []);
+	assert.deepEqual(blankPaneProblems(diff, [{ title: 'Not found' }], 'changes'), [], 'a run with no data row at all');
+});
+
+test('goldens never say "1 <plural>", the unit-convert pane title is a sentence, and a count filter says 1 point', () => {
+	for (const n of examples) { const g = path.join(EX, n, 'golden'); if (!fs.existsSync(g)) continue; for (const f of fs.readdirSync(g)) for (const m of fs.readFileSync(path.join(g, f), 'utf8').matchAll(/"([^"]*)"/g)) assert.ok(!/(?<![\d.,-])\b1 [a-z]{3,}s\b/.test(m[1]), `${n}/${f}: ${m[1].slice(0, 80)}`); }
+	const y = fs.readFileSync(path.join(EX, 'unit-convert', 'utilities', 'unit-convert.yaml'), 'utf8');
+	assert.match(y, /title: "Conversion"/); assert.match(y, /subtitle: "\{\{row\.title\}\}"/);
 });

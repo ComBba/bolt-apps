@@ -220,9 +220,7 @@ def emit_yaml(cfg):
     for osn in ("macos", "linux"):
         L.append('    %s: "%s"' % (osn, cmd % "python3"))
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title",
-          "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:", "    kind: cards", "    mode: list_data", "    bind:",
-          '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", *OVERVIEW_PANE,
+          "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:", *[l[4:] for l in OVERVIEW_PANE[2:]], "  views:", *OVERVIEW_PANE,
           "    replies:", "      right_widget:", "        kind: chart", "        mode: list_data", "        bind:", '          type: "%s"' % cfg["chart"]["type"],
           '          x: "label"', '          y: "value"', '          label: %s' % json.dumps(cfg["chart"]["title"]),
           "    raw:", "      right_widget:", "        kind: markdown", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          body: "{{row.body}}"',

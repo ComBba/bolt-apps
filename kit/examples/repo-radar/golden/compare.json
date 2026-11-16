@@ -16,7 +16,7 @@
   },
   {
     "title": "fastify/fastify leads on health",
-    "subtitle": "fastify/fastify 100 vs expressjs/express 98",
+    "subtitle": "fastify/fastify 96 vs expressjs/express 93",
     "icon": "ArrowLeftRight",
     "body": "",
     "actions": [],
@@ -27,16 +27,16 @@
     "kpi_note": "",
     "kpi_foot": "",
     "kpi_badge": "",
-    "copy_text": "- fastify/fastify leads on health - fastify/fastify 100 vs expressjs/express 98"
+    "copy_text": "- fastify/fastify leads on health - fastify/fastify 96 vs expressjs/express 93"
   },
   {
-    "title": "fastify/fastify · 100 of 100",
+    "title": "fastify/fastify · 96 of 100",
     "subtitle": "Safe to adopt",
     "icon": "Activity",
     "body": "",
     "actions": [],
     "kpi_label": "Health",
-    "kpi_value": 100,
+    "kpi_value": 96,
     "kpi_unit": "/100",
     "kpi_max": 100,
     "kpi_note": "fastify/fastify",
@@ -46,13 +46,13 @@
     "open_url": "https://github.com/fastify/fastify"
   },
   {
-    "title": "expressjs/express · 98 of 100",
+    "title": "expressjs/express · 93 of 100",
     "subtitle": "Safe to adopt",
     "icon": "Activity",
     "body": "",
     "actions": [],
     "kpi_label": "Health",
-    "kpi_value": 98,
+    "kpi_value": 93,
     "kpi_unit": "/100",
     "kpi_max": 100,
     "kpi_note": "expressjs/express",

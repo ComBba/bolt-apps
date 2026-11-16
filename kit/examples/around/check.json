@@ -267,6 +267,18 @@
           "Not in the recorded sample"
         ]
       }
+    },
+    {
+      "name": "a free-text first word (a zip code) is not a view: the app-level widget draws every row",
+      "os": "macos",
+      "args": [
+        "94087"
+      ],
+      "expect": {
+        "text_present": [
+          "Sample"
+        ]
+      }
     }
   ]
 }
