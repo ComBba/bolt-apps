@@ -86,7 +86,7 @@ For apps that run a script (not accepted in the gallery), the [authoring kit](ki
 
 Short version: [kit/examples/QUICKSTART.md](kit/examples/QUICKSTART.md) (decision tree, four commands, ten rules). What works and what does not: [CAPABILITIES.md](kit/examples/CAPABILITIES.md). In this README `bolt-apps` means `./bolt-apps`, run from the root of the clone.
 
-Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
+Needs Node 18+ and Python 3.9+. Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
 [`kit/examples/portal-template`](kit/examples/portal-template), make a copy with `bolt-apps new` (it renames every file for your app; pick a distinctive app id, since two authors who both ship `weather` still collide), change data in
 `scripts/my-app__config.json` and `scripts/my-app__fixtures.json`, generate the YAML, then check and pack it for yourself:
 
@@ -98,8 +98,7 @@ Want tiles, drill down with Back, a detail panel, a cache and plain error rows f
 ./bolt-apps ship ~/my-apps/my-app
 ```
 
-Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows what it can do and asks you to
-confirm (it rates a personal app high risk, which is expected). `ship` raises the version each time (Bolt refuses a pack that is not newer than the installed one) and keeps one signing key. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
+Drop the `.boltpack` on the Bolt launcher or Bolt Apps; Bolt shows one review card (it rates a personal app high risk and says the pack is self-signed: both expected; install it; on macOS an unverified-developer prompt may follow). Then open Settings, Desktop, User Apps, expand the app and click Review and accept; every reship needs that again. `ship` raises the version each time (Bolt refuses a pack that is not newer than the installed one) and keeps one signing key. This personal pack is how a rich app ships: it runs a script and calls the network (tier 3), so the gallery does not take it.
 [`kit/examples/acme-dash`](kit/examples/acme-dash) shows the same template with 8 views and three levels.
 Walkthrough with the row formats: <https://sparcle.app/docs/extend/rich-apps/>. Agents: [AGENTS.md](AGENTS.md) section 4c.
 

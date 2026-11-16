@@ -103,7 +103,7 @@ export function newFromTemplate(template, id, root) {
 		const r = bolt(['check', dir, '--update-golden']);
 		note = r.status === 0 ? 'check passes on the sample data' : `check did not pass yet:\n${r.stdout.slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`);
 }
 
 // ---------------------------------------------------------------- run
@@ -215,9 +215,8 @@ export function ship(args) {
 	const chip = (() => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || app.id; } catch { return app.id; } })();
 	console.log(`\nShipped ${app.id} ${version}: ${out}\n\nInstall it:
   1. Drop ${q(out)} on the Bolt launcher (or on Bolt Apps; not Admin settings).
-  2. Bolt shows a review card. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it.
-  3. Approve. Bolt asks once more because you signed the pack yourself. Approve again.
-  3b. After you drop the pack, open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept (the first run asks too). Every reship changes the files, so you approve again. An empty list when you press Enter means the app is not approved yet.
+  2. Bolt shows one review card. It says the pack is self-signed: that is expected, install it. Expect it to rate the app HIGH risk: it runs a script on your computer, and that is normal for a personal script app. It lists what the app can do; read it. On macOS an unverified-developer prompt may follow: accept it.
+  3. Then open Bolt Settings, Desktop, User Apps, expand the app, click Review and accept. Every reship changes the files, so you do this each time. An empty list when you press Enter means the app is not approved yet.
   4. Open the launcher and type =${chip}.
   ${startMode(dir) || 'Start mode: this app has no engine config, so it starts as its script says.'}
 To change the app: edit it, run bolt-apps ship again, drop the new file. The version rises by itself and replaces the old one; your other apps are not touched.

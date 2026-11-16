@@ -32,7 +32,7 @@ Needs Node 18+ and Python 3.9+:
 ./bolt-apps ship ~/my-apps/my-tool                         # lint, check, pack, verify; prints the .boltpack
 ```
 
-Edit between `new` and `run`. After editing an engine app's `scripts/<id>__config.json`, regenerate its app file: `cd ~/my-apps/my-tool && python3 scripts/engine.py --emit-yaml > utilities/my-tool.yaml`. Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the prompt, approve it, type `=mytool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
+Edit between `new` and `run`. After editing an engine app's `scripts/<id>__config.json`, regenerate its app file: `cd ~/my-apps/my-tool && python3 scripts/my-tool__engine.py --emit-yaml > utilities/my-tool.yaml`. Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the review card (self-signed is expected), install, then Settings, Desktop, User Apps, expand the app, Review and accept, and type `=my-tool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
 
 ## 3. Ten hard rules
 
@@ -52,9 +52,9 @@ Edit between `new` and `run`. After editing an engine app's `scripts/<id>__confi
 | Limit | Bolt | Kit or engine |
 |---|---|---|
 | Entries in `presentation.views` | 8 (the overview needs no entry) | 8 (the engine uses 7 plus an overview entry) |
-| Tiles pane (`cards`, `bind.layout: tiles`) | one tile per row, at most 24 rows; a row with no number draws an empty "-" tile | send 24 or fewer rows, every row with a number (the default grid layout caps at 500 and needs none) |
+| Tiles pane (`cards`, `bind.layout: tiles`) | one tile per row, at most 24 rows; a row with no number draws an empty "-" tile | send 24 or fewer rows, every row with a number (the default grid layout caps at 500 and needs none; from source, not yet seen in a running 181) |
 | Footer buttons | 6 | 3 (Open and Copy count) |
-| Footer label | 40 kept, 14 shown | write 14 or fewer |
+| Footer label | 40 kept, 14 shown (from source, not yet seen in a running 181) | write 14 or fewer |
 | Rows in a list | 2000 | 200 in the row schema, 50 from the engine |
 | Script timeout | 1 to 60 s, default 10 | engine requests 10 s each, 14 s together |
 | Pane kinds with app data | card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid | same |
@@ -74,14 +74,14 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 
 | Bolt says or does | Do this |
 |---|---|
-| After a drop the dialog says `Installed ... Ready to use: your-app-id` | Type `=<chip>`. 181 refreshes its list after a pack install. A file you saved into the User Apps folder by hand needs Reload. |
+| After a drop the dialog says `Installed ... Ready to use: your-app-id` | Type `=<chip>`. From the 181 source (not yet seen in a running 181), the list refreshes after a pack install. A file you saved into the User Apps folder by hand needs Reload. |
 | The chip is missing | Settings, Desktop App, User Apps, click Reload. A file that failed to load is listed there with the reason. |
 | "Not run. Needs your OK" | Press Enter on the app's run row, read what it can do, accept. First run only. |
-| Two approvals after a drop | First the install card (and on macOS an unverified-developer prompt): accept both. Then Settings, Desktop, User Apps, expand the app, Review and accept: that is what lets it run. A reship needs it again. |
+| What 181 shows after a drop | One review card (the self-signed warning is expected: install); on macOS an unverified-developer prompt may follow. Then Settings, Desktop, User Apps, expand the app, Review and accept: that is what lets it run. A reship needs it again. |
 | HIGH RISK in the install prompt | Normal for a personal app that runs a script (tier 3). Read the permissions, confirm only code you have read. |
 | "a pack is only replaced by a newer version" | `ship` already raises the version. If you packed by hand, pass a higher `--version`. To go back, remove the app first (see the Remove row). |
-| "one of its files already belongs to another installed pack" (`owned_by_other`) | Two apps shipped the same script file name. Name every file `<id>__<name>` (`./bolt-apps new` does), or remove the other app first. |
-| "already belongs to" another signer | Pack with the key you first used (`~/.bolt-apps/key.pem`), or remove the installed app (see the Remove row) and ship again. |
+| `Bolt did not install <name>: <file> already belongs to <other>. Remove that app first if you want this one instead.` (`owned_by_other`) | Another installed app owns that script file name (same name, or a different signer's pack). Name every file `<id>__<name>` (`./bolt-apps new` does), or remove the other app first. |
+| A script nested deeper than 8 folders (`too_deep`) | Keep scripts flat, directly in `scripts/`. |
 | Empty list after install and Enter | Not approved yet: Settings, Desktop, User Apps, expand the app, Review and accept. Every reship changes the files, so approve again. 181 shows an empty list instead of saying so. |
 | `chip_not_id` from lint, verify or pack | Set `chip` in the app file (and in `config.json`, then regenerate) to the app's id: Bolt only runs an app whose chip equals its id. |
 | "Bundle rejected" | You dropped it in Admin settings. Drop it on the Bolt launcher or Bolt Apps. |
@@ -97,7 +97,7 @@ From the Bolt 0.1.181 source; not run live unless stated. Tell the person what y
 |---|---|
 | Failure | A non-zero exit discards every row you printed. The person sees `<chip> unavailable: exit code N:` and up to 2 KiB of stderr. To show your own message, print an error row and exit 0; write diagnostics to stderr. |
 | Empty | With typed text and no rows Bolt shows "No results". A bare run with no rows shows nothing: print your own row. |
-| Typing | Rows of the last run stay; typing filters them (every term in the title or subtitle) and adds a `Run <app> with "..."` row. Always on; `presentation.searchable` does nothing. |
+| Typing | Rows of the last run stay; typing filters them (every term in the title or subtitle) and adds a `Run <app> with "..."` row. Always on; `presentation.searchable` does nothing. From source, not yet seen in a running 181. |
 | Drill cache | The launcher keeps the last 8 lists for 5 minutes by typed input, so a drill, Back or Refresh to a recent input may not run your script again. Not verified live. |
 | First word | A first word that is not a declared view (a place, a repo, a host) is drawn by the app-level right pane, which must tolerate rows with no value (a `selected_row` preview). `check` runs one sample case like that. |
 | Compare (`diff`) | Draws only the text its bind gives it (empty with none). Show what changed in a `detail` pane: Before, After, Change. |
@@ -108,7 +108,7 @@ From the Bolt 0.1.181 source; not run live unless stated. Tell the person what y
 | Detail pane | With no `bind.fields` it lists every key of the row, including `nav`, `actions` and `kpi_*`. Always give `fields`. |
 | Entity preview | `fields[].kind` is text, badge, chips, branch or diff; `tiles_above` draws only for a number. `primary: true` on one action takes Enter (at most one in the app file). A run action may carry an `icon`; a url action never does. |
 | Chart | A row without the `y` field is skipped, so one pane can mix chart rows and plain rows. |
-| Badges | In the list, tone `success`, `danger`, `warn` or `info` is coloured and any other tone is grey; at most 4 per row. `category` only re-selects the row after Back. |
+| Badges | In the list, tone `success`, `danger`, `warn` or `info` is coloured and any other tone is grey; at most 4 per row. `category` only re-selects the row after Back. From source, not yet seen in a running 181. |
 
 ## 7. Where things stand
 

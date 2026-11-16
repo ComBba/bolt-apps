@@ -3,7 +3,7 @@
 export const BOLT_SAYS = [
 	['same_or_older_version', 'version X is already installed, and a pack is only replaced by a newer version', 'Run bolt-apps ship again: it picks a higher version by itself. If you passed --version, use a higher number than the one installed.'],
 	['version_unreadable', 'it cannot tell whether this is newer than the installed version', 'A version is numbers with dots, such as 1.0.5. Run bolt-apps ship without --version.'],
-	['owned_by_other', 'a script file already belongs to another app', 'Two apps use the same script file name. Rebuild with the current bolt-apps: every file is named <app id>__<name>. Or remove the other app first.'],
+	['owned_by_other', 'Bolt did not install <name>: <file> already belongs to <other>. Remove that app first if you want this one instead.', 'Two apps use the same script file name. Rebuild with the current bolt-apps: every file is named <app id>__<name>. Or remove the other app first.'],
 	['file_exists', 'a file is already there and no pack installed it', 'A file with that name in your scripts folder was added by hand or came with Bolt. Open it (Settings, Desktop, User Apps, Open folder) and delete it, or rename yours.'],
 	['file_and_folder', 'a name is both a file and a folder', 'Rename the file or the folder inside scripts/ so one name is not both.'],
 	['case_collision', 'two names differ only in letter case', 'Rename one of the two files: macOS and Windows treat them as one file.'],
