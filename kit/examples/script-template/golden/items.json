@@ -27,7 +27,6 @@
       "arg": "101"
     },
     "actions": [],
-    "pane": "item",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -50,7 +49,6 @@
       "arg": "102"
     },
     "actions": [],
-    "pane": "item",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -73,7 +71,6 @@
       "arg": "103"
     },
     "actions": [],
-    "pane": "item",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -96,7 +93,6 @@
       "arg": "104"
     },
     "actions": [],
-    "pane": "item",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",

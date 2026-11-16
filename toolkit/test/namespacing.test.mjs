@@ -247,3 +247,24 @@ test('on_missing_key: sample shows the labelled data and a key hint; setup shows
 	cfg.api.on_missing_key = 'sample'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
 	assert.match(cli(home, d, 'doctor', app).stdout, /labelled SAMPLE DATA/);
 });
+
+test('check refuses what the launcher cannot draw in the right pane: row panes that name no preview, list_data or unsuitable views, and empty or oversized tile grids', async () => {
+	const { paneProblems, presentationOf } = await import('../lib/check.mjs');
+	const W = (kind, mode) => ({ kind, mode });
+	const pres = (top, views) => ({ top, views: new Map(Object.entries(views)), viewArg: 'view' });
+	const codes = (p, rows, v = 'overview') => paneProblems(p, rows, v).map((x) => x.code).sort();
+	const tiles = W('cards', 'list_data'), prev = W('entity_preview', 'selected_row');
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: prev }), [{ title: 't', kpi_value: 1, kpi_label: 'x', pane: 'a' }]), []);
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: null }), [{ title: 't', pane: 'a' }]), ['pane_no_widget']);
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: tiles }), [{ title: 't', pane: 'a' }]), ['pane_list_data']);
+	assert.deepEqual(codes(pres(tiles, { overview: null, a: W('diff', 'selected_row') }), [{ title: 't', pane: 'a' }]), ['pane_kind']);
+	assert.deepEqual(codes(pres(tiles, { overview: null }), [{ title: 't', pane: 'nope' }]), ['pane_no_view']);
+	assert.deepEqual(codes(pres(tiles, { overview: null }), [{ title: 't', pane: 'overview', kpi_value: 1 }]), [], 'a pane naming the view the run is on is drawn by that view');
+	const stories = Array.from({ length: 30 }, (_, i) => ({ title: `s${i}` }));
+	assert.deepEqual(codes(pres(tiles, { overview: null }), stories), ['empty_tile_grid', 'tile_cap']);
+	assert.deepEqual(codes(pres(null, { overview: prev }), stories), [], 'a selected_row preview takes any number of rows');
+	// the shipped pulse-feed declares a preview for every view that lists stories
+	const p = presentationOf(path.join(EX, 'pulse-feed'));
+	for (const v of ['overview', 'topic', 'stories']) assert.deepEqual(p.views.get(v), prev, v);
+	assert.equal(p.top, null);
+});

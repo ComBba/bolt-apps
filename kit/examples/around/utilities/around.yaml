@@ -39,7 +39,21 @@ presentation:
       subtitle: "{{row.kpi_note}}"
       badge: "{{row.kpi_badge}}"
   views:
-    overview: {}
+    overview:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          tiles_above:
+            title: "{{row.kpi_label}}"
+            value: "{{row.kpi_value}}"
+            unit: "{{row.kpi_unit}}"
+            max: "{{row.kpi_max}}"
+            subtitle: "{{row.kpi_note}}"
+            badge: "{{row.kpi_badge}}"
+          body: "{{row.body}}"
     places:
       right_widget:
         kind: detail

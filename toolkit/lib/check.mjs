@@ -11,6 +11,7 @@ import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { isNavToken } from './assess.mjs';
+import { parseYaml, get, str } from './yamlsubset.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const KIT_ROOT = path.resolve(here, '..', '..', 'kit');
@@ -232,6 +233,43 @@ export function kitGuard(appDir, cfg) {
 	return out;
 }
 
+
+// ---- what the launcher can draw in the right pane (userAppPane.ts): a row `pane` names a view that declares a selected_row preview; a tiles grid (cards, list_data) is drawn for the
+// whole run, one tile per row, at most 24 rows, and a row with no kpi_value is an empty tile. Static facts from the app file plus the rows a case printed.
+const ROW_PANE_KINDS = ['entity_preview', 'detail', 'markdown', 'json_tree', 'chart', 'table', 'card'];   // sanitizeRowPane accepts only these per row
+export function presentationOf(appDir) {
+	try {
+		const ud = path.join(appDir, 'utilities'), y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); if (!y) return null;
+		const root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')), pres = get(root, 'presentation')?.value;
+		const widget = (n) => { const w = get(n, 'right_widget')?.value; return w ? { kind: str(get(w, 'kind')?.value), mode: str(get(w, 'mode')?.value) } : null; };
+		const views = new Map(); const vs = get(pres, 'views')?.value;
+		for (const e of vs?.entries || []) views.set(e.key, widget(e.value) );
+		return { top: widget(pres), views, viewArg: str(get(pres, 'view_arg')?.value) };
+	} catch { return null; }
+}
+export function paneProblems(pres, rows, view) {
+	const out = [], E = (code, message) => out.push({ level: 'error', code, message });
+	if (!pres || !Array.isArray(rows)) return out;
+	const shown = pres.views.has(view) ? view : 'overview';
+	const own = pres.views.get(shown), w = own || pres.top;
+	const goodPane = (r) => r && typeof r.pane === 'string' && (r.pane !== shown && pres.views.has(r.pane)) && (() => { const pw = pres.views.get(r.pane); return pw && (pw.mode || 'selected_row') === 'selected_row' && ROW_PANE_KINDS.includes(pw.kind); })();
+	if (w && w.kind === 'cards' && w.mode === 'list_data') {
+		if (rows.length > 24) E('tile_cap', `the view "${shown}" draws a tile per row and at most 24 rows: this run printed ${rows.length}. Send 24 or fewer, or give the view a selected_row preview instead of a tiles grid`);
+		const loose = rows.filter((r) => !goodPane(r)), empty = loose.filter((r) => r && (r.kpi_value === undefined || r.kpi_value === '' || r.kpi_value === null)).length;
+		if (rows.length >= 8 && empty * 2 >= rows.length) E('empty_tile_grid', `the view "${shown}" draws a tile per row (cards, list_data), but ${empty} of ${rows.length} rows carry no kpi_value and no valid pane, so they draw as empty tiles ("no value"). Give those rows a tile, or give the view a selected_row preview (entity_preview) in presentation.views.${shown}.right_widget`);
+	}
+	const seen = new Set();
+	for (const r of rows) {
+		if (!r || typeof r.pane !== 'string' || !r.pane || r.pane === shown || seen.has(r.pane)) continue; seen.add(r.pane);   // a pane naming the view the run is on is drawn by that view's own widget
+		if (!pres.views.has(r.pane)) { E('pane_no_view', `a row names pane "${r.pane}", which is not a view in presentation.views: the launcher ignores the pane`); continue; }
+		const pw = pres.views.get(r.pane);
+		if (!pw) { if (r.pane !== shown) E('pane_no_widget', `a row names pane "${r.pane}", but that view declares no right_widget: the launcher ignores the pane. Add a selected_row preview (entity_preview) to presentation.views.${r.pane}.right_widget`); }
+		else if ((pw.mode || 'selected_row') !== 'selected_row') E('pane_list_data', `a row names pane "${r.pane}", but that view's right_widget is mode ${pw.mode}: a row pane must be a selected_row view (list_data views are drawn for the whole run, never per row)`);
+		else if (!ROW_PANE_KINDS.includes(pw.kind)) E('pane_kind', `a row names pane "${r.pane}", whose right_widget kind ${pw.kind} is never drawn per row (only ${ROW_PANE_KINDS.join(', ')} are): use entity_preview`);
+	}
+	return out;
+}
+
 // ---- stubs and the process ----
 const SH_QUOTE = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
 const HOSTILE = 'a\u202eb\u200bc{{x}}\u{E0041}d\u2028e\u0007f\u3164g\u2800h';
@@ -345,6 +383,7 @@ export async function checkApp(appDir, opts = {}) {
 		const gd = path.join(appDir, 'golden');
 		if (fs.existsSync(gd)) for (const g of fs.readdirSync(gd)) if (g.endsWith('.json') && !named.has(path.normalize(path.join('golden', g)))) top('error', 'golden_stale', `golden/${g} is not named by any case in check.json. Delete it, or add a case with "golden": "golden/${g}" (a copied template brings its goldens along: keep only the cases you want, then run check --update-golden once and review the files)`, `golden/${g}`);
 	}
+	const pres = presentationOf(appDir);
 	for (const kase of cases) {
 		const osName = kase.os || host, f = [], E = (code, message) => f.push({ level: 'error', code, message });
 		let secs = 0;
@@ -367,6 +406,7 @@ export async function checkApp(appDir, opts = {}) {
 			try { rows = JSON.parse(r.out); } catch { E('non_json_output', `stdout is not JSON (${r.out.length} bytes)`); }
 			if (rows !== null) {
 				for (const x of checkRows(rows, cfg.manifest_actions ?? 1)) f.push(x);
+				for (const x of paneProblems(pres, rows, (kase.args || [])[0] || 'overview')) f.push(x);
 				if (/[^\x00-\x7f]/.test(r.out)) f.push({ level: 'warning', code: 'non_ascii_output', message: 'stdout has non-ASCII bytes; ensure_ascii JSON is safe on any console code page' });
 				const flat = strings(rows, '$', []).map(([, s]) => s).join('\n');
 				const bad = rows.find((r) => r && typeof r.title === 'string' && /^This app (is not set up correctly|could not run)$/.test(r.title));
