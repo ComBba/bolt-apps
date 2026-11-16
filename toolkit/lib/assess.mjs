@@ -19,7 +19,7 @@ export function httpsLiteralHost(t) {
 	return !host || !/^[A-Za-z0-9.:-]+$/.test(host) ? null : host.toLowerCase();
 }
 export function scriptRefs(text) {
-	return new Set([...text.matchAll(/\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+)/g)].map((m) => m[1]));
+	return new Set([...text.matchAll(/\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*)/g)].map((m) => m[1]));
 }
 // Script names named by scalar VALUES of the parsed tree (comments are not values).
 function treeRefs(n, out = new Set()) {
@@ -207,19 +207,23 @@ export function plainName(n) {
 // is still reported as unused. `read(name)` returns the file's text.
 export function dataFilesUsed(used, names, read) {
 	const out = new Set(used);
+	// A script imports and reads its neighbours: only a file in the SAME folder counts, and names are matched by the file's own name, so two apps' helpers never count for each other.
+	const dir = (n) => (n.includes('/') ? n.slice(0, n.lastIndexOf('/')) : ''), base = (n) => n.slice(n.lastIndexOf('/') + 1);
+	// An app's files are named <app id>__<name>; the script's own code says bolt_app_kit and config.json, so a file counts under the name after the prefix too.
+	const bare = (n) => { const b = base(n), i = b.indexOf('__'); return i > 0 ? b.slice(i + 2) : b; };
 	for (let again = true; again;) {
 		again = false;
-		// a .py module counts as used when a used .py script imports it (import bolt_app_kit, from bolt_app_kit import ...)
+		// a .py module counts as used when a used .py script in the same folder imports it (import bolt_app_kit, from bolt_app_kit import ...)
 		for (const holder of [...out].filter((n) => n.endsWith('.py'))) {
 			let text = ''; try { text = String(read(holder)); } catch { continue; }
 			for (const n of names) {
-				const m = /^(.+)\.py$/.exec(n);
-				if (m && !out.has(n) && new RegExp(`^\\s*(import|from)\\s+${m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|\\.|,|$)`, 'm').test(text)) { out.add(n); again = true; }
+				const m = /^(.+)\.py$/.exec(bare(n));
+				if (m && dir(n) === dir(holder) && !out.has(n) && new RegExp(`^\\s*(import|from)\\s+${m[1].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|\\.|,|$)`, 'm').test(text)) { out.add(n); again = true; }
 			}
 		}
 		for (const holder of [...out].filter((n) => n.endsWith('.json') || n.endsWith('.py'))) {
 			let text = ''; try { text = String(read(holder)); } catch { continue; }
-			for (const n of names) if (n.endsWith('.json') && !out.has(n) && (text.includes(JSON.stringify(n)) || text.includes(`'${n}'`))) { out.add(n); again = true; }
+			for (const n of names) if (n.endsWith('.json') && dir(n) === dir(holder) && !out.has(n) && [base(n), bare(n)].some((b) => text.includes(JSON.stringify(b)) || text.includes(`'${b}'`))) { out.add(n); again = true; }
 		}
 	}
 	return out;
@@ -252,4 +256,15 @@ export function scanMentions(files) {
 		}
 	}
 	return [...out].sort();
+}
+
+// A description or placeholder that tells the person to type =something other than this app's chip (a copied template keeps its old words).
+export function chipMismatch(tree) {
+	if (!tree) return null;
+	const chip = str(get(tree, 'chip')?.value);
+	if (!chip) return null;
+	const texts = [str(get(tree, 'description')?.value), ...((get(tree, 'placeholder_examples')?.value?.items) || []).map((i) => str(i))].filter((x) => typeof x === 'string');
+	const wrong = new Set();
+	for (const tx of texts) for (const m of tx.matchAll(/(?:^|[\s"'(,;:])=([A-Za-z0-9][A-Za-z0-9-]*)/g)) if (m[1].toLowerCase() !== chip.toLowerCase()) wrong.add(`=${m[1]}`);
+	return wrong.size ? { chip, wrong: [...wrong] } : null;
 }

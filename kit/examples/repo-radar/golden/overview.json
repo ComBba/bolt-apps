@@ -103,7 +103,6 @@
       "view": "since"
     },
     "actions": [],
-    "pane": "since",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -122,7 +121,6 @@
       "view": "releases"
     },
     "actions": [],
-    "pane": "releases",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -141,7 +139,6 @@
       "view": "downloads"
     },
     "actions": [],
-    "pane": "downloads",
     "kpi_label": "Weekly downloads",
     "kpi_value": 197054,
     "kpi_unit": "k",
@@ -192,7 +189,6 @@
       "view": "vulns"
     },
     "actions": [],
-    "pane": "vulns",
     "kpi_label": "Open vulns",
     "kpi_value": 0,
     "kpi_unit": "",
@@ -211,7 +207,6 @@
       "view": "discussion"
     },
     "actions": [],
-    "pane": "discussion",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",

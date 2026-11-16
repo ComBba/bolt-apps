@@ -1,0 +1,236 @@
+{
+  "app": {
+    "id": "pipeline-board",
+    "chip": "pipeline-board",
+    "title": "Pipeline board",
+    "icon": "git-commit",
+    "description": "Runs grouped by stage, a detail pane per run and a line diff of what changed. Invented sample data.",
+    "service": "Pipeline board",
+    "searchable": true
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "PIPELINE_API_KEY",
+    "env_file": "~/.config/pipeline-board/.env",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "stages": {
+      "path": "/v1/stages",
+      "map": {
+        "title": "name"
+      }
+    },
+    "runs": {
+      "path": "/v1/runs",
+      "map": {
+        "title": "name"
+      }
+    },
+    "changes": {
+      "path": "/v1/changes",
+      "map": {
+        "title": "run"
+      }
+    }
+  },
+  "stats": {
+    "runs_total": {
+      "endpoint": "runs"
+    },
+    "runs_failed": {
+      "endpoint": "runs",
+      "where": {
+        "state": [
+          "failed"
+        ]
+      }
+    },
+    "runs_done": {
+      "endpoint": "runs",
+      "where": {
+        "state": [
+          "passed"
+        ]
+      }
+    }
+  },
+  "overview": {
+    "rows": [
+      {
+        "title": "Stages",
+        "subtitle": "runs grouped by stage. Enter opens the stages",
+        "icon": "list",
+        "view": "stages",
+        "tile": {
+          "label": "Runs",
+          "value": "runs_total",
+          "note": "across all stages"
+        }
+      },
+      {
+        "title": "Passed",
+        "subtitle": "Enter opens every run",
+        "icon": "git-commit",
+        "view": "runs",
+        "tile": {
+          "label": "Passed",
+          "value": "runs_done",
+          "max": "runs_total",
+          "note": "of all runs",
+          "badge": [
+            {
+              "if": "runs_failed>=1",
+              "badge": "FAILURES"
+            },
+            {
+              "badge": "GREEN"
+            }
+          ]
+        }
+      },
+      {
+        "title": "What changed",
+        "subtitle": "a line diff per run. Enter opens it",
+        "icon": "file",
+        "view": "changes",
+        "tile": {
+          "label": "Failed",
+          "value": "runs_failed",
+          "note": "need a look"
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "stages",
+      "title": "Stages",
+      "icon": "list",
+      "endpoint": "stages",
+      "sort": [
+        {
+          "field": "order"
+        }
+      ],
+      "children": [
+        {
+          "view": "runs",
+          "match": "stage"
+        }
+      ],
+      "no_children": "No runs in this stage",
+      "item": {
+        "title": "{title}",
+        "subtitle": "{runs} runs",
+        "icon": "list",
+        "fields": [
+          {
+            "label": "Stage",
+            "value": "{title}"
+          },
+          {
+            "label": "Runs",
+            "value": "{runs}"
+          },
+          {
+            "label": "Typical time",
+            "value": "{typical}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "runs",
+      "title": "Runs",
+      "icon": "git-commit",
+      "endpoint": "runs",
+      "sort": [
+        {
+          "field": "state",
+          "order": [
+            "failed",
+            "running",
+            "queued",
+            "passed"
+          ]
+        }
+      ],
+      "item": {
+        "title": "{title}",
+        "subtitle": "{state} · {stage} · {branch}",
+        "icon": "git-commit",
+        "body": "## {title}\n\n{summary}",
+        "copy": "{title} {state}",
+        "tile": {
+          "label": "Duration",
+          "value": "seconds",
+          "unit": "s",
+          "note": "this run",
+          "badge": [
+            {
+              "if": "seconds>=300",
+              "badge": "SLOW"
+            },
+            {
+              "badge": "OK"
+            }
+          ]
+        },
+        "fields": [
+          {
+            "label": "State",
+            "value": "{state}"
+          },
+          {
+            "label": "Stage",
+            "value": "{stage}"
+          },
+          {
+            "label": "Branch",
+            "value": "{branch}"
+          },
+          {
+            "label": "Author",
+            "value": "{author}"
+          },
+          {
+            "label": "Commit",
+            "value": "{commit}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "changes",
+      "title": "Changes",
+      "icon": "file",
+      "endpoint": "changes",
+      "item": {
+        "title": "{title}",
+        "subtitle": "{note}",
+        "extra": {
+          "left": "{before}",
+          "right": "{after}"
+        }
+      },
+      "widget": {
+        "kind": "diff",
+        "mode": "selected_row",
+        "bind": {
+          "left": "{{row.left}}",
+          "right": "{{row.right}}",
+          "leftLabel": "before",
+          "rightLabel": "after"
+        }
+      }
+    }
+  ]
+}

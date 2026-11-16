@@ -6,17 +6,17 @@ Read this page only. It is the one place for the rules. Every command is `./bolt
 
 | You need | Start from | Edit only | Read |
 |---|---|---|---|
-| A web API with a key: tiles, drill down, detail pane | `portal-template` | `scripts/config.json`, `scripts/fixtures.json` | `acme-dash` |
+| A web API with a key: tiles, drill down, detail pane | `portal-template` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json` | `acme-dash` |
 | Charts over rows | `chart-template` | same two | `widget-gallery` |
 | A sortable table with totals | `table-template` | same two | `widget-gallery` |
 | One word in, one card out | `lookup-template` | same two | itself |
-| A typed form that saves rows | `form-template` | `scripts/config.json` | itself |
-| A local file the person names | `file-insights-template` | `scripts/config.json`, `scripts/fixtures.json` | itself |
-| One command line tool | `cli-wrapper-template` | `scripts/config.json`, `scripts/wrap.py` | itself |
+| A typed form that saves rows | `form-template` | `scripts/<id>__config.json` | itself |
+| A local file the person names | `file-insights-template` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json` | itself |
+| One command line tool | `cli-wrapper-template` | `scripts/<id>__config.json`, `scripts/<id>__wrap.py` | itself |
 | Quick local probes as tiles | `system-glance` | `scripts/system-glance.py` | itself |
-| Several APIs joined | `repo-radar`, `around` | `scripts/config.json`, `scripts/fixtures.json`, the one script | itself |
+| Several APIs joined | `repo-radar`, `around` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json`, the one script | itself |
 | A service on this computer | `local-service-template` | `utilities/localmodels.yaml` | itself |
-| An API no engine template fits | `script-template` | `scripts/config.json`, `scripts/fixtures.json`, `scripts/app.py` | itself |
+| An API no engine template fits | `script-template` | `scripts/<id>__config.json`, `scripts/<id>__fixtures.json`, `scripts/<id>__app.py` | itself |
 | Reshape pasted text, no script | `./bolt-apps new <id> --type transform` | its yaml | [AGENTS.md](../../AGENTS.md) |
 
 The edit lists are `edit` in [index.json](index.json). Examples live in `kit/examples/<template>`.
@@ -32,14 +32,14 @@ Needs Node 18+ and Python 3.9+:
 ./bolt-apps ship ~/my-apps/my-tool                         # lint, check, pack, verify; prints the .boltpack
 ```
 
-Edit between `new` and `run`. After editing an engine app's `scripts/config.json`, regenerate its app file: `cd ~/my-apps/my-tool && python3 scripts/engine.py --emit-yaml > utilities/my-tool.yaml`. Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the prompt, approve it, type `=mytool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
+Edit between `new` and `run`. After editing an engine app's `scripts/<id>__config.json`, regenerate its app file: `cd ~/my-apps/my-tool && python3 scripts/engine.py --emit-yaml > utilities/my-tool.yaml`. Then drop the `.boltpack` on the Bolt launcher (never Admin settings), read the prompt, approve it, type `=mytool`. `ship` raises the version each time and keeps one signing key in `~/.bolt-apps`. Stuck: `./bolt-apps doctor ~/my-apps/my-tool`.
 
 ## 3. Ten hard rules
 
-1. Edit only the files in the table. Never edit `engine.py`, `bolt_app_kit.py`, the lock file or a generated `utilities/<id>.yaml`.
-2. `id` is lowercase letters, digits and hyphens, and equals the folder name.
+1. Edit only the files in the table. Never edit `<id>__engine.py`, `<id>__bolt_app_kit.py`, the lock file or a generated `utilities/<id>.yaml`.
+2. `id` is lowercase letters, digits and hyphens, and equals the folder name AND the app file's `chip` (`chip_not_id`: Bolt 181 and main look apps up by id, so a different chip is offered but never runs). Every file in `scripts/` is named `<id>__<name>` (`script_not_namespaced`): all apps share one scripts folder and Bolt refuses a file another app owns. Pick a distinctive id: two authors who both ship `weather` still collide.
 3. Keys never go in a file, a pack, a row or an error (the kit hides them from API answers within the limits in the table). Use the keychain or `~/.config/<id>/.env` (mode 600). A shell variable does not reach the script under Bolt.
-4. Ship live: `api.fixture_default` is `false`. Tests use sample data: `"fixture": true` at the top of `check.json`.
+4. Ship live: `api.fixture_default` is `false`. Tests use sample data: `"fixture": true` at the top of `check.json`. With no key an app starts in one of three states, set by `api.on_missing_key`: live (a key is found), labelled sample data (`sample`, for demos with a fictional API) or one setup row (`setup`, the default for a real app). `./bolt-apps ship` says which state yours starts in.
 5. Use only the panes in the table below. Chart types are `line`, `bar` and `sparkline`. Others (pie, donut, area, heatmap, gauge) are not shipped.
 6. Icon names are case-sensitive and come from `kit/schema/icons.json` (footer-button icons from a shorter lowercase list).
 7. A nav arg is one plain token: no slash. Drill with `nav` (one Enter). A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. A row's `pane` works when it names a view whose right pane has mode `selected_row` and kind entity_preview, detail, markdown, json_tree, chart, table or card; it is ignored for mode `list_data`, a view with no right pane, or kind diff, cards or image_grid.
@@ -52,6 +52,7 @@ Edit between `new` and `run`. After editing an engine app's `scripts/config.json
 | Limit | Bolt | Kit or engine |
 |---|---|---|
 | Entries in `presentation.views` | 8 (the overview needs no entry) | 8 (the engine uses 7 plus an overview entry) |
+| Tiles pane (`cards`, `bind.layout: tiles`) | one tile per row, at most 24 rows; a row with no number draws an empty "-" tile | send 24 or fewer rows, every row with a number (the default grid layout caps at 500 and needs none) |
 | Footer buttons | 6 | 3 (Open and Copy count) |
 | Footer label | 40 kept, 14 shown | write 14 or fewer |
 | Rows in a list | 2000 | 200 in the row schema, 50 from the engine |
@@ -78,7 +79,10 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 | "Not run. Needs your OK" | Press Enter on the app's run row, read what it can do, accept. First run only. |
 | HIGH RISK in the install prompt | Normal for a personal app that runs a script (tier 3). Read the permissions, confirm only code you have read. |
 | "a pack is only replaced by a newer version" | `ship` already raises the version. If you packed by hand, pass a higher `--version`. To go back, remove the app first (see the Remove row). |
+| "one of its files already belongs to another installed pack" (`owned_by_other`) | Two apps shipped the same script file name. Name every file `<id>__<name>` (`./bolt-apps new` does), or remove the other app first. |
 | "already belongs to" another signer | Pack with the key you first used (`~/.bolt-apps/key.pem`), or remove the installed app (see the Remove row) and ship again. |
+| Empty list after install and Enter | Not approved yet: Settings, Desktop, User Apps, expand the app, Review and accept. Every reship changes the files, so approve again. 181 shows an empty list instead of saying so. |
+| `chip_not_id` from lint, verify or pack | Set `chip` in the app file (and in `config.json`, then regenerate) to the app's id: Bolt only runs an app whose chip equals its id. |
 | "Bundle rejected" | You dropped it in Admin settings. Drop it on the Bolt launcher or Bolt Apps. |
 | Remove | Remove the app in Settings, Desktop, User Apps (the Remove button is on the app's row in 181 (not yet seen on a running 181 build); newer builds also show it in the expanded panel next to Revoke approval). Do not delete files by hand: Bolt keeps an install record, and a hand-deleted file can leave `owned_by_other` behind. Remove deletes the app's YAML and, for a pack's last app, its scripts and install record. If you cannot find a Remove button on your build, tell us which Bolt version you have. If you built apps before a fix was announced for them: remove the app this way, then `./bolt-apps ship` it again. |
 
@@ -104,5 +108,7 @@ From the Bolt 0.1.181 source; not run live unless stated. Tell the person what y
 | Badges | In the list, tone `success`, `danger`, `warn` or `info` is coloured and any other tone is grey; at most 4 per row. `category` only re-selects the row after Back. |
 
 ## 7. Where things stand
+
+Sharing common code: on 181 every pack is self-contained, with its own copy of the kit under `scripts/<id>__<name>` (a kit fix means re-vendoring and reshipping each app; an upgrade-kit command is planned). A shared library installed once is a Bolt 182 feature, not available now.
 
 Sample mode: `run --sample` and `check` need no key and no network. Live mode: put the key in the keychain or the `.env` file, then `run --live`. Not shipped: confinement of scripts, native MCP (a script can call one tool over stdio, tested only against a stand-in), Windows runs. The `permissions` block in an app file is shown at install and not enforced.

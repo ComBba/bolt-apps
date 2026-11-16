@@ -24,7 +24,7 @@ test('QUICKSTART.md stays small: a cold agent reads one short page', () => {
 	const words = QS.split(/\s+/).filter(Boolean).length, lines = QS.split('\n').length;
 	// Budget raised from 1500 words and 130 lines to 2000 and 150 when section 6 (what Bolt does with rows and runs) was added from the
 	// launcher audit: authors hit those behaviours, and it is still one page.
-	assert.ok(words <= 2000, `${words} words (budget 2000)`);
+	assert.ok(words <= 2400, `${words} words (budget 2400)`);   // 2000 plus the notes that chip must equal id, the three start states, re-approval and code sharing on 181
 	assert.ok(lines <= 150, `${lines} lines (budget 150)`);
 	assert.ok((QS.match(/^\d+\. /gm) || []).length >= 10, 'ten hard rules');
 });
@@ -73,16 +73,16 @@ test('pane kinds are identical across schema, toolkit, rules file and ENGINE.md'
 
 // ---------------------------------------------------------------- engine config fields
 test('every config field ENGINE.md documents exists in engine.py, and every field engine.py reads is documented', () => {
-	const eng = read('kit/examples/portal-template/scripts/engine.py');
+	const eng = read('kit/examples/portal-template/scripts/portal-template__engine.py');
 	const E = new Set([...eng.matchAll(/\.get\("([a-z_]+)"/g), ...eng.matchAll(/\["([a-z_]+)"\]/g), ...eng.matchAll(/"([a-z_]+)" in /g)].map((m) => m[1]));
 	const md = read('kit/examples/ENGINE.md');
 	const region = (md.slice(md.indexOf('## Modes'), md.indexOf('## Files named in the command')) + md.slice(md.indexOf('## More options'), md.indexOf('## What backs your app'))).replace(/```[\s\S]*?```/g, '');
 	const spans = [...region.matchAll(/`([^`]+)`/g)].map((m) => m[1]);
 	const pure = new Set(spans.filter((x) => /^[A-Za-z_]+$/.test(x))), anyWord = new Set(spans.flatMap((x) => x.match(/[A-Za-z_]+/g) || []));
 	// a lone backticked word that is a value, a template filter, a mode or an example, not a config key
-	const notFields = new Set(['_lines', 'api_key', 'count', 'day', 'dots', 'header', 'hhmm', 'human', 'join', 'key', 'left', 'list_data', 'lower', 'query', 'right', 'round', 'true', 'unknown', 'upper', 'when', 'whenday', 'yes']);
+	const notFields = new Set(['setup', 'sample', '_lines', 'api_key', 'count', 'day', 'dots', 'header', 'hhmm', 'human', 'join', 'key', 'left', 'list_data', 'lower', 'query', 'right', 'round', 'true', 'unknown', 'upper', 'when', 'whenday', 'yes']);
 	// keys the engine reads that are row fields it builds, not config
-	const engineOnly = new Set(['back', 'kpi_badge', 'nav']);
+	const engineOnly = new Set(['back', 'kpi_badge', 'nav', 'bolt_app_kit', '__']);
 	assert.deepEqual([...pure].filter((w) => !E.has(w) && !notFields.has(w)), [], 'documented as a field but engine.py never reads it');
 	assert.deepEqual([...E].filter((w) => !anyWord.has(w) && !engineOnly.has(w)), [], 'engine.py reads it but ENGINE.md does not document it');
 });
@@ -106,7 +106,7 @@ const known = new Set([...universe, ...BOLT_ONLY]);
 	for (const n of ['bolt-app', 'user-app', 'boltpack-manifest', 'connector']) { const walk = (o) => { if (o && typeof o === 'object') for (const [k, v] of Object.entries(o)) { if (k === 'properties' && v && typeof v === 'object') Object.keys(v).forEach((x) => known.add(x)); walk(v); } }; walk(JSON.parse(read(`schema/${n}.schema.json`))); }
 	const py = tracked().filter((f) => /^kit\/python\/(bolt_app_kit|tests)\/.*\.py$|^kit\/examples\/(portal-template|script-template)\/scripts\/[a-z-]+\.py$/.test(f)).map(read).join('\n');
 	for (const m of py.matchAll(/[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+/g)) known.add(m[0]);   // any identifier in the kit, the engine or their tests, so a name in a doc must at least exist there
-	for (const m of read('kit/examples/portal-template/scripts/engine.py').matchAll(/"([a-z_]+)"/g)) known.add(m[1]);
+	for (const m of read('kit/examples/portal-template/scripts/portal-template__engine.py').matchAll(/"([a-z_]+)"/g)) known.add(m[1]);
 	for (const f of [...SRC, 'conformance/verify-cases.json', 'kit/conformance/cases.json', 'kit/examples/index.json', 'kit/examples/capabilities.json']) for (const m of read(f).matchAll(/[A-Za-z][A-Za-z0-9]*(?:_[A-Za-z0-9]+)+/g)) known.add(m[0]);
 	for (const w of ['reads_clipboard', 'reads_launcher_input', 'copies_to_clipboard', 'runs_commands', 'agent_tools', 'opens_links', 'scripts_dir', 'bolt_app_kit', 'bolt_safenet']) known.add(w);
 }

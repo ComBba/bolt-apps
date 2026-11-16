@@ -39,31 +39,26 @@ test('fixture: a gallery pack refuses it and the words point at --personal', { s
 
 test('fixture without the helper folder (one flat script) packs with --personal and verifies', { skip: SKIP }, () => {
 	const { root, key } = stage();
-	fs.rmSync(path.join(root, 'apps', 'eagle-info', 'scripts', 'bolt_app_kit'), { recursive: true });
+	fs.rmSync(path.join(root, 'apps', 'eagle-info', 'scripts', 'eagle-info__lib'), { recursive: true });
+	fs.writeFileSync(path.join(root, 'apps', 'eagle-info', 'scripts', 'eagle-info__eagle_info.py'), 'print("{}")\n');
 	const out = path.join(root, 'e.boltpack');
 	const r = run(root, 'pack', 'apps/eagle-info', '--personal', '--key', key, '--out', out);
 	assert.equal(r.status, 0, r.stderr);
 	assert.equal(run(root, 'verify', out).status, 0);
 	const m = readPack(out).meta;
 	assert.equal(m.listing.tier, 3);
-	assert.ok(m.entries.some((e) => e.kind === 'script' && e.path === 'manifests/scripts/eagle_info.py'));
+	assert.ok(m.entries.some((e) => e.kind === 'script' && e.path === 'manifests/scripts/eagle-info__eagle_info.py'));
 });
 
-// The tester's real layout. Bolt 0.1.178 installs scripts flat, so `import bolt_app_kit` breaks
-// after install. Until Bolt installs script subfolders the toolkit must REFUSE this pack in
-// words that say why, never build a pack that installs and then fails. When Bolt gains
-// subfolder support this flips on its own: the pack must build and keep the folder paths.
-test('fixture with the helper package: refused in plain words, or packed with the folder intact', { skip: SKIP }, () => {
+// The tester's real layout: a helper package next to the script. Bolt 0.1.180 and later install script subfolders, so the package keeps its folder, under the app's own name
+// (every file of an app starts with <app id>__ because all apps share one scripts folder).
+test('fixture with the helper package: packs with the folder intact, under the app\'s own name', { skip: SKIP }, () => {
 	const { root, key } = stage();
 	const out = path.join(root, 'e.boltpack');
 	const r = run(root, 'pack', 'apps/eagle-info', '--personal', '--key', key, '--out', out);
-	if (r.status === 0) {
-		const paths = readPack(out).meta.entries.map((e) => e.path);
-		for (const f of ['__init__.py', 'cache.py', 'text.py', 'rows.py']) assert.ok(paths.includes(`manifests/scripts/bolt_app_kit/${f}`), f);
-		assert.equal(paths.filter((p) => p.startsWith('manifests/scripts/bolt_app_kit/')).length, 10);
-	} else {
-		assert.match(r.stderr, /bolt_app_kit/);
-		assert.match(r.stderr, /folder|subfolder|flat/);
-		assert.ok(!fs.existsSync(out), 'no pack is written when it would break after install');
-	}
+	assert.equal(r.status, 0, r.stderr);
+	const paths = readPack(out).meta.entries.map((e) => e.path);
+	for (const f of ['__init__.py', 'cache.py', 'text.py', 'rows.py']) assert.ok(paths.includes(`manifests/scripts/eagle-info__lib/bolt_app_kit/${f}`), f);
+	assert.equal(paths.filter((p) => p.startsWith('manifests/scripts/eagle-info__lib/bolt_app_kit/')).length, 10);
+	assert.ok(paths.every((p) => !p.startsWith('manifests/scripts/') || p.startsWith('manifests/scripts/eagle-info__')));
 });

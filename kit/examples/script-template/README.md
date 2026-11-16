@@ -4,9 +4,9 @@
 A blank script app on the kit, for an API or a tool no engine template fits. One list endpoint, three views (overview tiles, a list with a filter word, a detail with Back), a fresh cache and an old copy in code, an offline row, a setup row for a missing key, a key stripped from the API's answer before it is cached, sample mode, and `--emit-yaml` so the app file is generated from `config.json`.
 
 ## Edit these files
-- `scripts/config.json`: id, chip, title, the API (`base_url`, `hosts`, `key_env`, `auth_in`/`auth_param`), the endpoint path and `data` key, the field names, badges and tile labels.
-- `scripts/app.py`: `n_items()` (read your API's answer; raise ValueError for an answer you cannot trust), `http_get()` (headers if your API wants one), `build()` and `emit_yaml()` (rows and panes).
-- `scripts/fixtures.json`: a recorded answer from your API (the one here is invented, labelled SAMPLE DATA).
+- `scripts/script-template__config.json`: id, chip, title, the API (`base_url`, `hosts`, `key_env`, `auth_in`/`auth_param`), the endpoint path and `data` key, the field names, badges and tile labels.
+- `scripts/script-template__app.py`: `n_items()` (read your API's answer; raise ValueError for an answer you cannot trust), `http_get()` (headers if your API wants one), `build()` and `emit_yaml()` (rows and panes).
+- `scripts/script-template__fixtures.json`: a recorded answer from your API (the one here is invented, labelled SAMPLE DATA).
 - `check.json`: the cases. Keep the one that proves an echoed key never reaches the cache (`home_absent`).
 
 ## Run these commands

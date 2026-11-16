@@ -1,5 +1,7 @@
 # Bolt Apps
 
+> **Apps built before this change:** remove the old app in Bolt (Settings, Desktop, User Apps; the Remove button is on the app's row on 181, and newer builds also show it in the expanded panel; do not delete files by hand), run `./bolt-apps new <template> <id>`, copy your own `config.json` and `fixtures.json` over the new ones, re-run `./bolt-apps check`, then `./bolt-apps ship`.
+
 Small things people add to [Bolt](https://sparcle.app/bolt/) to do their job faster: a
 snippet that cleans a list, a search prefix for a site you use every day, a launcher key
 that turns pasted CSV into a Markdown table.
@@ -85,13 +87,13 @@ For apps that run a script (not accepted in the gallery), the [authoring kit](ki
 Short version: [kit/examples/QUICKSTART.md](kit/examples/QUICKSTART.md) (decision tree, four commands, ten rules). What works and what does not: [CAPABILITIES.md](kit/examples/CAPABILITIES.md). In this README `bolt-apps` means `./bolt-apps`, run from the root of the clone.
 
 Want tiles, drill down with Back, a detail panel, a cache and plain error rows for a web API? Copy
-[`kit/examples/portal-template`](kit/examples/portal-template), change data in `scripts/config.json` and
-`scripts/fixtures.json`, generate the YAML, then check and pack it for yourself:
+[`kit/examples/portal-template`](kit/examples/portal-template), make a copy with `bolt-apps new` (it renames every file for your app; pick a distinctive app id, since two authors who both ship `weather` still collide), change data in
+`scripts/my-app__config.json` and `scripts/my-app__fixtures.json`, generate the YAML, then check and pack it for yourself:
 
 ```
 ./bolt-apps new portal-template my-app --dir ~/my-apps
-# edit ~/my-apps/my-app/scripts/config.json and fixtures.json, then regenerate the app file:
-# cd ~/my-apps/my-app && python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
+# edit ~/my-apps/my-app/scripts/my-app__config.json and fixtures.json, then regenerate the app file:
+# cd ~/my-apps/my-app && python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
 ./bolt-apps run ~/my-apps/my-app --sample
 ./bolt-apps ship ~/my-apps/my-app
 ```

@@ -16,7 +16,7 @@
   },
   {
     "title": "Topic rust: 8 stories",
-    "subtitle": "front page and search merged. The Narrow button on a story goes deeper",
+    "subtitle": "front page and search merged. The Narrow rows below go deeper",
     "icon": "TrendingUp",
     "body": "",
     "actions": [],
@@ -48,19 +48,68 @@
     "copy_text": ""
   },
   {
+    "title": "Narrow to release",
+    "subtitle": "stories about release: the front page and a search, merged",
+    "icon": "Search",
+    "body": "",
+    "nav": {
+      "view": "topic",
+      "arg": "release"
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Narrow to keyboard",
+    "subtitle": "stories about keyboard: the front page and a search, merged",
+    "icon": "Search",
+    "body": "",
+    "nav": {
+      "view": "topic",
+      "arg": "keyboard"
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
+    "title": "Narrow to writing",
+    "subtitle": "stories about writing: the front page and a search, merged",
+    "icon": "Search",
+    "body": "",
+    "nav": {
+      "view": "topic",
+      "arg": "writing"
+    },
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
+  },
+  {
     "title": "Rust 2.0 release notes",
     "subtitle": "530 points, 260 comments, 60 min ago",
     "icon": "trending-up",
     "body": "530 points, 260 comments, posted 60 min ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "release"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/91005",
     "kpi_label": "",
@@ -82,15 +131,7 @@
     "subtitle": "301 points, 97 comments, 2 h ago",
     "icon": "trending-up",
     "body": "301 points, 97 comments, posted 2 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "keyboard"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/91002",
     "kpi_label": "",
@@ -112,15 +153,7 @@
     "subtitle": "187 points, 63 comments, 11 h ago",
     "icon": "trending-up",
     "body": "187 points, 63 comments, posted 11 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "writing"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/91006",
     "kpi_label": "",
@@ -142,15 +175,7 @@
     "subtitle": "143 points, 40 comments, 2 d 2 h ago",
     "icon": "trending-up",
     "body": "143 points, 40 comments, posted 2 d 2 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "ownership"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/92100",
     "kpi_label": "",
@@ -172,15 +197,7 @@
     "subtitle": "98 points, 55 comments, 3 d 8 h ago",
     "icon": "trending-up",
     "body": "98 points, 55 comments, posted 3 d 8 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "production"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/92101",
     "kpi_label": "",
@@ -202,15 +219,7 @@
     "subtitle": "85 points, 44 comments, 22 h ago",
     "icon": "trending-up",
     "body": "85 points, 44 comments, posted 22 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "impressions"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/91021",
     "kpi_label": "",
@@ -232,15 +241,7 @@
     "subtitle": "45 points, 12 comments, 44 h ago",
     "icon": "trending-up",
     "body": "45 points, 12 comments, posted 44 h ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "another"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/91031",
     "kpi_label": "",
@@ -262,15 +263,7 @@
     "subtitle": "12 points, 1 comments, 2 h 18 min ago",
     "icon": "trending-up",
     "body": "12 points, 1 comments, posted 2 h 18 min ago.\n\nLink: example.com\n\nUnmoderated public post, shown as is.",
-    "actions": [
-      {
-        "id": "narrow",
-        "kind": "utility",
-        "label": "Narrow",
-        "target_chip": "pulse",
-        "query_template": "example"
-      }
-    ],
+    "actions": [],
     "pane": "stories",
     "url": "https://example.com/post/92200",
     "kpi_label": "",

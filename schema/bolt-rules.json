@@ -643,6 +643,10 @@
  },
  "pack": {
   "script_max_depth": 8,
+  "script_namespace": {
+   "pattern": "<app id>__<name>",
+   "note": "toolkit rule, not a Bolt rule: every installed app shares one scripts folder and Bolt refuses a file whose path another pack owns (owned_by_other), so each file an app ships starts with its own id and a double underscore"
+  },
   "entry_name_max": 128,
   "entry_path_max": 512,
   "entry_part_pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*[A-Za-z0-9_-]$|^[A-Za-z0-9_-]$",

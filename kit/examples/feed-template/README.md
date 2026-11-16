@@ -1,8 +1,8 @@
 # Feed template
 
-Copy this folder when your API gives you **a list of ids** (one request per id) or **a result keyed by date**. It runs on sample data until you set `api.fixture_default` to `false` in `scripts/config.json`.
+Copy this folder when your API gives you **a list of ids** (one request per id) or **a result keyed by date**. It runs on sample data until you set `api.fixture_default` to `false` in `scripts/feed-template__config.json`.
 
-| What | Where in `scripts/config.json` |
+| What | Where in `scripts/feed-template__config.json` |
 |---|---|
 | A list of ids, then one request per id | `endpoints.news.hydrate` (`path` with `{id}`, `limit`) |
 | A date range in a path | `endpoints.asteroids.path`: `{today-2d}` to `{today}` |
@@ -13,11 +13,11 @@ Copy this folder when your API gives you **a list of ids** (one request per id) 
 
 Sources: the Hacker News API (no key) and NASA's NeoWs feed (a free key; `DEMO_KEY` works at a low rate). Set `NASA_API_KEY` in `~/.config/feed-template/.env` (mode 600) or the system keychain; see [the quick path](../QUICKSTART.md).
 
-The app file is generated. After editing `scripts/config.json`:
+The app file is generated. After editing `scripts/feed-template__config.json`:
 
 ```
-python3 scripts/engine.py --emit-yaml > utilities/feed-template.yaml
+python3 scripts/feed-template__engine.py --emit-yaml > utilities/feed-template.yaml
 bolt-apps check .
 ```
 
-Edit only `scripts/config.json` and `scripts/fixtures.json`. Run `./bolt-apps check` from the repo root on `kit/examples/feed-template` for the same check.
+Edit only `scripts/feed-template__config.json` and `scripts/feed-template__fixtures.json`. Run `./bolt-apps check` from the repo root on `kit/examples/feed-template` for the same check.

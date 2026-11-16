@@ -1,5 +1,7 @@
 # AGENTS.md: authoring a Bolt App
 
+> **Apps built before this change:** remove the old app in Bolt (Settings, Desktop, User Apps; the Remove button is on the app's row on 181, and newer builds also show it in the expanded panel; do not delete files by hand), run `./bolt-apps new <template> <id>`, copy your own `config.json` and `fixtures.json` over the new ones, re-run `./bolt-apps check`, then `./bolt-apps ship`.
+
 Instructions for AI coding agents (Claude Code, Codex, Cursor, Copilot and others) that
 create or change an app in this repository. Follow them exactly. Humans: see
 [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -51,7 +53,7 @@ repository.
 program or a script for themselves, do not tell them it is impossible and do not hand them a
 tar.gz. Build it outside `apps/` and run `bolt-apps lint <folder> --personal`, then
 `bolt-apps pack <folder> --personal`. Rules Bolt enforces on such a pack: scripts are single
-files directly in `scripts/` (no folders; the kit is the single file `scripts/bolt_app_kit.py`), named with letters,
+files directly in `scripts/`, each named `<app id>__<name>` (every installed app shares ONE scripts folder, and Bolt refuses a file another app already owns, `owned_by_other`; the kit is the single file `scripts/<app id>__bolt_app_kit.py`; pick a distinctive app id, because Bolt tells apps apart by id and two authors who both ship `weather` still collide), with letters,
 digits, `.`, `_` and `-`; every `{{scripts_dir}}/<name>` in the app file must exist; `runtime`
 is `transform`, `bridge` or `http_local`; action `kind` is `url`, `composer`, `utility` or
 `run`. Write the app YAML in plain form: bare keys with the colon touching them, values on one line (quoted or plain, `\"` and `\\` the only escapes), block lists and maps indented with spaces, no anchors, aliases, tags, block scalars (`|` `>`), duplicate keys or tabs. The tools read only that form; anything else is reported as `yaml_unreadable_here` and its tier as unknown. The person installs it by dropping the `.boltpack` on the Bolt launcher or Bolt Apps
@@ -132,11 +134,12 @@ the app can do and asks the person to confirm.
 Rules a script app must follow, each one a `verify` code:
 
 - One app file per `utilities/<id>.yaml`; script names are plain
-  (`script_name`); nested folders under `scripts/` install (Bolt allows them up to 8 deep; this toolkit refuses them as `script_subfolder` until it can check nested files). The kit ships as one file, `scripts/bolt_app_kit.py`, made by
+  (`script_name`); every file under `scripts/` starts with `<app id>__` (`script_not_namespaced`: Bolt installs all apps' scripts into one folder, so a bare `config.json` or `bolt_app_kit.py` stops a second app installing). The kit ships as one file, `scripts/<app id>__bolt_app_kit.py`, made by
   `bolt-apps kit vendor --flat <folder>`, which keeps the command's helper list short.
+- The app file's `chip` must equal its `id` (`chip_not_id`): the launcher looks apps up by id, so another chip is offered but never runs.
 - The command names the script as `{{scripts_dir}}/<name>`, bare, never in quotes
   (`command_variable_in_quotes`, `script_path_relative`, `script_missing`). Example:
-  `macos: "python3 {{scripts_dir}}/eagle.py {{view}}"`.
+  `macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"`.
 - The command is one program with arguments: no `;` `&&` `||` `|` backtick or `$(`
   (`command_shell_operator`). Put multi-step logic in the script.
 - `bridge.parse` is `json`, `lines` or `raw`; `timeout_seconds` is 1 to 60; `emits` is one of
@@ -167,17 +170,18 @@ that failed to load are listed there with the file name and Bolt's error. Run
 ## 4c. A rich app for a web API: start from the portal template
 
 If the person wants an app for a web API with a summary, tiles, lists they can drill into, a
-detail panel and a cache, do not write the YAML or the script. Copy
+detail panel and a cache, do not write the YAML or the script. Run
+`bolt-apps new portal-template <id>` (it copies
 [`kit/examples/portal-template`](kit/examples/portal-template) to a folder named after the new
-app's id, change data in `scripts/config.json` and `scripts/fixtures.json`, generate the YAML and
+app's id and renames every file and every mention of the template), change data in `scripts/<id>__config.json` and `scripts/<id>__fixtures.json`, generate the YAML and
 ship it as a personal pack (section 4b). It is tier 3, so it never goes in `apps/`. The personal
 pack is the way to ship a rich app: the gallery refuses it, and Bolt shows its permissions and asks
 the person to confirm when they drop the pack on the Bolt launcher or Bolt Apps.
 
 ```
 ./bolt-apps new portal-template my-app --dir ~/my-apps   # copy, rename, sample passes
-# edit ~/my-apps/my-app/scripts/config.json and fixtures.json (the `edit` list of the template in kit/examples/index.json)
-# then regenerate the app file:  cd ~/my-apps/my-app && python3 scripts/engine.py --emit-yaml > utilities/my-app.yaml
+# edit ~/my-apps/my-app/scripts/my-app__config.json and fixtures.json (the `edit` list of the template in kit/examples/index.json)
+# then regenerate the app file:  cd ~/my-apps/my-app && python3 scripts/my-app__engine.py --emit-yaml > utilities/my-app.yaml
 ./bolt-apps run ~/my-apps/my-app --sample     # the rows Bolt would show
 ./bolt-apps check ~/my-apps/my-app
 ./bolt-apps ship ~/my-apps/my-app              # lint --personal, check, pack (next version), verify
@@ -206,13 +210,13 @@ with the exact error text and the fix for each are in the "Rules Bolt enforces" 
 
 | Edit | Do not edit |
 |---|---|
-| `scripts/config.json`: endpoints and field `map`, `stats`, `overview`, `views` (labels, tile, up to 5 fields, body, link, `children`), `api`, `cache` | `scripts/engine.py` (the same file in every app built from the template) |
-| `scripts/fixtures.json`: a sample response per endpoint, made-up data | `scripts/bolt_app_kit.py` and `bolt_app_kit.lock.json` (refresh only with `bolt-apps kit vendor --flat .`) |
+| `scripts/<id>__config.json`: endpoints and field `map`, `stats`, `overview`, `views` (labels, tile, up to 5 fields, body, link, `children`), `api`, `cache` | `scripts/<id>__engine.py` (the same file in every app built from the template) |
+| `scripts/<id>__fixtures.json`: a sample response per endpoint, made-up data | `scripts/<id>__bolt_app_kit.py` and `bolt_app_kit.lock.json` (refresh only with `bolt-apps kit vendor --flat .`) |
 | `bolt-app.json`, `README.md`, `check.json` (one case per view you add), `golden/` | `utilities/<id>.yaml` by hand: regenerate it with `--emit-yaml` |
 
 Pitfalls: stay inside the view limit in [the rules table](kit/examples/QUICKSTART.md#4-the-rules-table) (use `views[].children` for a detail level, it
 reuses a view); no filter field in a row (the filter is the second word typed); scripts are flat
-single files; the YAML stays in the plain form the engine writes; `id` equals the folder name,
+single files named `<id>__<name>`; the YAML stays in the plain form the engine writes; `id` equals the folder name,
 `config.json` id and the yaml file name (lint refuses a mismatch); change `id` in `bolt-app.json` and delete the old
 `utilities/<template>.yaml` after emitting the new one.
 Row formats with the YAML that draws each: <https://sparcle.app/docs/extend/rich-apps/>. A full

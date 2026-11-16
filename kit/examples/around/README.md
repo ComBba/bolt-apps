@@ -47,13 +47,13 @@ The app ships live (`api.fixture_default` is false); `check` runs it in sample m
 Any app that joins sources with no shared id except location or time: a trip planner, a store finder, an event briefing. Replace the calls in `gather()`, the `n_*` readers, `stitch()` and `verdict()`.
 
 ## Edit only these fields
-`scripts/config.json`: `categories` (OSM filters), `bike_networks`, `radius_m`, `sources`, `score` (weights, comfort range, verdict labels), `auth_demo`, `api`. `scripts/fixtures.json`: recorded answers.
+`scripts/around__config.json`: `categories` (OSM filters), `bike_networks`, `radius_m`, `sources`, `score` (weights, comfort range, verdict labels), `auth_demo`, `api`. `scripts/around__fixtures.json`: recorded answers.
 
 ## Commands
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/around
-python3 kit/examples/around/scripts/around.py --emit-yaml > kit/examples/around/utilities/around.yaml
+python3 kit/examples/around/scripts/around__around.py --emit-yaml > kit/examples/around/utilities/around.yaml
 ./bolt-apps check kit/examples/around --update-golden
 ./bolt-apps lint kit/examples/around --personal
 ./bolt-apps pack kit/examples/around --personal --version 1.0.1 --out around-1.0.1.boltpack

@@ -1,7 +1,7 @@
 # repo-radar
 
 ## What this teaches
-Joining several remote APIs into one verdict. `=radar owner/repo` calls GitHub, npm, OSV.dev and Hacker News in parallel (a thread pool, a per-call timeout and one overall deadline), joins them on the repository and its npm package, scores 0 to 100, and shows what changed since you last looked.
+Joining several remote APIs into one verdict. `=repo-radar owner/repo` calls GitHub, npm, OSV.dev and Hacker News in parallel (a thread pool, a per-call timeout and one overall deadline), joins them on the repository and its npm package, scores 0 to 100, and shows what changed since you last looked.
 
 | View | Pane | What it shows |
 |---|---|---|
@@ -40,24 +40,24 @@ Read with `kit.get_secret("repo-radar", "GITHUB_TOKEN")`: keychain first, then `
 The newest result is saved in the kit cache (`~/.bolt-apps/cache/repo-radar/seen`). A run compares against the saved copy that is at least 60 minutes old (`snapshot_min_age_s`), so two runs a minute apart do not erase the change list. The first look at a repo says so.
 
 ## Sample data
-The app ships live (`api.fixture_default` is false); `check` runs sample mode (`"fixture": true` in `check.json`) on answers recorded on 2026-11-15 for `expressjs/express` and `fastify/fastify` (trimmed), with the clock fixed at the recording time. The `seen` entry in `fixtures.json` is NOT recorded: it is a hand-edited earlier snapshot, with a made-up advisory id, so the Since view has something to show. Record more repos with `BOLT_APP_FIXTURE=0 python3 scripts/radar.py --record owner/repo`. Failure previews: add `demo-osv-down`, `demo-github-limit`, `demo-npm-none` or `demo-hn-down` to the query in sample mode.
+The app ships live (`api.fixture_default` is false); `check` runs sample mode (`"fixture": true` in `check.json`) on answers recorded on 2026-11-15 for `expressjs/express` and `fastify/fastify` (trimmed), with the clock fixed at the recording time. The `seen` entry in `fixtures.json` is NOT recorded: it is a hand-edited earlier snapshot, with a made-up advisory id, so the Since view has something to show. Record more repos with `BOLT_APP_FIXTURE=0 python3 scripts/repo-radar__radar.py --record owner/repo`. Failure previews: add `demo-osv-down`, `demo-github-limit`, `demo-npm-none` or `demo-hn-down` to the query in sample mode.
 
 ## Copy this to build
 Any app that stitches two or more APIs on a shared key: a company lookup, a package audit, a city briefing. Replace the call table in `urls()`, the `n_*` functions that read each answer, the join in `model()` and the score.
 
 ## Edit only these fields
-`scripts/config.json`: `hosts`, `sources` (labels and TTLs), `weights`, `scoring`, `verdict`, `api` (timeouts, workers), `charts`. `scripts/fixtures.json`: recorded answers.
+`scripts/repo-radar__config.json`: `hosts`, `sources` (labels and TTLs), `weights`, `scoring`, `verdict`, `api` (timeouts, workers), `charts`. `scripts/repo-radar__fixtures.json`: recorded answers.
 
 ## Commands
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/repo-radar
-python3 kit/examples/repo-radar/scripts/radar.py --emit-yaml > kit/examples/repo-radar/utilities/radar.yaml
+python3 kit/examples/repo-radar/scripts/repo-radar__radar.py --emit-yaml > kit/examples/repo-radar/utilities/radar.yaml
 ./bolt-apps check kit/examples/repo-radar --update-golden
 ./bolt-apps lint kit/examples/repo-radar --personal
 ./bolt-apps pack kit/examples/repo-radar --personal --version 1.0.1 --out repo-radar-1.0.1.boltpack
 ```
-Use: `=radar expressjs/express`, `=radar fastify/fastify vs expressjs/express`, `=radar owner/repo:npm-name`.
+Use: `=repo-radar expressjs/express`, `=repo-radar fastify/fastify vs expressjs/express`, `=repo-radar owner/repo:npm-name`.
 
 ## Not covered
 Only npm packages (OSV supports other ecosystems). Not run in the real launcher. Windows was not tested. A repo with more than 8 releases shows the newest 8. The Hacker News total counts stories that link to the repo, not mentions in comments.

@@ -4,7 +4,7 @@
   "title": "JSON tree browser",
   "role": "Anyone who wants to look inside a JSON answer",
   "saves": "Writing a viewer for nested JSON",
-  "summary": "Type =jtree, pick a document, and browse it as a collapsible JSON tree. Replace the sample documents with any JSON API answer.",
+  "summary": "Type =json-tree-browser, pick a document, and browse it as a collapsible JSON tree. Replace the sample documents with any JSON API answer.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

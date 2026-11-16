@@ -1,0 +1,195 @@
+{
+ "app": {
+  "id": "table-template",
+  "chip": "table-template",
+  "title": "Table template",
+  "icon": "list",
+  "description": "A sortable table with totals, number formats and a share column. Sample data.",
+  "service": "Table template",
+  "searchable": true
+ },
+ "api": {
+  "base_url": "https://api.example.com",
+  "key_env": "TABLE_API_KEY",
+  "fixture_default": false,
+  "on_missing_key": "sample",
+  "fixture_file": "fixtures.json",
+  "fixture_banner": false
+ },
+ "cache": {
+  "ttl": 45,
+  "stale_max": 86400
+ },
+ "endpoints": {
+  "orders": {
+   "path": "/v1/orders"
+  },
+  "shares": {
+   "path": "/v1/revenue-by-region"
+  }
+ },
+ "stats": {
+  "orders_total": {
+   "endpoint": "orders"
+  },
+  "revenue": {
+   "endpoint": "orders",
+   "field_sum": "amount"
+  },
+  "paid": {
+   "endpoint": "orders",
+   "where": {
+    "status": [
+     "paid"
+    ]
+   }
+  }
+ },
+ "overview": {
+  "rows": [
+   {
+    "title": "Orders \u00b7 {orders_total}",
+    "subtitle": "sortable table with totals",
+    "icon": "list",
+    "view": "orders",
+    "tile": {
+     "label": "Revenue",
+     "value": "revenue",
+     "unit": "USD",
+     "note": "all orders",
+     "foot": "{paid} paid"
+    }
+   },
+   {
+    "title": "Revenue share by region",
+    "subtitle": "a table with a percent column (there is no pie pane)",
+    "icon": "line-chart",
+    "view": "shares",
+    "tile": {
+     "label": "Orders",
+     "value": "orders_total",
+     "note": "across 4 regions"
+    }
+   }
+  ]
+ },
+ "views": [
+  {
+   "id": "orders",
+   "title": "Orders",
+   "icon": "list",
+   "endpoint": "orders",
+   "item": {
+    "title": "{id} \u00b7 {customer}",
+    "subtitle": "{product} \u00b7 {status}",
+    "extra": {
+     "id": "{id}",
+     "customer": "{customer}",
+     "product": "{product}",
+     "qty": "{qty}",
+     "amount": "{amount}",
+     "placed": "{placed}",
+     "status": "{status}"
+    }
+   },
+   "widget": {
+    "kind": "table",
+    "mode": "list_data",
+    "bind": {
+     "sort": {
+      "field": "amount",
+      "dir": "desc"
+     },
+     "totals_label": "Total",
+     "columns": [
+      {
+       "field": "id",
+       "label": "Order",
+       "total": "count"
+      },
+      {
+       "field": "customer",
+       "label": "Customer"
+      },
+      {
+       "field": "product",
+       "label": "Product"
+      },
+      {
+       "field": "qty",
+       "label": "Qty",
+       "align": "right",
+       "total": "sum",
+       "format": "number"
+      },
+      {
+       "field": "amount",
+       "label": "Amount",
+       "align": "right",
+       "total": "sum",
+       "format": "currency",
+       "unit": "USD"
+      },
+      {
+       "field": "placed",
+       "label": "Placed",
+       "format": "date"
+      },
+      {
+       "field": "status",
+       "label": "Status"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "shares",
+   "title": "Shares",
+   "icon": "line-chart",
+   "endpoint": "shares",
+   "item": {
+    "title": "{region} \u00b7 {share}%",
+    "subtitle": "{amount} USD",
+    "extra": {
+     "region": "{region}",
+     "amount": "{amount}",
+     "share": "{share}"
+    }
+   },
+   "widget": {
+    "kind": "table",
+    "mode": "list_data",
+    "bind": {
+     "sort": {
+      "field": "share",
+      "dir": "desc"
+     },
+     "totals_label": "Total",
+     "columns": [
+      {
+       "field": "region",
+       "label": "Region",
+       "total": "count"
+      },
+      {
+       "field": "amount",
+       "label": "Amount",
+       "align": "right",
+       "total": "sum",
+       "format": "currency",
+       "unit": "USD"
+      },
+      {
+       "field": "share",
+       "label": "Share",
+       "align": "right",
+       "total": "sum",
+       "format": "percent"
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

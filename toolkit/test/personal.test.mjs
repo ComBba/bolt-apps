@@ -14,13 +14,13 @@ const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
 const run = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8' });
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-personal-'));
 const write = (f, c) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, c); };
-const BRIDGE = `schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: "Eagle info"\nemits: Generic\nbridge:\n  command:\n    macos: "python3 {{scripts_dir}}/eagle.py {{view}}"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n`;
+const BRIDGE = `schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle-info\ntitle: "Eagle info"\nemits: Generic\nbridge:\n  command:\n    macos: "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n`;
 // A script app laid out the way a tester's AI agent lays it out: listing, one User App, one flat script, author-side check files.
 function scriptApp(root, over = {}) {
 	const dir = path.join(root, 'apps', 'eagle-info');
 	write(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'eagle-info', title: 'Eagle info', role: 'Me', saves: 'A lookup', summary: 'Look up eagles.', author: { name: 'Tester' }, tier: 3, permissions: ['runs_commands'], tests: [], ...over }));
 	write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE);
-	write(path.join(dir, 'scripts', 'eagle.py'), 'print("{}")\n');
+	write(path.join(dir, 'scripts', 'eagle-info__eagle.py'), 'print("{}")\n');
 	write(path.join(dir, 'check.json'), '{}'); write(path.join(dir, 'fixtures', 'macos', 'x.out'), 'x'); write(path.join(dir, 'golden', 'g.json'), '{}');
 	return dir;
 }
@@ -42,14 +42,14 @@ test('pack --personal builds the layout Bolt installs, says what the app can do,
 	const d = tmp(), out = path.join(d, 'e.boltpack'); scriptApp(d);
 	const r = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', out);
 	assert.equal(r.status, 0, r.stderr);
-	for (const re of [/run programs on your computer/, /includes a script \(eagle\.py\)/, /ask whoever installs it to confirm/, /not Admin settings/, /approved apps, Bolt refuses/]) assert.match(r.stdout, re);
+	for (const re of [/run programs on your computer/, /includes a script \(eagle-info__eagle\.py\)/, /ask whoever installs it to confirm/, /not Admin settings/, /approved apps, Bolt refuses/]) assert.match(r.stdout, re);
 	const v = readPack(out); assert.ok(v.ok, v.reason);
 	// Bolt rules (the launcher): every entry sits under manifests/, with a plain path and a kind Bolt installs.
 	const byPath = Object.fromEntries(v.meta.entries.map((e) => [e.path, e]));
-	assert.deepEqual(Object.keys(byPath).sort(), ['manifests/scripts/eagle.py', 'manifests/utilities/eagle-info.yaml']);
+	assert.deepEqual(Object.keys(byPath).sort(), ['manifests/scripts/eagle-info__eagle.py', 'manifests/utilities/eagle-info.yaml']);
 	assert.equal(byPath['manifests/utilities/eagle-info.yaml'].kind, 'user_utility');
-	assert.equal(byPath['manifests/scripts/eagle.py'].kind, 'script');
-	assert.equal(byPath['manifests/scripts/eagle.py'].interpreter, 'python3');
+	assert.equal(byPath['manifests/scripts/eagle-info__eagle.py'].kind, 'script');
+	assert.equal(byPath['manifests/scripts/eagle-info__eagle.py'].interpreter, 'python3');
 	for (const e of v.meta.entries) assert.match(e.path.slice('manifests/'.length), /^[A-Za-z0-9_-][A-Za-z0-9._/-]*$/);
 	assert.equal(v.meta.listing.tier, 3); assert.ok(v.meta.listing.permissions.includes('runs_commands'));
 	assert.equal(v.meta.risk.level, 'high');
@@ -59,9 +59,10 @@ test('pack --personal builds the layout Bolt installs, says what the app can do,
 
 test('personal packs refuse what Bolt would break or reject, with the fix in the words', () => {
 	const cases = [
-		['a script folder', (dir) => write(path.join(dir, 'scripts', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'm.py'), 'x'), /script_subfolder/s],
+		['a script folder', (dir) => write(path.join(dir, 'scripts', 'eagle-info__a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'm.py'), 'x'), /script_depth/s],
+		['a bare shared script name', (dir) => write(path.join(dir, 'scripts', 'config.json'), '{}'), /script_not_namespaced/],
 		['bad script name', (dir) => write(path.join(dir, 'scripts', 'a b.py'), 'x'), /script_name/],
-		['missing script', (dir) => fs.rmSync(path.join(dir, 'scripts', 'eagle.py')), /script_missing.*scripts\/eagle\.py/s],
+		['missing script', (dir) => fs.rmSync(path.join(dir, 'scripts', 'eagle-info__eagle.py')), /script_missing.*scripts\/eagle-info__eagle\.py/s],
 		['runtime Bolt does not accept', (dir) => write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE.replace('runtime: bridge', 'runtime: wasm')), /runtime_not_allowed/],
 		['action Bolt does not accept', (dir) => write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE + 'actions:\n  - { id: a, kind: shell, label: A }\n'), /action_not_allowed/],
 		['stray file', (dir) => write(path.join(dir, 'notes.txt'), 'x'), /unknown_file/],
@@ -87,7 +88,7 @@ test('--personal also packs an ordinary tier 2 app, and a local-service app says
 	const d = tmp(); run(d, 'new', 'up', '--type', 'transform');
 	assert.equal(run(d, 'pack', 'apps/up', '--personal', '--key', keyed(d), '--out', path.join(d, 'u.boltpack')).status, 0);
 	const dir = scriptApp(d); fs.rmSync(path.join(dir, 'scripts'), { recursive: true });
-	write(path.join(dir, 'utilities', 'eagle-info.yaml'), 'schema_version: 1\nruntime: http_local\nid: eagle-info\nchip: eagle\ntitle: T\nemits: Generic\nhttp:\n  port: 8080\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\npresentation:\n  widget: list\n');
+	write(path.join(dir, 'utilities', 'eagle-info.yaml'), 'schema_version: 1\nruntime: http_local\nid: eagle-info\nchip: eagle-info\ntitle: T\nemits: Generic\nhttp:\n  port: 8080\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\npresentation:\n  widget: list\n');
 	const r = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', path.join(d, 'k.pem'), '--out', path.join(d, 'h.boltpack'));
 	assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /service on this computer \(port 8080\)/);
 });

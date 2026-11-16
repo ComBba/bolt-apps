@@ -16,7 +16,7 @@ const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
 const run = (cwd, ...a) => spawnSync(process.execPath, [CLI, ...a], { cwd, encoding: 'utf8' });
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-rules-'));
 const write = (f, c) => { fs.mkdirSync(path.dirname(f), { recursive: true }); fs.writeFileSync(f, c); };
-const cmd = (o) => `"${o === 'windows' ? 'python' : 'python3'} {{scripts_dir}}/run.py {{view}}"`;
+const cmd = (o) => `"${o === 'windows' ? 'python' : 'python3'} {{scripts_dir}}/demo__run.py {{view}}"`;
 
 // A bridge app file. opts: views (array of names), viewArg, argFrom, oses, rightWidget (yaml text), extra (top-level text).
 function appYaml(o = {}) {
@@ -77,17 +77,17 @@ test('escapes: \\x, \\u and \\U in the app file are refused by lint --personal a
 
 // ---- scripts folder (the launcher) ----
 test('scripts: a script over 2 MB is an error when named, a warning when not; a small one passes', () => {
-	const d = personalApp(tmp()); write(path.join(d.dir, 'scripts', 'run.py'), '#!/usr/bin/env python3\n' + 'x = 1\n'.repeat(450000));
+	const d = personalApp(tmp()); write(path.join(d.dir, 'scripts', 'demo__run.py'), '#!/usr/bin/env python3\n' + 'x = 1\n'.repeat(450000));
 	for (const c of ['lint', 'verify']) { const r = run(d.root, c, d.dir, '--personal', '--json'); assert.equal(r.status, 1, c); assert.match(r.stdout, /script_too_large/); }
-	const e = personalApp(tmp()); write(path.join(e.dir, 'scripts', 'unused.dat.py'), '#' + 'x'.repeat(2 * 1024 * 1024));
+	const e = personalApp(tmp()); write(path.join(e.dir, 'scripts', 'demo__unused.dat.py'), '#' + 'x'.repeat(2 * 1024 * 1024));
 	const r = run(e.root, 'lint', e.dir, '--personal', '--json'); const j = JSON.parse(r.stdout);
 	assert.equal(r.status, 0, r.stdout); assert.ok(j.reports[0].findings.some((f) => f.code === 'script_too_large' && f.level === 'warning'));
 	const ok = personalApp(tmp()); assert.ok(!/script_too_large/.test(run(ok.root, 'lint', ok.dir, '--personal', '--json').stdout));
 });
 test('scripts: a symlink or a non-plain file in scripts/ is refused with its own code', { skip: process.platform === 'win32' }, () => {
-	const d = personalApp(tmp()); fs.symlinkSync('/etc/hosts', path.join(d.dir, 'scripts', 'link.py'));
+	const d = personalApp(tmp()); fs.symlinkSync('/etc/hosts', path.join(d.dir, 'scripts', 'demo__link.py'));
 	let r = run(d.root, 'lint', d.dir, '--personal', '--json'); assert.equal(r.status, 1); assert.match(r.stdout, /script_symlink/);
-	const e = personalApp(tmp()); assert.equal(spawnSync('mkfifo', [path.join(e.dir, 'scripts', 'pipe.py')]).status, 0);
+	const e = personalApp(tmp()); assert.equal(spawnSync('mkfifo', [path.join(e.dir, 'scripts', 'demo__pipe.py')]).status, 0);
 	r = run(e.root, 'lint', e.dir, '--personal', '--json'); assert.equal(r.status, 1); assert.match(r.stdout, /script_not_plain/);
 	const ok = personalApp(tmp()); assert.doesNotMatch(run(ok.root, 'lint', ok.dir, '--personal', '--json').stdout, /script_symlink|script_not_plain/);
 });
@@ -154,7 +154,7 @@ test('pack: the version-order refusal is explained, and the pack never lands ins
 
 // ---- helper files (the launcher read_file_set hashes only the manifest and {{scripts_dir}}/<file> names) ----
 test('helper files: a data file a script reads but no command names is warned about; naming it clears the warning', () => {
-	const helper = (named) => { const d = personalApp(tmp(), { cmdExtra: named ? ' {{scripts_dir}}/config.json' : '' }); write(path.join(d.dir, 'scripts', 'config.json'), '{}'); write(path.join(d.dir, 'scripts', 'run.py'), '#!/usr/bin/env python3\nimport json\njson.load(open("config.json"))  # "config.json"\n'); return d; };
+	const helper = (named) => { const d = personalApp(tmp(), { cmdExtra: named ? ' {{scripts_dir}}/demo__config.json' : '' }); write(path.join(d.dir, 'scripts', 'demo__config.json'), '{}'); write(path.join(d.dir, 'scripts', 'demo__run.py'), '#!/usr/bin/env python3\nimport json\njson.load(open("config.json"))  # "config.json"\n'); return d; };
 	const w = (d) => JSON.parse(run(d.root, 'verify', d.dir, '--json').stdout).findings.filter((f) => f.code === 'helper_not_hashed');
 	const bad = w(helper(false)); assert.equal(bad.length, 1); assert.equal(bad[0].level, 'warning'); assert.match(bad[0].message, /approval hash/);
 	assert.equal(w(helper(true)).length, 0);
@@ -163,10 +163,10 @@ test('helper files: a data file a script reads but no command names is warned ab
 // A personal app: listing, one app file, one script. opts feed appYaml, plus cmdExtra (words added to every command) and extra.
 function personalApp(root, o = {}) {
 	const dir = path.join(root, 'apps', 'demo');
-	let y = appYaml(o); if (o.cmdExtra) y = y.replace(/(\{\{scripts_dir\}\}\/run\.py \{\{view\}\})/g, `$1${o.cmdExtra}`);
+	let y = appYaml(o); if (o.cmdExtra) y = y.replace(/(\{\{scripts_dir\}\}\/demo__run\.py \{\{view\}\})/g, `$1${o.cmdExtra}`);
 	write(path.join(dir, 'bolt-app.json'), JSON.stringify({ schema_version: 1, id: 'demo', title: 'Demo', role: 'Me', saves: 'A lookup', summary: 'Demo.', author: { name: 'Tester' }, tier: 3, permissions: ['runs_commands'], platforms: o.platformsListing, tests: [] }));
 	write(path.join(dir, 'utilities', 'demo.yaml'), y);
-	write(path.join(dir, 'scripts', 'run.py'), '#!/usr/bin/env python3\nprint("[]")\n');
+	write(path.join(dir, 'scripts', 'demo__run.py'), '#!/usr/bin/env python3\nprint("[]")\n');
 	return { root, dir };
 }
 

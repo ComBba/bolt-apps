@@ -1,8 +1,8 @@
 {
-  "script": "scripts/engine.py",
+  "script": "scripts/widget-gallery__engine.py",
   "interpreter": "python3",
   "manifest_actions": 2,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/widget-gallery__bolt_app_kit.py",
   "fixture": true,
   "cases": [
     {
@@ -84,6 +84,20 @@
       "expect": {
         "text_present": [
           "Could not connect"
+        ]
+      }
+    },
+    {
+      "name": "no key and no sample switch: the labelled sample data is shown, with a SAMPLE DATA row and a key hint (api.on_missing_key sample)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "overview"
+      ],
+      "expect": {
+        "text_present": [
+          "SAMPLE DATA: add your Widget gallery API key to see live data",
+          "Add your Widget gallery API key"
         ]
       }
     }

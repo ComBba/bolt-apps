@@ -1,0 +1,117 @@
+{
+ "mode": "form",
+ "app": {
+  "id": "form-template",
+  "chip": "form-template",
+  "title": "Log expense (form template)",
+  "icon": "wallet",
+  "description": "A typed input form, then the recent log as a table. Copy it for any app that takes a few typed values.",
+  "timeout": 10
+ },
+ "api": {
+  "fixture_default": false,
+  "fixture_file": "fixtures.json",
+  "fixture_banner": false
+ },
+ "form": {
+  "placeholder": "Fill the form and press Log expense",
+  "inputs": [
+   {
+    "name": "amount",
+    "type": "number",
+    "label": "Amount",
+    "required": true,
+    "min": 0,
+    "step": 0.01,
+    "placeholder": "42.50"
+   },
+   {
+    "name": "category",
+    "type": "select",
+    "label": "Category",
+    "default": "Meals",
+    "options": [
+     "Meals",
+     "Travel",
+     "Software",
+     "Office",
+     "Other"
+    ]
+   },
+   {
+    "name": "date",
+    "type": "date",
+    "label": "Date",
+    "default": "today"
+   },
+   {
+    "name": "description",
+    "type": "text",
+    "label": "Description",
+    "placeholder": "Client lunch",
+    "max_length": 120
+   },
+   {
+    "name": "billable",
+    "type": "toggle",
+    "label": "Billable",
+    "default": true
+   }
+  ],
+  "submit": {
+   "label": "Log expense"
+  },
+  "store": {
+   "file": "~/.bolt-apps/form-template/entries.jsonl",
+   "max_rows": 200
+  },
+  "record": {
+   "date": "{date}",
+   "amount": "{amount}",
+   "category": "{category}",
+   "description": "{description}",
+   "billable": "{billable|yes}"
+  },
+  "icon": "wallet",
+  "item": {
+   "title": "{category} \u00b7 {amount}",
+   "subtitle": "{date} \u00b7 {description}",
+   "extra": {
+    "date": "{date}",
+    "amount": "{amount}",
+    "category": "{category}",
+    "note": "{description}",
+    "billable": "{billable}"
+   }
+  },
+  "widget": {
+   "kind": "table",
+   "mode": "list_data",
+   "bind": {
+    "columns": [
+     {
+      "field": "date",
+      "label": "Date"
+     },
+     {
+      "field": "amount",
+      "label": "Amount",
+      "align": "right"
+     },
+     {
+      "field": "category",
+      "label": "Category"
+     },
+     {
+      "field": "note",
+      "label": "Note"
+     },
+     {
+      "field": "billable",
+      "label": "Billable"
+     }
+    ]
+   }
+  }
+ }
+}

@@ -5,9 +5,9 @@ The public example built from `../portal-template`: a fictional Acme Co complian
 - Overview: readiness 82%, tasks 41 of 50, policies, controls, risks, vendors, devices, people, trust portal.
 - Drill down: overview, then a list, then (for controls) a detail view with the linked tasks. Back is always the first row.
 - `=acme-dash tasks urgent` filters the task list by one word.
-- Ships live: with no key it shows the setup row. `check` runs it on the sample data in `scripts/fixtures.json` (`"fixture": true` in `check.json`), so tests need no key and no network. Put `ACME_API_KEY=...` in `~/.config/acme-dash/.env` (`chmod 600`) for the real API. To demo it on sample data in your own copy, set `api.fixture_default` to `true`.
+- Ships live: with no key it shows the setup row. `check` runs it on the sample data in `scripts/acme-dash__fixtures.json` (`"fixture": true` in `check.json`), so tests need no key and no network. Put `ACME_API_KEY=...` in `~/.config/acme-dash/.env` (`chmod 600`) for the real API. To demo it on sample data in your own copy, set `api.fixture_default` to `true`.
 
-All people, companies and numbers are made up. The only code is `scripts/engine.py`, identical to the template's; this folder differs only in `config.json` and `fixtures.json`.
+All people, companies and numbers are made up. The only code is `scripts/acme-dash__engine.py`, identical to the template's; this folder differs only in `config.json` and `fixtures.json`.
 
 Permissions in words: it runs a script on your computer, can reach the API host in `config.json`, and reads the `.env` file named there.
 

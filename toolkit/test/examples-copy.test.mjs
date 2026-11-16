@@ -67,23 +67,16 @@ for (const name of names) {
 		});
 	} else test(`${name}: has a README with commands`, { todo: 'no README.md yet' }, () => assert.fail('no README.md'));
 
-	test(`${name}: a copy with only id, chip and title changed passes check, pack --personal and verify`, () => {
-		const id = `copy-${name}`.slice(0, 60), s = sandbox(name, id), app = s.app;
-		// id, chip, title: in the listing, and in scripts/config.json (engine apps) or the app file (hand-written apps)
-		const bj = path.join(app, 'bolt-app.json'), b = JSON.parse(fs.readFileSync(bj, 'utf8')); b.id = id; b.title = `Copy of ${name}`; fs.writeFileSync(bj, JSON.stringify(b, null, 2) + '\n');
-		const cfgFile = path.join(app, 'scripts', 'config.json'), cfg = fs.existsSync(cfgFile) ? JSON.parse(fs.readFileSync(cfgFile, 'utf8')) : null;
-		const yamls = fs.readdirSync(path.join(app, 'utilities')).filter((f) => /\.ya?ml$/.test(f));
-		const scriptsDir = path.join(app, 'scripts'); // an http_local app has no scripts/ folder
-		const emitter = (fs.existsSync(scriptsDir) ? fs.readdirSync(scriptsDir) : [])
-			.filter((f) => f.endsWith('.py') && f !== 'bolt_app_kit.py').find((f) => fs.readFileSync(path.join(scriptsDir, f), 'utf8').includes('--emit-yaml'));
-		const chip = `${id}`.slice(0, 40);
-		if (cfg && cfg.app && emitter) {
-			cfg.app.id = id; cfg.app.chip = chip; cfg.app.title = `Copy of ${name}`; fs.writeFileSync(cfgFile, JSON.stringify(cfg, null, 2) + '\n');
-			for (const y of yamls) fs.rmSync(path.join(app, 'utilities', y));
-			const r = sh(`python3 scripts/${emitter} --emit-yaml > utilities/${id}.yaml`, app, s.env);
-			assert.equal(r.status, 0, `${name}: emit-yaml failed: ${r.stderr}`);
-		} else {
-			for (const y of yamls) { const f = path.join(app, 'utilities', y); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "Copy of ${name}"`)); }
+	test(`${name}: a copy made with new passes check, pack --personal and verify; a hand copy that only renames id, chip and title is refused with the fix`, () => {
+		const id = `copy-${name}`.slice(0, 60), s = sandbox(name), src = s.app;
+		// the way a person copies: bolt-apps new renames the id, chip, title AND every script file (Bolt keeps all apps' scripts in one folder)
+		const made = bolt(s, s.root, 'new', name, id, '--dir', path.join(s.root, 'kit', 'examples')); assert.equal(made.status, 0, `${name}: new\n${made.stdout}${made.stderr}`);
+		const app = path.join(s.root, 'kit', 'examples', id);
+		if (fs.existsSync(path.join(src, 'scripts'))) {
+			// the shortcut people took before: copy the folder, change id, chip and title only. The scripts keep the template's names, which would collide with the template's own app in Bolt.
+			const hand = path.join(s.root, 'hand', id); fs.cpSync(src, hand, { recursive: true });
+			const hb = JSON.parse(fs.readFileSync(path.join(hand, 'bolt-app.json'), 'utf8')); hb.id = id; fs.writeFileSync(path.join(hand, 'bolt-app.json'), JSON.stringify(hb));
+			const hr = bolt(s, hand, 'lint', '.', '--personal'); assert.notEqual(hr.status, 0, `${name}: a hand copy must not pass`); assert.match(hr.stdout, /script_not_namespaced/);
 		}
 		let r;
 		if (fs.existsSync(path.join(app, 'check.json'))) {   // `check` runs script apps only; an app with no check.json (http_local) goes straight to lint, pack and verify

@@ -11,7 +11,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Pane: entity_preview | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Facts list up to 40 entries, one tile above. Config default for a detail view. |
 | Pane: chart | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Types line, bar and sparkline only. Title is the label bind as literal text. |
 | Pane: table | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Up to 40 columns; totals sum, avg, min, max, count; the engine hands it at most 50 rows. |
-| Pane: cards | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Layout tiles or grid; tile label cut at 24 characters. |
+| Pane: cards | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Layout tiles (a tile per row, at most 24 rows, and a row with no number draws an empty "-" tile) or the default grid (up to 500 cards, no number needed); tile label cut at 24 characters. The 24 cap applies only to bind.layout tiles. |
 | Pane: detail | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Label and value fields of the selected row. |
 | Pane: json_tree | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Reads a nested object from the row field named in bind.source. |
 | Pane: diff | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Two texts, line by line. |
@@ -68,6 +68,10 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | permissions block in the app file | partial | no example yet | `toolkit/test/cold-agent.test.mjs` | Declared and shown at install and compared with what the files use (permissions_differ). Bolt does not enforce it at run time (link host limits will start applying when the device wiring ships). |
 | Sandbox: a script confined to what it declares | not supported | none | `toolkit/test/docs-drift.test.mjs` | Not shipped. A personal script runs as you, with your files and network. Confinement is planned. Install only code you have read. |
 | Windows | partial | see any example app file | `toolkit/test/kit.test.mjs` | Unproven: the command table accepts a windows entry and check can run fixtures labelled windows, but nothing has been run on Windows. |
+| Chip must equal id | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | The app file's chip must be its id (`chip_not_id` is an error in lint --personal, verify and pack). Bolt 181 and main look apps up by id, so a different chip is offered in the launcher but never runs: an empty list and no error. |
+| Three start states: live with a key, labelled sample data, setup row only | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | api.on_missing_key is setup (default: no key shows one setup row, no sample data) or sample (no key shows the labelled sample data, with the label and key hint on a tile in tile views). A key file with open permissions keeps its own row. BOLT_APP_FIXTURE=1 always shows sample data. |
+| Approval after every reship | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | A personal app is approved per set of files. Every reship changes the files, so approve again; the first run asks too. On 181 pressing Enter on an unapproved app shows an empty list (fixed on a later build). |
+| Share common code between apps | not supported | none | `toolkit/test/namespacing.test.mjs` | On 181 every app ships its own files under scripts/ID__name, kit included, so a kit fix needs a re-vendor and a reship of each app (a later upgrade-kit command is planned). A shared library installed once is a Bolt 182 feature, not available now. |
 
 ## Snippets
 
@@ -375,7 +379,7 @@ view_arg: view   # bound to query.word(0)
 ### Command variables: limit, press, outname (`runtime.vars`)
 
 ```
-"{{scripts_dir}}/app.py {{view}} {{arg}}"
+"{{scripts_dir}}/my-app__app.py {{view}} {{arg}}"
 ```
 
 ### Rows that open as files (`rows.emits_file`)
@@ -426,5 +430,23 @@ permissions:
 ### Windows (`platform.windows`)
 
 ```
-"windows": "python {{scripts_dir}}/engine.py {{view}} {{arg}}"
+"windows": "python {{scripts_dir}}/my-app__engine.py {{view}} {{arg}}"
+```
+
+### Chip must equal id (`platform.chip_equals_id`)
+
+```
+chip: portal-template
+```
+
+### Three start states: live with a key, labelled sample data, setup row only (`api.start_states`)
+
+```
+"on_missing_key": "sample"
+```
+
+### Approval after every reship (`platform.reapprove`)
+
+```
+Settings, Desktop, User Apps, expand the app, Review and accept
 ```

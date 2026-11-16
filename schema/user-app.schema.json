@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sparcle.app/schemas/user-app-v1.json",
   "title": "Bolt User App (utilities/<id>.yaml) v1",
-  "description": "The one schema for a Bolt User App file: utilities/<id>.yaml in an app folder, a User Apps folder or a .boltpack. It is documentation, not an enforcement boundary: Bolt itself refuses a file that breaks a rule, and Bolt also checks things a schema cannot say (a command is split into arguments and run without a shell, a {{variable}} is never inside quotes, a recognize regex must compile). Unknown fields are refused, and so are the company-admin connector fields. The limits below (kinds, view and action limits, patterns) are mirrored from schema/bolt-rules.json in the bolt-apps repository, and a test keeps them equal. The gallery accepts runtime: transform only; personal apps may use bridge and http_local. Guide: https://sparcle.app/docs/extend/agent-guide/",
+  "description": "The one schema for a Bolt User App file: utilities/<id>.yaml in an app folder, a User Apps folder or a .boltpack. It is documentation, not an enforcement boundary: Bolt itself refuses a file that breaks a rule, and Bolt also checks things a schema cannot say (a command is split into arguments and run without a shell, a {{variable}} is never inside quotes, a recognize regex must compile). Unknown fields are refused, and so are the company-admin connector fields. The limits below (kinds, view and action limits, patterns) are mirrored from schema/bolt-rules.json in the bolt-apps repository, and a test keeps them equal. The gallery accepts runtime: transform only; personal apps may use bridge and http_local. Guide: https://sparcle.app/docs/extend/agent-guide/ Bolt also checks what a schema cannot say: duplicate action ids, at most one primary action, that view_arg names a declared arg, and the rules about commands and placeholders.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -101,7 +101,7 @@
       "items": {
         "$ref": "#/$defs/action"
       },
-      "description": "Bolt shows at most 6 footer buttons; the authoring kit keeps to 3."
+      "description": "Buttons on a row and in the pane footer. Bolt shows at most 6 footer buttons in all (these first, then the row's own, trimmed to fit); the authoring kit keeps to 3. Bolt also refuses duplicate action ids and more than one primary."
     },
     "dispatch": {
       "type": "object",
@@ -970,7 +970,7 @@
               "PGSSLMODE"
             ]
           },
-          "description": "Environment variables the command reads. Commands start with an empty environment plus a fixed set Bolt chooses; an app may add only these names (hosts, regions, profiles, config paths, public identifiers). Credentials, loader and interpreter settings, proxies and Bolt settings are never forwarded to a gallery app. Mirrors BENIGN_PASSTHROUGH_NAMES in the launcher and the launcher; keep all three in step."
+          "description": "Environment variables the command reads. Commands start with an empty environment plus a fixed set Bolt chooses; an app may add only these names (hosts, regions, profiles, config paths, public identifiers). Credentials, loader and interpreter settings, proxies and Bolt settings are never forwarded to a gallery app. The list is the same in the launcher and in schema/bolt-rules.json (env.benign_passthrough); keep them in step."
         },
         "cwd": {
           "enum": [
@@ -1203,6 +1203,40 @@
           ]
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "presentation": {
+            "required": [
+              "view_arg"
+            ]
+          }
+        },
+        "required": [
+          "presentation"
+        ]
+      },
+      "then": {
+        "required": [
+          "args"
+        ],
+        "properties": {
+          "args": {
+            "contains": {
+              "properties": {
+                "from": {
+                  "pattern": "^\\s*query\\.word\\(\\s*\\d+\\s*\\)\\s*$"
+                }
+              },
+              "required": [
+                "from"
+              ]
+            }
+          }
+        }
+      },
+      "description": "view_arg must name an arg bound with from: query.word(N) (the name match is checked by Bolt)."
     }
   ],
   "$defs": {
@@ -1291,7 +1325,7 @@
         "label": {
           "type": "string",
           "pattern": "\\S",
-          "description": "Bolt keeps 40 characters of a label and the footer button shows the first 14. Words such as Allow, Approve, Delete, Confirm, Cancel, Deny, OK, Yes, No, Remove, Unlock and Sign in are refused."
+          "description": "Bolt keeps 40 characters of a label and the footer button shows the first 14. A label that is one of Allow, Approve, Delete, Confirm, Cancel, Deny, OK, Yes, No, Remove, Unlock or Sign in is shown as \"App: <word>\" (so a button cannot pass for a Bolt prompt); the toolkit warns about it (action_label_reserved)."
         },
         "target": {
           "type": "string",
@@ -1313,7 +1347,7 @@
         },
         "primary": {
           "type": "boolean",
-          "description": "At most one action may be primary."
+          "description": "At most one action may be primary. A run action is never primary."
         },
         "icon": {
           "enum": [
@@ -1476,6 +1510,19 @@
                   ]
                 }
               ]
+            },
+            "properties": {
+              "primary": {
+                "not": {
+                  "const": true
+                }
+              },
+              "query_template": {
+                "not": {
+                  "pattern": "\\{\\{"
+                },
+                "description": "Fixed text: a run action runs this app once with it, so no {{ placeholder."
+              }
             }
           }
         }
@@ -1527,7 +1574,7 @@
         },
         "searchable": {
           "type": "boolean",
-          "description": "Accepted and does nothing: Bolt always filters the rows of the last run as you type (title and subtitle)."
+          "description": "Accepted and does nothing. Once the app has rows Bolt filters them as you type (title and subtitle); an app with dispatch.choices shows its confirm choices instead."
         },
         "view_arg": {
           "type": "string",

@@ -1,7 +1,7 @@
 # widget-gallery-2
 
 ## What this teaches
-The three panes `widget-gallery` has no room for, because a personal app may have at most 8 views including the overview and that gallery already uses all 8. Open `=gallery2` and press Enter on each row.
+The three panes `widget-gallery` has no room for, because a personal app may have at most 8 views including the overview and that gallery already uses all 8. Open `=widget-gallery-2` and press Enter on each row.
 
 | View | kind and mode | bind keys | row fields it reads |
 |---|---|---|---|
@@ -19,13 +19,13 @@ Six colour swatches generated for this example, labelled SAMPLE DATA in each not
 A gallery, a palette, an avatar list, a screenshot index. Replace `endpoints.swatches` and the `item.extra` fields; keep the image small.
 
 ## Edit only these fields
-`scripts/config.json`: `endpoints`, `overview.rows`, each view's `item.extra` and `widget.bind`. `scripts/fixtures.json`: the recorded or sample response.
+`scripts/widget-gallery-2__config.json`: `endpoints`, `overview.rows`, each view's `item.extra` and `widget.bind`. `scripts/widget-gallery-2__fixtures.json`: the recorded or sample response.
 
 ## Commands
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/widget-gallery-2
-python3 kit/examples/widget-gallery-2/scripts/engine.py --emit-yaml > kit/examples/widget-gallery-2/utilities/widget-gallery-2.yaml
+python3 kit/examples/widget-gallery-2/scripts/widget-gallery-2__engine.py --emit-yaml > kit/examples/widget-gallery-2/utilities/widget-gallery-2.yaml
 ./bolt-apps check kit/examples/widget-gallery-2 --update-golden
 ./bolt-apps lint kit/examples/widget-gallery-2 --personal
 ./bolt-apps pack kit/examples/widget-gallery-2 --personal --version 1.0.1 --out widget-gallery-2-1.0.1.boltpack

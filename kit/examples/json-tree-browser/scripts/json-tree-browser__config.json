@@ -1,0 +1,56 @@
+{
+  "app": {
+    "id": "json-tree-browser",
+    "chip": "json-tree-browser",
+    "title": "JSON tree browser",
+    "icon": "binary",
+    "description": "Pick a document, browse any JSON as a collapsible tree. Replace the sample documents with the answer of any JSON API.",
+    "service": "JSON tree browser",
+    "searchable": true
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "JTREE_API_KEY",
+    "env_file": "~/.config/json-tree-browser/.env",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": { "ttl": 45, "stale_max": 86400 },
+  "endpoints": {
+    "documents": { "path": "/v1/documents", "map": { "title": "name" } }
+  },
+  "stats": {
+    "documents_total": { "endpoint": "documents" }
+  },
+  "overview": {
+    "rows": [
+      {
+        "title": "Documents",
+        "subtitle": "Enter opens the list. Each one is a JSON tree",
+        "icon": "binary",
+        "view": "docs",
+        "tile": { "label": "Documents", "value": "documents_total", "note": "each opens as a tree" }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "docs",
+      "title": "Documents",
+      "icon": "binary",
+      "endpoint": "documents",
+      "item": {
+        "title": "{title}",
+        "subtitle": "{kind}",
+        "data_field": "payload"
+      },
+      "widget": {
+        "kind": "json_tree",
+        "mode": "selected_row",
+        "bind": { "source": "data" }
+      }
+    }
+  ]
+}

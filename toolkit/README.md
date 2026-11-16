@@ -21,7 +21,7 @@ The gallery takes tier 1 and 2 only. An app that runs programs or reaches the ne
 ./bolt-apps pack apps/my-app --personal
 ```
 
-`pack --personal` recomputes what the app can do from its files and prints it in plain words, then Bolt shows the same facts and asks whoever installs it to confirm, because the pack is signed only by you. On a device whose company policy allows only approved apps, Bolt refuses it. Bolt installs nested folders under `scripts/` (at most 8 deep) but this toolkit refuses them for now (`script_subfolder`: it matches files by name). Also the approval hash covers only helper files the command names as `{{scripts_dir}}/<file>`, so vendor the kit as one file with `kit vendor --flat`. `check.json`, `fixtures/` and `golden/` stay on your machine and are not packed.
+`pack --personal` recomputes what the app can do from its files and prints it in plain words, then Bolt shows the same facts and asks whoever installs it to confirm, because the pack is signed only by you. On a device whose company policy allows only approved apps, Bolt refuses it. Every file under `scripts/` must be named `<app id>__<name>` (`script_not_namespaced`): all installed apps share one scripts folder and Bolt refuses a file another app already owns. The approval hash covers only helper files the command names as `{{scripts_dir}}/<file>`, so vendor the kit as one file with `kit vendor --flat`. `check.json`, `fixtures/` and `golden/` stay on your machine and are not packed.
 
 ## Commands
 
@@ -37,7 +37,7 @@ The gallery takes tier 1 and 2 only. An app that runs programs or reaches the ne
 | `verify <app-folder or file.boltpack> [--json]` | The checks Bolt runs at install, offline: each problem has a stable `code`, the file, the line and the fix; then an estimate of what Bolt will show (tier, permissions, files); Bolt checks again at install. Exit 1 on any error. |
 | `pack <app> [--key f] [--out f] [--version v] [--notes t] [--personal]` | Runs `lint`, then builds a `.boltpack` in Bolt's format and signs it. `--personal` allows tier 3 and script apps for your own use (not for the gallery). |
 | `check <app> [--json] [--os macos\|linux\|windows] [--case text] [--update-golden]` | For a **script app** (a folder with `check.json`): runs the script in a clean subprocess (empty environment, temp HOME, stub commands from recorded output), validates every output against the row contract, enforces the numeric-tile, footer and label rules, a hung-command time limit, hostile text and golden snapshots. For snippets, search engines and transforms it is not published yet: it runs the tests through Bolt's own engines, and Bolt runs the same tests when you add the app. See [docs/kit-design.md](../docs/kit-design.md). |
-| `kit vendor [--flat] <app>` | Copies the pinned Python kit (`bolt_app_kit`) into the app. `--flat` writes it as one file, `scripts/bolt_app_kit.py`, with the lock beside `check.json`, so the app can be packed with `--personal`; the plain form copies a package folder (check only, not packable). `check` fails if the copy is edited by hand. |
+| `kit vendor [--flat] <app>` | Copies the pinned Python kit (`bolt_app_kit`) into the app. `--flat` writes it as one file, `scripts/<app id>__bolt_app_kit.py` (every file of an app is named for it: Bolt keeps all apps' scripts in one folder, so pick a distinctive app id), with the lock beside `check.json`, so the app can be packed with `--personal`; the plain form copies a package folder (check only, not packable). `check` fails if the copy is edited by hand. |
 
 ## The authoring kit
 
@@ -74,3 +74,5 @@ Round trip for every template, tamper refusal, tier and permission rules, key ha
 ## For AI agents
 
 Run `new`, edit the files, run `lint --json` until it exits 0, then `pack`. Follow [AGENTS.md](../AGENTS.md).
+
+Apps built before script files were named for their app: remove the old app in Bolt (Settings, User Apps, Remove), run `./bolt-apps new <template> <id>`, then copy your own `config.json` and `fixtures.json` over the new ones and re-run `./bolt-apps check`.

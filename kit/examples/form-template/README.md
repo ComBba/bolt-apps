@@ -7,7 +7,7 @@ A declarative input form (number, select, date, text with a length limit, toggle
 Any app that takes a few typed values and shows what was recorded: expenses, time entries, bug reports, check-ins.
 
 ## Edit only these fields
-`scripts/config.json`, section `form`: `inputs`, `submit.label`, `record` (what is saved), `item` (how a saved row shows), `widget.bind.columns`, `store.file`. `app` for the id, chip and title. Regenerate the app file and run check (see `../ENGINE.md`).
+`scripts/form-template__config.json`, section `form`: `inputs`, `submit.label`, `record` (what is saved), `item` (how a saved row shows), `widget.bind.columns`, `store.file`. `app` for the id, chip and title. Regenerate the app file and run check (see `../ENGINE.md`).
 
 ## How it behaves
 - The launcher shows the form and passes each value as a word, in input order. The engine checks them again (required, number range, option list, date shape, length, pattern). A bad value shows one "Not saved" row and saves nothing.

@@ -1,8 +1,8 @@
 {
-  "script": "scripts/system-glance.py",
+  "script": "scripts/system-glance__system-glance.py",
   "interpreter": "python3",
   "manifest_actions": 1,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/system-glance__bolt_app_kit.py",
   "cases": [
     {
       "name": "macos overview",

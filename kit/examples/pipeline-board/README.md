@@ -1,6 +1,6 @@
 # Pipeline board
 **What this shows:** stages that drill into their runs, a detail pane with a meter per run, and a `diff` pane for what changed
-**Edit these files:** `scripts/config.json` (`views`, `children`, the diff `bind`) and `scripts/fixtures.json` (`stages`, `runs`, `changes`).
+**Edit these files:** `scripts/pipeline-board__config.json` (`views`, `children`, the diff `bind`) and `scripts/pipeline-board__fixtures.json` (`stages`, `runs`, `changes`).
 **Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
 ```
 ./bolt-apps lint kit/examples/pipeline-board --personal
@@ -14,4 +14,4 @@ The diff reads two multi-line fields. A field named `left`, `right` or ending in
 
 Sample data is invented. The app calls `https://api.example.com`, which does not exist: point `api.base_url` and `endpoints[].path` at your own API, or keep using fixture mode in `check.json`. See `../ENGINE.md` for every option.
 
-After editing `config.json`, rebuild the app file: `python3 scripts/engine.py --emit-yaml > utilities/pipeline-board.yaml`. Drop the `.boltpack` on the Bolt launcher or Bolt Apps; the key never goes in the pack (see ENGINE.md, "Where to store keys").
+After editing `config.json`, rebuild the app file: `python3 scripts/pipeline-board__engine.py --emit-yaml > utilities/pipeline-board.yaml`. Drop the `.boltpack` on the Bolt launcher or Bolt Apps; the key never goes in the pack (see ENGINE.md, "Where to store keys").

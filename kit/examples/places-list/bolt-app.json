@@ -4,7 +4,7 @@
   "title": "Places list",
   "role": "Anyone listing places from an API",
   "saves": "Building map links by hand",
-  "summary": "Type =places for places sorted by distance; press Open on a row to see it on an online map.",
+  "summary": "Type =places-list for places sorted by distance; press Open on a row to see it on an online map.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

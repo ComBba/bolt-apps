@@ -1,11 +1,15 @@
 # The shared engine: every config option, once
 
+> **Chip equals id:** the app file's `chip` must be the app's `id` (the launcher looks apps up by id, in Bolt 181 and main); `lint` refuses anything else as `chip_not_id`.
+
+> **Apps built before this change:** remove the old app in Bolt (Settings, Desktop, User Apps; the Remove button is on the app's row on 181, and newer builds also show it in the expanded panel; do not delete files by hand), run `./bolt-apps new <template> <id>`, copy your own `config.json` and `fixtures.json` over the new ones, re-run `./bolt-apps check`, then `./bolt-apps ship`.
+
 `bolt-apps` in this page means `./bolt-apps`, run from the root of the clone. Limits live in [the rules table](QUICKSTART.md#4-the-rules-table); what is supported is in [CAPABILITIES.md](CAPABILITIES.md).
 
-All apps here run the same `scripts/engine.py`. An app is `scripts/config.json` plus `scripts/fixtures.json`. Nothing else is edited. Regenerate the app file after any change:
+All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file in `scripts/` is named `<id>__<name>`). An app is `scripts/<id>__config.json` plus `scripts/<id>__fixtures.json`. Nothing else is edited. Regenerate the app file after any change:
 
 ```
-python3 scripts/engine.py --emit-yaml > utilities/<id>.yaml
+python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml
 ```
 
 The engine never connects to anything unless `api.fixture_default` is `false` (or `BOLT_APP_FIXTURE=1` is unset and the config says live).
@@ -19,10 +23,10 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 | `lookup` | One word in, one detail card out | `endpoints`, `lookup` |
 
 ## `app`
-`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (accepted and does nothing: Bolt always filters the rows of the last run as you type, matching the title and subtitle only), `timeout` (seconds, 1 to 60).
+`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (accepted and does nothing: once the app has rows, Bolt filters them as you type, matching the title and subtitle only; an app with `dispatch.choices` shows its confirm choices instead), `timeout` (seconds, 1 to 60).
 
 ## `api` (views and lookup)
-`base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.
+`on_missing_key` (`setup` or `sample`; see "Three starting states" below), `base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.
 
 ## `cache`
 `ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero.
@@ -60,7 +64,7 @@ Templates use `{field}` and `{field|filter}`: `human`, `day`, `hhmm`, `when` (an
 `endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `prompt_subtitle`, `none_title`, `examples`.
 
 ## Files named in the command
-The app file lists `config.json`, `fixtures.json` and `bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
+The app file lists `<id>__config.json`, `<id>__fixtures.json` and `<id>__bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
 
 ## Commands
 
@@ -114,15 +118,18 @@ Launcher facts measured for these examples: pane kinds and limits are in [the ru
 
 ## MCP: the workaround script
 
-Bolt has no native MCP runtime for a personal app. A `bridge` script can stand in: start the server the person already has installed, speak JSON-RPC over its pipes, call one tool, and print rows. It was run against a stand-in stdio server that answers `initialize` and `tools/call`; it has not been run against a real MCP server, so treat it as a starting point. Put `{"server": ["npx", "-y", "some-mcp-server"], "tool": "search", "arg": "query"}` in `scripts/config.json`, declare `runs_commands`, and name `config.json` and `bolt_app_kit.py` in the bridge command.
+Bolt has no native MCP runtime for a personal app. A `bridge` script can stand in: start the server the person already has installed, speak JSON-RPC over its pipes, call one tool, and print rows. It was run against a stand-in stdio server that answers `initialize` and `tools/call`; it has not been run against a real MCP server, so treat it as a starting point. Put `{"server": ["npx", "-y", "some-mcp-server"], "tool": "search", "arg": "query"}` in `scripts/<id>__config.json`, declare `runs_commands`, and name `config.json` and `bolt_app_kit.py` in the bridge command.
 
 ```python
 import json, os, subprocess, sys, threading
-import bolt_app_kit as kit
-cfg = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")))
+import importlib.util as _u
+_me = os.path.basename(__file__); _pfx = _me.partition("__")[0] + "__"     # <app id>__ : every file of this app starts with it
+_s = _u.spec_from_file_location("bolt_app_kit", os.path.join(os.path.dirname(os.path.abspath(__file__)), _pfx + "bolt_app_kit.py"))
+kit = _u.module_from_spec(_s); sys.modules["bolt_app_kit"] = kit; _s.loader.exec_module(kit)
+cfg = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), _pfx + "config.json")))
 
 def main(argv):
-    word = " ".join(w for w in argv[1:] if w != "-" and not w.endswith(("config.json", "bolt_app_kit.py")))[:200]
+    word = " ".join(w for w in argv[1:] if w != "-" and not w.endswith(("config.json", "bolt_app_kit.py"))   # the helper files named in the command)[:200]
     if not word:
         kit.emit([kit.row("Type a query", "sent to the %s tool" % cfg["tool"], copy=False)])
     exe = kit.which(cfg["server"][0])
@@ -166,7 +173,7 @@ Limits: servers that need a login or a key are out of scope here (use `get_secre
 
 - `expected_text_missing` now prints the first rows that were found, so you can copy the real text.
 - If the script printed its own error row ("This app is not set up correctly", "This app could not run"), `check` reports `app_error_row` with that row's text, for example a bad icon name in `config.json`, before it looks at expected text.
-- Every `icon` in `config.json` (the app, overview rows, views, items) must be a name in `kit/schema/icons.json`. The engine refuses an unknown name with its place (`views[0].icon`), and `lint --personal` reports `icon_unknown`: an error for `scripts/config.json` (the kit refuses the row) and a warning for the app file's own `icon:` (the launcher draws a plain plug and still shows the app).
+- Every `icon` in `config.json` (the app, overview rows, views, items) must be a name in `kit/schema/icons.json`. The engine refuses an unknown name with its place (`views[0].icon`), and `lint --personal` reports `icon_unknown`: an error for `scripts/<id>__config.json` (the kit refuses the row) and a warning for the app file's own `icon:` (the launcher draws a plain plug and still shows the app).
 - A file in `golden/` that no case names is `golden_stale`. A copied template brings its goldens: keep the cases you want, delete the other goldens, then run `check --update-golden` once and read the files.
 - Stubs can answer by argument, so a tool called as `git status` and `git log` can be tested: `"stubs": {"git": {"stdout": "default", "by_args": [{"args": ["status", "--porcelain"], "file": "fixtures/macos/status.out"}, {"args": ["log"], "stdout": "abc123 first", "rc": 0}]}}`. The first rule whose words equal the first words of the command line answers; the stub's own `stdout` or `file` is the default. A case can set environment variables with `"env": {"MYVAR": "value"}` (names in capitals; `PATH` is always the stub folder and `HOME` a temporary folder).
 
@@ -183,10 +190,19 @@ Limits: servers that need a login or a key are out of scope here (use `get_secre
 
 ## Which file to edit in each template
 
-The `edit` list of each template in [index.json](index.json) is the one answer (a test checks the files exist). A template with no `edit_in_script` entry needs no script change. For a CLI app you are expected to edit `build()` in `scripts/wrap.py`, because the rows depend on what your tool prints. `scripts/fixtures.json` holds a sample so a copy works before the tool is installed.
+The `edit` list of each template in [index.json](index.json) is the one answer (a test checks the files exist). A template with no `edit_in_script` entry needs no script change. For a CLI app you are expected to edit `build()` in `scripts/<id>__wrap.py`, because the rows depend on what your tool prints. `scripts/<id>__fixtures.json` holds a sample so a copy works before the tool is installed.
 
-Never edit `bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --flat <app>`. Every script that lists a helper file in its command names it as `{{scripts_dir}}/<file>` (config.json, fixtures.json, bolt_app_kit.py) so Bolt shows it in the approval.
+Never edit `<id>__bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --flat <app>`. Every file in `scripts/` is named `<id>__<name>`: all installed apps share one scripts folder, and Bolt refuses a file another app already owns (`owned_by_other`). Every script that lists a helper file in its command names it as `{{scripts_dir}}/<id>__<file>` (`<id>__config.json`, `<id>__fixtures.json`, `<id>__bolt_app_kit.py`) so Bolt shows it in the approval.
 
 ## Typing free text and views in a script app
 
-The view is read from query word 0 (`view_arg` bound to `query.word(0)`), so a script app that also takes free text treats the first word as a view only when it is one of its view names and otherwise reads every word as text (`=insights ~/data.csv`, `=insights trend`). A text that starts with a view name needs a leading `./` or a different spelling. Words before the view word would need plain-word defaults (lint `view_arg_lead_default`); a default of `-` is fine for words after it. A nav row carries no actions and cannot carry text with a slash; keep the last typed text in the kit cache. To drill, put `nav` ({view, arg}) on the row (and Back): that is one Enter, and it is how Bolt's own apps drill. A row-written chain action (`kind: utility` with `target_chip`) only pre-fills the next command and needs a second Enter, by design: do not use it to drill.
+The view is read from query word 0 (`view_arg` bound to `query.word(0)`), so a script app that also takes free text treats the first word as a view only when it is one of its view names and otherwise reads every word as text (`=insights ~/data.csv`, `=insights trend`). A text that starts with a view name needs a leading `./` or a different spelling. Words before the view word would need plain-word defaults (lint `view_arg_lead_default`); a default of `-` is fine for words after it. A nav row carries no actions and cannot carry text with a slash; keep the last typed text in the kit cache. To give a drilled-in view a button, add an ordinary row with `kit.action_chain(id, label, target_chip, query)` pointing at the app's own chip: a utility action to itself. That is not yet proven in the launcher.
+
+## Three starting states (`api.key_env` and `api.on_missing_key`)
+
+1. **Live with a key.** The key is found (environment, keychain or `~/.config/<id>/.env`): the app calls its API and shows real data.
+2. **Sample fallback** (`"on_missing_key": "sample"`, for demos whose API is fictional): no key, so the app shows its labelled sample data, with a first row "SAMPLE DATA: add your ... API key to see live data" and a setup hint row. The hint row never replaces the data.
+3. **Setup only** (`"on_missing_key": "setup"`, the default, for a real app): no key, so the app shows one row that says how to add it. That row carries no tile and no pane.
+
+`BOLT_APP_FIXTURE=1` always shows sample data (with the SAMPLE row only when `api.fixture_banner` is set), `0` always goes live. The SAMPLE DATA and key-hint rows of state 2 are left out of chart and table views, where a label row would become a data point. A key file with open permissions keeps its own "tighten the permissions" row and is never replaced by sample data. `on_missing_key` must be `setup` or `sample`. `bolt-apps ship` and `bolt-apps doctor <folder>` say which state the app starts in.
+

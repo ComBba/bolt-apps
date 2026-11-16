@@ -11,8 +11,8 @@ args:
   - { name: view, from: "query.word(0)", default: overview }
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/system-glance.py {{view}} {{scripts_dir}}/bolt_app_kit.py"
-    linux: "python3 {{scripts_dir}}/system-glance.py {{view}} {{scripts_dir}}/bolt_app_kit.py"
+    macos: "python3 {{scripts_dir}}/system-glance__system-glance.py {{view}} {{scripts_dir}}/system-glance__bolt_app_kit.py"
+    linux: "python3 {{scripts_dir}}/system-glance__system-glance.py {{view}} {{scripts_dir}}/system-glance__bolt_app_kit.py"
   parse: json
   timeout_seconds: 20
 presentation:

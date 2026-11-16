@@ -4,7 +4,7 @@
   "title": "File insights template",
   "role": "Anyone building an app that reads a local data file",
   "saves": "Opening a spreadsheet to total a column and spot a trend",
-  "summary": "Type =insights and the path of a CSV: totals, trend, breakdown and what to watch. Copy it for any local file reader.",
+  "summary": "Type =file-insights-template and the path of a CSV: totals, trend, breakdown and what to watch. Copy it for any local file reader.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

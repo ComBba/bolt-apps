@@ -46,7 +46,7 @@ const anywhere = (frag, doc) => subset(frag, doc) || (doc && typeof doc === 'obj
 test('a JSON snippet appears in its example config.json', () => {
 	let checked = 0;
 	for (const r of caps.rows.filter((x) => x.example && x.status === 'supported')) {
-		const cfg = path.join(REPO, r.example, 'scripts/config.json');
+		const cfg = path.join(REPO, r.example, 'scripts', `${path.basename(r.example)}__config.json`);
 		let frag; try { frag = JSON.parse(r.snippet.trim().startsWith('{') ? r.snippet : `{${r.snippet}}`); } catch { continue; }
 		if (!fs.existsSync(cfg)) continue;
 		const yamlText = fs.readFileSync(path.join(REPO, r.example, 'utilities', fs.readdirSync(path.join(REPO, r.example, 'utilities'))[0]), 'utf8');
@@ -95,7 +95,8 @@ test('CAPABILITIES.md is the rendering of capabilities.json', () => {
 
 test('index.json: one "verified" wording, a need for every template, and edit lists that name files that exist', () => {
 	for (const a of index.apps) {
-		assert.equal(a.verified, 'not verified in real Bolt', a.id);
+		// one wording for an app nobody has dropped into Bolt; an app a maintainer drop test covered says what was seen, when, and that it is not the shipped 181 binary
+		assert.ok(a.verified === 'not verified in real Bolt' || (/maintainer drop test/.test(a.verified) && /not run on the shipped 181 binary/.test(a.verified)), a.id);
 		assert.ok(typeof a.need === 'string' && a.need.length > 10, `${a.id}: need`);
 		assert.ok(Array.isArray(a.edit) && a.edit.length, `${a.id}: edit`);
 		const dir = path.join(REPO, 'kit/examples', a.id);
@@ -112,7 +113,7 @@ test('a row that names keys: the cited test file mentions each key, and the exam
 		for (const k of r.keys || []) { assert.ok(fs.readFileSync(path.join(REPO, r.test), 'utf8').includes(k), `${r.id}: ${r.test} never mentions "${k}"`); n++; }
 		for (const k of r.example_keys || []) {
 			assert.ok(r.example, `${r.id}: example_keys without an example`);
-			const dir = path.join(REPO, r.example), files = [path.join(dir, 'scripts/config.json'), ...fs.readdirSync(path.join(dir, 'utilities')).map((f) => path.join(dir, 'utilities', f))].filter((f) => fs.existsSync(f));
+			const dir = path.join(REPO, r.example), files = [path.join(dir, 'scripts', `${path.basename(dir)}__config.json`), ...fs.readdirSync(path.join(dir, 'utilities')).map((f) => path.join(dir, 'utilities', f))].filter((f) => fs.existsSync(f));
 			assert.ok(files.some((f) => fs.readFileSync(f, 'utf8').includes(k)), `${r.id}: ${r.example} never uses "${k}"`); n++;
 		}
 	}

@@ -19,13 +19,13 @@ Every chart the launcher can draw, each fed both ways, plus a cards-only dashboa
 A metrics or trends app. Start from the overview (tiles with a sparkline trend) and the view closest to your data.
 
 ## Edit only these fields
-`scripts/config.json`: `endpoints` (path, `map`), `views[].item.extra` (`label`, `value`), `views[].item.trend_field`, `widget.bind`, `overview.rows`. `scripts/fixtures.json`: one raw response per endpoint. Details: `../ENGINE.md`.
+`scripts/chart-template__config.json`: `endpoints` (path, `map`), `views[].item.extra` (`label`, `value`), `views[].item.trend_field`, `widget.bind`, `overview.rows`. `scripts/chart-template__fixtures.json`: one raw response per endpoint. Details: `../ENGINE.md`.
 
 ## Commands
 Run `./bolt-apps keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 ./bolt-apps kit vendor --flat kit/examples/chart-template
-python3 kit/examples/chart-template/scripts/engine.py --emit-yaml > kit/examples/chart-template/utilities/chart-template.yaml
+python3 kit/examples/chart-template/scripts/chart-template__engine.py --emit-yaml > kit/examples/chart-template/utilities/chart-template.yaml
 ./bolt-apps check kit/examples/chart-template --update-golden
 ./bolt-apps lint kit/examples/chart-template --personal
 ./bolt-apps pack kit/examples/chart-template --personal --version 1.0.1 --out chart-template-1.0.1.boltpack
