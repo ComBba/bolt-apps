@@ -5,9 +5,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
+import { chipMismatch, assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
 import { get, str } from './yamlsubset.mjs';
-import { layoutProblems, RULES as BOLT_RULES } from './boltrules.mjs';
+import { layoutProblems, namespaceProblems, RULES as BOLT_RULES } from './boltrules.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const RULES = JSON.parse(fs.readFileSync(path.join(here, '..', '..', 'schema', 'install-rules.json'), 'utf8'));
@@ -32,7 +32,8 @@ export const FIXES = {
 	entry_kind_skipped: 'Dropping a pack on the launcher installs User Apps and scripts only. Install snippets and search engines from Bolt Apps instead.',
 	entry_kind_unknown: 'Bolt does not install this kind of file from a pack. Remove it from the app folder.',
 	file_not_listed: 'The pack holds a file bundle.json does not list; Bolt ignores it. Build the pack again with bolt-apps pack.',
-	script_subfolder: 'Move the script directly into scripts/. Bolt installs nested folders, but this toolkit cannot yet check them (it matches files by name); the kit is one file with kit vendor --flat.',
+	script_not_namespaced: 'Rename the file to <app id>__<name> (for example pulse-feed__engine.py), and write the same name after {{scripts_dir}}/ in the app file. Every app shares one scripts folder, so a bare name like bolt_app_kit.py or config.json stops a second app installing. bolt-apps new does it for new apps. Apps built before this change: remove the old app in Bolt (Settings, User Apps, Remove), run ./bolt-apps new <template> <id>, then copy your own config.json and fixtures.json over the new ones and re-run ./bolt-apps check.',
+	description_chip_mismatch: 'Change the description (or placeholder_examples) so the =word it tells the person to type is this app\'s chip, or remove the =word.',
 	script_depth: 'Use at most 8 folder levels under scripts/.',
 	script_path: 'Remove the . or .. part from the script path.',
 	script_case_clash: 'Rename one of the two files so they differ by more than letter case.',
@@ -116,7 +117,7 @@ export const FIXES = {
 	right_widget_bind_unread: 'Remove the bind key: the map, image, calc, color, weather and date panes read nothing from bind. For a chart, type is line, bar or sparkline.',
 	run_action_template: 'Give the run action a fixed query_template with no {{ }} (for example refresh), or remove the action.',
 	script_too_large: 'Bolt hashes a script only up to 2 MB and will not run an app that names a larger file. Keep scripts small; put big data outside the app.',
-	helper_not_hashed: 'Name the file in the command (for example python3 {{scripts_dir}}/engine.py {{scripts_dir}}/config.json). Bolt\'s approval hash covers only the manifest and the scripts named as {{scripts_dir}}/<file>, so an unnamed helper can change without asking again.',
+	helper_not_hashed: 'Name the file in the command (for example python3 {{scripts_dir}}/my-app__engine.py {{scripts_dir}}/my-app__config.json). Bolt\'s approval hash covers only the manifest and the scripts named as {{scripts_dir}}/<file>, so an unnamed helper can change without asking again.',
 	pack_duplicate_entry: 'The archive lists the same file name twice. Build the pack again with bolt-apps pack.',
 };
 const fixFor = (code) => FIXES[code] || 'See the message.';
@@ -156,10 +157,10 @@ export function checkManifests(files, opts = {}) {
 	const used = new Set();
 	let unknownAssess = false;
 	for (const lp of layoutProblems([...files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, ''))])) add('error', lp.code, lp.message, 'scripts');
+	for (const np of namespaceProblems(files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, '')), opts.appId)) add('error', np.code, np.message, `scripts/${np.file}`);
 	for (const f of files.filter((x) => x.kind === 'script')) {
 		const rel = f.path.replace(/^scripts\//, '');
-		if (rel.includes('/')) add('error', 'script_subfolder', `${f.path} is inside a folder. Bolt does install nested script folders, but this toolkit matches helper files, approval hashing and the install-prompt scan by file name, so it cannot yet vouch for a nested file. Keep scripts directly in scripts/ (the kit is one file: kit vendor --flat)`, f.path);
-		else if (!rel.split('/').every(plainName)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
+		if (!rel.split('/').every(plainName)) add('error', 'script_name', `script name "${rel}" has characters or a shape Bolt refuses`, f.path);
 	}
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
@@ -168,6 +169,7 @@ export function checkManifests(files, opts = {}) {
 		for (const r of a.refs) used.add(r);
 		if (a.unknown) { add('error', 'yaml_unreadable_here', `this tool cannot interpret ${a.why}; Bolt may read it differently`, file, 1); unknownAssess = true; continue; }
 		const root = a.tree, E = (code, msg, line) => add('error', code, msg, file, line || 1);
+		{ const cm = chipMismatch(root); if (cm) add('warning', 'description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, file, 1); }
 		const val = (m, k) => get(m, k)?.value, S = (m, k) => str(val(m, k)), ln = (m, k, d) => get(m, k)?.line ?? d;
 		for (const e of root.entries) {
 			if (!R.top_level_keys.includes(e.key)) E('yaml_key_unknown', `unknown key "${e.key}"; Bolt refuses the whole file`, e.line);
@@ -204,7 +206,7 @@ export function checkManifests(files, opts = {}) {
 				if (prob) E(prob[0], prob[1], cl);
 				for (const r of scriptRefs(cmd)) used.add(r);
 				for (const t of cmd.split(/\s+/).filter(Boolean).slice(0, 2).filter((x) => !x.includes('{{'))) if (/\.(py|sh|js|mjs|rb|ps1)$/.test(t) && !/^([/~]|[A-Za-z]:\\)/.test(t)) E('script_path_relative', `${o} command names ${t} without {{scripts_dir}}; Bolt runs it in a fresh empty folder`, cl);
-				const direct = /^\s*\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+)/.exec(cmd);
+				const direct = /^\s*\{\{\s*scripts_dir\s*\}\}[/\\]([A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*)/.exec(cmd);
 				if (o !== 'windows' && direct && scripts.has(direct[1]) && !scripts.get(direct[1]).subarray(0, 2).equals(Buffer.from('#!'))) E('script_no_shebang', `${o} command runs scripts/${direct[1]} directly but the file has no #! line`, cl);
 			}
 			const pr = S(bridge, 'parse'); if (pr !== undefined && !R.parse.includes(pr)) E('parse_not_allowed', `bridge.parse "${pr}" is not accepted`, ln(bridge, 'parse', bl));

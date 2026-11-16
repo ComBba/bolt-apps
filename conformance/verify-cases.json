@@ -1,8 +1,8 @@
 {
   "$comment": "Conformance cases for `bolt-apps verify` (YAML and script layout level). Each case edits the base app and names the finding codes verify must report. `bolt_error_contains` is the text Bolt's own parser puts in the load error shown under Settings, Desktop App, User Apps, so a launcher-side test can run the same cases through the real parser: the expected result there is Err containing that text, or Ok when expect is empty. Cases without bolt_error_contains are checked by the toolkit only (the launcher text is not recorded yet).",
   "base": {
-    "utilities/eagle-info.yaml": "schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: \"Eagle info\"\nemits: Generic\nargs:\n  - { name: view, from: \"query.word(0)\", default: overview }\nbridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n",
-    "scripts/eagle.py": "print('{}')\n"
+    "utilities/eagle-info.yaml": "schema_version: 1\nruntime: bridge\nid: eagle-info\nchip: eagle\ntitle: \"Eagle info\"\nemits: Generic\nargs:\n  - { name: view, from: \"query.word(0)\", default: overview }\nbridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\npresentation:\n  widget: list\n  title_field: title\n",
+    "scripts/eagle-info__eagle.py": "print('{}')\n"
   },
   "cases": [
     {
@@ -14,8 +14,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "python3 {{scripts_dir}}/eagle.py {{view}}",
-            "python3 \\\"{{scripts_dir}}/eagle.py\\\" {{view}}"
+            "python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}",
+            "python3 \\\"{{scripts_dir}}/eagle-info__eagle.py\\\" {{view}}"
           ]
         ]
       },
@@ -29,8 +29,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "\"python3 {{scripts_dir}}/eagle.py {{view}}\"",
-            "\"python3 '{{scripts_dir}}/eagle.py' {{view}}\""
+            "\"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"",
+            "\"python3 '{{scripts_dir}}/eagle-info__eagle.py' {{view}}\""
           ]
         ]
       },
@@ -44,8 +44,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "{{scripts_dir}}/eagle.py",
-            "{{scripts_dir}/eagle.py"
+            "{{scripts_dir}}/eagle-info__eagle.py",
+            "{{scripts_dir}/eagle-info__eagle.py"
           ]
         ]
       },
@@ -75,8 +75,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "eagle.py {{view}}\"",
-            "eagle.py {{view}} | head\""
+            "eagle-info__eagle.py {{view}}\"",
+            "eagle-info__eagle.py {{view}} | head\""
           ]
         ]
       },
@@ -90,8 +90,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "eagle.py {{view}}\"",
-            "eagle.py && echo hi\""
+            "eagle-info__eagle.py {{view}}\"",
+            "eagle-info__eagle.py && echo hi\""
           ]
         ]
       },
@@ -105,8 +105,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "eagle.py {{view}}\"",
-            "eagle.py 'x\""
+            "eagle-info__eagle.py {{view}}\"",
+            "eagle-info__eagle.py 'x\""
           ]
         ]
       },
@@ -120,7 +120,7 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n",
+            "    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n",
             ""
           ]
         ]
@@ -136,8 +136,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "{{scripts_dir}}/eagle.py",
-            "scripts/eagle.py"
+            "{{scripts_dir}}/eagle-info__eagle.py",
+            "scripts/eagle-info__eagle.py"
           ]
         ]
       },
@@ -151,8 +151,8 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "python3 {{scripts_dir}}/eagle.py",
-            "{{scripts_dir}}/eagle.py"
+            "python3 {{scripts_dir}}/eagle-info__eagle.py",
+            "{{scripts_dir}}/eagle-info__eagle.py"
           ]
         ]
       },
@@ -163,7 +163,7 @@
     {
       "name": "script named in the app is not in the pack",
       "remove": [
-        "scripts/eagle.py"
+        "scripts/eagle-info__eagle.py"
       ],
       "expect": [
         "script_missing"
@@ -172,19 +172,29 @@
     {
       "name": "script no app runs",
       "add": {
-        "scripts/extra.py": "x\n"
+        "scripts/eagle-info__extra.py": "x\n"
       },
       "expect": [
         "script_unused"
       ]
     },
     {
-      "name": "script in a folder (Bolt allows it; this toolkit cannot yet check it)",
+      "name": "script in a folder under the app's own name (Bolt installs nested folders; every file is keyed by its full path)",
       "add": {
-        "scripts/lib/util.py": "x\n"
+        "scripts/eagle-info__lib/util.py": "x\n"
       },
       "expect": [
-        "script_subfolder"
+        "script_unused"
+      ]
+    },
+    {
+      "name": "script not named for the app: Bolt keeps every app's scripts in one shared folder, so a bare config.json or bolt_app_kit.py makes a second app fail with the Bolt error owned_by_other. That Bolt error needs two installed packs, so it cannot be a single-pack case here: bolt_error_contains does not apply, and the toolkit's own code is the check",
+      "add": {
+        "scripts/config.json": "{}\n"
+      },
+      "expect": [
+        "script_not_namespaced",
+        "script_unused"
       ]
     },
     {
@@ -397,7 +407,7 @@
       "edit": {
         "utilities/eagle-info.yaml": [
           [
-            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
             ""
           ]
         ]
@@ -448,13 +458,13 @@
             "runtime: http_local"
           ],
           [
-            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
             "http:\n  host: example.com\n  port: 8080\n  request:\n    method: GET\n    path: /x\n"
           ]
         ]
       },
       "remove": [
-        "scripts/eagle.py"
+        "scripts/eagle-info__eagle.py"
       ],
       "expect": [
         "http_host_not_loopback",
@@ -472,13 +482,13 @@
             "runtime: http_local"
           ],
           [
-            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
             "http:\n  host: 127.0.0.1\n  port: 8080\n  request:\n    method: DELETE\n    path: x\n"
           ]
         ]
       },
       "remove": [
-        "scripts/eagle.py"
+        "scripts/eagle-info__eagle.py"
       ],
       "expect": [
         "http_method_not_allowed",
@@ -601,7 +611,7 @@
             "runtime: http_local"
           ],
           [
-            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
             "http:\n  port: 13020\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\n"
           ]
         ]
@@ -641,6 +651,20 @@
       ]
     },
     {
+      "name": "description tells the person to type a =chip that is not this app's chip (a copied template keeps its old words)",
+      "edit": {
+        "utilities/eagle-info.yaml": [
+          [
+            "title: \"Eagle info\"\n",
+            "title: \"Eagle info\"\ndescription: \"Type =branch, then press Enter\"\n"
+          ]
+        ]
+      },
+      "expect": [
+        "description_chip_mismatch"
+      ]
+    },
+    {
       "name": "action icon not on the allowlist",
       "edit": {
         "utilities/eagle-info.yaml": [
@@ -655,12 +679,13 @@
       ]
     },
     {
-      "name": "script nested deeper than 8 folders (refused as a subfolder; the launcher refuses it as too deep)",
+      "name": "script nested deeper than 8 folders (the launcher refuses it as too deep)",
       "add": {
-        "scripts/a/b/c/d/e/f/g/h/i/x.py": "x\n"
+        "scripts/eagle-info__a/b/c/d/e/f/g/h/i/x.py": "x\n"
       },
       "expect": [
-        "script_subfolder"
+        "script_depth",
+        "script_unused"
       ]
     },
     {
@@ -962,13 +987,13 @@
             "runtime: http_local"
           ],
           [
-            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
+            "bridge:\n  command:\n    macos: \"python3 {{scripts_dir}}/eagle-info__eagle.py {{view}}\"\n  parse: json\n  timeout_seconds: 20\n",
             "http:\n  port: 8080\n  request: { path: /x }\n  parse: json\n  timeout_seconds: 5\n  headers:\n    X_Bad: y\n"
           ]
         ]
       },
       "remove": [
-        "scripts/eagle.py"
+        "scripts/eagle-info__eagle.py"
       ],
       "expect": [
         "http_header"

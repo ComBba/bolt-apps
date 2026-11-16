@@ -1,6 +1,6 @@
 {
   "schema": "Pick a template by archetype, copy its folder, edit only the files listed in edit. Every config option is in ENGINE.md.",
-  "engine": "portal-template/scripts/engine.py",
+  "engine": "portal-template/scripts/portal-template__engine.py",
   "reference": "ENGINE.md",
   "apps": [
     {
@@ -26,8 +26,8 @@
         "any REST API with a key"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/portal-template__config.json",
+        "scripts/portal-template__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/portal-template",
       "verified": "installed: not yet verified"
@@ -50,8 +50,8 @@
         "fictional API"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/acme-dash__config.json",
+        "scripts/acme-dash__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/acme-dash",
       "verified": "installed: not yet verified"
@@ -81,8 +81,8 @@
         "sample data"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/widget-gallery__config.json",
+        "scripts/widget-gallery__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery",
       "verified": "installed: not yet verified"
@@ -103,7 +103,7 @@
         "a local file"
       ],
       "edit": [
-        "scripts/config.json"
+        "scripts/form-template__config.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/form-template",
       "verified": "installed: not yet verified"
@@ -126,8 +126,8 @@
         "any REST API"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/chart-template__config.json",
+        "scripts/chart-template__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/chart-template",
       "verified": "installed: not yet verified"
@@ -149,8 +149,8 @@
         "any REST API"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/table-template__config.json",
+        "scripts/table-template__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/table-template",
       "verified": "installed: not yet verified"
@@ -173,8 +173,8 @@
         "Open-Meteo geocoding and forecast (keyless)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/lookup-template__config.json",
+        "scripts/lookup-template__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/lookup-template",
       "verified": "installed: not yet verified"
@@ -183,7 +183,7 @@
       "id": "file-insights-template",
       "layout": "verdict tiles and insight rows, drill to a line chart, a bar chart, a table and a problems list",
       "mode": "custom script on the flat kit",
-      "script": "scripts/insights.py",
+      "script": "scripts/file-insights-template__insights.py",
       "backing": "local file",
       "widgets": [
         "cards",
@@ -205,8 +205,8 @@
         "a local CSV file"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/file-insights-template__config.json",
+        "scripts/file-insights-template__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/file-insights-template",
       "verified": "not yet verified in real Bolt"
@@ -215,7 +215,7 @@
       "id": "cli-wrapper-template",
       "layout": "verdict and tiles with a sparkline, drill to a line chart, raw output and the command",
       "mode": "custom script on the flat kit",
-      "script": "scripts/wrap.py",
+      "script": "scripts/cli-wrapper-template__wrap.py",
       "backing": "CLI command",
       "widgets": [
         "cards",
@@ -238,7 +238,7 @@
         "the system ping command"
       ],
       "edit": [
-        "scripts/config.json"
+        "scripts/cli-wrapper-template__config.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/cli-wrapper-template",
       "verified": "not yet verified in real Bolt"
@@ -247,7 +247,7 @@
       "id": "system-glance",
       "layout": "three parallel command probes as tiles, Disk drill view",
       "mode": "custom script on the flat kit",
-      "script": "scripts/system-glance.py",
+      "script": "scripts/system-glance__system-glance.py",
       "backing": "CLI command",
       "widgets": [
         "cards"
@@ -262,7 +262,7 @@
         "df, uptime, lsof or ss"
       ],
       "edit": [
-        "scripts/system-glance.py"
+        "scripts/system-glance__system-glance.py"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/system-glance",
       "verified": "not yet verified in real Bolt"
@@ -271,7 +271,7 @@
       "id": "repo-radar",
       "layout": "verdict and tiles with source health badges, drill to releases diff, vulnerability detail, downloads chart, discussion, since-diff, compare table",
       "mode": "custom script on the flat kit",
-      "script": "scripts/radar.py",
+      "script": "scripts/repo-radar__radar.py",
       "backing": "remote HTTP API (four, joined)",
       "widgets": [
         "cards",
@@ -300,8 +300,8 @@
         "Hacker News search"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/repo-radar__config.json",
+        "scripts/repo-radar__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/repo-radar",
       "verified": "not yet verified in real Bolt"
@@ -310,7 +310,7 @@
       "id": "around",
       "layout": "verdict and tiles with source badges, drill to places panels, bike table, weather line chart, landmarks, auth matrix",
       "mode": "custom script on the flat kit",
-      "script": "scripts/around.py",
+      "script": "scripts/around__around.py",
       "backing": "remote HTTP API (five, stitched by distance)",
       "widgets": [
         "cards",
@@ -338,8 +338,8 @@
         "Wikipedia geosearch"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/around__config.json",
+        "scripts/around__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/around",
       "verified": "not yet verified in real Bolt"
@@ -386,8 +386,8 @@
         "sample data (generated swatches)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/widget-gallery-2__config.json",
+        "scripts/widget-gallery-2__fixtures.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/widget-gallery-2",
       "verified": "not yet verified in real Bolt"
@@ -397,7 +397,7 @@
       "need": "a script app on the kit for an API or tool no engine template fits",
       "layout": "overview tiles, list with a filter word, detail with Back",
       "mode": "custom script on the flat kit",
-      "script": "scripts/app.py",
+      "script": "scripts/script-template__app.py",
       "backing": "remote HTTP API",
       "widgets": [
         "cards",
@@ -421,9 +421,9 @@
         "a placeholder API (replace it)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json",
-        "scripts/app.py (n_items, http_get, build, emit_yaml)",
+        "scripts/script-template__config.json",
+        "scripts/script-template__fixtures.json",
+        "scripts/script-template__app.py (n_items, http_get, build, emit_yaml)",
         "check.json"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/script-template",
@@ -434,7 +434,7 @@
       "need": "a trending feed where a topic word merges more public sources, with open, copy and narrow buttons",
       "layout": "trending overview with a tile row, a topic word that merges two sources in parallel, a preview pane per story",
       "mode": "custom script on the flat kit",
-      "script": "scripts/app.py",
+      "script": "scripts/pulse-feed__app.py",
       "template": "script-template",
       "backing": "remote HTTP API",
       "widgets": [
@@ -457,14 +457,14 @@
         "Hacker News Algolia search API (free, no key)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json",
-        "scripts/app.py (n_firebase, n_algolia, story_row, emit_yaml)"
+        "scripts/pulse-feed__config.json",
+        "scripts/pulse-feed__fixtures.json",
+        "scripts/pulse-feed__app.py (n_firebase, n_algolia, story_row, emit_yaml)"
       ],
       "snippets": [
-        "scripts/app.py: hydrate() and gather()",
-        "scripts/app.py: story_row() with kit.action_chain",
-        "scripts/app.py: emit_yaml() entity_preview bind"
+        "scripts/pulse-feed__app.py: hydrate() and gather()",
+        "scripts/pulse-feed__app.py: story_row() with kit.action_chain",
+        "scripts/pulse-feed__app.py: emit_yaml() entity_preview bind"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/pulse-feed",
       "verified": "not yet verified in real Bolt"
@@ -489,12 +489,12 @@
         "a placeholder API (replace it)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/json-tree-browser__config.json",
+        "scripts/json-tree-browser__fixtures.json"
       ],
       "snippets": [
-        "scripts/config.json: views[0].item.data_field",
-        "scripts/config.json: views[0].widget json_tree"
+        "scripts/json-tree-browser__config.json: views[0].item.data_field",
+        "scripts/json-tree-browser__config.json: views[0].widget json_tree"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/json-tree-browser",
       "verified": "not yet verified in real Bolt"
@@ -522,13 +522,13 @@
         "a placeholder API (replace it)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/expense-tracker__config.json",
+        "scripts/expense-tracker__fixtures.json"
       ],
       "snippets": [
-        "scripts/config.json: stats field_sum",
-        "scripts/config.json: views[0].children",
-        "scripts/config.json: chart widget bind"
+        "scripts/expense-tracker__config.json: stats field_sum",
+        "scripts/expense-tracker__config.json: views[0].children",
+        "scripts/expense-tracker__config.json: chart widget bind"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/expense-tracker",
       "verified": "not yet verified in real Bolt"
@@ -554,12 +554,12 @@
         "a placeholder API (replace it)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/pipeline-board__config.json",
+        "scripts/pipeline-board__fixtures.json"
       ],
       "snippets": [
-        "scripts/config.json: stages view children",
-        "scripts/config.json: diff widget bind with left and right"
+        "scripts/pipeline-board__config.json: stages view children",
+        "scripts/pipeline-board__config.json: diff widget bind with left and right"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/pipeline-board",
       "verified": "not yet verified in real Bolt"
@@ -569,7 +569,7 @@
       "need": "a typed form whose answer is a result detail",
       "layout": "form (number and two selects), a result row and a detail pane, the same amount in other units",
       "mode": "custom script on the flat kit",
-      "script": "scripts/app.py",
+      "script": "scripts/unit-convert__app.py",
       "template": "form-template",
       "backing": "no network",
       "widgets": [
@@ -586,12 +586,12 @@
         "none: a unit table in config.json"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/app.py (convert, build, emit_yaml)"
+        "scripts/unit-convert__config.json",
+        "scripts/unit-convert__app.py (convert, build, emit_yaml)"
       ],
       "snippets": [
-        "scripts/app.py: emit_yaml() inputs and submit",
-        "scripts/app.py: convert()"
+        "scripts/unit-convert__app.py: emit_yaml() inputs and submit",
+        "scripts/unit-convert__app.py: convert()"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/unit-convert",
       "verified": "not yet verified in real Bolt"
@@ -617,12 +617,12 @@
         "a placeholder API (replace it)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/branch-explorer__config.json",
+        "scripts/branch-explorer__fixtures.json"
       ],
       "snippets": [
-        "scripts/config.json: views[0].children pointing at the same view",
-        "scripts/config.json: overview row arg"
+        "scripts/branch-explorer__config.json: views[0].children pointing at the same view",
+        "scripts/branch-explorer__config.json: overview row arg"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/branch-explorer",
       "verified": "not yet verified in real Bolt"
@@ -647,11 +647,11 @@
         "a placeholder API (replace it)"
       ],
       "edit": [
-        "scripts/config.json",
-        "scripts/fixtures.json"
+        "scripts/places-list__config.json",
+        "scripts/places-list__fixtures.json"
       ],
       "snippets": [
-        "scripts/config.json: views[0].item.url template"
+        "scripts/places-list__config.json: views[0].item.url template"
       ],
       "check": "node toolkit/bin/bolt-apps.mjs check kit/examples/places-list",
       "verified": "not yet verified in real Bolt"

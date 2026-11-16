@@ -1,8 +1,8 @@
 {
-  "script": "scripts/engine.py",
+  "script": "scripts/places-list__engine.py",
   "interpreter": "python3",
   "manifest_actions": 2,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/places-list__bolt_app_kit.py",
   "fixture": true,
   "cases": [
     {

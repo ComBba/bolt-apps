@@ -1,8 +1,8 @@
 {
-  "script": "scripts/radar.py",
+  "script": "scripts/repo-radar__radar.py",
   "interpreter": "python3",
   "manifest_actions": 2,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/repo-radar__bolt_app_kit.py",
   "fixture": true,
   "cases": [
     {

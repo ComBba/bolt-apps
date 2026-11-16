@@ -1,6 +1,6 @@
 # Pulse feed
 **What this shows:** a trending overview (a tile row, then one row per story with a trend icon and an open-link arrow), a topic word that merges two public sources in parallel, a preview pane with SOURCE, AUTHOR, AGE and SCORE plus a markdown body with a safety note, and footer buttons Open post, Copy quote and Narrow.
-**Edit these files:** `scripts/config.json` (hosts, limits, cache), `scripts/app.py` (`n_firebase`, `n_algolia`, `story_row`, `emit_yaml`) and `scripts/fixtures.json` (sample answers of both APIs).
+**Edit these files:** `scripts/pulse-feed__config.json` (hosts, limits, cache), `scripts/pulse-feed__app.py` (`n_firebase`, `n_algolia`, `story_row`, `emit_yaml`) and `scripts/pulse-feed__fixtures.json` (sample answers of both APIs).
 **Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
 ```
 node toolkit/bin/bolt-apps.mjs lint kit/examples/pulse-feed --personal
@@ -19,5 +19,5 @@ node toolkit/bin/bolt-apps.mjs verify ../pulse-feed-1.0.1.boltpack
 - Words: `=pulse overview` is the front page and `=pulse refresh` re-reads it, so those words cannot be topics when typed bare. To search for one, type `=pulse topic overview`. The topic must be one plain lowercase word.
 - Cache: a partial answer is cached for the fresh period but never replaces the complete old copy. Sample mode keeps its cache in memory, so `check` never touches your cache folder.
 - Not verified in real Bolt: the preview pane, the open-link arrow and the Narrow chain were checked against the row contract only.
-After editing `config.json` or `emit_yaml`, rebuild the app file: `python3 scripts/app.py --emit-yaml > utilities/pulse-feed.yaml`. The key is not needed; nothing secret is stored.
+After editing `config.json` or `emit_yaml`, rebuild the app file: `python3 scripts/pulse-feed__app.py --emit-yaml > utilities/pulse-feed.yaml`. The key is not needed; nothing secret is stored.
 

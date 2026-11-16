@@ -14,13 +14,13 @@ The themed sky card, the C/F toggle and the icon-only action bar. The `weather` 
 Any "type a name, see a card" lookup over one or two APIs.
 
 ## Edit only these fields
-`scripts/config.json`: `endpoints` (a path may use `{query}` and `{earlier_step.field}`), `lookup.steps`, `lookup.rows` (templates over the results, dotted paths and list indexes allowed, `trend_path` for a sparkline), `maps` (value labels such as weather codes). `scripts/fixtures.json`: the two recorded responses (real, trimmed). Details: `../ENGINE.md`.
+`scripts/lookup-template__config.json`: `endpoints` (a path may use `{query}` and `{earlier_step.field}`), `lookup.steps`, `lookup.rows` (templates over the results, dotted paths and list indexes allowed, `trend_path` for a sparkline), `maps` (value labels such as weather codes). `scripts/lookup-template__fixtures.json`: the two recorded responses (real, trimmed). Details: `../ENGINE.md`.
 
 ## Commands
 Run `node toolkit/bin/bolt-apps.mjs keygen` once before the first pack: it makes your signing key and never overwrites one.
 ```
 node toolkit/bin/bolt-apps.mjs kit vendor --flat kit/examples/lookup-template
-python3 kit/examples/lookup-template/scripts/engine.py --emit-yaml > kit/examples/lookup-template/utilities/lookup-template.yaml
+python3 kit/examples/lookup-template/scripts/lookup-template__engine.py --emit-yaml > kit/examples/lookup-template/utilities/lookup-template.yaml
 node toolkit/bin/bolt-apps.mjs check kit/examples/lookup-template --update-golden
 node toolkit/bin/bolt-apps.mjs lint kit/examples/lookup-template --personal
 node toolkit/bin/bolt-apps.mjs pack kit/examples/lookup-template --personal --version 1.0.1 --out lookup-template-1.0.1.boltpack

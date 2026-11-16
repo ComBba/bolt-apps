@@ -1,8 +1,8 @@
 {
-  "script": "scripts/app.py",
+  "script": "scripts/script-template__app.py",
   "interpreter": "python3",
   "manifest_actions": 1,
-  "kit": "scripts/bolt_app_kit.py",
+  "kit": "scripts/script-template__bolt_app_kit.py",
   "fixture": true,
   "cases": [
     {

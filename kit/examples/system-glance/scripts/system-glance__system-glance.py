@@ -9,9 +9,21 @@ import os as _os
 import sys as _sys
 
 _sys.dont_write_bytecode = True   # Bolt installs the script folder as it is: no __pycache__ in it
-_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))   # python -I drops the script folder from the path; the kit sits beside the script
+_SELF = _os.path.basename(__file__)
+_PFX = _SELF.partition("__")[0] + "__" if "__" in _SELF else ""   # Bolt keeps every app's scripts in ONE folder, so each file of this app is named <app id>__<name>
+import importlib.util as _ilu
+_spec = _ilu.spec_from_file_location("bolt_app_kit", _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), _PFX + "bolt_app_kit.py"))   # the kit sits beside the script under this app's own name (python -I drops the script folder from the path, so it is loaded by path)
+kit = _sys.modules.get("bolt_app_kit")   # already imported: the test suite does this; a normal run never has
+if kit is None and _os.path.exists(_spec.origin):
+    kit = _ilu.module_from_spec(_spec)
+    _sys.modules["bolt_app_kit"] = kit
+    _spec.loader.exec_module(kit)
+elif kit is None and _os.path.isdir(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "bolt_app_kit")):   # a bolt_app_kit package folder beside the script
+    _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    import bolt_app_kit as kit
+elif kit is None:
+    raise SystemExit("script files must be named <app id>__<name>: this one is %s and %s was not found beside it. Rename the files back, and do not run the script through a link." % (_SELF, _PFX + "bolt_app_kit.py"))
 import os
-import bolt_app_kit as kit
 
 OS = kit.os_name()
 PLATFORMS = ("macos", "linux")
