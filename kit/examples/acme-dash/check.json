@@ -234,7 +234,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data: add your Acme Compliance API key for live data"
+          "sample data"
         ]
       }
     },

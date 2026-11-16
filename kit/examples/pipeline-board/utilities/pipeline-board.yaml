@@ -88,13 +88,15 @@ presentation:
             - "copy"
     changes:
       right_widget:
-        kind: diff
+        kind: detail
         mode: selected_row
         bind:
-          left: "{{row.left}}"
-          right: "{{row.right}}"
-          leftLabel: "before"
-          rightLabel: "after"
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          fields:
+            - { label: "Before", value: "{{row.change_before}}" }
+            - { label: "After", value: "{{row.change_after}}" }
+            - { label: "What changed", value: "{{row.change_note}}" }
 actions:
   - { id: open, kind: url, target: row, label: Open, url_template: "{{row.open_url}}" }
   - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }

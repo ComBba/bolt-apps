@@ -9,7 +9,7 @@
     "kpi_value": 33,
     "kpi_unit": "%",
     "kpi_max": 100,
-    "kpi_note": "closed / all",
+    "kpi_note": "closed / all · sample data",
     "kpi_foot": "4 of 12 closed",
     "kpi_badge": "BEHIND",
     "copy_text": "- Example Co Summary - 4 open tickets 2 active projects",
@@ -30,7 +30,7 @@
     "kpi_unit": "",
     "kpi_max": 12,
     "kpi_note": "of all tickets",
-    "kpi_foot": "sample data: no key and no network (api.fixture_default)",
+    "kpi_foot": "",
     "kpi_badge": "ACTION",
     "copy_text": "",
     "open_url": ""

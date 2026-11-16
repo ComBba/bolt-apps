@@ -241,7 +241,7 @@ export function presentationOf(appDir) {
 	try {
 		const ud = path.join(appDir, 'utilities'), y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); if (!y) return null;
 		const root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')), pres = get(root, 'presentation')?.value;
-		const widget = (n) => { const w = get(n, 'right_widget')?.value; if (!w) return null; const bind = get(w, 'bind')?.value, bound = str(get(bind, 'value')?.value), vf = /^\{\{\s*row\.([A-Za-z0-9_]+)\s*\}\}$/.exec(bound || ''); return { kind: str(get(w, 'kind')?.value), mode: str(get(w, 'mode')?.value), layout: str(get(bind, 'layout')?.value), valueField: vf ? vf[1] : 'kpi_value' }; };
+		const widget = (n) => { const w = get(n, 'right_widget')?.value; if (!w) return null; const bind = get(w, 'bind')?.value, bound = str(get(bind, 'value')?.value), vf = /^\{\{\s*row\.([A-Za-z0-9_]+)\s*\}\}$/.exec(bound || ''); const fields = new Set(); const walk = (n) => { if (!n) return; if (n.t === 's') for (const m of String(n.v).matchAll(/\{\{\s*row\.([A-Za-z0-9_]+)/g)) fields.add(m[1]); else if (n.t === 'm') n.entries.forEach((e) => walk(e.value)); else if (n.t === 'l') n.items.forEach(walk); }; walk(bind); return { kind: str(get(w, 'kind')?.value), mode: str(get(w, 'mode')?.value), layout: str(get(bind, 'layout')?.value), valueField: vf ? vf[1] : 'kpi_value', fields: [...fields] }; };
 		const views = new Map(); const vs = get(pres, 'views')?.value;
 		for (const e of vs?.entries || []) views.set(e.key, widget(e.value) );
 		return { top: widget(pres), views, viewArg: str(get(pres, 'view_arg')?.value) };
@@ -257,8 +257,10 @@ export function widgetNumber(v) {
 export function paneProblems(pres, rows, view, opts = {}) {
 	const out = [], E = (code, message) => out.push({ level: opts.waiveEmptyTiles && code === 'tile_row_without_value' ? 'warning' : 'error', code, message });
 	if (!pres || !Array.isArray(rows)) return out;
-	const shown = pres.views.has(view) ? view : 'overview';
-	const own = pres.views.get(shown), w = own || pres.top;
+	// the launcher draws the view named by the first word; a first word that is not a declared view (a place, a repo, a host name) is drawn by the APP-LEVEL right_widget
+	const fallback = pres.viewArg && view !== 'overview' && !pres.views.has(view);
+	const shown = fallback ? '(app-level)' : (pres.views.has(view) ? view : 'overview');
+	const own = fallback ? null : pres.views.get(shown), w = own || pres.top;
 	const goodPane = (r) => r && typeof r.pane === 'string' && (r.pane !== shown && pres.views.has(r.pane)) && (() => { const pw = pres.views.get(r.pane); return pw && (pw.mode || 'selected_row') === 'selected_row' && ROW_PANE_KINDS.includes(pw.kind); })();
 	// Bolt applies the 24-tile cap and the "no value" tile only to a tiles layout (bind.layout: tiles). The default grid layout caps at 500 and needs no number.
 	if (w && w.kind === 'cards' && w.mode === 'list_data' && w.layout === 'tiles') {
@@ -290,10 +292,22 @@ export function paneProblems(pres, rows, view, opts = {}) {
 export function sampleVisibleProblems(pres, rows, view) {
 	if (!pres || !Array.isArray(rows) || rows.length < 2) return [];
 	const shown = pres.views.has(view) ? view : 'overview', w = pres.views.get(shown) || pres.top;
-	if (w && (w.kind === 'chart' || w.kind === 'table')) return [];
 	const say = (s) => /sample/i.test(String(s || ''));
-	const ok = w && w.kind === 'cards' && w.layout === 'tiles' ? rows.some((r) => say(r.kpi_badge) || say(r.kpi_foot) || say(r.kpi_note)) : rows.some((r) => say(r.title));
-	return ok ? [] : [{ level: 'error', code: 'sample_not_visible', message: `the app is showing sample data (no key) in the view "${shown}", but no ${w && w.kind === 'cards' && w.layout === 'tiles' ? 'tile badge, footer or note' : 'row title'} says so. Put the label where it is drawn: a SAMPLE DATA row in a list view, the tile badge or footer in a tiles grid` }];
+	const tiles = w && w.kind === 'cards' && w.layout === 'tiles', quiet = w && !['entity_preview', 'markdown'].includes(w.kind) && !tiles;
+	const ok = tiles ? rows.some((r) => say(r.kpi_badge) || say(r.kpi_foot) || say(r.kpi_note)) : quiet ? rows.some((r) => say(r.subtitle) || say(r.title)) : rows.some((r) => say(r.title));
+	return ok ? [] : [{ level: 'error', code: 'sample_not_visible', message: `the app is showing sample data (no key) in the view "${shown}", but nothing visible says so. Put the label where it is drawn: a SAMPLE DATA row in a list view, the tile badge or footer in a tiles grid, the first row's subtitle in a chart, table, diff, json_tree or image_grid view (a label row there would be a data point or a blank pane)` }];
+}
+
+// In a selected_row view every row the person can arrow onto must give its pane something to draw: at least one non-empty field the pane binds (the app's own Back and refresh rows are exempt).
+export function blankPaneProblems(pres, rows, view) {
+	if (!pres || !Array.isArray(rows)) return [];
+	const shown = pres.views.has(view) ? view : 'overview', w = pres.views.get(shown) || pres.top;
+	if (!w || w.mode !== 'selected_row' || !w.fields || !w.fields.length) return [];
+	const nav = (r) => r && r.nav && (r.nav.back === true || /^refresh(\.|$)/.test(String(r.nav.arg || '')));
+	const has = (r) => w.fields.some((f) => r[f] !== undefined && r[f] !== null && String(r[f]).trim() !== ''), sel = rows.filter((r) => r && !nav(r));
+	if (!sel.some(has)) return [];   // a run with no data row at all (a not-found, setup or error state) has nothing to draw
+	const bad = sel.filter((r) => !has(r));
+	return bad.length ? [{ level: 'error', code: 'pane_blank_row', message: `the view "${shown}" draws a ${w.kind} pane for the selected row, but ${bad.length} row(s) bind none of its fields (${w.fields.slice(0, 4).join(', ')}): ${bad.slice(0, 2).map((r) => JSON.stringify(String(r.title).slice(0, 40))).join(', ')}. Selecting one shows an empty pane. Give the row a field the pane draws, or leave the row out of this view` }] : [];
 }
 
 // ---- stubs and the process ----
@@ -442,6 +456,7 @@ export async function checkApp(appDir, opts = {}) {
 			try { rows = JSON.parse(r.out); } catch { E('non_json_output', `stdout is not JSON (${r.out.length} bytes)`); }
 			if (rows !== null) {
 				for (const x of checkRows(rows, cfg.manifest_actions ?? 1)) f.push(x);
+				for (const x of blankPaneProblems(pres, rows, (kase.args || [])[0] || 'overview')) f.push(x);
 				if (sample === 'unset') for (const x of sampleVisibleProblems(pres, rows, (kase.args || [])[0] || 'overview')) f.push(x);
 				for (const x of paneProblems(pres, rows, (kase.args || [])[0] || 'overview', { waiveEmptyTiles: typeof cfg.known_empty_tiles === 'string' && cfg.known_empty_tiles.trim().length > 10 })) f.push(x);
 				for (const x of chainProblems(rows, listing && listing.id)) f.push(x);

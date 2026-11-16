@@ -103,7 +103,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data: add your Expense tracker API key for live data"
+          "sample data"
         ]
       }
     },

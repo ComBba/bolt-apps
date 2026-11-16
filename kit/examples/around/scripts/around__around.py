@@ -623,9 +623,7 @@ def emit_yaml(cfg):
     L += ["bridge:", "  command:"]
     for osn, py in (("macos", "python3"), ("linux", "python3"), ("windows", "python")):
         L.append('    %s: "%s"' % (osn, cmd % py))
-    L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:",
-          "    kind: cards", "    mode: list_data", "    bind:", '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", *OVERVIEW_PANE]
+    L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:", *[l[4:] for l in OVERVIEW_PANE[2:]], "  views:", *OVERVIEW_PANE]
     L += ["    places:", "      right_widget:", "        kind: detail", "        mode: selected_row", "        bind:", '          title: "{{row.pname}}"', '          subtitle: "{{row.chain}}"', "          fields:",
           '            - { label: Distance, value: "{{row.dist}}" }', '            - { label: Hours, value: "{{row.hours}}" }', '            - { label: Nearest dock, value: "{{row.dock}}" }',
           '            - { label: Weather there, value: "{{row.wx}}" }', '            - { label: Source, value: "{{row.src}}" }']

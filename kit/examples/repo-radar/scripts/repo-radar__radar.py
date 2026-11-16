@@ -162,7 +162,24 @@ def n_month(raw):
     rows = raw["downloads"]
     if not isinstance(rows, list):
         raise ValueError("downloads is not a list")
-    return {"days": [(str(d["day"])[:10], need_int(d, "downloads")) for d in rows]}
+    days = [(str(d["day"])[:10], need_int(d, "downloads")) for d in rows]
+    # npm itself reports 0 for a day or two inside a busy range (measured: express 2026-10-14/15 and 10-19/20, fastify last month): that is a missing day, not a day with no downloads,
+    # so a run of 1 to 3 zero days with a real day on both sides is dropped and named; a package that is genuinely at zero stays honest
+    keep, gaps, i = [], [], 0
+    while i < len(days):
+        if days[i][1] == 0:
+            j = i
+            while j < len(days) and days[j][1] == 0:
+                j += 1
+            if i > 0 and j < len(days) and j - i <= 3:
+                gaps += [d for d, _ in days[i:j]]
+            else:
+                keep += days[i:j]
+            i = j
+        else:
+            keep.append(days[i])
+            i += 1
+    return {"days": keep, "gaps": gaps}
 
 
 def n_osv(raw):
@@ -351,6 +368,7 @@ def model(ctx, spec, pkg_override):
     m["npm_other"] = npm["data"]["repo"] if npm["ok"] and not joined else None
     m["week"] = wk["data"]["n"] if joined and wk["ok"] else None
     m["days"] = mo["data"]["days"] if joined and mo["ok"] else None
+    m["gaps"] = mo["data"].get("gaps") if joined and mo["ok"] else None
     m["hn"] = hn["data"] if hn["ok"] else None
     m["vulns_all"] = osv["data"]["all"] if osv["ok"] and osv["data"] else None
     m["vulns_open"] = osv["data"]["latest"] if osv["ok"] and osv["data"] else None
@@ -569,6 +587,17 @@ def stale_note(m, tasks):
     return [kit.safe_row("Showing an old copy", "the source failed (%s); copy is %s old" % (rs[0]["err"], kit.fmt_duration(rs[0]["age"])), icon="Clock", badge="OLD COPY", copy=False)] if rs else []
 
 
+def delta_text(a, b):
+    """The signed change between two shown values, with a percent when both are plain numbers; the two texts when they are not."""
+    try:
+        x, y = float(str(a).replace(",", "")), float(str(b).replace(",", ""))
+    except ValueError:
+        return "changed"
+    d = y - x
+    s = "%+g" % d if abs(d) < 1000 else "{:+,.0f}".format(d)
+    return s + ("" if x == 0 else " (%+.1f%%)" % (d * 100.0 / x))
+
+
 def view_rows(ctx, view, m, since_info):
     now = m["now"]
     if view == "releases":
@@ -596,7 +625,11 @@ def view_rows(ctx, view, m, since_info):
         d = m["days"]
         if not d:
             return [kit.safe_row("No download data", "needs a matching npm package", icon="AlertCircle", copy=False)]
-        return [kit.safe_row("%s" % day, "{:,}".format(n), icon="Download", label=day[5:], value=n, copy=False) for day, n in d]
+        out = [kit.safe_row("%s" % day, "{:,}".format(n), icon="Download", label=day[5:], value=n, copy=False) for day, n in d]
+        gaps = m.get("gaps") or []
+        if out and gaps:   # said in the first row's subtitle, which the chart does not plot
+            out[0]["subtitle"] = ("{:,}".format(d[0][1]) + " · npm reported no data for " + ", ".join(g[5:] for g in gaps[:4]) + (" and more" if len(gaps) > 4 else "") + ": not plotted")[:200]
+        return out
     if view == "discussion":
         h = m["hn"]
         if h is None:
@@ -614,9 +647,10 @@ def view_rows(ctx, view, m, since_info):
             return [back(), kit.safe_row("Nothing changed", "since %s ago" % kit.fmt_duration(now - base_ts), icon="CheckCircle2", copy=False)]
         left = "\n".join("%s: %s" % (l, a) for l, a, b in ch)
         right = "\n".join("%s: %s" % (l, b) for l, a, b in ch)
-        out = [back(), kit.safe_row("All changes · %d" % len(ch), "since %s ago (the copy saved on your computer)" % kit.fmt_duration(now - base_ts), icon="Clock", multiline={"left": left, "right": right}, copy=False)]
+        out = [back(), kit.safe_row("All changes · %s" % kit.fmt_count(len(ch), "change", "changes"), "since %s ago (the copy saved on your computer)" % kit.fmt_duration(now - base_ts), icon="Clock",
+                                    since_what="Every change since the copy saved on your computer", since_change=kit.fmt_count(len(ch), "change", "changes"), multiline={"since_before": left, "since_after": right}, copy=False)]
         for l, a, b in ch:
-            out.append(kit.safe_row("%s: %s to %s" % (l, a, b), "", icon="Activity", multiline={"left": "%s: %s" % (l, a), "right": "%s: %s" % (l, b)}))
+            out.append(kit.safe_row("%s: %s to %s" % (l, a, b), "", icon="Activity", since_what=l, since_before=a, since_after=b, since_change=delta_text(a, b)))
         return out
     return []
 
@@ -688,12 +722,11 @@ def emit_yaml(cfg):
     L += ["bridge:", "  command:"]
     for osn, py in (("macos", "python3"), ("linux", "python3"), ("windows", "python")):
         L.append('    %s: "%s"' % (osn, cmd % py))
-    L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:",
-          "    kind: cards", "    mode: list_data", "    bind:", '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      trend: "{{row.trend}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", *OVERVIEW_PANE]
+    L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:", *[l[4:] for l in OVERVIEW_PANE[2:]], "  views:", *OVERVIEW_PANE]
     diff = ["      right_widget:", "        kind: diff", "        mode: selected_row", "        bind:", '          left: "{{row.left}}"', '          right: "{{row.right}}"']
     L += ["    releases:"] + diff + ['          leftLabel: "earlier"', '          rightLabel: "this release"']
-    L += ["    since:"] + diff + ['          leftLabel: "last look"', '          rightLabel: "now"']
+    L += ["    since:", "      right_widget:", "        kind: detail", "        mode: selected_row", "        bind:", '          title: "{{row.since_what}}"', '          subtitle: "{{row.since_change}}"', "          fields:",
+          '            - { label: Before, value: "{{row.since_before}}" }', '            - { label: After, value: "{{row.since_after}}" }', '            - { label: Change, value: "{{row.since_change}}" }', '            - { label: What it is, value: "{{row.since_what}}" }']
     L += ["    vulns:", "      right_widget:", "        kind: detail", "        mode: selected_row", "        bind:", '          title: "{{row.vid}}"', '          subtitle: "{{row.status}}"', "          fields:",
           '            - { label: Severity, value: "{{row.sev}}" }', '            - { label: Status, value: "{{row.status}}" }', '            - { label: Fixed in, value: "{{row.fixed}}" }',
           '            - { label: Published, value: "{{row.published}}" }', '            - { label: CVE, value: "{{row.cve}}", copy: true }']

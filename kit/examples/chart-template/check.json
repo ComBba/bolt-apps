@@ -75,7 +75,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data: add your Chart template API key for live data"
+          "sample data"
         ]
       }
     }

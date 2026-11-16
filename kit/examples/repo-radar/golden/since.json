@@ -18,7 +18,7 @@
     "copy_text": ""
   },
   {
-    "title": "All changes · 7",
+    "title": "All changes · 7 changes",
     "subtitle": "since 6 d ago (the copy saved on your computer)",
     "icon": "Clock",
     "body": "",
@@ -31,8 +31,8 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "",
-    "left": "latest release: v5.2.1\nstars: 69,570\nopen issues: 262\nweekly downloads: 183,260,255\nhealth score: 96\nopen vulnerabilities: 1 (GHSA-sample-0001-fixed-later)\nnew discussion threads: 3",
-    "right": "latest release: v5.3.0\nstars: 69,690\nopen issues: 259\nweekly downloads: 197,054,038\nhealth score: 98\nopen vulnerabilities: 0 (none)\nnew discussion threads: 5"
+    "since_what": "Every change since the copy saved on your computer",
+    "since_change": "7 changes"
   },
   {
     "title": "latest release: v5.2.1 to v5.3.0",
@@ -48,8 +48,10 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- latest release: v5.2.1 to v5.3.0",
-    "left": "latest release: v5.2.1",
-    "right": "latest release: v5.3.0"
+    "since_what": "latest release",
+    "since_before": "v5.2.1",
+    "since_after": "v5.3.0",
+    "since_change": "changed"
   },
   {
     "title": "stars: 69,570 to 69,690",
@@ -65,8 +67,10 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- stars: 69,570 to 69,690",
-    "left": "stars: 69,570",
-    "right": "stars: 69,690"
+    "since_what": "stars",
+    "since_before": "69,570",
+    "since_after": "69,690",
+    "since_change": "+120 (+0.2%)"
   },
   {
     "title": "open issues: 262 to 259",
@@ -82,8 +86,10 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- open issues: 262 to 259",
-    "left": "open issues: 262",
-    "right": "open issues: 259"
+    "since_what": "open issues",
+    "since_before": "262",
+    "since_after": "259",
+    "since_change": "-3 (-1.1%)"
   },
   {
     "title": "weekly downloads: 183,260,255 to 197,054,038",
@@ -99,11 +105,13 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- weekly downloads: 183,260,255 to 197,054,038",
-    "left": "weekly downloads: 183,260,255",
-    "right": "weekly downloads: 197,054,038"
+    "since_what": "weekly downloads",
+    "since_before": "183,260,255",
+    "since_after": "197,054,038",
+    "since_change": "+13,793,783 (+7.5%)"
   },
   {
-    "title": "health score: 96 to 98",
+    "title": "health score: 96 to 93",
     "subtitle": "",
     "icon": "Activity",
     "body": "",
@@ -115,9 +123,11 @@
     "kpi_note": "",
     "kpi_foot": "",
     "kpi_badge": "",
-    "copy_text": "- health score: 96 to 98",
-    "left": "health score: 96",
-    "right": "health score: 98"
+    "copy_text": "- health score: 96 to 93",
+    "since_what": "health score",
+    "since_before": "96",
+    "since_after": "93",
+    "since_change": "-3 (-3.1%)"
   },
   {
     "title": "open vulnerabilities: 1 (GHSA-sample-0001-fixed-later) to 0 (none)",
@@ -133,8 +143,10 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- open vulnerabilities: 1 [GHSA-sample-0001-fixed-later] to 0 [none]",
-    "left": "open vulnerabilities: 1 (GHSA-sample-0001-fixed-later)",
-    "right": "open vulnerabilities: 0 (none)"
+    "since_what": "open vulnerabilities",
+    "since_before": "1 (GHSA-sample-0001-fixed-later)",
+    "since_after": "0 (none)",
+    "since_change": "changed"
   },
   {
     "title": "new discussion threads: 3 to 5",
@@ -150,7 +162,9 @@
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": "- new discussion threads: 3 to 5",
-    "left": "new discussion threads: 3",
-    "right": "new discussion threads: 5"
+    "since_what": "new discussion threads",
+    "since_before": "3",
+    "since_after": "5",
+    "since_change": "+2 (+66.7%)"
   }
 ]

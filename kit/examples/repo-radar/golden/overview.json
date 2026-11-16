@@ -15,19 +15,19 @@
     "copy_text": ""
   },
   {
-    "title": "Safe to adopt · 98 of 100",
-    "subtitle": "Maintenance 100 · Security 100 · Adoption 100 · Momentum 90",
+    "title": "Safe to adopt · 93 of 100",
+    "subtitle": "Maintenance 100 · Security 100 · Adoption 100 · Momentum 67",
     "icon": "CheckCircle2",
     "body": "",
     "actions": [],
     "kpi_label": "Health score",
-    "kpi_value": 98,
+    "kpi_value": 93,
     "kpi_unit": "/100",
     "kpi_max": 100,
-    "kpi_note": "Maintenance 100 · Security 100 · Adoption 100 · Momentum 90",
+    "kpi_note": "Maintenance 100 · Security 100 · Adoption 100 · Momentum 67",
     "kpi_foot": "",
     "kpi_badge": "ADOPT",
-    "copy_text": "- expressjs/express: Safe to adopt, 98 of 100",
+    "copy_text": "- expressjs/express: Safe to adopt, 93 of 100",
     "open_url": "https://github.com/expressjs/express"
   },
   {
@@ -132,7 +132,7 @@
   },
   {
     "title": "Downloads · 197,054,038 a week",
-    "subtitle": "+16% against the half-month before",
+    "subtitle": "+7% against the half-month before",
     "icon": "Download",
     "body": "",
     "nav": {
@@ -151,8 +151,6 @@
       29398494,
       15314197,
       15271736,
-      0,
-      0,
       33394269,
       33983408,
       31102434,

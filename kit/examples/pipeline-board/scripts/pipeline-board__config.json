@@ -165,7 +165,7 @@
       ],
       "item": {
         "title": "{title}",
-        "subtitle": "{state} · {stage} · {branch}",
+        "subtitle": "{state} \u00b7 {stage} \u00b7 {branch}",
         "icon": "git-commit",
         "body": "## {title}\n\n{summary}",
         "copy": "{title} {state}",
@@ -217,18 +217,31 @@
         "title": "{title}",
         "subtitle": "{note}",
         "extra": {
-          "left": "{before}",
-          "right": "{after}"
+          "change_before": "{before}",
+          "change_after": "{after}",
+          "change_note": "{note}"
         }
       },
       "widget": {
-        "kind": "diff",
+        "kind": "detail",
         "mode": "selected_row",
         "bind": {
-          "left": "{{row.left}}",
-          "right": "{{row.right}}",
-          "leftLabel": "before",
-          "rightLabel": "after"
+          "title": "{{row.title}}",
+          "subtitle": "{{row.subtitle}}",
+          "fields": [
+            {
+              "label": "Before",
+              "value": "{{row.change_before}}"
+            },
+            {
+              "label": "After",
+              "value": "{{row.change_after}}"
+            },
+            {
+              "label": "What changed",
+              "value": "{{row.change_note}}"
+            }
+          ]
         }
       }
     }

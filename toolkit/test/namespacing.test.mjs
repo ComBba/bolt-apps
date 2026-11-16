@@ -351,3 +351,25 @@ test('known_empty_tiles exists only in the four examples that were not redesigne
 	const acme = JSON.parse(fs.readFileSync(path.join(EX, 'acme-dash', 'check.json'), 'utf8')).cases.filter((c) => c.fixture === 'unset').map((c) => c.args[0]);
 	for (const v of ['tasks', 'policies', 'controls', 'risks', 'vendors', 'devices', 'people']) assert.ok(acme.includes(v), `acme-dash ${v}`);
 });
+
+test('a first word that is not a view is drawn by the APP-LEVEL widget: a tiles grid there with value-less rows fails, the entity_preview the examples now use passes', async () => {
+	const { paneProblems, presentationOf, blankPaneProblems } = await import('../lib/check.mjs');
+	const rows = [{ title: 'Sample verdict', kpi_value: 71, kpi_label: 'Score' }, { title: 'Weather', subtitle: 'x' }, { title: 'Bikes', subtitle: 'y' }, { title: 'Places', subtitle: 'z' }];
+	const old = { top: { kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'kpi_value' }, views: new Map([['overview', { kind: 'entity_preview', mode: 'selected_row' }], ['places', null]]), viewArg: 'view' };
+	assert.deepEqual(paneProblems(old, rows, '94087').map((x) => x.code), ['tile_row_without_value'], 'the old around.yaml: the overview was fixed but the fallback was not');
+	assert.deepEqual(paneProblems(old, rows, 'overview').map((x) => x.code), [], 'a declared view word is drawn by that view');
+	const fixed = { ...old, top: { kind: 'entity_preview', mode: 'selected_row', fields: ['title'] } };
+	assert.deepEqual(paneProblems(fixed, rows, '94087'), []);
+	for (const n of ['around', 'repo-radar', 'cli-wrapper-template', 'file-insights-template']) { const p = presentationOf(path.join(EX, n)); assert.equal(p.top.kind, 'entity_preview', n); assert.equal(p.top.mode, 'selected_row', n); }
+	// every selectable row must give its pane a field to draw (the old pipeline-board changes: a key-hint row in a diff view)
+	const diff = { top: null, views: new Map([['changes', { kind: 'diff', mode: 'selected_row', fields: ['left', 'right'] }]]), viewArg: 'view' };
+	assert.equal(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true } }, { title: 'Add your key' }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes')[0].code, 'pane_blank_row');
+	assert.deepEqual(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true } }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes'), []);
+	assert.deepEqual(blankPaneProblems(diff, [{ title: 'Not found' }], 'changes'), [], 'a run with no data row at all');
+});
+
+test('goldens never say "1 <plural>", the unit-convert pane title is a sentence, and a count filter says 1 point', () => {
+	for (const n of examples) { const g = path.join(EX, n, 'golden'); if (!fs.existsSync(g)) continue; for (const f of fs.readdirSync(g)) for (const m of fs.readFileSync(path.join(g, f), 'utf8').matchAll(/"([^"]*)"/g)) assert.ok(!/(?<![\d.,-])\b1 [a-z]{3,}s\b/.test(m[1]), `${n}/${f}: ${m[1].slice(0, 80)}`); }
+	const y = fs.readFileSync(path.join(EX, 'unit-convert', 'utilities', 'unit-convert.yaml'), 'utf8');
+	assert.match(y, /title: "Conversion"/); assert.match(y, /subtitle: "\{\{row\.title\}\}"/);
+});
