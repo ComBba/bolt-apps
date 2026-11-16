@@ -91,3 +91,41 @@ test('check warns (config_copy_ignored) when a chained lookup declares copy on a
 	c.lookup.rows[0].copy = 'serde = "1"'; fs.writeFileSync(cf, JSON.stringify(c, null, 2));
 	const r = sh(home, root, 'check', app); assert.match(r.stdout, /warning config_copy_ignored: lookup\.rows\[0\]/); assert.equal(r.status, 0, 'a warning, not a failure');
 });
+
+// ---------------------------------------------------------------- the two shapes
+const engineRows = (app, id, args, env = {}) => { const r = spawnSync('python3', [path.join(app, 'scripts', `${id}__engine.py`), ...args], { cwd: path.join(app, 'scripts'), encoding: 'utf8', env: { ...process.env, BOLT_APP_FIXTURE: '1', ...env } }); assert.equal(r.status, 0, r.stderr); return JSON.parse(r.stdout); };
+
+test('views mode takes no typed query: an unknown first word shows the overview; "view word" filters; "view id" drills through children', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	assert.equal(sh(home, root, 'new', 'portal-template', 'pt').status, 0); const app = path.join(root, 'pt');
+	const overview = engineRows(app, 'pt', []);
+	assert.deepEqual(engineRows(app, 'pt', ['zzz-not-a-view']), overview, 'an unknown first word is ignored: the overview is shown');
+	assert.deepEqual(engineRows(app, 'pt', ['zzz-not-a-view', 'web']), overview);
+	const filtered = engineRows(app, 'pt', ['projects', 'web']);
+	assert.ok(filtered.some((r) => /1 of 4 match "web"/.test(r.subtitle)), 'the word filters the list in the app');
+	assert.ok(filtered.some((r) => r.nav && r.nav.arg === 'P-1'), 'a matching row drills to its detail');
+	const detail = engineRows(app, 'pt', ['projects', 'P-1']);
+	assert.ok(detail.some((r) => /Add SSO/.test(r.title)), 'children (the tickets) are listed under the detail');
+});
+
+test('the docs state the two shapes, the one that works and the one that does not; the capability rows exist and name this test', () => {
+	const eng = fs.readFileSync(path.join(EX, 'ENGINE.md'), 'utf8'), qs = fs.readFileSync(path.join(EX, 'QUICKSTART.md'), 'utf8');
+	for (const w of ['Two shapes of app: lookup or views', 'cannot take a typed query', 'Not possible in one app on 181', 'Buttons in lookup mode', 'An app that only shows sample data']) assert.ok(eng.includes(w), w);
+	for (const w of ['Two shapes', 'no drill, no Back', 'build two apps', 'unless the app is sample-only by design']) assert.ok(qs.includes(w), w);
+	assert.ok(!/Ship live: `api\.fixture_default` is `false`\./.test(qs), 'rule 4 no longer forbids a sample-only app');
+	const caps = JSON.parse(fs.readFileSync(path.join(EX, 'capabilities.json'), 'utf8')).rows;
+	for (const [id, st] of [['nav.typed_word_and_drill', 'partial'], ['actions.lookup_row', 'partial'], ['sample.offline_only', 'supported']]) { const r = caps.find((x) => x.id === id); assert.ok(r && r.status === st, id); assert.equal(r.test, 'toolkit/test/cold-run.test.mjs'); }
+});
+
+test('sample-only app: doctor and ship print the same start mode; a key_env on a sample-only app is called out', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	const app = ENGINE_APP(root, home), cf = path.join(app, 'scripts', 'lk__config.json');
+	const c = JSON.parse(fs.readFileSync(cf, 'utf8')); c.api.fixture_default = true; delete c.api.key_env; fs.writeFileSync(cf, JSON.stringify(c, null, 2));
+	const e = spawnSync('python3', [path.join(app, 'scripts', 'lk__engine.py'), '--emit-yaml'], { cwd: path.join(app, 'scripts'), encoding: 'utf8' }); assert.equal(e.status, 0, e.stderr); fs.writeFileSync(path.join(app, 'utilities', 'lk.yaml'), e.stdout);
+	const d = sh(home, root, 'doctor', app), s = sh(home, root, 'ship', app);
+	const line = (t) => (/Start mode: [^\n]*/.exec(t) || [''])[0].trim();
+	assert.match(line(d.stdout), /sample data \(api\.fixture_default is true\), so it never contacts a service/); assert.equal(line(d.stdout), line(s.stdout), s.stdout + s.stderr);
+	assert.match(line(s.stdout), /sample-only by design/);
+	c.api.key_env = 'LK_KEY'; fs.writeFileSync(cf, JSON.stringify(c, null, 2));
+	assert.match(line(sh(home, root, 'doctor', app).stdout), /never reads it and never goes live|never read|never goes live/);
+});

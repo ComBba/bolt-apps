@@ -6,7 +6,7 @@ Instructions for AI coding agents (Claude Code, Codex, Cursor, Copilot and other
 create or change an app in this repository. Follow them exactly. Humans: see
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
-> **Building an app for yourself (a rich app, a script, a web API)? Read [kit/examples/QUICKSTART.md](kit/examples/QUICKSTART.md) only: decision tree, four commands, ten rules and the one rules table. [kit/examples/CAPABILITIES.md](kit/examples/CAPABILITIES.md) says what works. The sections below are the reference.**
+> **Building an app for yourself (a rich app, a script, a web API)? Read [kit/examples/QUICKSTART.md](kit/examples/QUICKSTART.md) only: decision tree, four commands, ten rules and the one rules table. [kit/examples/CAPABILITIES.md](kit/examples/CAPABILITIES.md) says what works. The sections below are the reference. Pick the shape first: a typed word that calls the API is `lookup` (rows, no drill, no Back); drill and Back are `views` (its first word is a view, not a query). One app cannot do both: [ENGINE.md](kit/examples/ENGINE.md#two-shapes-of-app-lookup-or-views). An app that only shows sample data is allowed: [recipe](kit/examples/ENGINE.md#an-app-that-only-shows-sample-data-offline-no-api).**
 
 > **Status: the gallery is not open yet and contributions are not accepted.** Do not open a pull request against this
 > repository unless the person you work for is a Sparcle maintainer. You may still build

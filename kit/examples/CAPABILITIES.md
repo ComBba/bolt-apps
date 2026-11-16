@@ -63,7 +63,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | One action takes Enter (primary) | supported | no example yet | `conformance/launcher-constants.json` | At most one primary in the app file; it takes Enter on every row and the others go in the Tab menu. |
 | Chart rows mixed with plain rows | supported | [widget-gallery](widget-gallery) | `conformance/launcher-constants.json` | A row without the y field is skipped, so one list can hold chart rows and plain rows. The unit is cut at 8 characters. |
 | What Bolt does limit about a run | partial | automatic | `conformance/launcher-constants.json` | Each run gets a fresh private working folder (not the app folder) unless bridge.cwd is home, its process tree is killed on timeout, and there are CPU and process limits. Files and network are not confined. Bolt sets 6 variables: the 3 Python ones and GIT_CONFIG_NOSYSTEM, GIT_TERMINAL_PROMPT, GIT_OPTIONAL_LOCKS. |
-| Sample data: no key, no network | supported | [portal-template](portal-template) | `kit/python/tests/test_portal_engine.py` | Ship live (api.fixture_default false). Put "fixture": true at the top of check.json; an installed pack cannot be switched to sample data. |
+| Sample data: no key, no network | supported | [portal-template](portal-template) | `kit/python/tests/test_portal_engine.py` | Ship live (api.fixture_default false) unless the app is sample-only by design (see sample.offline_only). Put "fixture": true at the top of check.json; an installed pack cannot be switched to sample data. |
 | Several sources at once inside one deadline | supported | [system-glance](system-glance) | `kit/python/tests/test_probe.py` | Partial failure shows per-source rows; an unread value is never zero. |
 | permissions block in the app file | partial | no example yet | `toolkit/test/cold-agent.test.mjs` | Declared and shown at install and compared with what the files use (permissions_differ). Bolt does not enforce it at run time (link host limits will start applying when the device wiring ships). |
 | Sandbox: a script confined to what it declares | not supported | none | `toolkit/test/docs-drift.test.mjs` | Not shipped. A personal script runs as you, with your files and network. Confinement is planned. Install only code you have read. |
@@ -73,6 +73,9 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Approval after every reship | supported | [portal-template](portal-template) | `toolkit/test/namespacing.test.mjs` | A personal app is approved per set of files. Every reship changes the files, so approve again; the first run asks too. On 181 pressing Enter on an unapproved app shows an empty list (fixed on a later build). |
 | Share common code between apps | not supported | none | `toolkit/test/namespacing.test.mjs` | On 181 every app ships its own files under scripts/ID__name, kit included, so a kit fix needs a re-vendor and a reship of each app (a later upgrade-kit command is planned). A shared library installed once is a Bolt 182 feature, not available now. |
 | A first word that is not a view (a place, a repo, a host) | supported | [around](around) | `toolkit/test/namespacing.test.mjs` | The launcher draws such a run with the APP-LEVEL right_widget, not a view's, so that widget must tolerate rows with no value: use a selected_row entity_preview (tile on top), never a tiles grid over mixed rows. check runs your sample cases with a free-text first word and refuses a tiles grid there (tile_row_without_value). |
+| One app that takes a typed query AND drills (lookup plus views) | partial | [portal-template](portal-template) | `toolkit/test/cold-run.test.mjs` | Not in one app when the API must be asked per typed word: lookup mode has {query} but no drill or Back, views mode has drill and Back but its first word is a view, never a query (an unknown first word shows the overview). What works in views mode: a view name then one word filters that list inside the app, and Enter drills through children. Otherwise build two apps (two chips). ENGINE.md, Two shapes of app. |
+| Buttons on a lookup row | partial | [lookup-template](lookup-template) | `toolkit/test/cold-run.test.mjs` | Open (url) and Copy only: no drill, no Back, no extra actions. In a chained lookup (steps and rows) a row's copy is ignored and Copy copies the row text; check warns (config_copy_ignored). With a single endpoint and an item, item.copy works. |
+| An app that only shows sample data (offline, no API) | supported | no shipped example sets api.fixture_default true; the recipe is in ENGINE.md | `toolkit/test/cold-run.test.mjs` | Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack. |
 
 ## Snippets
 
@@ -456,4 +459,22 @@ Settings, Desktop, User Apps, expand the app, Review and accept
 
 ```
 =around 94087
+```
+
+### One app that takes a typed query AND drills (lookup plus views) (`nav.typed_word_and_drill`)
+
+```
+=my-tool customers acme
+```
+
+### Buttons on a lookup row (`actions.lookup_row`)
+
+```
+"lookup": {"rows": [{"title": "{place.name}", "url": "https://example.com/{place.id}"}]}
+```
+
+### An app that only shows sample data (offline, no API) (`sample.offline_only`)
+
+```
+"api": {"base_url": "https://example.invalid", "fixture_default": true, "fixture_file": "fixtures.json"}
 ```

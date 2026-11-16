@@ -12,6 +12,8 @@ All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file
 python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml
 ```
 
+If the config is wrong (an unknown icon, a missing key, unreadable JSON), `--emit-yaml` prints the problem on screen (for an icon it also lists the valid names), writes nothing to stdout and exits 1. The shell still creates an empty `utilities/<id>.yaml` for `>`: an empty file means the command failed, so run it again without `> ...` to read the reason. `run`, `lint` and `check` say the same when they meet an app file that is empty or is not YAML.
+
 The engine never connects to anything unless `api.fixture_default` is `false` (or `BOLT_APP_FIXTURE=1` is unset and the config says live).
 
 ## Modes (`mode`)
@@ -21,6 +23,36 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 | `views` (default) | Overview tiles that drill into lists, detail views, filters | `endpoints`, `overview`, `views` |
 | `form` | A typed input form, then a result pane | `form` |
 | `lookup` | One word in, one detail card out | `endpoints`, `lookup` |
+
+## Two shapes of app: lookup or views
+
+Pick before you build: the two shapes cannot be mixed in one app.
+
+| | `lookup` | `views` |
+|---|---|---|
+| The person types | a word (up to three): `=chip serde` | a view name, then optionally one word: `=chip customers acme` |
+| The word reaches | the API, as `{query}` in an endpoint path (URL-quoted) | nothing remote: it filters the list the endpoint already returned |
+| Drill and Back | none | yes (`nav` rows, `children`, Back row) |
+| Right pane | one for the result | one per view, from `views[].widget` |
+| Buttons on a row | Open (`url`) and Copy; see "Buttons in lookup mode" | Open and Copy in config; more in the app file's `actions:` |
+
+What a views-mode app does with a typed first word, from the engine and the launcher (written from source, run here only in sample mode): a first word that is not a declared view is not an error, but the engine ignores it and prints the overview rows, which the app-level right pane draws. So a views-mode app cannot take a typed query. What it can take: `=chip <view> <word>` keeps the rows of that view whose title, subtitle, badge or first five fields contain the word (case-insensitive, one word; a "Showing N of M" row clears it), and `=chip <view> <id>` opens one row when that view has `children`.
+
+**Recipe: type a name, see a summary, drill into related lists (views mode).** It works when the API's list endpoints already return every row you need (the engine filters on this side, up to the row limits in the rules table):
+
+```
+"endpoints": { "customers": { "path": "/customers" }, "orders": { "path": "/orders" } },
+"views": [
+  { "id": "customers", "title": "Customers", "endpoint": "customers",
+    "children": [{ "view": "orders", "match": "customer_id" }],
+    "item": { "title": "{name}", "subtitle": "{plan} · {city}", "fields": [{ "label": "Plan", "value": "{plan}" }] } },
+  { "id": "orders", "title": "Orders", "endpoint": "orders",
+    "item": { "title": "{number}", "subtitle": "{total|round2} · {status}" } } ]
+```
+
+The person types `=chip customers acme`, sees the customers that match (each row is a summary), presses Enter on one to see its summary with its orders listed below, and Back returns to the filtered list. The portal-template example is this shape (projects, each with its tickets).
+
+**Not possible in one app on 181:** "type a name, ask the API for exactly that name, then drill". Asking the API per word needs `lookup`, and lookup has no drill. The honest workaround is two apps: a `lookup` app for the typed name (rows, Open, Copy) and a `views` app for browsing (its own chip), or a script app that reads its own words (see `repo-radar`, and "Typing free text and views in a script app" below).
 
 ## `app`
 `id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (accepted and does nothing: once the app has rows, Bolt filters them as you type, matching the title and subtitle only; an app with `dispatch.choices` shows its confirm choices instead), `timeout` (seconds, 1 to 60).
@@ -62,6 +94,11 @@ Templates use `{field}` and `{field|filter}`: `human`, `day`, `hhmm`, `when` (an
 
 ## `lookup`
 `endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `prompt_subtitle`, `none_title`, `examples`.
+
+### Buttons in lookup mode
+A lookup row has Open (when its `url` renders to an https address) and Copy, and nothing else: no nav, no drill, no Back, no per-row actions. What Copy puts on the clipboard depends on the form of the lookup:
+- `endpoint` + `match` + `item` (one endpoint): `item.copy` (a template) is honoured; with none, Copy copies the row text.
+- `steps` + `rows` (a chain): each `rows[]` entry is drawn like an overview row, so its `copy` is ignored and Copy copies the row text. The check command warns about it (config_copy_ignored). Put the text you want copied in `title` or `subtitle`.
 
 ## Files named in the command
 The app file lists `<id>__config.json`, `<id>__fixtures.json` and `<id>__bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
@@ -163,9 +200,24 @@ main(sys.argv)
 ```
 Limits: servers that need a login or a key are out of scope here (use `get_secret` and pass the key in the server's environment from the script, never in `config.json`); the server starts on every run, so slow servers feel slow; remote MCP servers over HTTP are a plain HTTP call and need no workaround.
 
+## An app that only shows sample data (offline, no API)
+
+Most apps ship live (`api.fixture_default` `false`). An app that is sample-only by design (a demo, a reference card, a checklist whose data you write yourself) ships with the sample switch on, so it never opens a connection:
+
+```
+"api": { "base_url": "https://example.invalid", "fixture_default": true, "fixture_file": "fixtures.json" }
+```
+
+- `base_url` is still required by the config check; use a name that cannot resolve, such as `https://example.invalid`. Nothing connects to it while `fixture_default` is `true`.
+- `fixtures.json[<endpoint name>]` holds your rows, shaped like an API answer. It is signed with the pack, so changing the data means reshipping.
+- Leave out `key_env`: no key, no setup row. `on_missing_key` does nothing here.
+- `fixture_banner` (default off) adds a row or tile note that says the data is sample. Turn it on when the person might take your rows for real data. Label real-looking rows yourself too (a `SAMPLE` badge, "invented" in the body) if they could be mistaken for facts.
+- `ship` and `doctor` read the same words: "Start mode: sample data (api.fixture_default is true), so it never contacts a service." If the same config also names a `key_env`, both add that the key is never read and the app never goes live.
+- QUICKSTART rule 4 ("ship live") has this one exception: sample-only by design. If the app is meant to show someone's real data, `fixture_default` must be `false`.
+
 ## Sample mode, live mode and what check does
 
-- A shipped engine app is live: `api.fixture_default` is `false`. An installed pack cannot be switched to sample data, because `config.json` is signed and Bolt starts the script with no environment.
+- A shipped engine app is live (`api.fixture_default` is `false`) unless it is sample-only by design (see "An app that only shows sample data" above). An installed pack cannot be switched between the two, because `config.json` is signed and Bolt starts the script with no environment.
 - `check` runs the script in sample mode so tests need no key and no network: put `"fixture": true` at the top of `check.json` (every case) or on one case (a case wins over the top level; `"fixture": false` forces live). The script then reads `fixtures.json`. A terminal run can use `BOLT_APP_FIXTURE=1` (or `0`).
 - Live with no key shows one setup row with the exact one-line command. Live with the network down shows the offline row, or an old copy with its age when one was cached. These are checked in sample mode with `demo-nokey`, `demo-offline`, `demo-auth` and `demo-stale`.
 
