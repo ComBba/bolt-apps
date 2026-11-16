@@ -1,7 +1,7 @@
 # table-template
 
 ## What this teaches
-The `table` pane: columns with `label`, `align`, `format` (text, number, percent, currency, date), `unit`, per-column `total` (sum, avg, min, max, count), `sort` and `totals_label`. A share column stands in for a pie chart, which the launcher cannot draw. `app.searchable: true` lets the launcher filter rows as you type.
+The `table` pane: columns with `label`, `align`, `format` (text, number, percent, currency, date), `unit`, per-column `total` (sum, avg, min, max, count), `sort` and `totals_label`. A share column stands in for a pie chart, which the launcher cannot draw. `app.searchable` is accepted and does nothing: once the app has rows, Bolt filters them as you type (title and subtitle).
 
 ## Copy this to build
 Any list that needs sorting and totals: orders, invoices, usage, inventory.

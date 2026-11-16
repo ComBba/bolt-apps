@@ -19,7 +19,7 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 | `lookup` | One word in, one detail card out | `endpoints`, `lookup` |
 
 ## `app`
-`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (true lets the launcher filter rows as you type), `timeout` (seconds, 1 to 60).
+`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (accepted and does nothing: once the app has rows, Bolt filters them as you type, matching the title and subtitle only; an app with `dispatch.choices` shows its confirm choices instead), `timeout` (seconds, 1 to 60).
 
 ## `api` (views and lookup)
 `base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row).
@@ -176,7 +176,7 @@ Limits: servers that need a login or a key are out of scope here (use `get_secre
 ## Limits of views mode (so you pick the right template)
 
 - Views mode calls the list endpoints you name; it cannot call a per-id detail endpoint. `{id}`-style paths (and `{query}`) work only in `lookup` mode, where one typed word drives the calls. For a detail view, put the detail fields in the list response, or use a `lookup` app, or write a script like `repo-radar`.
-- Row actions in config are only Open (`url` on an item) and Copy (`copy`). More buttons need the app file's `actions:` (kinds `url`, `composer`, `utility`, `run`), at most 3 footer buttons including those two, and a nav row carries no actions.
+- Row actions in config are only Open (`url` on an item) and Copy (`copy`). More buttons need the app file's `actions:` (kinds `url`, `composer`, `utility`, `run`), the kit and `check` keep to 3 footer buttons including those two, while Bolt itself shows up to 6 (the app file's buttons first, then the row's), and a nav row carries no actions.
 - Stitching: stats from several endpoints on the overview, and `children` that list rows of another view whose field equals this row's id. There is no cross-join of two endpoints into one row. For that, use a script (`repo-radar` joins on a repo and its package; `around` stitches by distance).
 - Lists show at most 50 rows (`MAX_ROWS` in `engine.py`); the view says so. The chart and table panes could draw more, but the engine does not hand them more.
 

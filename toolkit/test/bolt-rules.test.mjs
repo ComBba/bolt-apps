@@ -20,7 +20,7 @@ test('rules file: widget kinds, no-data kinds and bind tables agree with the too
 	assert.deepEqual([...RULES.no_app_data_kinds].sort(), [...NO_APP_DATA_KINDS].sort());
 	for (const k of RULES.widget_kinds) assert.ok(Object.hasOwn(RULES.right_widget.bind, k), `bind table for ${k}`);
 	const sc = JSON.parse(fs.readFileSync(path.resolve(HERE, '../../schema/user-app.schema.json'), 'utf8'));
-	assert.deepEqual([...sc.properties.presentation.properties.right_widget.properties.kind.enum].sort(), [...RULES.widget_kinds].sort());
+	assert.deepEqual([...sc.$defs.presentation.properties.right_widget.properties.kind.enum].sort(), [...RULES.widget_kinds].sort());
 });
 
 test('nested unknown keys and missing required keys are refused at every level; a clean app passes', () => {
