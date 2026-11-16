@@ -1,12 +1,12 @@
 # Sky Watch
 **What this shows:** several keyless public sources in one app: where the ISS is (`api.wheretheiss.at`), the next launches (`ll.thespacedevs.com`, rate limited, cached 10 minutes), earthquakes M4.5 and up in the last day (`earthquake.usgs.gov`) and, when you type a city, weather and sunrise and sunset (`geocoding-api.open-meteo.com`, `api.open-meteo.com`). Every row has one preview pane (SOURCE, WHEN, KEY FIGURE, DATA) with Open source and Copy summary.
 **Edit these files:** `scripts/sky-watch__config.json` (hosts, sources, TTLs, limits) and `scripts/sky-watch__fixtures.json` (recorded answers used by `check` and `demo`).
-**Run these commands** from the repo root (once before the first pack: `./bolt-apps keygen`; a higher `--version` each pack):
+**Run these commands** from the repo root (once before the first pack: `node toolkit/bin/bolt-apps.mjs keygen`; a higher `--version` each pack):
 ```
-./bolt-apps lint kit/examples/sky-watch --personal
-./bolt-apps check kit/examples/sky-watch
-./bolt-apps pack kit/examples/sky-watch --personal --version 1.0.1 --out ../sky-watch-1.0.1.boltpack
-./bolt-apps verify ../sky-watch-1.0.1.boltpack
+node toolkit/bin/bolt-apps.mjs lint kit/examples/sky-watch --personal
+node toolkit/bin/bolt-apps.mjs check kit/examples/sky-watch
+node toolkit/bin/bolt-apps.mjs pack kit/examples/sky-watch --personal --version 1.0.1 --out ../sky-watch-1.0.1.boltpack
+node toolkit/bin/bolt-apps.mjs verify ../sky-watch-1.0.1.boltpack
 ```
 
 ## Notes
