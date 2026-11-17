@@ -377,7 +377,7 @@ test('goldens never say "1 <plural>", the unit-convert pane title is a sentence,
 	assert.match(y, /title: "Conversion"/); assert.match(y, /subtitle: "\{\{row\.title\}\}"/);
 });
 
-// The first row of a drilled list is selected on arrival: a Back row that binds none of a detail pane's fields draws a blank title and "—" for every field.
+// The first row of a drilled list is selected on arrival: a Back row that binds none of a detail pane's fields draws a blank title and a dash for every field.
 test('a Back or refresh row is not exempt from pane_blank_row: around landmarks with a bare Back fails, with the note pane it passes (mutation of the old exemption)', async () => {
 	const { blankPaneProblems, presentationOf } = await import('../lib/check.mjs');
 	const pres = presentationOf(path.join(EX, 'around'));

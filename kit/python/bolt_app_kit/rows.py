@@ -258,7 +258,7 @@ def _nav(nav):
 
 
 # The first row of a drilled list is selected when the list opens, so the app's own Back row is the first thing the right pane draws. A
-# `detail` pane (or card, diff, json_tree) binds fields a Back row does not have and draws "—" placeholders. Give those rows `pane="note"`:
+# `detail` pane (or card, diff, json_tree) binds fields a Back row does not have and draws dash placeholders. Give those rows `pane="note"`:
 # a small markdown view (title, subtitle, body) the app declares. NOTE_VIEW is the one name every example uses.
 NOTE_VIEW = "note"
 BACK_BODY = "Press Enter, Esc or Left to go back. Select a row to see its details."
@@ -276,7 +276,7 @@ def refresh_row(view, title="Scan again", subtitle="Enter to refresh", icon="Ref
 
 
 def note_row(title, subtitle="", icon="AlertCircle", badge="", body=None, nav=None):
-    """A row with no data of its own (a stale-copy notice, a not-found, a key hint) in a view whose pane binds fields it lacks: its pane is the NOTE_VIEW note, so it draws its own words, never "—" placeholders."""
+    """A row with no data of its own (a stale-copy notice, a not-found, a key hint) in a view whose pane binds fields it lacks: its pane is the NOTE_VIEW note, so it draws its own words, never dash placeholders."""
     return safe_row(title, subtitle, icon=icon, badge=badge, nav=nav, pane=NOTE_VIEW, body=subtitle if body is None else body, copy=False)
 
 

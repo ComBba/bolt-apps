@@ -1074,7 +1074,7 @@ def is_tiles_grid(w):
 
 
 # The first row of a drilled list is selected when it opens, so the Back row is the first thing the right pane draws. A pane that binds fields (detail, card, diff, json_tree...)
-# draws "—" placeholders for a row that has none, so in a view like that the Back, Refresh and notice rows point at a small markdown view, "note", that draws their own words.
+# draws dash placeholders for a row that has none, so in a view like that the Back, Refresh and notice rows point at a small markdown view, "note", that draws their own words.
 NOTE_VIEW = kit.NOTE_VIEW
 NOTE_ACTIVE = [None]   # set by run_views for the view being drawn: the note view's id when its pane binds fields a nav row lacks, else None
 
