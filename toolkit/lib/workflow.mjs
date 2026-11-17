@@ -42,6 +42,56 @@ const refuseSecrets = (dir) => { const h = keyLooking(dir); if (h.length) die(`$
 // ---------------------------------------------------------------- new <template> <id>  and  new --list
 export const listTemplates = () => { try { return JSON.parse(fs.readFileSync(path.join(EXAMPLES, 'index.json'), 'utf8')).apps.filter((a) => fs.existsSync(path.join(EXAMPLES, a.id, 'bolt-app.json'))); } catch { return []; } };   // an entry whose folder is not here yet is not offered
 export const hasTemplate = (name) => /^[a-z0-9][a-z0-9-]*$/.test(name) && fs.existsSync(path.join(EXAMPLES, name, 'bolt-app.json'));
+// ---------------------------------------------------------------- stale clone
+// Is the clone of bolt-apps this toolkit runs from behind origin/main? Local facts only: the remote-tracking ref `git fetch` last updated and the age of
+// .git/FETCH_HEAD. No network, each git call has a 2 second limit, and any problem means "say nothing".
+const git = (cwd, args) => { try { const r = spawnSync('git', args, { cwd, encoding: 'utf8', timeout: 2000, env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0' } }); return r.status === 0 ? r.stdout.trim() : null; } catch { return null; } };
+export function staleClone(root = path.resolve(HERE, '../..'), now = Date.now()) {
+	try {
+		if (!fs.existsSync(path.join(root, '.git'))) return null;   // not a clone of its own (a copy, a download, or a folder inside another repo)
+		const top = git(root, ['rev-parse', '--show-toplevel']); if (!top || fs.realpathSync(top) !== fs.realpathSync(root)) return null;
+		if (!git(root, ['remote', 'get-url', 'origin'])) return null;
+		if (!git(root, ['rev-parse', '--verify', '-q', 'refs/remotes/origin/main'])) return null;
+		const behind = Number(git(root, ['rev-list', '--count', 'HEAD..refs/remotes/origin/main']));
+		if (!Number.isInteger(behind)) return null;
+		let age = '', old = false;
+		// FETCH_HEAD is written by every fetch or pull; a clone that was never fetched since has only the clone's own reflog, which dates the clone
+		for (const name of ['FETCH_HEAD', 'logs/HEAD']) {
+			try {
+				const h = Math.max(0, Math.floor((now - fs.statSync(path.resolve(root, git(root, ['rev-parse', '--git-path', name]))).mtimeMs) / 3600000));
+				old = h >= 24; age = h < 1 ? 'less than an hour ago' : h < 48 ? `${h} hours ago` : `${Math.floor(h / 24)} days ago`; break;
+			} catch { /* try the next */ }
+		}
+		if (behind > 0) return `your copy of bolt-apps is ${behind} commit${behind === 1 ? '' : 's'} behind (last fetch: ${age || 'unknown'}): run git pull --ff-only`;
+		if (old) return `your copy of bolt-apps last checked GitHub ${age} and may be behind: run git pull --ff-only`;
+		return null;
+	} catch { return null; }
+}
+let staleShown = false;
+export const staleCloneNote = () => { if (staleShown) return; staleShown = true; const m = staleClone(); if (m) console.error(`note: ${m}`); };
+
+// ---------------------------------------------------------------- Bolt user-utils folder (doctor, read only)
+export function userUtilsDir(env = process.env, platform = process.platform, home = os.homedir()) {
+	if (env.BOLT_USER_UTILS_DIR) return env.BOLT_USER_UTILS_DIR;
+	const sub = 'app.sparcle.bolt.enterprise';
+	const base = platform === 'darwin' ? path.join(home, 'Library', 'Application Support') : platform === 'win32' ? (env.APPDATA || path.join(home, 'AppData', 'Roaming')) : (env.XDG_CONFIG_HOME || path.join(home, '.config'));
+	return path.join(base, sub, 'user-utils');
+}
+// Names only, never contents and never a write. Lists the files in Bolt's user apps folder that would stop a pack of this app installing (file_exists).
+// Old flat names are the app's own script names without the `<id>__` prefix (a hand copy from before apps were namespaced): never from a pack.
+// An `<id>.yaml` or `scripts/<id>__*` file is what a pack of this app leaves, so names alone cannot say whether it is a problem: kind says which.
+export function userUtilsClashes(dir, id, appDir) {
+	const out = [];
+	try { if (!fs.statSync(dir).isDirectory()) return out; } catch { return out; }
+	const ls = (d) => { try { return fs.readdirSync(d); } catch { return []; } };
+	const top = ls(dir), scripts = ls(path.join(dir, 'scripts'));
+	for (const f of top) if (f === `${id}.yaml` || f === `${id}.yml`) out.push({ file: path.join(dir, f), kind: 'app file' });
+	for (const f of scripts) if (f.startsWith(`${id}__`)) out.push({ file: path.join(dir, 'scripts', f), kind: 'script' });
+	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => f.startsWith(`${id}__`)).map((f) => f.slice(id.length + 2));
+	for (const f of scripts) if (own.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'old flat name' });
+	return out;
+}
+
 export function newList() {
 	const apps = listTemplates();
 	console.log('Templates (./bolt-apps new <template> <id>):\n');
@@ -49,6 +99,7 @@ export function newList() {
 	console.log(`\nStart with the one whose "need" matches. Not sure: ${DOCS}`);
 }
 export function newFromTemplate(template, id, root) {
+	staleCloneNote();
 	const src = path.join(EXAMPLES, template);
 	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`);
 	if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) die('the id is lowercase letters, digits and hyphens, at most 64 characters, for example my-tool');
@@ -108,7 +159,7 @@ export function newFromTemplate(template, id, root) {
 		const r2 = r.status === 0 ? bolt(['check', dir]) : r;   // a second plain run proves the recorded goldens agree with a fresh run
 		note = r2.status === 0 ? `check passes on the sample data${minimal ? ' (check.json was rewritten with one case per view and none of the template words: it checks that every row is well formed)' : ''}${pruned ? ` (${pruned} expected-text line${pruned === 1 ? '' : 's'} about the template's own sample words were dropped from check.json; add your own once your data is in)` : ''}` : `CHECK DOES NOT PASS YET (it did not pass straight after the copy, which is a toolkit fault, not yours):\n${(r2.stdout + r2.stderr).slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${String(fe).split(`${template}__`).join(`${id}__`)}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (ENGINE.md, "Make it yours"): the listing in bolt-app.json (summary, role, saves) and the description in the config say TODO, README.md starts with a note, and check.json ${minimal ? 'has one case per view and no template words' : 'still expects the template words'}. Goldens are recorded only for a case that names one: add "golden": "golden/<name>.json" to a case, then run ./bolt-apps check ${q(dir)} --update-golden once your data is final, and read what changed.\n\nThe generated check proves the app runs and draws well-formed rows, not that your data is right: when your data is final, run check --update-golden once; from then on check compares your real output.`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${String(fe).split(`${template}__`).join(`${id}__`)}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note: replace it\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
 }
 
 // For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).
@@ -257,6 +308,7 @@ const core = (v) => String(v).trim().replace(/^[vV]/, '').split('+')[0].split('-
 export const newer = (a, b) => { const x = core(a), y = core(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; } return false; };
 export function ship(args) {
 	const dir = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--version'); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps ship <app-folder> [--version X]   (lint, check, pack, verify, with the next version picked for you)');
+	staleCloneNote();
 	refuseSecrets(dir);
 	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { die(`${q(path.join(dir, 'bolt-app.json'))} is not valid JSON (${e.message}). Fix it, then run ship again`); }
 	if (!app || typeof app !== 'object' || Array.isArray(app)) die(`${q(path.join(dir, 'bolt-app.json'))} must be a JSON object with an id, title and so on, not ${app === null ? 'null' : Array.isArray(app) ? 'a list' : typeof app}. Fix it, then run ship again`);
@@ -264,7 +316,8 @@ export function ship(args) {
 	const chipOf = () => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || null; } catch { return null; } };
 	const chipNow = chipOf(), chipsSeen = loadShip()['#chips'], chipBefore = chipsSeen && typeof chipsSeen === 'object' ? chipsSeen[app.id] : null;
 	if (chipNow && chipBefore && chipNow !== chipBefore) console.log(`WARNING the chip changed: your last build of ${app.id} used =${chipBefore}, this one uses =${chipNow}. Anyone typing =${chipBefore} will find nothing after they install it. Keep the chip unless you mean to change it (set it back in the app file, or in config.json and regenerate the app file).`);
-	const step = (name, r) => { if (r.status === 0 && /^(lint|pack)/.test(name)) { const ws = `${r.stdout}`.split('\n').filter((l) => /^\s*warning /.test(l)); console.log(`ok ${name}`); for (const l of ws) console.log(`   ${l.trim()}`); if (ws.some((l) => /description_todo/.test(l))) console.log('   WARNING your app description still says TODO: it is shipped in the pack and shown in the launcher. Fix it before you share the pack.'); return; } if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
+	const seenWarn = new Set();   // lint and pack print the same warnings: each distinct one is shown once
+	const step = (name, r) => { if (r.status === 0 && /^(lint|pack)/.test(name)) { const ws = `${r.stdout}`.split('\n').filter((l) => /^\s*warning /.test(l)); const fresh = ws.filter((l) => !seenWarn.has(l.trim())); console.log(`ok ${name}${ws.length && !fresh.length ? ' (same warnings as above)' : ''}`); for (const l of fresh) { seenWarn.add(l.trim()); console.log(`   ${l.trim()}`); } if (fresh.some((l) => /description_todo/.test(l))) console.log('   WARNING your app description still says TODO: it is shipped in the pack and shown in the launcher. Fix it before you share the pack.'); return; } if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
 	step('lint --personal', bolt(['lint', dir, '--personal']));
 	if (fs.existsSync(path.join(dir, 'check.json'))) step('check', bolt(['check', dir]));
 	notLink(STATE); notLink(path.join(STATE, 'key.pem')); notLink(path.join(STATE, 'ship.json')); notLink(path.join(STATE, 'packs'));
@@ -305,6 +358,13 @@ Every message and fix: bolt-apps doctor --bolt-says`);
 // ---------------------------------------------------------------- doctor
 export function doctor(args) {
 	if (args.includes('--bolt-says')) { console.log(`Bolt said X, do Y:\n${formatBoltSays()}`); return; }
+	if (args.includes('--help') || args.includes('-h')) { console.log(`usage: ./bolt-apps doctor [app-folder] [--bolt-says]
+
+Checks node, python3, your signing key, ~/.bolt-apps, and with an app folder: its key file, lint and verify, and whether files already in your Bolt
+user apps folder would stop its pack installing (Bolt message file_exists). That scan reads file names only and never writes or deletes.
+
+Environment: BOLT_USER_UTILS_DIR=<folder> checks that folder instead of the default (macOS ~/Library/Application Support/app.sparcle.bolt.enterprise/user-utils,
+Windows %APPDATA%\\app.sparcle.bolt.enterprise\\user-utils, Linux ~/.config/app.sparcle.bolt.enterprise/user-utils).`); return; }
 	const dir = args.find((a) => !a.startsWith('--'));
 	const line = (ok, what, fix) => console.log(`${ok ? 'ok  ' : 'FIX '} ${what}${ok ? '' : `\n       ${fix}`}`);
 	let bad = 0; const chk = (ok, what, fix) => { if (!ok) bad++; line(ok, what, fix); };
@@ -322,6 +382,12 @@ export function doctor(args) {
 		const hits = keyLooking(dir); chk(!hits.length, 'no real-looking key in the app folder', `Remove the key from ${hits.map(q).join(', ')}; keys go in the keychain or ~/.config/${id}/.env.`);
 		const l = bolt(['lint', dir, '--personal']); chk(l.status === 0, 'lint --personal (what blocks a dropped pack)', `Run: ./bolt-apps lint ${q(dir)} --personal   and fix each line it prints.`);
 		if (l.status === 0) { const v = bolt(['verify', dir]); chk(v.status === 0, 'verify (what Bolt checks at install)', `Run: ./bolt-apps verify ${q(dir)}   and fix each line it prints.`); }
+		const uu = userUtilsDir(), shippedHere = typeof loadShip()[id] === 'string';
+		for (const c of userUtilsClashes(uu, id, dir)) {
+			const how = process.platform === 'win32' ? `del ${q(c.file)}` : `rm ${q(c.file)}`;
+			if (c.kind !== 'old flat name' && shippedHere) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder: expected if you installed a pack of ${id} (a newer version replaces it).`); continue; }
+			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `${c.kind === 'old flat name' ? 'A hand copy from before scripts were named <app id>__<name>' : `You have not shipped ${id} from here, so this is likely a hand copy`}: Bolt refuses the pack with file_exists. Remove it: ${how}   (or Settings, Desktop, User Apps, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
+		}
 	} else console.log('\n(give an app folder to also check its key file, lint and verify: ./bolt-apps doctor <app-folder>)');
 	console.log(bad ? `\n${bad} thing(s) to fix.` : '\nAll good.');
 	process.exit(bad ? 1 : 0);
