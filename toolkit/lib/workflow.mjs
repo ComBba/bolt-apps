@@ -129,7 +129,7 @@ function minimalCheck(dir, id) {
 	} else return false;
 	const keep = fs.readFileSync(p, 'utf8');
 	const osName = cfg.cases && cfg.cases[0] && cfg.cases[0].os ? cfg.cases[0].os : 'macos';
-	cfg.cases = cases.map((c) => ({ ...c, os: osName }));
+	cfg.cases = cases.map((c) => ({ ...c, os: osName, expect: { min_rows: 1 } }));   // no template word, but not empty: check itself also refuses a run with no rows, a blank title or subtitle, a missing sample label and a view the config lacks
 	delete cfg.known_empty_tiles;
 	fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + '\n');
 	const r = bolt(['check', dir]);
@@ -250,7 +250,7 @@ export function ship(args) {
 	const chipOf = () => { try { const y = fs.readdirSync(path.join(dir, 'utilities')).find((f) => /\.ya?ml$/.test(f)); return str(get(parseYaml(fs.readFileSync(path.join(dir, 'utilities', y), 'utf8')), 'chip')?.value) || null; } catch { return null; } };
 	const chipNow = chipOf(), chipsSeen = loadShip()['#chips'], chipBefore = chipsSeen && typeof chipsSeen === 'object' ? chipsSeen[app.id] : null;
 	if (chipNow && chipBefore && chipNow !== chipBefore) console.log(`WARNING the chip changed: your last build of ${app.id} used =${chipBefore}, this one uses =${chipNow}. Anyone typing =${chipBefore} will find nothing after they install it. Keep the chip unless you mean to change it (set it back in the app file, or in config.json and regenerate the app file).`);
-	const step = (name, r) => { if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
+	const step = (name, r) => { if (r.status === 0 && /^(lint|pack)/.test(name)) { const ws = `${r.stdout}`.split('\n').filter((l) => /^\s*warning /.test(l)); console.log(`ok ${name}`); for (const l of ws) console.log(`   ${l.trim()}`); if (ws.some((l) => /description_todo/.test(l))) console.log('   WARNING your app description still says TODO: it is shipped in the pack and shown in the launcher. Fix it before you share the pack.'); return; } if (r.status !== 0) { console.error(`${r.stdout}${r.stderr}`.trim().split('\n').slice(-25).join('\n')); die(`${name} failed. Fix the lines above (each says what to change), then run ship again`); } console.log(`ok ${name}`); };
 	step('lint --personal', bolt(['lint', dir, '--personal']));
 	if (fs.existsSync(path.join(dir, 'check.json'))) step('check', bolt(['check', dir]));
 	notLink(STATE); notLink(path.join(STATE, 'key.pem')); notLink(path.join(STATE, 'ship.json')); notLink(path.join(STATE, 'packs'));

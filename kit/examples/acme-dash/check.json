@@ -159,6 +159,7 @@
         "nope"
       ],
       "expect": {
+        "view_fallback": true,
         "text_present": [
           "Compliance posture"
         ]

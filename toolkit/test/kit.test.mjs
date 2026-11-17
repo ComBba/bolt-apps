@@ -84,7 +84,7 @@ test('the example app passes check, with every case', async () => {
 	const r = await checkApp(EXAMPLE);
 	assert.deepEqual(r.findings, []);
 	assert.ok(r.cases.length >= 9);
-	for (const c of r.cases) assert.deepEqual(c.findings.filter((x) => !(x.code === 'tile_row_without_value' && x.level === 'warning')), [], c.name);   // known_empty_tiles downgrades that one rule to a warning
+	for (const c of r.cases) assert.deepEqual(c.findings.filter((x) => !(x.code === 'tile_row_without_value' && x.level === 'warning')), [], c.name);
 });
 
 test('--os selects fixture cases; an OS with no case is an error', async () => {

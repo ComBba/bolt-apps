@@ -30,7 +30,7 @@
   "chip": "lookup-template",
   "title": "Forecast lookup",
   "icon": "cloud-sun",
-  "description": "Type a place, get its weather. One query in, tiles and rows out, from two keyless Open-Meteo calls.",
+  "description": "Type a place, get its weather. One query in, a list with a preview pane out, from two keyless Open-Meteo calls.",
   "service": "Open-Meteo",
   "timeout": 20
  },

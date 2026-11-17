@@ -307,21 +307,21 @@ test('on_missing_key: a loose key file keeps its setup row, an unknown value is 
 	assert.ok(dv, 'chart-template has a chart view'); assert.ok(!rn([dv.id]).some((r) => /SAMPLE DATA/.test(r.title)));
 });
 
-test('tile_row_without_value: the old sample behaviour (label rows in a tiles view) fails, the fixed rows pass, a lone state is allowed, a waiver downgrades it', async () => {
+test('tile_row_without_value: the old sample behaviour (label rows in a tiles view) fails, the fixed rows pass, a lone state is allowed, a waiver no longer exists', async () => {
 	const { paneProblems } = await import('../lib/check.mjs');
 	const pres = { top: { kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'kpi_value' }, views: new Map([['overview', null]]), viewArg: 'view' };
 	const tile = (n) => ({ title: `T${n}`, kpi_label: 'x', kpi_value: n });
 	const old = [{ title: 'SAMPLE DATA: add your X API key to see live data', badge: 'SAMPLE' }, { title: 'Add your X API key' }, tile(1), tile(2)];
 	const codes = (rows, o) => paneProblems(pres, rows, 'overview', o).map((x) => `${x.level}:${x.code}`);
 	assert.deepEqual(codes(old), ['error:tile_row_without_value']);
-	assert.deepEqual(codes(old, { waiveEmptyTiles: true }), ['warning:tile_row_without_value']);
+	assert.deepEqual(codes(old, { waiveEmptyTiles: true }), ['error:tile_row_without_value'], 'the old option does nothing');
 	const fixed = [{ ...tile(1), kpi_badge: 'SAMPLE', kpi_foot: 'sample data: add your X API key for live data' }, tile(2)];
 	assert.deepEqual(codes(fixed), []);
 	assert.deepEqual(codes([{ title: 'Add your X API key' }]), [], 'a lone setup row');
 	assert.deepEqual(codes([{ title: 'Could not reach X' }, { title: 'Try again', nav: { view: 'overview', arg: 'refresh' } }]), [], 'a run with no data row at all');
 	assert.deepEqual(codes([tile(1), { title: 'Back', nav: { back: true } }, { title: 'Refresh', nav: { view: 'overview', arg: 'refresh' } }]), [], 'Back and refresh rows are navigation');
 	// the shipped demos: every check case passes with no waiver except the four named in their check.json
-	for (const n of examples) { const cj = path.join(EX, n, 'check.json'); if (!fs.existsSync(cj)) continue; const c = JSON.parse(fs.readFileSync(cj, 'utf8')); if (c.known_empty_tiles) assert.ok(String(c.known_empty_tiles).length > 10, n); }
+	for (const n of examples) { const cj = path.join(EX, n, 'check.json'); if (!fs.existsSync(cj)) continue; const c = JSON.parse(fs.readFileSync(cj, 'utf8')); assert.ok(!('known_empty_tiles' in c), n); }
 });
 
 test('tile_row_without_value mutants: only a refresh nav arg and the exact Back row are exempt, and "n/a" or "-" is not a number', async () => {
