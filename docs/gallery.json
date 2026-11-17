@@ -257,5 +257,31 @@
       ],
       "how": "See `kit/examples/QUICKSTART.md`."
     }
+  ],
+  "anatomy": [
+    {
+      "id": "acme-dash-overview",
+      "title": "acme-dash: overview",
+      "src": "acme-dash-overview-anatomy.png",
+      "alt": "Annotated acme-dash overview: call-outs 1 to 4 on the launcher word, the list rows, the right pane and a tile"
+    },
+    {
+      "id": "acme-dash-drill",
+      "title": "acme-dash: drill",
+      "src": "acme-dash-drill-anatomy.png",
+      "alt": "Annotated acme-dash drill: call-outs 1 to 5 on the input, the rows with Back first, the detail pane, a tile strip and the Open and Copy buttons"
+    },
+    {
+      "id": "pulse-feed-story",
+      "title": "pulse-feed: story pane",
+      "src": "pulse-feed-story-anatomy.png",
+      "alt": "Annotated pulse-feed: call-outs 1, 2, 3 and 5 on the launcher word, the story rows, the story pane and the Open post and Copy quote buttons"
+    },
+    {
+      "id": "unit-convert",
+      "title": "unit-convert: form, rows, detail",
+      "src": "unit-convert-anatomy.png",
+      "alt": "Annotated unit-convert: the form on the left with call-outs 1 and 6, the result rows and detail pane on the right with call-outs 1, 2, 3 and 5"
+    }
   ]
 }

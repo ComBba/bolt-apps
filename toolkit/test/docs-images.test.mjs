@@ -52,6 +52,8 @@ test('the new docs have no em dash or en dash and no non-ASCII', () => {
 test('gallery.md equals what gallery.json says, and every entry is real', () => {
 	const g = JSON.parse(read('docs/gallery.json')), md = read('docs/gallery.md');
 	assert.ok(g.entries.length >= 10);
+	assert.equal(g.anatomy.length, 4);
+	for (const a of g.anatomy) { assert.ok(exists(`docs/images/${a.src}`), `anatomy image ${a.src}`); assert.ok(a.alt.length >= 20 && a.title, `anatomy ${a.src}`); assert.ok(read('docs/anatomy.md').includes(`![${a.alt}](images/${a.src})`)); }
 	for (const e of g.entries) {
 		assert.ok(exists(`kit/examples/${e.example}`), `example ${e.example}`);
 		assert.ok(e.caption && e.how, `${e.id}: caption and how`);
