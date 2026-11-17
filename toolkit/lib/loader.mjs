@@ -12,7 +12,7 @@
 //          shared version is at least KIT_MIN;
 //   3. the app's own vendored kit beside the script, <id>__bolt_app_kit.py (what every app did before Bolt 182);
 //   4. a bolt_app_kit package folder beside the script (old apps).
-// Any failure in step 2 is silent and falls through: the rows must not depend on which copy ran.
+// Any failure in step 2 is silent (a Ctrl-C is not a failure: it stops the app) and falls through: the rows must not depend on which copy ran.
 // A manifest cannot set BOLT_APP_SHARED_DIR (names starting BOLT_ are refused), so only Bolt chooses the folder.
 export const LOADER_VERSION = 1;
 
@@ -36,10 +36,18 @@ def _load_kit_bytes(data, origin):
     return mod
 
 
+def _abs_dir(d, nt=_os.name == "nt"):
+    """An absolute local folder. On Windows that means a drive letter and a root: a rooted path with no drive (it would follow the current drive) and a network share are refused."""
+    if nt:
+        import ntpath
+        return bool(ntpath.splitdrive(d)[0]) and d[:1] not in "\\/" and ntpath.isabs(d)
+    return _os.path.isabs(d)
+
+
 def _shared_kit(own_path):
-    """Bolt's shared kit, verified, or None. Never raises: any doubt means use the app's own copy."""
+    """Bolt's shared kit, verified, or None. Never raises: any doubt means use the app's own copy (a real Ctrl-C still stops the app)."""
     d = _os.environ.get("BOLT_APP_SHARED_DIR")
-    if not d or not _os.path.isabs(d):
+    if not d or not _abs_dir(d):
         return None
     try:
         import hashlib, json
@@ -68,12 +76,16 @@ def _shared_kit(own_path):
                 same = hashlib.sha256(f.read()).hexdigest() == have
         if not same and not (WANT_SHARED and tuple(int(x) for x in ver.split(".")) >= KIT_MIN):
             return None
+        if not data.startswith(('"""bolt_app_kit %s, ' % ver).encode("utf-8")):
+            return None   # the file does not say it is the version the manifest names: do not run it
         mod = _load_kit_bytes(data, sp)
         if getattr(mod, "__version__", None) != ver:
             _sys.modules.pop("bolt_app_kit", None)
             return None
         return mod
-    except Exception:
+    except KeyboardInterrupt:
+        raise   # the person pressed Ctrl-C: stop, do not carry on with another copy
+    except BaseException:   # including SystemExit raised by the kit at import: the app's own copy still runs
         _sys.modules.pop("bolt_app_kit", None)
         return None
 

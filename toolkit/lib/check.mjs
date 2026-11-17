@@ -354,7 +354,24 @@ except ImportError:
     pass
 sys.platform = plat
 sys.dont_write_bytecode = True
-runpy.run_path(script, run_name="__main__")
+_probed = []
+def _probe():
+    # check --shared: say which file the kit module came from, so the check can prove which copy ran. Only when the shared folder was offered.
+    if _probed or not os.environ.get("BOLT_APP_SHARED_DIR"):
+        return
+    _probed.append(1)
+    _k = sys.modules.get("bolt_app_kit")
+    sys.stderr.write("\\n@@bolt-check-kit-file@@ " + (getattr(_k, "__file__", None) or "(none)") + "\\n")
+    sys.stderr.flush()
+_real_exit = os._exit
+def _exit_after_probe(code=0):
+    _probe()
+    _real_exit(code)
+os._exit = _exit_after_probe   # the kit ends a run with os._exit, which skips finally and atexit
+try:
+    runpy.run_path(script, run_name="__main__")
+finally:
+    _probe()
 `;
 function runScript(py, script, osName, args, env, cwd) {
 	return new Promise((resolve) => {
@@ -363,7 +380,12 @@ function runScript(py, script, osName, args, env, cwd) {
 		let out = '', err = '', killed = false;
 		ch.stdout.on('data', (d) => { out += d; }); ch.stderr.on('data', (d) => { err += d; });
 		const timer = setTimeout(() => { killed = true; try { process.kill(-ch.pid, 'SIGKILL'); } catch {} }, BRIDGE_LIMIT_S * 1000 + 3000);
-		ch.on('close', (rc) => { clearTimeout(timer); try { process.kill(-ch.pid, 'SIGKILL'); } catch {} resolve({ rc, out, err, killed, seconds: (Date.now() - t0) / 1000 }); });
+		ch.on('close', (rc) => {
+			clearTimeout(timer); try { process.kill(-ch.pid, 'SIGKILL'); } catch {}
+			const m = /\n@@bolt-check-kit-file@@ (.*)\n$/.exec(err); let kitFile = null;
+			if (m) { kitFile = m[1]; err = err.slice(0, m.index); }   // the probe line is ours, not the script's
+			resolve({ rc, out, err, killed, kitFile, seconds: (Date.now() - t0) / 1000 });
+		});
 		ch.on('error', (e) => { clearTimeout(timer); resolve({ rc: null, out, err: String(e), killed, seconds: (Date.now() - t0) / 1000 }); });
 	});
 }
@@ -488,6 +510,8 @@ async function checkAppRun(appDir, opts = {}) {
 			const sample = kase.fixture ?? cfg.fixture;
 			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }), ...(opts.sharedDir ? { BOLT_APP_SHARED_DIR: opts.sharedDir } : {}) }, home);
 			const ex = kase.expect || {};
+			// check --shared: the point is to run on Bolt's shared kit, so prove it. An app that kept its own different copy (or never asks) ran on that copy and says nothing about the shared one.
+			if (opts.sharedDir && !(r.kitFile && path.resolve(r.kitFile).startsWith(path.resolve(opts.sharedDir) + path.sep))) E('shared_kit_not_used', `--shared: the script ran on ${r.kitFile && r.kitFile !== '(none)' ? r.kitFile : 'a kit that is not Bolt\'s shared one'}, not the shared kit. The loader uses the shared kit only when the app's own copy has the same bytes, or the app sets WANT_SHARED = True (and KIT_MIN is met). Re-vendor the kit, or use the loader from toolkit/lib/loader.mjs`);
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;
 			if (r.killed) E('deadline_exceeded', `the script was still running after ${BRIDGE_LIMIT_S} s (the bridge limit); a global deadline of 14 s must bound every command`);

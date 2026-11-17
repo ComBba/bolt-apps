@@ -140,8 +140,17 @@ const broken = {
 	'manifest hash differs from the kit': (d) => rewrite(d, (m) => { m.kit.sha256 = '0'.repeat(64); }),
 	'the kit is a link': (d) => { const p = path.join(d, 'bolt_app_kit.py'); const t = path.join(path.dirname(d), 'real.py'); fs.renameSync(p, t); fs.symlinkSync(t, p); },
 	'the manifest is a link': (d) => { const p = path.join(d, 'manifest.json'); const t = path.join(path.dirname(d), 'm.json'); fs.renameSync(p, t); fs.symlinkSync(t, p); },
-	'the kit does not run': (d) => { const p = path.join(d, 'bolt_app_kit.py'); fs.writeFileSync(p, 'raise RuntimeError("boom")\n'); rewrite(d, (m) => { m.kit.sha256 = sha(fs.readFileSync(p)); }); },
+	'the kit does not run': (d) => plant(d, 'raise RuntimeError("boom")\n'),
+	'the kit exits at import (SystemExit)': (d) => plant(d, 'import sys\nsys.exit(3)\n'),
+	'the kit file says another version than the manifest (and is not run)': (d) => { plant(d, 'open(__import__("os").path.join(__import__("os").path.dirname(__file__), "RAN"), "w").write("x")\n', '0.0.7'); },
 };
+// A kit file that really names its version (as the generated one does) and a manifest that matches it byte for byte, with `body` as its code.
+function plant(d, body, docVersion) {
+	const m0 = JSON.parse(fs.readFileSync(path.join(d, 'manifest.json'), 'utf8'));
+	const p = path.join(d, 'bolt_app_kit.py');
+	fs.writeFileSync(p, `\"\"\"bolt_app_kit ${docVersion || m0.kit.version}, single-file build (test double).\"\"\"\n${body}`);
+	rewrite(d, (m) => { m.kit.sha256 = sha(fs.readFileSync(p)); });
+}
 function rewrite(d, f) { const p = path.join(d, 'manifest.json'); const m = JSON.parse(fs.readFileSync(p, 'utf8')); f(m); fs.writeFileSync(p, JSON.stringify(m)); }
 for (const [name, break_] of Object.entries(broken)) {
 	test(`loader: falls back to the app's own copy when ${name}`, { skip: !PY }, () => {
@@ -154,9 +163,29 @@ for (const [name, break_] of Object.entries(broken)) {
 			assert.ok(r.out[0].startsWith(path.join(a, 'probe__bolt_app_kit.py')), r.out[0]);
 			assert.equal(r.out[1], 'ab');
 			assert.equal(r.err, '');
+			assert.equal(fs.existsSync(path.join(d, 'RAN')), false, 'a kit that names another version must not be run');
 		}
 	});
 }
+
+test('loader: a real Ctrl-C while the shared kit imports still stops the app (it is not a reason to fall back)', { skip: !PY }, () => {
+	const a = app(OWN_OTHER, (s) => s.replace('WANT_SHARED = False', 'WANT_SHARED = True')), d = shared();
+	plant(d, 'raise KeyboardInterrupt\n');
+	const r = run(a, { BOLT_APP_SHARED_DIR: d });
+	assert.notEqual(r.rc, 0);
+	assert.ok(!r.out[0] || !r.out[0].startsWith(path.join(a, 'probe__bolt_app_kit.py')), 'it must not have carried on with the own copy');
+});
+
+test('loader: the folder must be an absolute local path, on Windows a drive letter and a root (no rooted-without-drive, no network share)', { skip: !PY }, () => {
+	const dir = tmp('shared-abs-');
+	fs.writeFileSync(path.join(dir, 'probe__app.py'), HEADER + LOADER_PORTABLE + [
+		'print(_abs_dir("C:\\\\x\\\\y", True), _abs_dir("C:/x/y", True), _abs_dir("\\\\x\\\\y", True), _abs_dir("/x/y", True), _abs_dir("\\\\\\\\host\\\\share\\\\x", True), _abs_dir("C:x", True))',
+		'print(_abs_dir("/x/y", False), _abs_dir("x/y", False), _abs_dir("", False))'].join('\n') + '\n');
+	fs.writeFileSync(path.join(dir, 'probe__bolt_app_kit.py'), flatKitSource());
+	const r = spawnSync(PY, ['-I', path.join(dir, 'probe__app.py')], { encoding: 'utf8', env: { PATH: process.env.PATH } });
+	assert.equal(r.status, 0, r.stderr);
+	assert.deepEqual(r.stdout.trim().split('\n'), ['True True False False False False', 'True False False']);
+});
 
 test('loader: a relative or empty BOLT_APP_SHARED_DIR is ignored', { skip: !PY }, () => {
 	const a = app(ownKit()), d = shared();
@@ -214,6 +243,39 @@ test('unit-convert runs through check in the shared mode with the same rows as i
 	const sh = await checkApp(path.join(EX, 'unit-convert'), { shared: true });
 	assert.ok(reportOk(sh), JSON.stringify(sh.findings.concat(sh.cases.filter((c) => c.findings?.length))));
 	assert.equal(sh.cases.length, plain.cases.length);
+});
+
+const copyApp = (name, edit) => { const d = path.join(tmp('shared-copy-'), name); fs.cpSync(path.join(EX, name), d, { recursive: true }); edit(d); return d; };
+const findingCodes = (r) => JSON.stringify(r);
+
+test('check --shared proves which kit ran: an app whose own kit differs is reported as NOT using the shared kit', { skip: !PY, timeout: 300000 }, async () => {
+	const d = copyApp('unit-convert', (dir) => fs.appendFileSync(path.join(dir, 'scripts', 'unit-convert__bolt_app_kit.py'), '\n# a different copy\n'));
+	const sh = await checkApp(d, { shared: true });
+	assert.ok(!reportOk(sh));
+	assert.match(findingCodes(sh), /shared_kit_not_used/);
+	assert.match(findingCodes(sh), /unit-convert__bolt_app_kit\.py/, 'the message names the file that ran');
+});
+
+test('check --shared: an app that asks for the shared kit (WANT_SHARED) runs on it even with a different own copy', { skip: !PY, timeout: 300000 }, async () => {
+	const d = copyApp('unit-convert', (dir) => {
+		fs.appendFileSync(path.join(dir, 'scripts', 'unit-convert__bolt_app_kit.py'), '\n# a different copy\n');
+		const f = path.join(dir, 'scripts', 'unit-convert__app.py');
+		fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('WANT_SHARED = False', 'WANT_SHARED = True'));
+	});
+	const sh = await checkApp(d, { shared: true });
+	assert.doesNotMatch(findingCodes(sh), /shared_kit_not_used/);
+});
+
+test('check without --shared never hands the script the variable, even when the parent environment has one (181 behaviour)', { skip: !PY, timeout: 300000 }, async () => {
+	const keep = process.env.BOLT_APP_SHARED_DIR;
+	process.env.BOLT_APP_SHARED_DIR = shared();
+	try {
+		const d = copyApp('unit-convert', (dir) => fs.appendFileSync(path.join(dir, 'scripts', 'unit-convert__bolt_app_kit.py'), '\n# a different copy\n'));
+		const plain = await checkApp(d, {});
+		assert.doesNotMatch(findingCodes(plain), /shared_kit_not_used/);
+		const ok = await checkApp(path.join(EX, 'unit-convert'), {});
+		assert.ok(reportOk(ok), JSON.stringify(ok.findings));
+	} finally { if (keep === undefined) delete process.env.BOLT_APP_SHARED_DIR; else process.env.BOLT_APP_SHARED_DIR = keep; }
 });
 
 test('the shared mode really hands the script the variable (the check env is the only place besides Bolt that sets it)', { skip: !PY }, () => {

@@ -1,5 +1,5 @@
 // `bolt-apps kit export-shared <dir>`: the ONE producer of the folder Bolt ships read-only in its bundle
-// (bolt-native src-tauri/resources/bolt-apps-shared) and hands to apps as BOLT_APP_SHARED_DIR.
+// (a folder named bolt-apps-shared inside the app bundle) and hands to apps as BOLT_APP_SHARED_DIR.
 // Deterministic: two exports of one source tree are byte-equal. Files: manifest.json, bolt_app_kit.py, LICENSE.
 import fs from 'node:fs';
 import path from 'node:path';

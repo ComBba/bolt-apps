@@ -81,6 +81,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Buttons on a lookup row | partial | [lookup-template](lookup-template) | `toolkit/test/cold-run.test.mjs` | Open (url) and Copy only: no drill, no Back, no extra actions. In a chained lookup (steps and rows) a row's copy is ignored and Copy copies the row text; check warns (config_copy_ignored). With a single endpoint and an item, item.copy works. |
 | An app that only shows sample data (offline, no API) | supported | no shipped example sets api.fixture_default true; the recipe is in ENGINE.md | `toolkit/test/cold-run.test.mjs` | Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack. |
 | A text-only lookup result (no empty tile) | supported | [lookup-template](lookup-template) | `kit/python/tests/test_cold_run2_engine.py` | tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt. |
+| Shared kit from Bolt (Bolt 182) | partial | [unit-convert](unit-convert) | `toolkit/test/shared-kit.test.mjs` | Needs Bolt 182; on 181 the app runs its own vendored kit. Bolt offers BOLT_APP_SHARED_DIR only after a hash check against a table compiled into Bolt, and the loader checks the folder again; any doubt means the app's own copy. WANT_SHARED = True trusts whoever controls that variable (Bolt does). Not seen in a running Bolt; the engine is not shared; existing apps keep their own copy until their author reships with the new loader; only unit-convert has the loader so far. |
 
 ## Snippets
 
@@ -512,4 +513,10 @@ Settings, Desktop, User Apps, expand the app, Review and accept
 
 ```
 {"kind": "entity_preview", "mode": "selected_row", "bind": {"title": "{{row.title}}", "subtitle": "{{row.subtitle}}", "tiles_above": {"title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}"}, "body": "{{row.body}}", "actions": ["open", "copy"]}}
+```
+
+### Shared kit from Bolt (Bolt 182) (`kit.shared`)
+
+```
+WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt's shared kit even when it differs from the app's own copy
 ```

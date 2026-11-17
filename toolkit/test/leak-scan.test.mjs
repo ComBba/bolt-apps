@@ -65,6 +65,8 @@ export function scan(text, rel = '') {
 					if (/github\.com\/SparcleHQ/i.test(around) || /https?:\/\/[^\s"')>]*sparcle\.app/i.test(around) || /\bsparcle\.app\b/i.test(around)) continue;
 					if (/"author"\s*:/.test(line) || /^\s*(author|"name")\s*:.*sparcle/i.test(line)) continue;
 					if (OK_SPARCLE_PHRASES.some((p) => p.test(line))) continue;
+					// One deliberate, narrow exception: the shared-kit manifest names this public repository as its source. Those bytes are pinned by a hash table in the Bolt app, so the string cannot be reworded.
+					if (rel === 'toolkit/lib/shared.mjs' && line.trim().includes("manifest.source = { repo: 'SparcleHQ/bolt-apps', sha:")) continue;
 				}
 				add(rule, m[0]);
 			}
@@ -88,4 +90,11 @@ test('leak scan: every tracked file holds nothing internal', () => {
 	const found = [];
 	for (const f of files()) for (const h of scan(fs.readFileSync(f, 'utf8'), path.relative(REPO, f))) found.push(`${path.relative(REPO, f)}:${h.line} [${h.rule}] ${h.text}`);
 	assert.deepEqual(found, [], `leaks found:\n${found.join('\n')}`);
+});
+
+test('leak scan: the one shared-kit manifest exception is narrow (that file, that line, nothing else)', () => {
+	const line = "if (opts.sourceSha) manifest.source = { repo: 'SparcleHQ/bolt-apps', sha: opts.sourceSha };";
+	assert.deepEqual(scan(line, 'toolkit/lib/shared.mjs'), []);
+	assert.ok(scan(line, 'toolkit/lib/other.mjs').some((h) => h.rule === 'the word sparcle'));
+	assert.ok(scan("const x = 'Sparcle internal';", 'toolkit/lib/shared.mjs').some((h) => h.rule === 'the word sparcle'));
 });
