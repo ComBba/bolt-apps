@@ -44,12 +44,14 @@ test('new: sample words of the template stay out of check.json, so the first edi
 	const cfg = JSON.parse(fs.readFileSync(path.join(root, 'quote-box', 'check.json'), 'utf8'));
 	const text = JSON.stringify(cfg);
 	for (const w of ['Example Co', 'Example Service', 'Crash on startup']) assert.ok(!JSON.stringify(cfg.cases.map((c) => c.expect && c.expect.text_present)).includes(w), w);
-	assert.ok(text.includes('Enter to retry'), 'the engine own words are kept');
-	// the author puts their own words in config and fixtures, then re-records the goldens: check passes
+	assert.ok(!text.includes('Enter to retry'), 'an engine app gets one case per view and no expected text at all');
+	// the author puts their own words in config and fixtures: check passes with nothing to re-record (no case names a golden)
 	const f = path.join(root, 'quote-box', 'scripts', 'quote-box__fixtures.json'); fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replaceAll('Example Co', 'Quote Co').replaceAll('Crash on startup', 'Boom'));
 	const g = path.join(root, 'quote-box', 'scripts', 'quote-box__config.json'); fs.writeFileSync(g, fs.readFileSync(g, 'utf8').replaceAll('Example Service', 'Quotes'));
-	const bad = sh(home, root, 'check', 'quote-box'); assert.notEqual(bad.status, 0); assert.match(bad.stdout, /golden_mismatch[^\n]*--update-golden/);
-	const up = sh(home, root, 'check', 'quote-box', '--update-golden'); assert.equal(up.status, 0, up.stdout);
+	const ok = sh(home, root, 'check', 'quote-box'); assert.equal(ok.status, 0, ok.stdout);
+	// a golden the author adds later is recorded by --update-golden and compared after that
+	const cj = path.join(root, 'quote-box', 'check.json'), ck = JSON.parse(fs.readFileSync(cj, 'utf8')); ck.cases[0].golden = 'golden/first.json'; fs.writeFileSync(cj, JSON.stringify(ck, null, 2));
+	assert.equal(sh(home, root, 'check', 'quote-box', '--update-golden').status, 0);
 	assert.equal(sh(home, root, 'check', 'quote-box').status, 0);
 });
 
