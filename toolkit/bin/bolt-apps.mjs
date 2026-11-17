@@ -17,7 +17,7 @@ import { get, str, notYamlHint } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem, chipMismatch } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
-import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor } from '../lib/workflow.mjs';
+import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote } from '../lib/workflow.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
@@ -205,6 +205,7 @@ const keyOf = (id) => { let k = id.replace(/[^a-z0-9_-]/g, '').slice(0, 24); ret
 const prefixOf = (id) => { let k = id.replace(/[^a-z0-9]/g, '').slice(0, 12); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 12); };
 function flag(args, name, dflt) { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : dflt; }
 function cmdNew(args) {
+	staleCloneNote();
 	if (args[0] === '--list' || args[0] === 'list') return newList();
 	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
@@ -439,6 +440,10 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
 			process.exit(reportOk(r) ? 0 : 1);
 		}
+		if (!target) die('usage: ./bolt-apps check <app-folder>');
+		const has = (sub) => fs.existsSync(path.join(target, sub));
+		const yamls = (() => { try { return fs.readdirSync(path.join(target, 'utilities')).filter((f) => /\.ya?ml$/.test(f)); } catch { return []; } })();
+		if (!fs.existsSync(target) || !(has('snippets') || has('search_engines') || yamls.length)) die(`no app found in ${target}: an app folder holds utilities/<id>.yaml`);
 		die('check for snippets, search engines and transforms runs through Bolt\'s own engines and is not published yet. Use lint for offline shape checks; Bolt runs the tests when you add the app. Script apps (a check.json in the folder) run here: see kit/examples/system-glance.');
 	};
 	const cmdKit = (args) => {
