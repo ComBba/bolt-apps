@@ -3,11 +3,12 @@
     "title": "Back",
     "subtitle": "Back to the overview",
     "icon": "arrow-left",
-    "body": "",
+    "body": "Press Enter, Esc or Left to go back. Select a row to see its details.",
     "nav": {
       "back": true
     },
     "actions": [],
+    "pane": "note",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -18,91 +19,329 @@
     "copy_text": ""
   },
   {
-    "title": "Alpha service",
-    "subtitle": "ok · 12",
-    "icon": "list",
-    "body": "",
-    "nav": {
-      "view": "item",
-      "arg": "101"
-    },
+    "title": "Sample data",
+    "subtitle": "Recorded answers, no network. A shipped app runs live",
+    "icon": "FileText",
+    "body": "Recorded answers, no network. A shipped app runs live",
     "actions": [],
+    "pane": "note",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
     "kpi_max": "",
     "kpi_note": "",
     "kpi_foot": "",
-    "kpi_badge": "OK",
-    "copy_text": "",
-    "item_name": "Alpha service",
-    "status": "ok",
-    "count": 12
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
   },
   {
-    "title": "Beta service",
-    "subtitle": "late · 7",
-    "icon": "list",
-    "body": "",
+    "title": "Landscape with Saint John on Patmos",
+    "subtitle": "Nicolas Poussin (French, 1594–1665) · 1640",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
     "nav": {
       "view": "item",
-      "arg": "102"
+      "arg": "5848"
     },
     "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 375,
     "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "LATE",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1600 to 1700",
+    "kpi_foot": "for this search",
+    "kpi_badge": "17th c.",
     "copy_text": "",
-    "item_name": "Beta service",
-    "status": "late",
-    "count": 7
+    "open_url": "https://www.artic.edu/artworks/5848",
+    "a_artist": "Nicolas Poussin (French, 1594–1665)",
+    "a_date": "1640",
+    "a_medium": "Oil on canvas",
+    "a_origin": "France",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape with Saint John on Patmos - Nicolas Poussin [French, 1594 1665] 1640 - https://www.artic.edu/artworks/5848",
+    "img1": "data:image/jpeg;base64,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",
+    "img2": "od/7gx8izAgo3jWpFVlnNF58mO1df2goFoNq46BUkDpCiZStxTcu8mVeC1gYM0uNL45rCgJ54fXcAjMbEI72+UHO5fXEUC72no3ie47TZHPgF9KvvC9D+WFr3ufxlskpsuQ6Kcs9aaJLoIYQp17xMrAmFEAUCRVx9tKSqQ9nn95W76ZYWM43e7ZMWkJslVadf4HcVHhF2yWY8H0WiQnvAP4xAIuwgEXVt3e5Trk6QscVKAXj99hi/1pKqgJN/cXhhg/hQwBCMAIahMZDASXyEpx3vI0gg5//9k="
   },
   {
-    "title": "Gamma worker",
-    "subtitle": "ok · 31",
-    "icon": "list",
-    "body": "",
+    "title": "Landscape: Window Overlooking the Woods",
+    "subtitle": "Édouard Vuillard (French, 1868-1940) · 1899",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
     "nav": {
       "view": "item",
-      "arg": "103"
+      "arg": "109926"
     },
     "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 160,
     "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "OK",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1850 to 1900",
+    "kpi_foot": "for this search",
+    "kpi_badge": "19th c.",
     "copy_text": "",
-    "item_name": "Gamma worker",
-    "status": "ok",
-    "count": 31
+    "open_url": "https://www.artic.edu/artworks/109926",
+    "a_artist": "Édouard Vuillard (French, 1868-1940)",
+    "a_date": "1899",
+    "a_medium": "Oil on canvas",
+    "a_origin": "France",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape: Window Overlooking the Woods - Édouard Vuillard [French, 1868-1940] 1899 - https://www.artic.edu/artworks/109926",
+    "img1": "data:image/jpeg;base64,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"
   },
   {
-    "title": "Delta queue",
-    "subtitle": "down · 0",
-    "icon": "list",
-    "body": "",
+    "title": "Landscape with the Ruins of the Castle of Egmond",
+    "subtitle": "Jacob van Ruisdael (Dutch, 1628/29-1682) · 1650–55",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
     "nav": {
       "view": "item",
-      "arg": "104"
+      "arg": "60755"
     },
     "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 375,
     "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "DOWN",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1600 to 1700",
+    "kpi_foot": "for this search",
+    "kpi_badge": "17th c.",
     "copy_text": "",
-    "item_name": "Delta queue",
-    "status": "down",
-    "count": 0
+    "open_url": "https://www.artic.edu/artworks/60755",
+    "a_artist": "Jacob van Ruisdael (Dutch, 1628/29-1682)",
+    "a_date": "1650–55",
+    "a_medium": "Oil on canvas",
+    "a_origin": "Holland",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape with the Ruins of the Castle of Egmond - Jacob van Ruisdael [Dutch, 1628/29-1682] 1650 55 - https://www.artic.edu/artworks/60755",
+    "img1": "data:image/jpeg;base64,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"
+  },
+  {
+    "title": "Landscape",
+    "subtitle": "Jean Charles Cazin (French, 1841–1901) · c. 1895",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
+    "nav": {
+      "view": "item",
+      "arg": "874"
+    },
+    "actions": [],
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 160,
+    "kpi_unit": "",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1850 to 1900",
+    "kpi_foot": "for this search",
+    "kpi_badge": "19th c.",
+    "copy_text": "",
+    "open_url": "https://www.artic.edu/artworks/874",
+    "a_artist": "Jean Charles Cazin (French, 1841–1901)",
+    "a_date": "c. 1895",
+    "a_medium": "Oil on canvas",
+    "a_origin": "France",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape - Jean Charles Cazin [French, 1841 1901] c. 1895 - https://www.artic.edu/artworks/874",
+    "img1": "data:image/jpeg;base64,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",
+    "img2": "N81Up5M3SqcAdl69NPOJgm2APaCTunnKGcuo+GbmaX4Neopd88OXaoC7X89m8WHLRBe5vC7D13oTf6wdHwQ1ryYR7qTKclL3hZxKL0W+ObziRuAIojSeyM0nxh4NVRQdiLN4c8ZNRfx479esM4JU5SKy+Eeepk/cEABzF7LrEhhESel3n//2Q=="
+  },
+  {
+    "title": "Pastoral Landscape with Ruins",
+    "subtitle": "Adriaen van de Velde (Dutch, 1636–1672) · 1664",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
+    "nav": {
+      "view": "item",
+      "arg": "863"
+    },
+    "actions": [],
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 375,
+    "kpi_unit": "",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1600 to 1700",
+    "kpi_foot": "for this search",
+    "kpi_badge": "17th c.",
+    "copy_text": "",
+    "open_url": "https://www.artic.edu/artworks/863",
+    "a_artist": "Adriaen van de Velde (Dutch, 1636–1672)",
+    "a_date": "1664",
+    "a_medium": "Oil on canvas",
+    "a_origin": "Holland",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Pastoral Landscape with Ruins - Adriaen van de Velde [Dutch, 1636 1672] 1664 - https://www.artic.edu/artworks/863",
+    "img1": "data:image/jpeg;base64,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"
+  },
+  {
+    "title": "Landscape",
+    "subtitle": "Théodore Rousseau (French, 1812–1867) · c. 1850",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
+    "nav": {
+      "view": "item",
+      "arg": "893"
+    },
+    "actions": [],
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 218,
+    "kpi_unit": "",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1800 to 1850",
+    "kpi_foot": "for this search",
+    "kpi_badge": "19th c.",
+    "copy_text": "",
+    "open_url": "https://www.artic.edu/artworks/893",
+    "a_artist": "Théodore Rousseau (French, 1812–1867)",
+    "a_date": "c. 1850",
+    "a_medium": "Oil on panel",
+    "a_origin": "France",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape - Théodore Rousseau [French, 1812 1867] c. 1850 - https://www.artic.edu/artworks/893",
+    "img1": "data:image/jpeg;base64,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",
+    "img2": "n1zaqdCbccOdyXEPChg4CByxCHkh76G05yG/wDmMJ4ODo95fTOXkIhKdGAWGYFxeg6IYA1ReiXa60CJRQSFTYd1mA+a5ZJ0CUEJcjHiFAlABtKNdCod1h+hI7+b85pwhUdVAM/Wa3+qFFNkLRrQE4QJWwLvWh9c3FeLSojbxopG6YoAR+xXg6/V841pNgNjjTpP7lPXIawUwO1G6OtTYA0bq22Y6DCsqgVgXs6ScbXaaiUlQXEJaWpRdU4PC45BpAJR2GXAFyDwVR0TvZe/W9fCGBejGonsLswNhY4RM0Bu35uU8adFt6e+HjjBJGnSFGjrcGq+pjM08tB5ry+usBSNpGCyByqY8EAaggO9Ouv/ADhbKq+0kBsqC0ECTNlFsQX07KEbxg4E0I0hKqg0mBSbDs70VixF5SbcrWiCAhb6/fffGEuBoPb1KBdgTv1iGxBWQ53/AMMPWj+G+cQmeVEZ97x+FT8w1odlmuZgGuOsjKONdnnKftHoAl/E/huECZsCoCqMitd28aCbKbQHv6+esmS6FZv1lgVA2nOf/9k="
+  },
+  {
+    "title": "Landscape",
+    "subtitle": "Jean-Baptiste-Camille Corot (French, 1796–1875) · 1865/70",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
+    "nav": {
+      "view": "item",
+      "arg": "877"
+    },
+    "actions": [],
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 160,
+    "kpi_unit": "",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1850 to 1900",
+    "kpi_foot": "for this search",
+    "kpi_badge": "19th c.",
+    "copy_text": "",
+    "open_url": "https://www.artic.edu/artworks/877",
+    "a_artist": "Jean-Baptiste-Camille Corot (French, 1796–1875)",
+    "a_date": "1865/70",
+    "a_medium": "Oil on canvas",
+    "a_origin": "France",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape - Jean-Baptiste-Camille Corot [French, 1796 1875] 1865/70 - https://www.artic.edu/artworks/877",
+    "img1": "data:image/jpeg;base64,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"
+  },
+  {
+    "title": "Landscape with Two Poplars",
+    "subtitle": "Vasily Kandinsky · 1912",
+    "icon": "Sparkles",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
+    "nav": {
+      "view": "item",
+      "arg": "8980"
+    },
+    "actions": [],
+    "badges": [
+      {
+        "label": "Modern",
+        "tone": "draft"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 15,
+    "kpi_unit": "",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1900 to 1950",
+    "kpi_foot": "for this search",
+    "kpi_badge": "20th c.",
+    "copy_text": "",
+    "open_url": "https://www.artic.edu/artworks/8980",
+    "a_artist": "Vasily Kandinsky",
+    "a_date": "1912",
+    "a_medium": "Oil on canvas",
+    "a_origin": "Germany",
+    "a_dept": "Modern Art",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape with Two Poplars - Vasily Kandinsky 1912 - https://www.artic.edu/artworks/8980",
+    "img1": "data:image/jpeg;base64,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",
+    "img2": "sly7/RgGXkKClXWQqFxylG0Ygd48w2HAAwNtul27+Y1EcFhHb1/13Vx5opAYBOm670v8xCw3UWOifBTncp1vPGF1bQCRbUMZ4p3JR2ZquBd2SG/iawNQrL7cbSMW77iyonbejkJIxUBFgs/ruFmEultgTgjsH+YRuCzV0NKa8nmFGl1wqqCkcJ/cUBL88CbgFTiczbgfqnUYQJFyubWCDMECIs4C0Nbx5HEzU4TcoUeiMsavINukUbBT5zC9AWQQL0ECrRhumIDrU4Pnz3Hv7nt0Q92R4erhCJpEvq4efneOp/zrYGSBSMTWaXf20f7bBPxhtGkB4wlt9okPmItNBgbdWNqNSe5fXQLU3uH3/fMm1oFNAJxW/hw6xHDQFap9eYrq7REasdv/e4zt2OCBsDV/ZsHuJxMcBCpv5mg1NGfApxTdR36+hzmAaFyAqtJotH4Rxh/k/dyK0eAPfuGphKRL6lsG6X/ADFtO6LWwfNj033DIHBKrpSCzP/Z"
+  },
+  {
+    "title": "Landscape with Figures",
+    "subtitle": "Narcisse Virgile Diaz de la Peña (French, 1807–1876) · c. 1870",
+    "icon": "Palette",
+    "body": "Image and data: Art Institute of Chicago, public domain (CC0)",
+    "nav": {
+      "view": "item",
+      "arg": "887"
+    },
+    "actions": [],
+    "badges": [
+      {
+        "label": "Paintings",
+        "tone": "merged"
+      }
+    ],
+    "kpi_label": "Same period",
+    "kpi_value": 160,
+    "kpi_unit": "",
+    "kpi_max": 375,
+    "kpi_note": "public domain, 1850 to 1900",
+    "kpi_foot": "for this search",
+    "kpi_badge": "19th c.",
+    "copy_text": "",
+    "open_url": "https://www.artic.edu/artworks/887",
+    "a_artist": "Narcisse Virgile Diaz de la Peña (French, 1807–1876)",
+    "a_date": "c. 1870",
+    "a_medium": "Oil on panel",
+    "a_origin": "France",
+    "a_dept": "Painting and Sculpture of Europe",
+    "a_rights": "Public domain (CC0)",
+    "share_text": "- Landscape with Figures - Narcisse Virgile Diaz de la Peña [French, 1807 1876] c. 1870 - https://www.artic.edu/artworks/887",
+    "img1": "data:image/jpeg;base64,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"
   }
 ]

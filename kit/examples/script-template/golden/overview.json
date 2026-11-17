@@ -1,50 +1,93 @@
 [
   {
-    "title": "Sample data",
-    "subtitle": "Fixture mode: no network. Unset BOLT_APP_FIXTURE for the live API",
-    "icon": "FileText",
-    "body": "",
-    "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "SAMPLE",
-    "copy_text": ""
-  },
-  {
-    "title": "Items: 4",
-    "subtitle": "1 late",
-    "icon": "Activity",
-    "body": "",
-    "actions": [],
-    "kpi_label": "Items",
-    "kpi_value": 4,
-    "kpi_unit": "",
-    "kpi_max": "",
-    "kpi_note": "1 late",
-    "kpi_foot": "",
-    "kpi_badge": "LATE",
-    "copy_text": ""
-  },
-  {
-    "title": "All items",
-    "subtitle": "the list, with a filter word",
-    "icon": "list",
-    "body": "",
+    "title": "Public domain: 60%",
+    "subtitle": "1,109 of 1,861 artworks matching landscape are free to use",
+    "icon": "ShieldCheck",
+    "body": "Press Enter for the list, with a picture, facts and where to read more.",
     "nav": {
       "view": "items"
     },
     "actions": [],
-    "kpi_label": "",
-    "kpi_value": "",
+    "kpi_label": "Public domain",
+    "kpi_value": 60,
+    "kpi_unit": "%",
+    "kpi_max": 100,
+    "kpi_note": "1,109 of 1,861 matches",
+    "kpi_foot": "recorded answers, no network",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
+    "title": "Peak period: 375 artworks",
+    "subtitle": "1600 to 1700 is the busiest of 7 periods",
+    "icon": "TrendingUp",
+    "body": "Press Enter for the chart of artworks per period.",
+    "nav": {
+      "view": "chart"
+    },
+    "actions": [],
+    "kpi_label": "Peak period",
+    "kpi_value": 375,
     "kpi_unit": "",
     "kpi_max": "",
-    "kpi_note": "",
-    "kpi_foot": "",
-    "kpi_badge": "",
+    "kpi_note": "1600 to 1700",
+    "kpi_foot": "public domain, for landscape",
+    "kpi_badge": "PEAK",
+    "copy_text": "",
+    "trend": [
+      172,
+      375,
+      167,
+      218,
+      160,
+      15,
+      0
+    ],
+    "delta": 217,
+    "since": "above the period average"
+  },
+  {
+    "title": "Top department: Prints and Drawings",
+    "subtitle": "894 artworks, 81% of the public-domain matches",
+    "icon": "PenTool",
+    "body": "Press Enter for the table of departments.",
+    "nav": {
+      "view": "table"
+    },
+    "actions": [],
+    "kpi_label": "Top department",
+    "kpi_value": 894,
+    "kpi_unit": "",
+    "kpi_max": 1109,
+    "kpi_note": "Prints and Drawings",
+    "kpi_foot": "of 1,109 public domain",
+    "kpi_badge": "TOP",
+    "copy_text": "",
+    "trend": [
+      894,
+      108,
+      45,
+      44,
+      12,
+      2
+    ]
+  },
+  {
+    "title": "Pictured: 9 artworks",
+    "subtitle": "small pictures, shown in the list and as a grid",
+    "icon": "Image",
+    "body": "Press Enter for the picture grid.",
+    "nav": {
+      "view": "pictures"
+    },
+    "actions": [],
+    "kpi_label": "Pictured",
+    "kpi_value": 9,
+    "kpi_unit": "",
+    "kpi_max": 9,
+    "kpi_note": "pictures from artic.edu",
+    "kpi_foot": "public domain, CC0",
+    "kpi_badge": "CC0",
     "copy_text": ""
   },
   {

@@ -15,7 +15,9 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Pane: detail | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Label and value fields of the selected row. |
 | Pane: json_tree | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Reads a nested object from the row field named in bind.source. |
 | Pane: diff | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Two texts, line by line. It draws only the text its bind gives it: left and right templates of the selected row, and in 181 it can show an empty Compare box when a row carries none. For what changed, prefer a detail pane (Before, After, Change). Verified in a launcher: not yet. |
-| Pane: image_grid | supported | [widget-gallery-2](widget-gallery-2) | `kit/examples/widget-gallery-2/check.json` | 1 to 8 columns. Inline data:image only (png, jpeg, gif, webp, avif, bmp), 1 MiB each and 4 MiB per render; remote images never load in a personal app. |
+| Pane: image_grid | supported | [widget-gallery-2](widget-gallery-2) | `kit/examples/widget-gallery-2/check.json` | 1 to 8 columns. Inline data:image only (png, jpeg, gif, webp, avif, bmp), 1 MiB each and 4 MiB per render; remote images never load in a personal app. A tile is a square, cropped. Clicking a tile asks the launcher to open the tile's src as a link; an inline image is not one, so read it as a refusal and caption every tile instead (from the launcher source, not seen running). |
+| Pane: entity_preview picture (image_url) | partial | [script-template](script-template) | `kit/python/tests/test_script_template_live.py` | The selected row's picture draws above the title, but as a 40 pixel square avatar (181 gives a User App no large variant). image_url must expand to an inline data:image (up to 1 MiB); a web address draws nothing. A row text field is cut at 4,000 characters, so a picture of more than about 3 KB is split over fields and joined in the template (img1 to img4 in script-template). Read from the launcher source and sample runs, not seen in a running Bolt. |
+| A picture from a web API in a pane | partial | [script-template](script-template) | `kit/python/tests/test_script_template_live.py` | The app cannot point a pane at a web picture (every pane loads inline data: images only). Its script fetches a small JPEG from an allowlisted host (name the picture host in hosts, not only the API host), checks it, and puts it in the row as data:image/jpeg;base64 split over img1 to img4 (about 12 KB of picture in all). Ask the host for a small size; one that is too big is dropped, the row stays. Read from the launcher source and sample runs, not seen in a running Bolt. |
 | Panes: image, color, weather, date, calc | not supported | none | `toolkit/test/launcher-rules.test.mjs` | A personal app cannot show its own data in these panes: Bolt shows "This app asks for ... pane, which cannot show app data". |
 | Pane: map | not supported | none | `toolkit/test/launcher-rules.test.mjs` | Draws the launcher own map, not your rows; any bind key is refused. No message is shown. |
 | Chart types: pie, donut, area, multi-series, heatmap, gauge | not supported | none | `toolkit/test/bolt-rules.test.mjs` | Not shipped. Only line, bar and sparkline draw. Do not use any other chart type. |
@@ -40,7 +42,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Secret input field | partial | no example: not recommended | `toolkit/test/bolt-rules.test.mjs` | The launcher accepts type secret but the value reaches the script as a plain word and the run log is not measured. Use the keychain or a 0600 .env file. |
 | REST list endpoint | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | GET only; at most 50 rows per list; 10 s per request, 14 s together. |
 | A list of ids, then one request per id | supported | [feed-template](feed-template) | `kit/python/tests/test_round2_engine.py` | limit 1 to 50; requests run in parallel; ids that fail are dropped. |
-| API key sent as a query parameter | supported | [script-template](script-template) | `kit/python/tests/test_round2_engine.py` | The key is stripped from the answer before anything is cached or shown. Prefer a header when the API allows it. |
+| API key sent as a query parameter | supported | [feed-template](feed-template) | `kit/python/tests/test_round2_engine.py` | The key is stripped from the answer before anything is cached or shown. Prefer a header when the API allows it. |
 | API key sent in a header | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | The key goes only to the host of base_url. |
 | No key at all | supported | [lookup-template](lookup-template) | `kit/examples/lookup-template/check.json` | Leave key_env out. |
 | Date tokens in a path: {today}, {today-7d}, {today+1d} | supported | [feed-template](feed-template) | `kit/python/tests/test_round2_engine.py` | Local dates, 0 to 9999 days; sample mode uses _now from fixtures.json. |
@@ -53,7 +55,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | A local file the person names | supported | [file-insights-template](file-insights-template) | `kit/examples/file-insights-template/check.json` | Declare files; caps on size; a path cannot travel in a nav arg. |
 | An MCP server | partial | snippet in ENGINE.md | `toolkit/test/cold-agent.test.mjs` | No native MCP runtime. A bridge script can call one tool over stdio; tested only against a stand-in server, not a real MCP server. |
 | Keys from the keychain or a private file | supported | [portal-template](portal-template) | `kit/python/tests/test_secrets.py` | Lookup order: environment (terminal only), keychain, then a 0600 .env file. A shell variable does not reach the script under Bolt. |
-| Keys stripped from API answers before cache | partial | [script-template](script-template) | `kit/python/tests/test_round2_security.py` | Strips the key (as written, URL-encoded, hex, base64, any letter case), user:password@ and credential-named query values, also inside nested, fragment and encoded links. Cannot strip: HTTP Basic base64 at another alignment, HTML entities, colon-separated hex, a split key, a key held as a JSON number, a value encoded twice. A key under 3 characters is refused. |
+| Keys stripped from API answers before cache | partial | [feed-template](feed-template) | `kit/python/tests/test_round2_security.py` | Strips the key (as written, URL-encoded, hex, base64, any letter case), user:password@ and credential-named query values, also inside nested, fragment and encoded links. Cannot strip: HTTP Basic base64 at another alignment, HTML entities, colon-separated hex, a split key, a key held as a JSON number, a value encoded twice. A key under 3 characters is refused. |
 | Failure: exit code and stderr | supported | see the kit error_row | `conformance/launcher-constants.json` | A non-zero exit discards every printed row; the person sees `<chip> unavailable: exit code N:` and up to 2 KiB of stderr. From the source, not run live. |
 | What nav needs to work | supported | [portal-template](portal-template) | `conformance/launcher-constants.json` | view_arg bound to query.word(N) with N at most 8; every query.word arg before it needs a one-token default (not -). Otherwise no row can drill, silently. |
 | Back, Esc, Left and Right | supported | [portal-template](portal-template) | `conformance/launcher-constants.json` | Esc and Left go Back, Right drills with the caret at the end, up to 16 deep. |
@@ -138,6 +140,18 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 
 ```
 {"kind": "image_grid", "mode": "list_data", "bind": {"src": "{{row.src}}", "caption": "{{row.name}}", "columns": 3}}
+```
+
+### Pane: entity_preview picture (image_url) (`widget.entity_preview_image`)
+
+```
+{"kind": "entity_preview", "mode": "selected_row", "bind": {"title": "{{row.title}}", "image_url": "{{row.img1}}{{row.img2}}"}}
+```
+
+### A picture from a web API in a pane (`data.web_picture`)
+
+```
+{"kind": "cards", "mode": "list_data", "bind": {"layout": "grid", "title": "{{row.title}}", "image": "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"}}
 ```
 
 ### presentation.widget (list, table, cards, detail) (`layout.list_widget`)

@@ -135,8 +135,28 @@
       "example": "kit/examples/widget-gallery-2",
       "snippet": "{\"kind\": \"image_grid\", \"mode\": \"list_data\", \"bind\": {\"src\": \"{{row.src}}\", \"caption\": \"{{row.name}}\", \"columns\": 3}}",
       "test": "kit/examples/widget-gallery-2/check.json",
-      "limit": "1 to 8 columns. Inline data:image only (png, jpeg, gif, webp, avif, bmp), 1 MiB each and 4 MiB per render; remote images never load in a personal app.",
+      "limit": "1 to 8 columns. Inline data:image only (png, jpeg, gif, webp, avif, bmp), 1 MiB each and 4 MiB per render; remote images never load in a personal app. A tile is a square, cropped. Clicking a tile asks the launcher to open the tile's src as a link; an inline image is not one, so read it as a refusal and caption every tile instead (from the launcher source, not seen running).",
       "kind": "image_grid"
+    },
+    {
+      "id": "widget.entity_preview_image",
+      "group": "layout",
+      "name": "Pane: entity_preview picture (image_url)",
+      "status": "partial",
+      "example": "kit/examples/script-template",
+      "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"image_url\": \"{{row.img1}}{{row.img2}}\"}}",
+      "test": "kit/python/tests/test_script_template_live.py",
+      "limit": "The selected row's picture draws above the title, but as a 40 pixel square avatar (181 gives a User App no large variant). image_url must expand to an inline data:image (up to 1 MiB); a web address draws nothing. A row text field is cut at 4,000 characters, so a picture of more than about 3 KB is split over fields and joined in the template (img1 to img4 in script-template). Read from the launcher source and sample runs, not seen in a running Bolt."
+    },
+    {
+      "id": "data.web_picture",
+      "group": "data",
+      "name": "A picture from a web API in a pane",
+      "status": "partial",
+      "example": "kit/examples/script-template",
+      "snippet": "{\"kind\": \"cards\", \"mode\": \"list_data\", \"bind\": {\"layout\": \"grid\", \"title\": \"{{row.title}}\", \"image\": \"{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}\"}}",
+      "test": "kit/python/tests/test_script_template_live.py",
+      "limit": "The app cannot point a pane at a web picture (every pane loads inline data: images only). Its script fetches a small JPEG from an allowlisted host (name the picture host in hosts, not only the API host), checks it, and puts it in the row as data:image/jpeg;base64 split over img1 to img4 (about 12 KB of picture in all). Ask the host for a small size; one that is too big is dropped, the row stays. Read from the launcher source and sample runs, not seen in a running Bolt."
     },
     {
       "id": "widget.no_app_data",
@@ -465,7 +485,7 @@
       "group": "api",
       "name": "API key sent as a query parameter",
       "status": "supported",
-      "example": "kit/examples/script-template",
+      "example": "kit/examples/feed-template",
       "snippet": "\"api\": {\"auth_in\": \"query\", \"auth_param\": \"api_key\"}",
       "test": "kit/python/tests/test_round2_engine.py",
       "limit": "The key is stripped from the answer before anything is cached or shown. Prefer a header when the API allows it."
@@ -617,7 +637,7 @@
       "group": "secrets",
       "name": "Keys stripped from API answers before cache",
       "status": "partial",
-      "example": "kit/examples/script-template",
+      "example": "kit/examples/feed-template",
       "snippet": "kit.redact_tree(answer, [key], auth_param)",
       "test": "kit/python/tests/test_round2_security.py",
       "limit": "Strips the key (as written, URL-encoded, hex, base64, any letter case), user:password@ and credential-named query values, also inside nested, fragment and encoded links. Cannot strip: HTTP Basic base64 at another alignment, HTML entities, colon-separated hex, a split key, a key held as a JSON number, a value encoded twice. A key under 3 characters is refused.",
