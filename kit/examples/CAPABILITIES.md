@@ -76,6 +76,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | One app that takes a typed query AND drills (lookup plus views) | partial | [portal-template](portal-template) | `toolkit/test/cold-run.test.mjs` | Not in one app when the API must be asked per typed word: lookup mode has {query} but no drill or Back, views mode has drill and Back but its first word is a view, never a query (an unknown first word shows the overview). What works in views mode: a view name then one word filters that list inside the app, and Enter drills through children. Otherwise build two apps (two chips). ENGINE.md, Two shapes of app. |
 | Buttons on a lookup row | partial | [lookup-template](lookup-template) | `toolkit/test/cold-run.test.mjs` | Open (url) and Copy only: no drill, no Back, no extra actions. In a chained lookup (steps and rows) a row's copy is ignored and Copy copies the row text; check warns (config_copy_ignored). With a single endpoint and an item, item.copy works. |
 | An app that only shows sample data (offline, no API) | supported | no shipped example sets api.fixture_default true; the recipe is in ENGINE.md | `toolkit/test/cold-run.test.mjs` | Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack. |
+| A text-only lookup result (no empty tile) | supported | [lookup-template](lookup-template) | `kit/python/tests/test_cold_run2_engine.py` | tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt. |
 
 ## Snippets
 
@@ -477,4 +478,10 @@ Settings, Desktop, User Apps, expand the app, Review and accept
 
 ```
 "api": {"base_url": "https://example.invalid", "fixture_default": true, "fixture_file": "fixtures.json"}
+```
+
+### A text-only lookup result (no empty tile) (`lookup.text_only`)
+
+```
+{"kind": "entity_preview", "mode": "selected_row", "bind": {"title": "{{row.title}}", "subtitle": "{{row.subtitle}}", "tiles_above": {"title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}"}, "body": "{{row.body}}", "actions": ["open", "copy"]}}
 ```

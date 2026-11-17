@@ -220,6 +220,19 @@ main(sys.argv)
 ```
 Limits: servers that need a login or a key are out of scope here (use `get_secret` and pass the key in the server's environment from the script, never in `config.json`); the server starts on every run, so slow servers feel slow; remote MCP servers over HTTP are a plain HTTP call and need no workaround.
 
+### Recipe: a text-only lookup result (no tile)
+A lookup whose answer is words (a version, a status, a description) has no number to put in a tile. Use an `entity_preview` selected-row widget, not a tiles grid. `tiles_above` draws only for a row that has a number, so a row with no `tile` draws no empty "-" tile, and the row's `body` (markdown) is what the pane shows:
+
+```
+"lookup": { "rows": [
+  { "title": "{latest.name} {latest.version}", "subtitle": "latest version", "body": "## {latest.name}\n\n{latest.description}", "url": "https://www.npmjs.com/package/{latest.name}" } ],
+  "widget": { "kind": "entity_preview", "mode": "selected_row", "bind": { "title": "{{row.title}}", "subtitle": "{{row.subtitle}}",
+    "tiles_above": { "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "max": "{{row.kpi_max}}", "trend": "{{row.trend}}", "subtitle": "{{row.kpi_note}}", "badge": "{{row.kpi_badge}}", "footer": "{{row.kpi_foot}}" },
+    "body": "{{row.body}}", "actions": ["open", "copy"] } } }
+```
+
+Give a row that has a number a `tile` and it draws one above its text; give every text-only row a `body` (its pane shows title, subtitle and body; a row that binds none of the pane's fields is `pane_blank_row`). A plain `markdown` widget (title, subtitle, body) is the same without tiles. lookup-template is this shape: tiles on the temperature rows, plain text on Coordinates and the forecast link. check treats a tiles grid (`cards` with `bind.layout: tiles`) over rows without numbers as an error (`tile_row_without_value`); the `known_empty_tiles` waiver is gone from lookup-template.
+
 ## An app that only shows sample data (offline, no API)
 
 Most apps ship live (`api.fixture_default` `false`). An app that is sample-only by design (a demo, a reference card, a checklist whose data you write yourself) ships with the sample switch on, so it never opens a connection:

@@ -897,6 +897,16 @@
       "snippet": "\"api\": {\"base_url\": \"https://example.invalid\", \"fixture_default\": true, \"fixture_file\": \"fixtures.json\"}",
       "test": "toolkit/test/cold-run.test.mjs",
       "limit": "Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack."
+    },
+    {
+      "id": "lookup.text_only",
+      "group": "layout",
+      "name": "A text-only lookup result (no empty tile)",
+      "status": "supported",
+      "example": "kit/examples/lookup-template",
+      "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"subtitle\": \"{{row.subtitle}}\", \"tiles_above\": {\"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\"}, \"body\": \"{{row.body}}\", \"actions\": [\"open\", \"copy\"]}}",
+      "test": "kit/python/tests/test_cold_run2_engine.py",
+      "limit": "tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt."
     }
   ]
 }

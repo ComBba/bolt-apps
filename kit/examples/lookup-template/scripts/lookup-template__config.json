@@ -89,7 +89,8 @@
      "note": "next 24 hours below",
      "foot": "{geocode.admin1}, {geocode.country}",
      "badge": "NOW"
-    }
+    },
+    "body": "## {geocode.name}\n\nNow {weather.current.temperature_2m}\u00b0C, {weather.current.weather_code|wmo}. The next 24 hours are in the chart above."
    },
    {
     "title": "Feels like {weather.current.apparent_temperature}\u00b0C",
@@ -162,28 +163,38 @@
     "title": "Coordinates",
     "subtitle": "{geocode.latitude}, {geocode.longitude} \u00b7 {geocode.timezone}",
     "icon": "map-pin",
-    "url": "https://www.openstreetmap.org/?mlat={geocode.latitude}&mlon={geocode.longitude}#map=11/{geocode.latitude}/{geocode.longitude}"
+    "url": "https://www.openstreetmap.org/?mlat={geocode.latitude}&mlon={geocode.longitude}#map=11/{geocode.latitude}/{geocode.longitude}",
+    "body": "## Coordinates\n\n{geocode.latitude}, {geocode.longitude}\n\nTime zone: {geocode.timezone}\n\nEnter opens the spot on OpenStreetMap."
    },
    {
     "title": "Open the full forecast",
     "subtitle": "open-meteo.com",
     "icon": "globe",
-    "url": "https://open-meteo.com/en/docs#latitude={geocode.latitude}&longitude={geocode.longitude}"
+    "url": "https://open-meteo.com/en/docs#latitude={geocode.latitude}&longitude={geocode.longitude}",
+    "body": "## Full forecast\n\nEnter opens the full forecast for this place on open-meteo.com."
    }
   ],
   "widget": {
-   "kind": "cards",
-   "mode": "list_data",
+   "kind": "entity_preview",
+   "mode": "selected_row",
    "bind": {
-    "layout": "tiles",
-    "title": "{{row.kpi_label}}",
-    "value": "{{row.kpi_value}}",
-    "unit": "{{row.kpi_unit}}",
-    "max": "{{row.kpi_max}}",
-    "trend": "{{row.trend}}",
-    "subtitle": "{{row.kpi_note}}",
-    "badge": "{{row.kpi_badge}}",
-    "footer": "{{row.kpi_foot}}"
+    "title": "{{row.title}}",
+    "subtitle": "{{row.subtitle}}",
+    "tiles_above": {
+     "title": "{{row.kpi_label}}",
+     "value": "{{row.kpi_value}}",
+     "unit": "{{row.kpi_unit}}",
+     "max": "{{row.kpi_max}}",
+     "trend": "{{row.trend}}",
+     "subtitle": "{{row.kpi_note}}",
+     "badge": "{{row.kpi_badge}}",
+     "footer": "{{row.kpi_foot}}"
+    },
+    "body": "{{row.body}}",
+    "actions": [
+     "open",
+     "copy"
+    ]
    }
   }
  }

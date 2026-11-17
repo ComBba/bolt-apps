@@ -1,7 +1,7 @@
 # lookup-template
 
 ## What this teaches
-One typed word in, a stitched result out. Two chained keyless calls (Open-Meteo geocoding, then the forecast for the first match), laid out as tiles with a 24 hour sparkline, three day rows, and Open in Maps and Open forecast links. This is the lookup archetype: `mode: lookup` with `steps`.
+One typed word in, a stitched result out. Two chained keyless calls (Open-Meteo geocoding, then the forecast for the first match), laid out as a list with a preview pane: tiles with a 24 hour sparkline on the number rows, plain text on Coordinates and the forecast link (an entity_preview draws a tile only for a number, so a text-only row has no empty tile). This is the lookup archetype: `mode: lookup` with `steps`.
 
 ## Live terms, checked 2026-11-15 with real requests
 - Geocoding `geocoding-api.open-meteo.com/v1/search` and forecast `api.open-meteo.com/v1/forecast`: no key, HTTPS, JSON. The forecast answers with `X-RateLimit-Limit: 600` per 60 seconds. Free for non-commercial use; credit Open-Meteo (CC BY 4.0). A `User-Agent` is sent (`api.user_agent`).
