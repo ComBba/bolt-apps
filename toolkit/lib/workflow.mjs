@@ -108,7 +108,7 @@ export function newFromTemplate(template, id, root) {
 		const r2 = r.status === 0 ? bolt(['check', dir]) : r;   // a second plain run proves the recorded goldens agree with a fresh run
 		note = r2.status === 0 ? `check passes on the sample data${minimal ? ' (check.json was rewritten with one case per view and none of the template words: it checks that every row is well formed)' : ''}${pruned ? ` (${pruned} expected-text line${pruned === 1 ? '' : 's'} about the template's own sample words were dropped from check.json; add your own once your data is in)` : ''}` : `CHECK DOES NOT PASS YET (it did not pass straight after the copy, which is a toolkit fault, not yours):\n${(r2.stdout + r2.stderr).slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)\n\nMake it yours (ENGINE.md, "Make it yours"): the listing in bolt-app.json (summary, role, saves) and the description in the config say TODO, README.md starts with a note, and check.json ${minimal ? 'has one case per view and no template words' : 'still expects the template words'}. Goldens are recorded only for a case that names one: add "golden": "golden/<name>.json" to a case, then run ./bolt-apps check ${q(dir)} --update-golden once your data is final, and read what changed.\n\nThe generated check proves the app runs and draws well-formed rows, not that your data is right: when your data is final, run check --update-golden once; from then on check compares your real output.`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (ENGINE.md, "Make it yours"): the listing in bolt-app.json (summary, role, saves) and the description in the config say TODO, README.md starts with a note, and check.json ${minimal ? 'has one case per view and no template words' : 'still expects the template words'}. Goldens are recorded only for a case that names one: add "golden": "golden/<name>.json" to a case, then run ./bolt-apps check ${q(dir)} --update-golden once your data is final, and read what changed.\n\nThe generated check proves the app runs and draws well-formed rows, not that your data is right: when your data is final, run check --update-golden once; from then on check compares your real output.`);
 }
 
 // For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).
@@ -217,6 +217,20 @@ export function runApp(args) {
 	});
 	if (rows.some((x) => x.title === 'This app could not run' || x.title === 'This app is not set up correctly')) console.log('\nThe app printed its own error row (above). BOLT_APP_DEBUG=1 is set, so the script wrote the real error to its error output; run with --json to see it as data.');
 }
+
+// A template that calls a placeholder API (api.example.com) shows labelled sample data on its first run; say how to connect the real one.
+const PLACEHOLDER_HOST = /(^|\.)example\.(com|org|net)$|\.invalid$/;
+export function connectStep(dir, id) {
+	try {
+		const c = JSON.parse(fs.readFileSync(path.join(dir, 'scripts', `${id}__config.json`), 'utf8')), api = c.api || {};
+		const host = (() => { try { return new URL(api.base_url).hostname; } catch { return ''; } })();
+		if (!(PLACEHOLDER_HOST.test(host) || api.fixture_default === true || api.on_missing_key === 'sample')) return null;
+		if (api.fixture_default === true) return 'connect your API: set api.base_url, hosts, key and flip fixture_default to false when your data is real (until then the app shows labelled sample data)';
+		if (api.on_missing_key === 'sample') return 'connect your API: set api.base_url, hosts and key. Until your key is found the app shows labelled sample data (api.on_missing_key is sample)';
+		return 'connect your API: set api.base_url, hosts and key (the address in the config is a placeholder)';
+	} catch { return null; }
+}
+
 
 // What the app shows the first time it runs, read from its config: live with a key, labelled sample data when there is no key, or only a setup row.
 export function startMode(dir) {
