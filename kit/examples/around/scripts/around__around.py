@@ -531,13 +531,17 @@ def overview(ctx, g, r, text):
     return rows
 
 
-def back():
-    return kit.back_row("Back to the overview")
+def back(note=True):
+    """The detail panes (places, landmarks, keys) bind fields a Back row lacks and Back is selected first, so it draws the note view; the bikes table and weather chart plot every row and need none."""
+    return kit.back_row("Back to the overview", view=kit.NOTE_VIEW if note else None)
 
 
-def old_row(r, s):
+def old_row(r, s, note=True):
     x = r[s]
-    return [kit.safe_row("Showing an old copy", "the source failed (%s); copy is %s old" % (x["err"], kit.fmt_duration(x["age"])), icon="Clock", badge="OLD COPY", copy=False)] if x["stale"] else []
+    if not x["stale"]:
+        return []
+    why = "the source failed (%s); copy is %s old" % (x["err"], kit.fmt_duration(x["age"]))
+    return [kit.note_row("Showing an old copy", why, icon="Clock", badge="OLD COPY") if note else kit.safe_row("Showing an old copy", why, icon="Clock", badge="OLD COPY", copy=False)]
 
 
 def view_rows(ctx, view, g, r, text):
@@ -545,10 +549,10 @@ def view_rows(ctx, view, g, r, text):
     now = ctx.now
     if view == "places":
         if not r["places"]["ok"]:
-            return [back(), kit.safe_row("Places unavailable", "Overpass: " + r["places"]["err"], icon="AlertCircle", copy=False)]
+            return [back(), kit.note_row("Places unavailable", "Overpass: " + r["places"]["err"], icon="AlertCircle")]
         out = [back()] + old_row(r, "places")
         if r["places"]["data"]["limited"]:
-            out.append(kit.safe_row("Limited to the first %d results" % ctx.cfg["places_limit"], "the nearest places may be missing: Overpass cuts by id, not distance", icon="AlertCircle", badge="LIMITED", copy=False))
+            out.append(kit.note_row("Limited to the first %d results" % ctx.cfg["places_limit"], "the nearest places may be missing: Overpass cuts by id, not distance", icon="AlertCircle", badge="LIMITED"))
         for p in prow[:40]:
             c = next(c for c in ctx.cfg["categories"] if c["id"] == p["cat"])
             d = p["dock"]
@@ -557,25 +561,25 @@ def view_rows(ctx, view, g, r, text):
             out.append(kit.safe_row(p["name"], "%s · %s %s · %s" % (c["label"][:-1].lower(), metres(p["dist"]), p["bearing"], ("open " + p["hours"]) if p["hours"] else "hours not listed"), icon=c["icon"],
                                open_url=osm_url(p["lat"], p["lon"]), copy="%s, %s" % (p["name"], g["name"]), pname=p["name"], dist="%s, %d min walk" % (metres(p["dist"]), max(1, round(p["dist"] / ctx.cfg["walk_m_per_min"]))),
                                hours=p["hours"] or "not listed", dock=dock, wx=wxs, chain=p["brand"] or "independent", src="OpenStreetMap contributors (ODbL)"))
-        return out if len(out) > 1 else out + [kit.safe_row("Nothing found", "no cafe or gym within %d m" % ctx.cfg["radius_m"], icon="MapPin", copy=False)]
+        return out if len(out) > 1 else out + [kit.note_row("Nothing found", "no cafe or gym within %d m" % ctx.cfg["radius_m"], icon="MapPin")]
     if view == "bikes":
         if not r["bikes"]["ok"] or not docks:
-            return [back(), kit.safe_row("No bike docks", r["bikes"]["err"] or "none within %d m" % ctx.cfg["bike_max_m"], icon="Navigation", copy=False)]
+            return [back(False), kit.safe_row("No bike docks", r["bikes"]["err"] or "none within %d m" % ctx.cfg["bike_max_m"], icon="Navigation", copy=False)]
         net = r["bikes"]["data"]["network"]
-        return old_row(r, "bikes") + [kit.safe_row(d["name"], "%d bikes · %s free · %s%s" % (d["bikes"], "?" if d["free"] is None else d["free"], metres(d["dist"]), (" · updated %d s ago" % max(0, int(now - d["at"]))) if d["at"] else ""), icon="Navigation",
+        return old_row(r, "bikes", False) + [kit.safe_row(d["name"], "%d bikes · %s free · %s%s" % (d["bikes"], "?" if d["free"] is None else d["free"], metres(d["dist"]), (" · updated %d s ago" % max(0, int(now - d["at"]))) if d["at"] else ""), icon="Navigation",
                                               open_url=osm_url(d["lat"], d["lon"]), dock=d["name"], bikes=d["bikes"], free=d["free"], dist=metres(d["dist"]), copy="%s, %s" % (d["name"], net)) for d in docks[:12]]
     if view == "weather":
         if not wx:
-            return [back(), kit.safe_row("Weather unavailable", r["weather"]["err"], icon="AlertCircle", copy=False)]
-        return old_row(r, "weather") + [kit.safe_row("%s" % t, "%s C · rain chance %s%%" % (temp, pr if pr is not None else "?"), icon="CloudSun", label=t, value=temp, copy=False) for t, temp, pr in window(wx)]
+            return [back(False), kit.safe_row("Weather unavailable", r["weather"]["err"], icon="AlertCircle", copy=False)]
+        return old_row(r, "weather", False) + [kit.safe_row("%s" % t, "%s C · rain chance %s%%" % (temp, pr if pr is not None else "?"), icon="CloudSun", label=t, value=temp, copy=False) for t, temp, pr in window(wx)]
     if view == "landmarks":
         if not r["wiki"]["ok"]:
-            return [back(), kit.safe_row("Landmarks unavailable", r["wiki"]["err"], icon="AlertCircle", copy=False)]
+            return [back(), kit.note_row("Landmarks unavailable", r["wiki"]["err"], icon="AlertCircle")]
         out = [back()] + old_row(r, "wiki")
         for w in r["wiki"]["data"]:
             out.append(kit.safe_row(w["title"], "%s %s" % (metres(w["dist"]), bearing_word(g["lat"], g["lon"], w["lat"], w["lon"])), icon="Landmark", open_url="https://en.wikipedia.org/?curid=%d" % w["page"],
                                pname=w["title"], dist=metres(w["dist"]), src="Wikipedia (CC BY-SA)", copy=w["title"]))
-        return out if len(out) > 1 else out + [kit.safe_row("No articles nearby", "none within 1 km", icon="Landmark", copy=False)]
+        return out if len(out) > 1 else out + [kit.note_row("No articles nearby", "none within 1 km", icon="Landmark")]
     return []
 
 
@@ -610,6 +614,9 @@ OVERVIEW_PANE = ["    overview:", "      right_widget:", "        kind: entity_p
                  '            subtitle: "{{row.kpi_note}}"', '            badge: "{{row.kpi_badge}}"', '          body: "{{row.body}}"']   # the overview is a list of rows that drill into views: each row is drawn by this preview, and the views keep their own widgets
 
 
+NOTE_PANE = ["    note:", "      right_widget:", "        kind: markdown", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"', '          body: "{{row.body}}"']   # the pane of the Back, notice and hint rows: they carry none of the detail fields, so they draw their own words (kit.NOTE_VIEW)
+
+
 def emit_yaml(cfg):
     app = cfg["app"]
     words = " ".join("{{scripts_dir}}/%s" % f for f in FILE_WORDS)
@@ -634,6 +641,7 @@ def emit_yaml(cfg):
           '            - { label: Distance, value: "{{row.dist}}" }', '            - { label: Source, value: "{{row.src}}" }']
     L += ["    keys:", "      right_widget:", "        kind: detail", "        mode: selected_row", "        bind:", '          title: "{{row.mode}}"', "          fields:",
           '            - { label: State, value: "{{row.state}}" }', '            - { label: Sent as, value: "{{row.sample}}" }', '            - { label: Sent in, value: "{{row.how}}" }', '            - { label: Read from, value: "{{row.where}}" }']
+    L += NOTE_PANE
     L += ["actions:", '  - { id: open, kind: url, target: row, label: Open in Maps, url_template: "{{row.open_url}}" }', '  - { id: copy, kind: composer, target: row, label: Copy address, insert: "{{row.copy_text}}" }']
     return "\n".join(L) + "\n"
 

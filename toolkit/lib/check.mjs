@@ -298,16 +298,17 @@ export function sampleVisibleProblems(pres, rows, view) {
 	return ok ? [] : [{ level: 'error', code: 'sample_not_visible', message: `the app is showing sample data (no key) in the view "${shown}", but nothing visible says so. Put the label where it is drawn: a SAMPLE DATA row in a list view, the tile badge or footer in a tiles grid, the first row's subtitle in a chart, table, diff, json_tree or image_grid view (a label row there would be a data point or a blank pane)` }];
 }
 
-// In a selected_row view every row the person can arrow onto must give its pane something to draw: at least one non-empty field the pane binds (the app's own Back and refresh rows are exempt).
+// In a selected_row view every row the person can arrow onto must give its pane something to draw: at least one non-empty field the pane binds, or its own `pane` naming another selected_row view. The app's own Back, refresh, sample-data and key-hint rows are NOT exempt: the first row of a drilled list is selected on arrival, and a Back row that binds nothing draws a detail pane of "—" placeholders (a blank title and every field a dash), which reads as missing data. Give those rows `pane: "note"` (a small entity_preview view) or a bound field.
 export function blankPaneProblems(pres, rows, view) {
 	if (!pres || !Array.isArray(rows)) return [];
 	const shown = pres.views.has(view) ? view : 'overview', w = pres.views.get(shown) || pres.top;
 	if (!w || w.mode !== 'selected_row' || !w.fields || !w.fields.length) return [];
 	const nav = (r) => r && r.nav && (r.nav.back === true || /^refresh(\.|$)/.test(String(r.nav.arg || '')));
-	const has = (r) => w.fields.some((f) => r[f] !== undefined && r[f] !== null && String(r[f]).trim() !== ''), sel = rows.filter((r) => r && !nav(r));
-	if (!sel.some(has)) return [];   // a run with no data row at all (a not-found, setup or error state) has nothing to draw
-	const bad = sel.filter((r) => !has(r));
-	return bad.length ? [{ level: 'error', code: 'pane_blank_row', message: `the view "${shown}" draws a ${w.kind} pane for the selected row, but ${bad.length} row(s) bind none of its fields (${w.fields.slice(0, 4).join(', ')}): ${bad.slice(0, 2).map((r) => JSON.stringify(String(r.title).slice(0, 40))).join(', ')}. Selecting one shows an empty pane. Give the row a field the pane draws, or leave the row out of this view` }] : [];
+	const own = (r) => r && typeof r.pane === 'string' && r.pane !== shown && pres.views.has(r.pane) && (() => { const pw = pres.views.get(r.pane); return !!pw && (pw.mode || 'selected_row') === 'selected_row' && ROW_PANE_KINDS.includes(pw.kind); })();
+	const has = (r) => w.fields.some((f) => r[f] !== undefined && r[f] !== null && String(r[f]).trim() !== '');
+	if (!rows.some((r) => r && !nav(r) && has(r))) return [];   // a run with no data row at all (a not-found, setup or error state) has nothing to draw
+	const bad = rows.filter((r) => r && !has(r) && !own(r));
+	return bad.length ? [{ level: 'error', code: 'pane_blank_row', message: `the view "${shown}" draws a ${w.kind} pane for the selected row, but ${bad.length} row(s) bind none of its fields (${w.fields.slice(0, 4).join(', ')}): ${bad.slice(0, 2).map((r) => JSON.stringify(String(r.title).slice(0, 40))).join(', ')}. Selecting one shows an empty pane${w.kind === 'detail' ? ' of "—" placeholders' : ''}${bad.some(nav) ? ' (a Back or refresh row is selected first in a drilled list, so it is the first thing seen)' : ''}. Give the row a field the pane draws, give it \`pane: "note"\` (a small entity_preview view), or leave the row out of this view` }] : [];
 }
 
 // ---- stubs and the process ----

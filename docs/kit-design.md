@@ -47,7 +47,7 @@ Pure standard library, Python 3.9+, no environment-driven behaviour. CI tests 3.
 | Area | API |
 |---|---|
 | Output | `emit(rows)` validates against the schema, prints compact ASCII JSON, exits without waiting for stray threads. An invalid payload prints one error row and exits 3. Under Bolt that row is never seen: a non-zero exit discards every printed row and the person sees a row titled `<chip> unavailable` whose subtitle is `exit code 3: ` followed by the script's stderr (cut short). The row is what `check` and a terminal show. `validate_rows(rows)` returns the problems. |
-| Builders | `row` (with `badges`), `tile`, `back_row`, `refresh_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
+| Builders | `row` (with `badges`), `tile`, `back_row`, `refresh_row`, `note_row`, `error_row`, `unsupported_row`, `action_copy`, `action_chain`, `action_url`, `kv_fields`, `chips`. Contract violations raise `KitError` at build time. |
 | Formatters | `rnd`, `fmt_num`, `fmt_pct`, `fmt_bytes`, `fmt_duration`, `fmt_count`, `fmt_time`. One rounding rule: `floor(x + 0.5)`. A missing value is the word `unknown`, never `0`. |
 | Text | `clean_text` (control, format, bidi, zero-width, tag, surrogate, private-use, line separators, blank fillers removed; stacked marks capped), `clean_lines`, `neutralise_braces`, `text`, `elide_end`, `elide_left`, `host_label`, `safe_text`, `safe_copy`, `copy_ok`. |
 | Probes | `Deadline`, `run`, `probe`, `Probe`, `run_parallel`, `os_name`, `which`. |

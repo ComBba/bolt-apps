@@ -578,13 +578,14 @@ def overview_rows(ctx, m, since, new_snapshot_note):
     return rows
 
 
-def back():
-    return kit.back_row("Back to the overview")
+def back(note=True):
+    """The releases diff and the since, vulns and discussion detail panes bind fields a Back row lacks and Back is selected first, so it draws the note view; the compare table and downloads chart plot every row and need none."""
+    return kit.back_row("Back to the overview", view=kit.NOTE_VIEW if note else None)
 
 
 def stale_note(m, tasks):
     rs = [m["raw"][t] for t in tasks if m["raw"][t]["stale"]]
-    return [kit.safe_row("Showing an old copy", "the source failed (%s); copy is %s old" % (rs[0]["err"], kit.fmt_duration(rs[0]["age"])), icon="Clock", badge="OLD COPY", copy=False)] if rs else []
+    return [kit.note_row("Showing an old copy", "the source failed (%s); copy is %s old" % (rs[0]["err"], kit.fmt_duration(rs[0]["age"])), icon="Clock", badge="OLD COPY")] if rs else []
 
 
 def delta_text(a, b):
@@ -603,7 +604,7 @@ def view_rows(ctx, view, m, since_info):
     if view == "releases":
         rs = m["releases"]
         if not rs:
-            return [back(), kit.safe_row("No releases", "none published or GitHub did not answer", icon="AlertCircle", copy=False)]
+            return [back(), kit.note_row("No releases", "none published or GitHub did not answer", icon="AlertCircle")]
         out = [back()] + stale_note(m, ("gh_releases",))
         for i, x in enumerate(rs):
             prev = rs[i + 1]["body"] if i + 1 < len(rs) else ""
@@ -612,7 +613,7 @@ def view_rows(ctx, view, m, since_info):
         return out
     if view == "vulns":
         if m["vulns_all"] is None:
-            return [back(), kit.safe_row("Vulnerabilities unavailable", "OSV did not answer or no npm package matches this repo", icon="AlertCircle", copy=False)]
+            return [back(), kit.note_row("Vulnerabilities unavailable", "OSV did not answer or no npm package matches this repo", icon="AlertCircle")]
         openids = set(v["id"] for v in (m["vulns_open"] or []))
         out = [back()] + stale_note(m, ("osv",))
         for v in sorted(m["vulns_all"], key=lambda v: (v["id"] not in openids, -(v["published"] or 0))):
@@ -620,7 +621,7 @@ def view_rows(ctx, view, m, since_info):
             out.append(kit.safe_row("%s · %s" % (v["id"], v["sev"].lower()), "%s · %s" % (v["summary"][:70], st), icon="ShieldAlert" if v["id"] in openids else "ShieldCheck",
                                open_url=pin_url(ctx.cfg, "https://osv.dev/vulnerability/" + urllib.parse.quote(v["id"], safe="")) or None, vid=v["id"], sev=v["sev"], status=st, fixed=", ".join(v["fixed"][:3]) or "no fixed version listed",
                                published=ago_days(now, v["published"]), cve=", ".join(v["cve"]) or "none", copy="%s %s" % (v["id"], v["summary"][:80])))
-        return out if len(out) > 1 else out + [kit.safe_row("No known vulnerabilities", "OSV lists none for this package", icon="ShieldCheck", badge="CLEAR", copy=False)]
+        return out if len(out) > 1 else out + [kit.note_row("No known vulnerabilities", "OSV lists none for this package", icon="ShieldCheck", badge="CLEAR")]
     if view == "downloads":
         d = m["days"]
         if not d:
@@ -633,18 +634,18 @@ def view_rows(ctx, view, m, since_info):
     if view == "discussion":
         h = m["hn"]
         if h is None:
-            return [back(), kit.safe_row("Discussion unavailable", "Hacker News search did not answer", icon="AlertCircle", copy=False)]
+            return [back(), kit.note_row("Discussion unavailable", "Hacker News search did not answer", icon="AlertCircle")]
         out = [back()] + stale_note(m, ("hn",))
         for s in sorted(h["stories"], key=lambda s: -s["points"]):
             out.append(kit.safe_row(s["title"][:100], "%d points · %d comments · %s" % (s["points"], s["comments"], ago_days(now, s["at"])), icon="MessageSquare", open_url=pin_url(ctx.cfg, s["url"]) or None,
                                points=s["points"], comments=s["comments"], posted=ago_days(now, s["at"]), copy=s["title"][:100]))
-        return out if len(out) > 1 else out + [kit.safe_row("No threads", "no Hacker News story links to this repo", icon="MessageSquare", copy=False)]
+        return out if len(out) > 1 else out + [kit.note_row("No threads", "no Hacker News story links to this repo", icon="MessageSquare")]
     if view == "since":
         base, ch, base_ts = since_info
         if base is None:
-            return [back(), kit.safe_row("First look", "Nothing to compare with yet. The next run after %d minutes shows what changed" % (ctx.cfg["snapshot_min_age_s"] // 60), icon="Clock", copy=False)]
+            return [back(), kit.note_row("First look", "Nothing to compare with yet. The next run after %d minutes shows what changed" % (ctx.cfg["snapshot_min_age_s"] // 60), icon="Clock")]
         if not ch:
-            return [back(), kit.safe_row("Nothing changed", "since %s ago" % kit.fmt_duration(now - base_ts), icon="CheckCircle2", copy=False)]
+            return [back(), kit.note_row("Nothing changed", "since %s ago" % kit.fmt_duration(now - base_ts), icon="CheckCircle2")]
         left = "\n".join("%s: %s" % (l, a) for l, a, b in ch)
         right = "\n".join("%s: %s" % (l, b) for l, a, b in ch)
         out = [back(), kit.safe_row("All changes · %s" % kit.fmt_count(len(ch), "change", "changes"), "since %s ago (the copy saved on your computer)" % kit.fmt_duration(now - base_ts), icon="Clock",
@@ -674,7 +675,7 @@ def compare_rows(ctx, ms):
         if k == "Open issues":
             return m["repo"]["issues"] if m["repo"] else None
     higher = {"Health": True, "Stars": True, "Downloads per week": True, "Open vulns": False, "Days since release": False, "Days since push": False, "Open issues": False}
-    out = [back()]
+    out = [back(False)]
     for k, hi in higher.items():
         x, y = v(a, k), v(b, k)
         lead = "not compared" if x is None or y is None else ("tie" if x == y else (a["spec"] if (x > y) == hi else b["spec"]))
@@ -709,6 +710,9 @@ OVERVIEW_PANE = ["    overview:", "      right_widget:", "        kind: entity_p
                  '            subtitle: "{{row.kpi_note}}"', '            badge: "{{row.kpi_badge}}"', '          body: "{{row.body}}"']   # the overview is a list of rows that drill into views: each row is drawn by this preview, and the views keep their own widgets
 
 
+NOTE_PANE = ["    note:", "      right_widget:", "        kind: markdown", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"', '          body: "{{row.body}}"']   # the pane of the Back, notice and hint rows: they carry none of the detail fields, so they draw their own words (kit.NOTE_VIEW)
+
+
 def emit_yaml(cfg):
     app = cfg["app"]
     words = " ".join("{{scripts_dir}}/%s" % f for f in FILE_WORDS)
@@ -735,6 +739,7 @@ def emit_yaml(cfg):
           '            - { label: Points, value: "{{row.points}}" }', '            - { label: Comments, value: "{{row.comments}}" }', '            - { label: Posted, value: "{{row.posted}}" }']
     L += ["    compare:", "      right_widget:", "        kind: table", "        mode: list_data", "        bind:", "          columns:", "            - { field: metric, label: Metric }",
           "            - { field: first, label: First, align: right }", "            - { field: second, label: Second, align: right }", "            - { field: lead, label: Leads }"]
+    L += NOTE_PANE
     L += ["actions:", '  - { id: open, kind: url, target: row, label: Open, url_template: "{{row.open_url}}" }', '  - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }']
     return "\n".join(L) + "\n"
 

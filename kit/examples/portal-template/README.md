@@ -11,7 +11,7 @@ It is a tier 3 personal-use app (it runs a script and calls the network), so it 
 | 1 | `scripts/portal-template__config.json` `app`, `api` | App id, chip, title; `base_url`, the key variable name, the `.env` path, the auth header |
 | 2 | `scripts/portal-template__config.json` `endpoints` | One entry per API path, with `map` from your field names to the names the views use (`"title": "name"`, dotted paths such as `"owner": "assignee.name"` work) |
 | 3 | `scripts/portal-template__config.json` `stats`, `overview`, `views` | Counters, the tiles on the overview, and per view: row title, subtitle, tile, up to 5 detail fields, body, link, `children` for a drill to a second list |
-| 4 | `scripts/portal-template__fixtures.json` | A real response saved per endpoint. `check` runs on it (`"fixture": true` in `check.json`); the shipped app is live (`api.fixture_default: false`) |
+| 4 | `scripts/portal-template__fixtures.json` | A real response saved per endpoint. `check` runs on it (`"fixture": true` in `check.json`); the shipped app is live (`api.fixture_default: false`) and, with no key, shows labelled sample data (`api.on_missing_key: sample`) |
 
 Then rebuild the app file and check:
 

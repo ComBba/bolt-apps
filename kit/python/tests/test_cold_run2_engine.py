@@ -138,5 +138,57 @@ class Hardening(unittest.TestCase):
             self.assertEqual(eng.fill_path("/{query}/x", {"query": q}), want)
 
 
+class BackRowPane(unittest.TestCase):
+    """The first row of a drilled list is selected on arrival: its Back row must give a field-binding pane something to draw."""
+
+    def test_kit_back_refresh_and_note_rows(self):
+        sys.path.insert(0, os.path.join(HERE, "..", "..", "python"))
+        import bolt_app_kit as kit
+        bare = kit.back_row("Back to the overview")
+        self.assertNotIn("pane", bare)
+        self.assertEqual(bare["body"], "")
+        noted = kit.back_row("Back to the overview", view=kit.NOTE_VIEW)
+        self.assertEqual((noted["pane"], noted["nav"]), ("note", {"back": True}))
+        self.assertIn("Esc or Left", noted["body"])
+        self.assertEqual(kit.refresh_row("items")["pane"], "items")
+        r = kit.refresh_row("items", pane=kit.NOTE_VIEW)
+        self.assertEqual((r["pane"], r["body"]), ("note", kit.REFRESH_BODY))
+        n = kit.note_row("Not found", "no item with id 9")
+        self.assertEqual((n["pane"], n["body"], n["copy_text"]), ("note", "no item with id 9", ""))
+
+    def test_engine_back_row_in_a_detail_view_points_at_the_note_view(self):
+        r = run("widget-gallery", ["detail"], env={"BOLT_APP_FIXTURE": "1"})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        rows = json.loads(r.stdout)
+        for x in rows:
+            if (x.get("nav") or {}).get("back") or (x.get("nav") or {}).get("arg") == "refresh":
+                self.assertEqual(x.get("pane"), "markdown", x["title"])   # widget-gallery has 8 views already: it reuses its markdown view as the note
+                self.assertTrue(x["body"].strip(), x["title"])
+        self.assertTrue([x for x in rows if (x.get("nav") or {}).get("back")])
+
+    def test_engine_note_view_is_reused_or_skipped_at_the_8_view_limit(self):
+        eng = __import__("test_cold_run_engine").load_engine()
+        cfg = cfg_of("widget-gallery")
+        self.assertEqual(eng.note_plan(cfg), ("markdown", False))
+        cfg["views"] = [v for v in cfg["views"] if v["id"] != "markdown"]
+        self.assertEqual(eng.note_plan(cfg), ("note", True))
+        cfg["views"] = cfg["views"] + [dict(cfg["views"][0], id="x%d" % i) for i in range(2)]
+        self.assertIsNone(eng.note_plan(cfg), "no room for a 9th view: no pane is invented")
+        self.assertIsNone(eng.note_plan(cfg_of("places-list")), "entity_preview views bind the row title already")
+
+    def test_engine_back_row_in_an_entity_preview_view_is_unchanged(self):
+        r = run("places-list", ["places"], env={"BOLT_APP_FIXTURE": "1"})
+        rows = json.loads(r.stdout)
+        back = [x for x in rows if (x.get("nav") or {}).get("back")]
+        self.assertTrue(back)
+        self.assertNotEqual(back[0].get("pane"), "note")
+
+    def test_apps_with_a_field_binding_pane_declare_the_note_view(self):
+        for app in ("widget-gallery-2", "pipeline-board", "chart-template", "json-tree-browser", "around", "repo-radar", "script-template"):
+            d = os.path.join(EX, app, "utilities")
+            y = open(os.path.join(d, [f for f in os.listdir(d) if f.endswith(".yaml")][0])).read()
+            self.assertIn("\n    note:\n      right_widget:\n        kind: markdown\n        mode: selected_row\n", y, app)
+
+
 if __name__ == "__main__":
     unittest.main()
