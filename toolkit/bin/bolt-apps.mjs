@@ -40,6 +40,7 @@ export function lintApp(dir, opts = {}) {
 	if (app.schema_version !== 1) E('schema_version', 'schema_version must be 1', 'bolt-app.json');
 	if (app.id !== id || !ID.test(String(app.id))) E('id_mismatch', `id must match ${ID} and equal the folder name "${id}"`, 'bolt-app.json');
 	for (const k of ['title', 'role', 'saves']) if (typeof app[k] !== 'string' || !app[k].trim()) E('field_missing', `${k} is required`, 'bolt-app.json');
+	{ const todo = ['summary', 'role', 'saves'].filter((k) => typeof app[k] === 'string' && /\bTODO\b/.test(app[k])); if (todo.length) W('listing_todo', `${todo.join(', ')} in bolt-app.json still say TODO (./bolt-apps new leaves them for you). Write one real line each before you share the pack`, 'bolt-app.json'); }
 	if (!app.author || typeof app.author.name !== 'string' || !app.author.name.trim()) E('field_missing', 'author.name is required', 'bolt-app.json');
 	if (app.author?.link && !String(app.author.link).startsWith('https://')) E('author_link', 'author.link must start with https://', 'bolt-app.json');
 	// files

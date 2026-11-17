@@ -468,7 +468,7 @@ export async function checkApp(appDir, opts = {}) {
 				const bad = rows.find((r) => r && typeof r.title === 'string' && /^This app (is not set up correctly|could not run)$/.test(r.title));
 				const head = rows.slice(0, 5).map((r) => `"${String(r && r.title).slice(0, 60)}"${r && r.subtitle ? ` / "${String(r.subtitle).slice(0, 80)}"` : ''}`).join('; ');
 				if (bad) E('app_error_row', `the script printed its own error row instead of rows: "${bad.title}": ${String(bad.subtitle).slice(0, 300)}. Fix that first, then the expected text`);
-				else for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `output does not contain "${t}". The first rows were: ${head}`);
+				else for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `check.json, case "${kase.name}": output does not contain "${t}". The first rows were: ${head}`);
 				for (const t of ex.text_absent || []) if (flat.includes(t)) E('forbidden_text_present', `output contains "${t}"`);
 				// home_absent: text that must not be on disk after the run (a key echoed by the API must never reach the cache). HOME is the temporary folder of this case.
 				if ((ex.home_absent || []).length) { const hits = []; const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.isFile()) { const b = fs.readFileSync(f, 'utf8'); for (const t of ex.home_absent) if (b.includes(t)) hits.push(`${path.relative(home, f)} holds "${t}"`); } } }; walk(home); for (const h of hits) E('text_on_disk', `${h}. The kit strips a secret from an API answer before it is cached: call kit.redact_tree on the parsed answer`); }
@@ -477,7 +477,7 @@ export async function checkApp(appDir, opts = {}) {
 					if (opts.updateGolden && f.some((x) => x.level === 'error')) E('golden_not_written', 'not writing a golden from a failing run');
 					else if (opts.updateGolden) { fs.mkdirSync(path.dirname(gp), { recursive: true }); fs.writeFileSync(gp, JSON.stringify(rows, null, 2) + '\n'); }
 					else if (!fs.existsSync(gp)) E('golden_missing', `${kase.golden} does not exist (run with --update-golden once, then review it)`);
-					else if (!deepEq(JSON.parse(fs.readFileSync(gp, 'utf8')), rows)) E('golden_mismatch', `output differs from ${kase.golden}. If you changed the app's data or text on purpose, run: ./bolt-apps check <app-folder> --update-golden (it rewrites the goldens; read the change first)`);
+					else if (!deepEq(JSON.parse(fs.readFileSync(gp, 'utf8')), rows)) E('golden_mismatch', `check.json, case "${kase.name}": output differs from ${kase.golden}. If you changed the app's data or text on purpose, run: ./bolt-apps check <app-folder> --update-golden (it rewrites the goldens; read the change first)`);
 				}
 			}
 		} catch (e) { E('check_error', String(e.message || e)); }
@@ -493,11 +493,14 @@ function whichSync(name) {
 	for (const d of (process.env.PATH || '').split(path.delimiter)) { const p = path.join(d, name); try { fs.accessSync(p, fs.constants.X_OK); if (fs.statSync(p).isFile()) return p; } catch {} }
 	return null;
 }
+// One line for the whole report when an expectation failed because the app's text changed (a copied template's words, an old golden): which file, and the two ways out.
+export const TEMPLATE_WORDS_HINT = 'check.json still expects words or goldens from before your edit (a copied template brings its own). Edit cases[].expect.text_present in check.json to words your app prints (or delete the line), and run ./bolt-apps check <app-folder> --update-golden once your data is final; read the goldens it rewrites.';
 export const reportOk = (r) => !r.findings.some((x) => x.level === 'error') && r.cases.every((c) => c.ok);
 export function formatReport(r) {
 	const L = [`${reportOk(r) ? 'PASS' : 'FAIL'}  ${r.app}  (host ${r.host_os})`];
 	for (const f of r.findings) L.push(`  ${f.level} ${f.code}: ${f.message}`);
 	for (const c of r.cases) { L.push(`  ${c.ok ? 'ok  ' : 'FAIL'} [${c.os}] ${c.name}`); for (const f of c.findings) L.push(`       ${f.level} ${f.code}: ${f.message}`); }
+	if (r.cases.some((c) => c.findings.some((f) => ['expected_text_missing', 'golden_mismatch', 'golden_missing'].includes(f.code)))) L.push('', `Hint: ${TEMPLATE_WORDS_HINT}`);
 	const fx = [...new Set(r.cases.filter((c) => c.os !== r.host_os).map((c) => c.os))];
 	L.push('', fx.length ? `Fixture-tested only: ${fx.join(', ')}. That logic was not run on those systems.` : 'All cases ran with stubbed commands on this OS. Not run: the real launcher, Windows, other OS tools.');
 	return L.join('\n');

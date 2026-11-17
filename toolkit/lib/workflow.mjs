@@ -83,9 +83,11 @@ export function newFromTemplate(template, id, root) {
 	edit('README.md', (s) => s.split('node toolkit/bin/bolt-apps.mjs').join('bolt-apps').split(`kit/examples/${template}`).join('.'));
 	walkText(dir);
 	if (fs.existsSync(sd0)) { const longest = fs.readdirSync(sd0).map((f) => `manifests/scripts/${f}`).filter((n) => n.length > 100)[0]; if (longest) fail(`the id "${id}" is too long: ${longest.slice(10)} would not fit: Bolt allows 128 characters per name (every file starts with <app id>__, ids are up to 64), and this toolkit packs at most 82 for a script name. Choose a shorter id.`); }
-	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; return JSON.stringify(j, null, 2) + '\n'; });
+	// The listing text (summary, role, saves) and the app description described the TEMPLATE. Say so plainly instead of leaving another app's words on yours: lint warns (listing_todo) until they are rewritten.
+	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; j.summary = `TODO describe your app: what =${chip} shows, in one line.`; j.role = 'TODO describe who this app is for.'; j.saves = 'TODO describe what it saves them.'; return JSON.stringify(j, null, 2) + '\n'; });
+	edit('README.md', (s) => `> Template text below (copied from ${template}): replace it with what your app does. The files \`new\` leaves for you to rewrite are listed in ENGINE.md, "Make it yours".\n\n${s}`);
 	const cfgName = `scripts/${id}__config.json`;
-	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; } return JSON.stringify(j, null, 2) + '\n'; });
+	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; j.app.description = `TODO describe your app: one line on what =${chip} shows.`; } return JSON.stringify(j, null, 2) + '\n'; });
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
 	const sd = path.join(dir, 'scripts');
 	const emitter = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('.py') && !f.endsWith('__bolt_app_kit.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')) : null;
@@ -98,14 +100,42 @@ export function newFromTemplate(template, id, root) {
 	} else if (fs.existsSync(ud)) for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
 	// the vendored kit is named for its app: re-vendor it under the new name (the template's lock and file name carry the old id)
 	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { fail(`could not vendor the kit: ${e.message}`); } }
-	let note = '';
+	let note = '', minimal = false;
 	if (fs.existsSync(path.join(dir, 'check.json'))) {   // goldens were not copied: record them for the new app and show that it passes
-		const pruned = pruneSampleExpectations(dir, id);
+		minimal = minimalCheck(dir, id);
+		const pruned = minimal ? 0 : pruneSampleExpectations(dir, id);
 		const r = bolt(['check', dir, '--update-golden']);
 		const r2 = r.status === 0 ? bolt(['check', dir]) : r;   // a second plain run proves the recorded goldens agree with a fresh run
-		note = r2.status === 0 ? `check passes on the sample data${pruned ? ` (${pruned} expected-text line${pruned === 1 ? '' : 's'} about the template's own sample words were dropped from check.json; add your own once your data is in)` : ''}` : `CHECK DOES NOT PASS YET (it did not pass straight after the copy, which is a toolkit fault, not yours):\n${(r2.stdout + r2.stderr).slice(-900)}`;
+		note = r2.status === 0 ? `check passes on the sample data${minimal ? ' (check.json was rewritten with one case per view and none of the template words: it checks that every row is well formed)' : ''}${pruned ? ` (${pruned} expected-text line${pruned === 1 ? '' : 's'} about the template's own sample words were dropped from check.json; add your own once your data is in)` : ''}` : `CHECK DOES NOT PASS YET (it did not pass straight after the copy, which is a toolkit fault, not yours):\n${(r2.stdout + r2.stderr).slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)\n\nThe goldens and expected text recorded now describe the sample data. After you change your data, ./bolt-apps check will report golden_mismatch: run ./bolt-apps check ${q(dir)} --update-golden once your data is final, and read what changed.`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)\n\nMake it yours (ENGINE.md, "Make it yours"): the listing in bolt-app.json (summary, role, saves) and the description in the config say TODO, README.md starts with a note, and check.json ${minimal ? 'has one case per view and no template words' : 'still expects the template words'}. Goldens are recorded only for a case that names one: add "golden": "golden/<name>.json" to a case, then run ./bolt-apps check ${q(dir)} --update-golden once your data is final, and read what changed.`);
+}
+
+// For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).
+// Nothing is copied from the template's words, so the first edit of the data does not break check. A form-mode app, or a copy where the rewritten check does not pass, keeps the template cases.
+// Returns true when the rewrite was kept.
+function minimalCheck(dir, id) {
+	const p = path.join(dir, 'check.json'), cf = path.join(dir, 'scripts', `${id}__config.json`);
+	if (!fs.existsSync(path.join(dir, 'scripts', `${id}__engine.py`))) return false;   // only the shared engine: a script app with its own config.json keeps its template cases
+	let cfg, ec; try { cfg = JSON.parse(fs.readFileSync(p, 'utf8')); ec = JSON.parse(fs.readFileSync(cf, 'utf8')); } catch { return false; }
+	const mode = ec.mode || 'views';
+	let cases;
+	if (mode === 'lookup') {
+		const ex = (ec.lookup && Array.isArray(ec.lookup.examples) && typeof ec.lookup.examples[0] === 'string' ? ec.lookup.examples[0] : 'example').split(/\s+/).filter(Boolean).slice(0, 3);
+		cases = [{ name: 'a typed word draws its rows', args: ex }, { name: 'no word asks for one', args: [] }, { name: 'offline preview', args: [...ex, 'demo-offline'] }];
+	} else if (mode === 'views' && Array.isArray(ec.views)) {
+		const ids = ['overview', ...ec.views.map((v) => v && v.id).filter((x) => typeof x === 'string')];
+		cases = [...ids.map((v) => ({ name: `${v}: every row is well formed`, args: [v] })), { name: 'offline preview', args: [ids[1] || 'overview', 'demo-offline'] }];
+	} else return false;
+	const keep = fs.readFileSync(p, 'utf8');
+	const osName = cfg.cases && cfg.cases[0] && cfg.cases[0].os ? cfg.cases[0].os : 'macos';
+	cfg.cases = cases.map((c) => ({ ...c, os: osName }));
+	delete cfg.known_empty_tiles;
+	fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + '\n');
+	const r = bolt(['check', dir]);
+	if (r.status === 0) return true;
+	fs.writeFileSync(p, keep);   // the rewrite did not pass: keep the template cases rather than hand over a failing check
+	return false;
 }
 
 // check.json lists expected texts. Some are the engine's own words (kept); others are the template's sample words ("Example Co", "Example Service"), which go stale the moment the
