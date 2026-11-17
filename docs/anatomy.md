@@ -89,7 +89,7 @@ Example: [`kit/examples/pulse-feed`](../kit/examples/pulse-feed). Each story get
 |---|---|---|---|
 | 1 | `=pulse-feed` | `id`, `chip` | `platform.chip_equals_id` |
 | 2 | Story rows: title, then points, comments, age | `title_field`, `subtitle_field` (the script writes the subtitle text) | `nav.drill`, `search.searchable` |
-| 3 | Story pane: source, author, age, score, body | `presentation.views.overview.right_widget.kind: entity_preview`, `bind.fields` with `story_source`, `story_author`, `story_age`, `story_score` | `widget.entity_preview`, `pane.per_row` |
+| 3 | Story pane: source, author, age, score, body | `presentation.views.overview.right_widget.kind: entity_preview`, `bind.fields` reading the row fields story_source, story_author, story_age and story_score | `widget.entity_preview`, `pane.per_row` |
 | 5 | Open post and Copy quote | top-level `actions` with these labels; `bind.actions` names them | `actions.footer` |
 
 Source: `kit/examples/pulse-feed/utilities/pulse-feed.yaml`
@@ -145,4 +145,4 @@ actions:
   - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }
 ```
 
-The snippet shows the first input only; the file has `unit_from` and `unit_to` as `select` inputs with the same shape.
+The snippet shows the first input only; the file has two more inputs, From and To, of type `select` with the same shape.
