@@ -61,11 +61,12 @@ const boltAtLeast = (have, need) => { for (let i = 0; i < 3; i++) if (have[i] !=
 function gateProblem(where, key, since, ctx) {
 	const have = parseBoltVersion(ctx.minBolt), need = parseBoltVersion(since);
 	if (have && need && boltAtLeast(have, need)) return null;
-	const ver = since.replace(/^0\.1\./, '');
-	const why = ctx.minBolt === undefined ? 'bolt-app.json declares no min_bolt_version' : `bolt-app.json says min_bolt_version "${ctx.minBolt}"`;
-	return { code: 'bind_needs_newer_bolt', gate: true, level: ctx.minBoltKnown === false ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses it ("unknown key for a entity_preview pane"), so no app in the pack would install there. ${ctx.minBoltKnown === false ? 'This pack carries no bolt-app.json, so its minimum Bolt cannot be read; give it only to people on Bolt ' + ver + ' or newer' : `${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (Bolt 181 does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}`}` };
+	const ver = since.replace(/^0\.1\./, ''), packed = ctx.minBoltKnown === false;   // packed: a built pack is being read, only a warning (the author may still hand it only to Bolt 182 users)
+	const where2 = packed ? "the pack's listing" : 'bolt-app.json';
+	const why = ctx.minBolt === undefined ? `${where2} declares no min_bolt_version` : `${where2} says min_bolt_version "${ctx.minBolt}"`;
+	return { code: 'bind_needs_newer_bolt', gate: true, level: packed ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses it ("unknown key for a entity_preview pane"), so no app in the pack would install there. ${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (Bolt 181 does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}` };
 }
-const REF = /\{\{/g;
+const REF = /\{\{[^}]*\}\}/g;   // the same count the Bolt pane makes: one reference per {{ ... }}
 function bindMap(node, keysSpec, where, out, ctx = {}) {
 	if (!node || node.t !== 'm') { out.push({ code: 'bind_invalid', message: `${where}: must be a mapping, got ${kindWord(node?.t)}` }); return; }
 	for (const e of node.entries) {
@@ -77,7 +78,7 @@ function bindMap(node, keysSpec, where, out, ctx = {}) {
 			if (sp.max_refs && e.value && e.value.t === 's') {
 				const n = (e.value.v.match(REF) || []).length;
 				if (n > sp.max_refs) out.push({ code: 'bind_too_many_refs', message: `${where}.${e.key}: has ${n} {{ }} references, at most ${sp.max_refs} are read (Bolt drops the picture). A picture that needs more parts is too big: use a smaller one` });
-				else if (e.key === 'src' && !/^\s*\{\{\s*row\./.test(e.value.v) && !/^\s*data:image\//.test(e.value.v)) out.push({ code: 'hero_src_not_picture', level: 'warning', message: `${where}.${e.key}: is not a {{row.<field>}} reference or a data:image URI. A Bolt pane never loads a web address, so no hero would show` });
+				else if (e.key === 'src' && !/^\s*\{\{\s*row\./.test(e.value.v) && !/^\s*data:image\/(png|jpe?g|gif|webp|avif|bmp)\b/i.test(e.value.v)) out.push({ code: 'hero_src_not_picture', level: 'warning', message: `${where}.${e.key}: is not a {{row.<field>}} reference or a data:image URI. A Bolt pane never loads a web address, so no hero would show` });
 			}
 		}
 	}

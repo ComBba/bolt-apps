@@ -67,9 +67,13 @@ test('a src that is neither a {{row.*}} reference nor a data: URI warns (a web a
 test('more than 16 references is an error; exactly 16 passes', () => {
 	const refs = (n) => Array.from({ length: n }, (_, i) => `{{row.img${i + 1}}}`).join('');
 	assert.deepEqual(codes(app('entity_preview', hero(`src: "${refs(16)}"`))), []);
-	const bad = P(app('entity_preview', hero(`src: "${refs(17)}"`)), { pack: true }).filter((p) => p.code === 'bind_too_many_refs' || /17 \{\{/.test(p.message));
-	assert.ok(bad.length && bad.every((p) => p.level === 'error'));
-	assert.match(bad[0].message, /smaller one/);
+	for (const opts of [{}, { pack: true }]) {   // lint (schema 1, no pack) and pack both give this code, not right_widget_bind_unread
+		const all = P(app('entity_preview', hero(`src: "${refs(17)}"`)), opts);
+		assert.deepEqual(all.map((p) => p.code), ['bind_too_many_refs']);
+		assert.equal(all[0].level, 'error'); assert.match(all[0].message, /17 \{\{ \}\} references, at most 16/); assert.match(all[0].message, /smaller one/);
+	}
+	// references are counted the way the pane does: one per {{ ... }}, so a stray "{{" with no close is not a reference
+	assert.deepEqual(codes(app('entity_preview', hero(`src: "${refs(16)}{{"`))), []);
 });
 
 test('the version gate: undeclared or below 182 is an error that says a 181 refuses the whole pack', () => {
@@ -122,11 +126,26 @@ test('check and lint pass for the example as shipped, and a bad min_bolt_version
 	const r = run(b.d, 'lint', b.dir, '--personal'); assert.notEqual(r.status, 0); assert.match(r.stdout + r.stderr, /min_bolt_version must be a dotted version/);
 });
 
-test('verify of a built pack warns (it carries no listing) and still passes', () => {
+test('a data:image src is checked without regard to case and for every mime the pane takes', () => {
+	for (const m of ['PNG', 'png', 'jpeg', 'jpg', 'gif', 'webp', 'avif', 'bmp']) assert.deepEqual(codes(app('entity_preview', hero(`src: "DATA:IMAGE/${m};base64,AAAA"`))), [], m);
+	assert.deepEqual(codes(app('entity_preview', hero('src: "data:text/html;base64,AAAA"'))), ['hero_src_not_picture']);
+});
+
+test('verify of a pack with a listing at 0.1.182 or newer has no needs-Bolt-182 warning; with less or nothing it warns, never errors', () => {
+	const y = app('entity_preview', hero('src: "{{row.img1}}"'));
+	for (const minBolt of ['0.1.182', '0.1.190']) assert.deepEqual(codes(y, { minBolt, minBoltKnown: false }), [], minBolt);
+	for (const minBolt of [undefined, '0.1.181']) {
+		const g = P(y, { minBolt, minBoltKnown: false });
+		assert.deepEqual(g.map((p) => [p.code, p.level]), [['bind_needs_newer_bolt', 'warning']], String(minBolt));
+		assert.match(g[0].message, /pack's listing/);
+	}
+});
+
+test('verify of a built pack reads min_bolt_version from the signed listing: no needs-Bolt-182 warning, and the pack still passes', () => {
 	const { d, dir } = copyExample();
 	assert.equal(run(d, 'keygen').status, 0);
 	const out = path.join(d, 'h.boltpack');
 	const pk = run(d, 'pack', dir, '--personal', '--version', '1.0.0', '--out', out); assert.equal(pk.status, 0, pk.stdout + pk.stderr);
 	const v = run(d, 'verify', out); assert.equal(v.status, 0, v.stdout + v.stderr);
-	assert.match(v.stdout, /bind_needs_newer_bolt/); assert.match(v.stdout, /needs Bolt 182/);
+	assert.doesNotMatch(v.stdout, /bind_needs_newer_bolt/);
 });

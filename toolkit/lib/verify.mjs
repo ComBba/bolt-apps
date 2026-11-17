@@ -117,7 +117,7 @@ export const FIXES = {
 	right_widget_kind_invalid: 'Use a right_widget kind and mode Bolt accepts: kinds card, map, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (and the data-less image, color, weather, date, calc); modes selected_row or list_data.',
 	right_widget_bind_unread: 'Remove the bind key: the map, image, calc, color, weather and date panes read nothing from bind. For a chart, type is line, bar or sparkline.',
 	bind_needs_newer_bolt: 'Set "min_bolt_version": "0.1.182" in bolt-app.json to confirm you give the pack only to people on Bolt 182 or newer, or remove the bind key. Bolt does not read that field and cannot hold the pack back; a Bolt 181 refuses the whole pack when one app uses a key it does not know.',
-	bind_too_many_refs: 'Join at most 16 {{ }} references in hero.src: use a smaller picture so it fits in fewer parts.',
+	bind_too_many_refs: 'hero.src may join at most 16 {{ }} references; Bolt draws no picture past that. Use a smaller picture so it fits in 16 parts or fewer (kit.hero_fields refuses a bigger one).',
 	hero_src_not_picture: 'Set hero.src to {{row.<field>}} joined from the row fields that hold the picture, or to a data:image URI. A pane never loads a web address.',
 	run_action_template: 'Give the run action a fixed query_template with no {{ }} (for example refresh), or remove the action.',
 	script_too_large: 'Bolt hashes a script only up to 2 MB and will not run an app that names a larger file. Keep scripts small; put big data outside the app.',

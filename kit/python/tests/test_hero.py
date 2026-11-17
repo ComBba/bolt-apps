@@ -54,6 +54,14 @@ class HeroTests(unittest.TestCase):
             with self.assertRaises(k.KitError):
                 k.hero_fields(bad)
 
+    def test_avif_bmp_only_as_a_data_uri(self):
+        blob = b"\x00\x00\x00\x1cftypavif" + b"x" * 20
+        with self.assertRaises(k.KitError):
+            k.hero_fields(blob)
+        for m in ("avif", "BMP"):
+            f = k.hero_fields("data:image/%s;base64,%s" % (m, base64.b64encode(blob).decode()))
+            self.assertTrue(f["img1"].startswith("data:image/%s;base64," % m.lower()))
+
     def test_template(self):
         self.assertEqual(k.hero_src_template(3), "{{row.img1}}{{row.img2}}{{row.img3}}")
         self.assertEqual(k.hero_src_template(16).count("{{"), 16)

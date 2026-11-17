@@ -165,7 +165,7 @@ export function launcherRules(root, opts = {}) {
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
 		// Every other kind: keys, types, enums and caps from the launcher's table (schema/bolt-rules.json). Strict for schema_version 2 and for every pack.
 		if (!BIND_NONE.includes(kind) && bind && bind.t === 'm') for (const bp of bindProblems(kind, bind, `${p}.bind`, { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown })) {
-			if (bp.gate || bp.level === 'warning') (bp.level === 'warning' ? W : E)(bp.code, bp.message);   // a gate on a newer Bolt, or a plain warning, is never softened or hardened by schema_version
+			if (bp.gate || bp.level === 'warning' || bp.code === 'bind_too_many_refs') (bp.level === 'warning' ? W : E)(bp.code, bp.message);   // a gate on a newer Bolt, or a plain warning, is never softened or hardened by schema_version
 			else (strict || opts.pack ? E : W)('right_widget_bind_unread', bp.message + (strict || opts.pack ? '' : ' (a warning for schema_version 1, an error from schema_version 2 and in every pack)'));
 		}
 	}

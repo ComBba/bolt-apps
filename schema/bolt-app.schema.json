@@ -53,7 +53,7 @@
     "min_bolt_version": {
       "type": "string",
       "pattern": "^\\d+\\.\\d+\\.\\d+$",
-      "description": "The oldest Bolt the app works on, for example 0.1.182. A proposal for the runtime: Bolt does not read this field yet and the pack does not carry it. bolt-apps lint, check and pack require it when the app uses a key a newer Bolt added (hero needs 0.1.182), as the author's statement that the pack goes only to people on that Bolt or newer: a Bolt that does not know the key refuses the whole pack."
+      "description": "The oldest Bolt the app works on, for example 0.1.182. A proposal for the runtime: Bolt does not read this field yet; the pack carries it in its signed listing, and bolt-apps verify reads it from there. bolt-apps lint, check and pack require it when the app uses a key a newer Bolt added (hero needs 0.1.182), as the author's statement that the pack goes only to people on that Bolt or newer: a Bolt that does not know the key refuses the whole pack."
     },
     "requires": {
       "description": "Interpreters the app's scripts need, so install can check them. A proposal for the runtime: Bolt does not read this field yet. min_version is a dotted number such as 3.9.",
