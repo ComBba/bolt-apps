@@ -525,7 +525,7 @@ def overview(ctx, g, r, text):
         rows.append(kit.safe_row("Landmarks · %d nearby" % len(wiki), ("nearest: %s, %s" % (wiki[0]["title"], metres(wiki[0]["dist"]))) if wiki else "none within 1 km", icon="Landmark", nav={"view": "landmarks"}, copy=False))
     else:
         rows.append(kit.safe_row("Landmarks · unavailable", r["wiki"]["err"], icon="AlertCircle", nav={"view": "landmarks"}, copy=False))
-    rows.append(kit.safe_row("Keys and sign-in styles", "how each API here asks for a key, and the one that needs yours", icon="Key", nav={"view": "keys"}, pane="keys", copy=False))
+    rows.append(kit.safe_row("Keys and sign-in styles", "how each API here asks for a key, and the one that needs yours", icon="Key", nav={"view": "keys"}, copy=False))   # no pane: the overview preview draws this row; the keys detail pane binds fields it lacks
     rows.append(kit.safe_row("About the data", "Map data (c) OpenStreetMap contributors, ODbL. Weather by Open-Meteo.com (CC BY 4.0). Landmarks from Wikipedia (CC BY-SA). Bikes by CityBikes", icon="FileText", copy=False))
     rows.append(kit.refresh_row("overview", title="Check again", subtitle="Enter to fetch fresh data (bikes are kept 30 s)"))
     return rows
@@ -678,8 +678,8 @@ def main(argv):
     gr = geocode(ctx, text)
     if not gr["ok"]:
         if fixture and gr["err"] == "not in the recorded sample":
-            kit.emit([kit.error_row("This is sample data, which covers only: %s" % ", ".join(sorted(fx["places"])), title="Not in the recorded sample")])
-        kit.emit([kit.error_row("The place finder said: %s" % gr["err"], title="Could not find that place")])
+            kit.emit([kit.note_row("Not in the recorded sample", "This is sample data, which covers only: %s" % ", ".join(sorted(fx["places"])))])
+        kit.emit([kit.note_row("Could not find that place", "The place finder said: %s" % gr["err"])])
     g = gr["data"]
     lastc.put("last", {"text": text})
     if view == "keys":
