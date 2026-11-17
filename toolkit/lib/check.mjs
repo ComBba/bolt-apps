@@ -432,7 +432,18 @@ export function presenceProblems(rows, { sampleMode, bannerPromised, minRows, st
 	return out;
 }
 
+// opts.shared: run every case as Bolt 182+ would, with BOLT_APP_SHARED_DIR naming a fresh export of THIS repo's kit. The rows must still match the
+// golden files and the expectations, so a shared kit and an app's own copy are proven to give the same answer.
 export async function checkApp(appDir, opts = {}) {
+	if (!opts.shared) return checkAppRun(appDir, opts);
+	const { exportShared } = await import('./shared.mjs');
+	const base = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-apps-shared-'));
+	try {
+		exportShared(path.join(base, 'bolt-apps-shared'));
+		return await checkAppRun(appDir, { ...opts, sharedDir: path.join(base, 'bolt-apps-shared') });
+	} finally { fs.rmSync(base, { recursive: true, force: true }); }
+}
+async function checkAppRun(appDir, opts = {}) {
 	const cfgFile = path.join(appDir, 'check.json');
 	const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
 	const host = hostOs();
@@ -475,7 +486,7 @@ export async function checkApp(appDir, opts = {}) {
 			makeStubs(stubDir, appDir, osName, kase, files);
 			// Sample mode: a case (or check.json as a whole) sets "fixture": true, so the script runs on its recorded answers while the shipped app stays live.
 			const sample = kase.fixture ?? cfg.fixture;
-			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
+			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }), ...(opts.sharedDir ? { BOLT_APP_SHARED_DIR: opts.sharedDir } : {}) }, home);
 			const ex = kase.expect || {};
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;
