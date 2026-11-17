@@ -81,9 +81,9 @@
       "group": "layout",
       "name": "Pane: cards",
       "status": "supported",
-      "example": "kit/examples/portal-template",
+      "example": "kit/examples/acme-dash",
       "snippet": "{\"kind\": \"cards\", \"mode\": \"list_data\", \"bind\": {\"layout\": \"tiles\"}}",
-      "test": "kit/examples/portal-template/check.json",
+      "test": "kit/examples/acme-dash/check.json",
       "limit": "Layout tiles (a tile per row, at most {rules:widgets.tile_cap} rows, and a row with no number draws an empty \"-\" tile) or the default grid (up to {rules:widgets.row_cap} cards, no number needed); tile label cut at {rules:tile.label_cut} characters. The 24 cap applies only to bind.layout tiles.",
       "kind": "cards"
     },

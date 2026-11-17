@@ -49,9 +49,16 @@
         "tile": { "label": "Active projects", "value": "projects_active", "max": "projects_total", "note": "projects", "badge": [{ "if": "projects_active==projects_total", "badge": "OK" }, { "badge": "MIXED" }] }
       },
       {
-        "title": "Documentation", "subtitle": "example.com/docs. Enter opens the page", "icon": "book", "url": "https://example.com/docs"
+        "title": "Documentation", "subtitle": "example.com/docs. Enter opens the page", "icon": "book", "url": "https://example.com/docs",
+        "body": "## Documentation\n\nEnter opens the documentation page in your browser."
       }
-    ]
+    ],
+    "widget": {
+      "kind": "entity_preview", "mode": "selected_row",
+      "bind": { "title": "{{row.title}}", "subtitle": "{{row.subtitle}}",
+                "tiles_above": { "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "max": "{{row.kpi_max}}", "trend": "{{row.trend}}", "subtitle": "{{row.kpi_note}}", "badge": "{{row.kpi_badge}}", "footer": "{{row.kpi_foot}}" },
+                "body": "{{row.body}}", "actions": ["open", "copy"] }
+    }
   },
   "views": [
     {

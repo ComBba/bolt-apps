@@ -154,7 +154,7 @@
       }
     },
     {
-      "name": "no key and no sample switch: the sample data is shown, with the sample label and a key hint on a tile (api.on_missing_key sample)",
+      "name": "no key and no sample switch: the sample data is shown, with a SAMPLE DATA row and a key hint row (api.on_missing_key sample)",
       "os": "macos",
       "fixture": "unset",
       "args": [
@@ -162,7 +162,7 @@
       ],
       "expect": {
         "text_present": [
-          "sample data"
+          "SAMPLE DATA"
         ]
       }
     },
@@ -184,6 +184,5 @@
       ],
       "expect": {}
     }
-  ],
-  "known_empty_tiles": "the Documentation link row has no tile; redesign pending"
+  ]
 }
