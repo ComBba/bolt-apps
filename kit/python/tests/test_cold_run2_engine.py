@@ -109,7 +109,7 @@ class Hardening(unittest.TestCase):
         rows = [{"n": x} for x in ("inf", "nan", "1e999", "-Infinity", "5", 7)] + [{"n": float("inf")}]
         r = self.portal({"s": {"endpoint": "tickets", "field_sum": "n"}, "m": {"endpoint": "tickets", "field_max": "n"}}, rows, "{s} {m}")
         self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T 12.0 7")
+        self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T 12 7")
 
     def test_unknown_where_comparison_is_a_config_error(self):
         r = self.portal({"s": {"endpoint": "tickets", "where": {"n": {"between": [1, 5]}}}}, [{"n": 3}])
