@@ -111,6 +111,22 @@ class Hardening(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T 12 7")
 
+    def test_huge_integers_and_an_overflowing_sum_are_left_out_not_a_crash(self):
+        big = 10 ** 400
+        rows = [{"n": big}, {"n": -big}, {"n": 4}, {"n": 6}]
+        r = self.portal({"s": {"endpoint": "tickets", "field_sum": "n"}, "m": {"endpoint": "tickets", "field_max": "n"}}, rows, "{s} {m}")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T 10 6")
+        for field in ("field_sum", "field_max"):
+            r = self.portal({"s": {"endpoint": "tickets", field: "n"}}, [{"n": big}, {"n": -big}], "{s}")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T unknown")
+        r = self.portal({"s": {"endpoint": "tickets", "field_sum": "n"}}, [{"n": 1e308}, {"n": 1e308}], "{s}")
+        self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T unknown")
+        r = self.portal({"a": {"endpoint": "tickets", "field_sum": "n"}, "s": {"sum": ["a", "a"]}}, [{"n": 1e308}], "{s}")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T unknown")
+
     def test_unknown_where_comparison_is_a_config_error(self):
         r = self.portal({"s": {"endpoint": "tickets", "where": {"n": {"between": [1, 5]}}}}, [{"n": 3}])
         self.assertIn("unknown comparison", r.stdout)

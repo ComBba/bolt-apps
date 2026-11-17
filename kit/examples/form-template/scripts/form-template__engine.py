@@ -182,17 +182,24 @@ def token(s):
     return t if NAV_OK.match(t) and ".." not in t else ""
 
 
+def finite(x):
+    try:
+        return math.isfinite(x)
+    except OverflowError:   # an integer too large for a float (10**400)
+        return False
+
+
 def number(v):
     if isinstance(v, bool):
         return None
     if isinstance(v, (int, float)):
-        return v if math.isfinite(v) else None   # a JSON Infinity or NaN is not a number a total can use
+        return v if finite(v) else None   # a JSON Infinity, NaN or a huge integer is not a number a total can use
     if isinstance(v, str):
         try:
             f = float(v)
         except ValueError:
             return None
-        return f if math.isfinite(f) else None   # "inf", "nan", "1e999" are text, not numbers
+        return f if finite(f) else None   # "inf", "nan", "1e999" are text, not numbers
     return None
 
 
@@ -394,6 +401,7 @@ def compute_stats(cfg, data):
         elif "sum" in s:
             parts = [one(n, depth + 1) for n in s["sum"]]
             v = None if any(x is None for x in parts) else sum(parts)
+            v = v if v is None or finite(v) else None   # 1e308 + 1e308 is not a number
         else:
             items = data.get(s.get("endpoint"))
             if isinstance(items, list):
@@ -402,6 +410,7 @@ def compute_stats(cfg, data):
                     nums = [number(get_path(x, s.get("field_sum") or s.get("field_max"))) for x in rows]
                     nums = [n for n in nums if n is not None]
                     v = (sum(nums) if "field_sum" in s else max(nums)) if nums else None
+                    v = v if v is None or finite(v) else None   # a sum that overflows is left out, like any non-number
                 elif "group" in s:
                     counts = {}
                     for x in rows:

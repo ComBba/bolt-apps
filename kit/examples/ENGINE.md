@@ -284,6 +284,10 @@ The TODO description is shipped: `utilities/<id>.yaml` carries `app.description`
 
 `check` also fails any case, whatever it expects, when the run prints no rows, a row has no title, a row of a shared-engine app has an empty or missing subtitle, a sample-labelled app shows no row that says "sample", or the case names a view the config no longer has (`case_unknown_view`: the engine would draw the overview and the case would test nothing; `expect.view_fallback: true` marks a case that tests that fallback on purpose). `expect.min_rows` sets a floor on the rows.
 
+The generated `check.json` proves that your app runs and draws well-formed rows (at least one row per case, titles, subtitles, a sample label); it does not prove your data is right. One useless row per case, or emptied fixtures, still pass.
+
+Checklist step: when your data is final, run `check <dir> --update-golden` once (after adding `"golden": "golden/<name>.json"` to the cases you want compared); from then on check compares your real output.
+
 When `check` fails after an edit because an old expectation no longer holds, it names `check.json` and the case, and ends with one hint: change `cases[].expect.text_present` to words your app prints (or delete the line), then run `check --update-golden` once your data is final and read the goldens it rewrites.
 
 ## What check tells you
