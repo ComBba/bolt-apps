@@ -58,7 +58,7 @@ test('new prints the real file names to edit, not the template\'s', () => {
 //  1. the review card (PackInstallReview.svelte: "Signed by its author ... If you made this pack yourself, that is expected: install it");
 //  2. then, on EVERY OS and for every pack not signed by the Bolt publisher, Bolt's own native dialog "Install an unverified Bolt pack?" with Install and
 //     Cancel (src-tauri/src/user_utilities/commands.rs, install_pack_inner, `confirm_unverified_pack_install`; declining returns
-//     "Install cancelled: the pack is signed by its author, not by <the publisher>."). It is not a macOS prompt;
+//     "Install cancelled: the pack is signed by its author, not by Sparcle."). It is not a macOS prompt;
 //  3. then Settings, Desktop, User Apps, expand the app, Review and accept.
 const DIALOG = /Install an unverified Bolt pack\?/;
 test('the journey text names the "Install an unverified Bolt pack?" dialog and no macOS-only prompt', () => {
