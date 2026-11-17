@@ -501,12 +501,13 @@
     {
       "id": "script-template",
       "need": "a script app for an API or tool no engine template fits, working out of the box against a free keyless API (Art Institute of Chicago) and showing what Bolt 181 can draw",
-      "layout": "overview of four number tiles (meter, sparkline, delta, badge) that drill, a list with a search word and a big picture in the preview pane, a detail with Back, a card grid of pictures, a bar chart, a sorted table with a total, a json tree",
+      "layout": "overview of four number tiles (meter, sparkline, delta, badge) that drill, a list with a search word and a picture in the preview pane, a detail with Back and a big picture, a card grid of pictures, a bar chart, a sorted table with a total, a json tree",
       "mode": "custom script on the flat kit",
       "script": "scripts/script-template__app.py",
       "backing": "remote HTTP API",
       "widgets": [
         "cards",
+        "entity_preview",
         "chart",
         "table",
         "json_tree",

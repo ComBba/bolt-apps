@@ -170,14 +170,14 @@ class ScriptTemplateLive(unittest.TestCase):
                 rows = self.m.build_item(view, it, state, self.cfg, True)
             else:
                 data, state = s.search("landscape", False, False)
-                (s.attach_heroes if view == "items" else s.attach_thumbs)(data["items"], network=False)
+                s.attach_thumbs(data["items"], network=False)
                 rows = self.m.build(view, arg, data, state, self.cfg, True, "landscape")
             self.assertEqual(kit.validate_rows(rows), [], view)
             pics = [r for r in rows if r.get("img1")]
             if view in ("items", "pictures") or (view, arg) == ("item", "5848"):
                 self.assertTrue(pics, view)
             for r in pics:
-                n = 24 if view in ("items", "item") else 4
+                n = 24 if view == "item" else 4
                 joined = "".join(r.get("img%d" % k, "") for k in range(1, n + 1))
                 self.assertTrue(joined.startswith("data:image/jpeg;base64,/9j/"))
                 self.assertLessEqual(len(joined), n * 4000)
@@ -243,34 +243,37 @@ class ScriptTemplateLive(unittest.TestCase):
             self.assertEqual(f.read(), y)
         self.assertIn("{{row.img1}}{{row.img2}}{{row.img3}}", y)
         self.assertIn("{{row.img24}}){{row.hero_lines}}", y)   # the big picture of the list and detail panes: markdown over img1 to img24
-        for kind in ("kind: cards", "kind: chart", "kind: table", "kind: json_tree", "kind: markdown"):
+        for kind in ("kind: cards", "kind: chart", "kind: table", "kind: json_tree", "kind: entity_preview", "kind: markdown"):
             self.assertIn(kind, y)
         self.assertNotIn("http", y.split("presentation:")[1].split("actions:")[0])   # no web address in any pane bind
 
-    def test_the_big_picture_rows_carry_only_the_first_rows_and_stay_small_and_whole(self):
+    def test_only_the_detail_row_carries_the_big_picture_and_the_list_rows_stay_small(self):
         s = self.src()
         data, state = s.search("landscape", False, False)
-        s.attach_heroes(data["items"], network=False)
+        s.attach_thumbs(data["items"], network=False)
         rows = self.m.build("items", "", data, state, self.cfg, True, "landscape")
-        art = [r for r in rows if r.get("hero_lines")]
-        self.assertEqual(len(art), 9)
-        with_pic = [r for r in art if r.get("img1")]
-        self.assertEqual(len(with_pic), 2)   # sample mode records a big picture for the first two rows only
-        for r in art:
-            self.assertTrue(r["hero_lines"].startswith("&nbsp;"))
-            self.assertIn("Image and data", r["hero_lines"])
-            self.assertEqual(r["hero_alt"], "Artwork" if r.get("img1") else "No picture here: it is on Open source")
-            self.assertTrue(r["open_url"] and r["share_text"])   # the Open source and Copy summary buttons still have their values
-        for r in with_pic:
-            f = [r["img%d" % k] for k in range(1, 25) if r.get("img%d" % k)]
-            self.assertTrue(all(len(x) <= 4000 for x in f))
-            self.assertTrue("".join(f).startswith("data:image/jpeg;base64,/9j/"))
-        self.assertLess(len(json.dumps(rows)), 400000)   # far under the 4 MiB the launcher keeps of a script's answer
-        cfg = json.loads(json.dumps(self.cfg)); cfg["images"]["hero"]["rows"] = 1
-        s2 = self.m.Source(cfg, True, [], self.fx)
-        items = s2.search("landscape", False, False)[0]["items"]
-        s2.attach_heroes(items, network=False)
-        self.assertEqual([bool(i["hero"]) for i in items[:3]], [True, False, False])   # a row past the cap is text-only
+        for r in rows:
+            self.assertNotIn("hero_lines", r)
+            self.assertNotIn("img5", r)   # the list rows hold the small picture only (img1 to img4)
+        it, state = s.detail("5848", False)
+        s.attach_heroes([it], network=False)
+        row = [r for r in self.m.build_item("item", it, state, self.cfg, True) if r.get("hero_lines")]
+        self.assertEqual(len(row), 1)
+        r = row[0]
+        self.assertTrue(r["hero_lines"].startswith("&nbsp;"))
+        self.assertIn("Image and data", r["hero_lines"])
+        self.assertEqual(r["hero_alt"], "Artwork")
+        self.assertTrue(r["open_url"] and r["share_text"])   # the Open source and Copy summary buttons still have their values
+        f = [r["img%d" % k] for k in range(1, 25) if r.get("img%d" % k)]
+        self.assertGreater(len(f), 10)
+        self.assertTrue(all(len(x) <= 4000 for x in f))
+        self.assertTrue("".join(f).startswith("data:image/jpeg;base64,/9j/"))
+        self.assertLess(len(json.dumps(r)), 120000)
+        it2, state2 = s.detail("874", False)   # no recorded big picture: the same pane as text, with the note
+        s.attach_heroes([it2], network=False)
+        r2 = [x for x in self.m.build_item("item", it2, state2, self.cfg, True) if x.get("hero_lines")][0]
+        self.assertEqual(r2["hero_alt"], "No picture here: it is on Open source")
+        self.assertNotIn("img1", r2)
 
     def test_a_big_picture_that_does_not_fit_the_fields_is_dropped_and_the_row_stays(self):
         s = self.src(fixture=False)

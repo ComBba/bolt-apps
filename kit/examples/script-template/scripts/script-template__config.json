@@ -4,7 +4,7 @@
     "chip": "script-template",
     "title": "Script template",
     "icon": "Image",
-    "description": "Search the Art Institute of Chicago's public-domain artworks, no key: number tiles with meters and sparklines, a list with a big picture in the preview pane, a chart, a table, a picture grid and a detail view. Replace the API and the fields to make it yours.",
+    "description": "Search the Art Institute of Chicago's public-domain artworks, no key: number tiles with meters and sparklines, a list with a picture in the preview pane, a detail with a big picture, a chart, a table, a picture grid and a detail view. Replace the API and the fields to make it yours.",
     "timeout": 25,
     "service": "Art Institute of Chicago"
   },
@@ -43,8 +43,7 @@
       ],
       "max_bytes": 70000,
       "chunk_chars": 4000,
-      "max_chunks": 24,
-      "rows": 8
+      "max_chunks": 24
     }
   },
   "cache": {
