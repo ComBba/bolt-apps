@@ -27,9 +27,9 @@ Drop the `.boltpack` on the Bolt launcher. Install it (the pack is self-signed: 
 | Step | Type or press | Expect |
 |---|---|---|
 | 1 | `=my-tool` | Four number tiles on the right: Public domain 60% with a meter and a CC0 badge; Peak period 375 artworks with a sparkline, a delta and a PEAK badge; Top department with a meter; Pictured 9 artworks. First run takes about a second. |
-| 2 | arrow down, Enter on Public domain | A list of landscape paintings. Select one: a small picture, facts (artist, date, medium, origin, department, rights), a note with the attribution, a tile for its period, buttons Open source and Copy summary. |
+| 2 | arrow down, Enter on Public domain | A list of landscape paintings. Select one: a big picture across the pane, then the title, the artist and date, a short facts list (Same period: N works, X to Y; medium; origin; department), the attribution, and the buttons Open source and Copy summary. In sample mode only the first two carry a picture. |
 | 3 | type `items monet`, Enter | The list for another word (any word works, two words too). A word with no match shows one `No match` row. |
-| 4 | Enter on an artwork | The detail: description, credit, attribution, Back, and Record (JSON). |
+| 4 | Enter on an artwork | The detail: the same big picture pane with the description, credit, size and attribution, Back, and Record (JSON). |
 | 5 | Enter on Record (JSON) | The record as an open tree. Esc returns. |
 | 6 | `=my-tool pictures` | A grid of cards with the pictures, titles, artists and dates. |
 | 7 | `=my-tool chart` | A bar chart of public-domain artworks per period. |
@@ -39,7 +39,7 @@ Drop the `.boltpack` on the Bolt launcher. Install it (the pack is self-signed: 
 | 11 | turn off the network, `=my-tool` | An old copy of the last results, labelled OLD COPY on the first tile. With nothing cached: one Could not reach row and Try again. |
 
 ## 4. Things to know before you record
-- The pictures are small (a 40 pixel avatar in the list pane, larger in the picture grid). The app puts them in the rows itself because a personal app pane never loads a web address.
+- The picture in the list and detail panes is big (a markdown pane draws it across the pane; the entity preview pane would draw the same picture as a 40 pixel avatar, by its design). The app puts it in the row itself because a personal app pane never loads a web address.
 - Grid views (tiles, pictures, chart, table) have no Back row: press Esc or Left to go back.
 - Sample data (`--sample`, and `check`) is labelled SAMPLE on its first row or tile. A shipped app always runs live.
 - The data is from the Art Institute of Chicago (artic.edu): metadata CC0, descriptions CC BY 4.0, images of public-domain works CC0. Say so in the video.

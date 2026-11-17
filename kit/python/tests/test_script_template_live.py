@@ -166,20 +166,21 @@ class ScriptTemplateLive(unittest.TestCase):
             s = self.src()
             if view in ("item", "record"):
                 it, state = s.detail(arg, False)
-                s.attach_thumbs([it], network=False)
+                s.attach_heroes([it], network=False)
                 rows = self.m.build_item(view, it, state, self.cfg, True)
             else:
                 data, state = s.search("landscape", False, False)
-                s.attach_thumbs(data["items"], network=False)
+                (s.attach_heroes if view == "items" else s.attach_thumbs)(data["items"], network=False)
                 rows = self.m.build(view, arg, data, state, self.cfg, True, "landscape")
             self.assertEqual(kit.validate_rows(rows), [], view)
             pics = [r for r in rows if r.get("img1")]
-            if view in ("items", "pictures", "item"):
+            if view in ("items", "pictures") or (view, arg) == ("item", "5848"):
                 self.assertTrue(pics, view)
             for r in pics:
-                joined = "".join(r.get("img%d" % k, "") for k in (1, 2, 3, 4))
+                n = 24 if view in ("items", "item") else 4
+                joined = "".join(r.get("img%d" % k, "") for k in range(1, n + 1))
                 self.assertTrue(joined.startswith("data:image/jpeg;base64,/9j/"))
-                self.assertLessEqual(len(joined), 16000)
+                self.assertLessEqual(len(joined), n * 4000)
 
     def test_the_overview_tiles_carry_a_meter_a_sparkline_and_a_delta_and_only_numbers(self):
         s = self.src()
@@ -240,10 +241,70 @@ class ScriptTemplateLive(unittest.TestCase):
         y = self.m.emit_yaml(self.cfg)
         with open(os.path.join(EX, "utilities", "script-template.yaml"), encoding="utf-8") as f:
             self.assertEqual(f.read(), y)
-        self.assertIn('image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"', y)
-        for kind in ("kind: cards", "kind: chart", "kind: table", "kind: json_tree", "kind: entity_preview", "kind: markdown"):
+        self.assertIn("{{row.img1}}{{row.img2}}{{row.img3}}", y)
+        self.assertIn("{{row.img24}}){{row.hero_lines}}", y)   # the big picture of the list and detail panes: markdown over img1 to img24
+        for kind in ("kind: cards", "kind: chart", "kind: table", "kind: json_tree", "kind: markdown"):
             self.assertIn(kind, y)
         self.assertNotIn("http", y.split("presentation:")[1].split("actions:")[0])   # no web address in any pane bind
+
+    def test_the_big_picture_rows_carry_only_the_first_rows_and_stay_small_and_whole(self):
+        s = self.src()
+        data, state = s.search("landscape", False, False)
+        s.attach_heroes(data["items"], network=False)
+        rows = self.m.build("items", "", data, state, self.cfg, True, "landscape")
+        art = [r for r in rows if r.get("hero_lines")]
+        self.assertEqual(len(art), 9)
+        with_pic = [r for r in art if r.get("img1")]
+        self.assertEqual(len(with_pic), 2)   # sample mode records a big picture for the first two rows only
+        for r in art:
+            self.assertTrue(r["hero_lines"].startswith("&nbsp;"))
+            self.assertIn("Image and data", r["hero_lines"])
+            self.assertEqual(r["hero_alt"], "Artwork" if r.get("img1") else "No picture here: it is on Open source")
+            self.assertTrue(r["open_url"] and r["share_text"])   # the Open source and Copy summary buttons still have their values
+        for r in with_pic:
+            f = [r["img%d" % k] for k in range(1, 25) if r.get("img%d" % k)]
+            self.assertTrue(all(len(x) <= 4000 for x in f))
+            self.assertTrue("".join(f).startswith("data:image/jpeg;base64,/9j/"))
+        self.assertLess(len(json.dumps(rows)), 400000)   # far under the 4 MiB the launcher keeps of a script's answer
+        cfg = json.loads(json.dumps(self.cfg)); cfg["images"]["hero"]["rows"] = 1
+        s2 = self.m.Source(cfg, True, [], self.fx)
+        items = s2.search("landscape", False, False)[0]["items"]
+        s2.attach_heroes(items, network=False)
+        self.assertEqual([bool(i["hero"]) for i in items[:3]], [True, False, False])   # a row past the cap is text-only
+
+    def test_a_big_picture_that_does_not_fit_the_fields_is_dropped_and_the_row_stays(self):
+        s = self.src(fixture=False)
+        im = self.cfg["images"]["hero"]
+        room = im["chunk_chars"] * im["max_chunks"]
+        big = "/9j/" + "A" * room
+        s.heroes.put(IMG, {"t": "/9j/AAAA"})
+        items = [{"image_id": IMG}]
+        s.attach_heroes(items, network=False)
+        self.assertTrue(items[0]["hero"].startswith("data:image/jpeg;base64,/9j/"))
+        self.assertEqual(self.m.hero_fields("x" * (room + 1), self.cfg), {})
+        self.assertEqual(len(self.m.hero_fields(self.m.DATA_PREFIX + big[:room - 100], self.cfg)), im["max_chunks"])
+
+    def test_every_api_string_that_enters_a_markdown_body_is_escaped_to_plain_text(self):
+        hostile = "](javascript:alert(1)) ![x](https://evil/x.png) <img src=x onerror=alert(1)> **bold** `code` [a](b) <https://evil.example> a_b_c | x &lt; www.evil.example me@evil.example # h\\"
+        it = self.m.n_item(self.rec(title=hostile, artist_display=hostile, date_display=hostile, medium_display=hostile, place_of_origin=hostile, department_title=hostile, description=hostile, credit_line=hostile, dimensions=hostile), self.cfg)
+        facets = {"periods": [1, 2, 3, 4, 5, 6, 7]}
+        for full in (False, True):
+            body = self.m.hero_markdown(it, self.cfg, facets, full)
+            for line in body.split("\n"):
+                if line.startswith(("### ", "- ", "*")) or ":" in line or "\\" in line:
+                    # the only markdown that is NOT an escape: the heading hash, the list dash, the emphasis stars, our own labels
+                    plain = __import__("re").sub(r"\\.", "", line)
+                    plain = plain.replace("### ", "", 1) if plain.startswith("### ") else plain
+                    plain = plain[2:] if plain.startswith("- ") else plain
+                    plain = plain[1:-1] if plain.startswith("*") and plain.endswith("*") else plain
+                    for ch in "[]()<>`*_|!#&~{}":
+                        self.assertNotIn(ch, plain, (ch, line))
+        # an escaped string reads back as the cleaned text
+        un = lambda t: __import__("re").sub(r"\\(.)", r"\1", t)
+        self.assertEqual(un(self.m.md_escape(hostile)), kit.clean_text(hostile))
+        row = self.m.hero_row(it, self.cfg, facets)
+        self.assertEqual(kit.validate_rows([row]), [])
+        self.assertNotIn("](javascript", row["hero_lines"].replace("\\]\\(", ""))
 
     def test_no_long_dashes_in_the_example_and_api_text_is_tidied(self):
         root = os.path.abspath(os.path.join(EX))
