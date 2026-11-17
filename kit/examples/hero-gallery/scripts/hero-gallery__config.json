@@ -1,0 +1,84 @@
+{
+  "app": {
+    "id": "hero-gallery",
+    "chip": "hero-gallery",
+    "title": "Hero gallery",
+    "icon": "Image",
+    "description": "Pictures drawn by the app itself, shown full width at the top of the preview pane (needs Bolt 182). Offline, no network."
+  },
+  "credit": "Drawn by this example's script, public domain (CC0)",
+  "pictures": [
+    {
+      "id": "dawn",
+      "title": "Dawn",
+      "subtitle": "a grainy sky from deep blue to orange",
+      "kind": "vertical gradient",
+      "alt": "A sky going from deep blue at the top to orange at the horizon",
+      "caption": "Dawn, 240 by 135, grainy so it takes about 12 row fields",
+      "width": 240,
+      "height": 135,
+      "from": [
+        14,
+        32,
+        96
+      ],
+      "to": [
+        250,
+        150,
+        60
+      ],
+      "grain": 1
+    },
+    {
+      "id": "stripes",
+      "title": "Stripes",
+      "subtitle": "diagonal bands in three greens",
+      "kind": "diagonal stripes",
+      "alt": "Diagonal stripes in three shades of green",
+      "caption": "Stripes, 320 by 180",
+      "width": 320,
+      "height": 180,
+      "colors": [
+        [
+          20,
+          90,
+          60
+        ],
+        [
+          60,
+          160,
+          90
+        ],
+        [
+          170,
+          220,
+          150
+        ]
+      ],
+      "band": 14
+    },
+    {
+      "id": "rings",
+      "title": "Rings",
+      "subtitle": "rings around a point, in two purples",
+      "kind": "rings",
+      "alt": "Concentric rings in two shades of purple",
+      "caption": "Rings, 320 by 180",
+      "width": 320,
+      "height": 180,
+      "colors": [
+        [
+          70,
+          30,
+          120
+        ],
+        [
+          190,
+          150,
+          230
+        ]
+      ],
+      "ring": 9
+    }
+  ]
+}

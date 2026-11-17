@@ -4,13 +4,13 @@
 // schema validation of every output; footer button and label limits; the numeric tile rule; text safety scan;
 // vendored-kit divergence guard. Not built: see docs/kit-design.md, section "What check does not do".
 import fs from 'node:fs';
-import { RULES } from './boltrules.mjs';
+import { RULES, parseBoltVersion } from './boltrules.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { isNavToken } from './assess.mjs';
+import { isNavToken, assessYaml } from './assess.mjs';
 import { parseYaml, get, str, notYamlHint } from './yamlsubset.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -63,6 +63,7 @@ export function platformFindings(app) {
 		const p = app.platforms;
 		if (!Array.isArray(p) || !p.length || p.some((x) => !OSES.includes(x)) || new Set(p).size !== p.length) E('platforms_invalid', `platforms must be a non-empty list of unique values from ${OSES.join(', ')}`);
 	}
+	if ('min_bolt_version' in app && !(typeof app.min_bolt_version === 'string' && parseBoltVersion(app.min_bolt_version))) E('min_bolt_version_invalid', 'min_bolt_version must be a dotted version such as "0.1.182"');
 	if ('requires' in app) {
 		const r = app.requires;
 		if (!Array.isArray(r) || r.length > 8 || r.some((x) => !x || typeof x !== 'object' || !REQ_INTERP.includes(x.interpreter) || (x.min_version !== undefined && !/^\d+(\.\d+){0,2}$/.test(String(x.min_version))) || Object.keys(x).some((k) => !['interpreter', 'min_version', 'platforms'].includes(k)) || (x.platforms !== undefined && (!Array.isArray(x.platforms) || x.platforms.some((q) => !OSES.includes(q))))))
@@ -440,6 +441,8 @@ export async function checkApp(appDir, opts = {}) {
 	let listing = null;
 	try { listing = JSON.parse(fs.readFileSync(path.join(appDir, 'bolt-app.json'), 'utf8')); } catch {}
 	if (listing) for (const x of platformFindings(listing)) report.findings.push(x);
+	// a key only a newer Bolt reads (hero, Bolt 182): the app file must be offered only to that Bolt, because an older one refuses the whole pack
+	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) for (const pr of assessYaml(fs.readFileSync(path.join(ud, y), 'utf8'), undefined, { pack: true, minBolt: listing?.min_bolt_version, minBoltKnown: !!listing }).problems) if (['bind_needs_newer_bolt', 'bind_too_many_refs', 'hero_src_not_picture'].includes(pr.code)) report.findings.push({ level: pr.level, code: pr.code, message: `utilities/${y}: ${pr.message}`, path: `utilities/${y}` }); } catch { /* an unreadable app file is reported below */ }
 	if ('known_empty_tiles' in cfg) report.findings.push({ level: 'error', code: 'waiver_removed', message: 'check.json: known_empty_tiles no longer exists. A tiles view with rows that have no number now always fails (tile_row_without_value). Delete the key and give those rows a body in an entity_preview pane (a tile draws only for a number), as lookup-template does (ENGINE.md, "a text-only lookup result")', path: 'check.json' });
 	report.findings.push(...kitGuard(appDir, cfg));
 	// lookup.rows (a chained lookup) are drawn like overview rows: a row's own `copy` is not read, so Copy puts the row text on the clipboard. Only an `item` (single endpoint) honours `copy`.

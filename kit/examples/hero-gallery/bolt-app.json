@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "id": "hero-gallery",
+  "title": "Hero gallery",
+  "role": "Anyone who wants a picture at the top of a preview pane",
+  "saves": "Working out how to put a picture in a pane with the hero key",
+  "summary": "A list of pictures; the preview pane shows the selected one full width. Needs Bolt 182. Works offline.",
+  "author": { "name": "Bolt Apps examples", "link": "https://github.com/SparcleHQ/bolt-apps" },
+  "tier": 3,
+  "permissions": ["runs_commands"],
+  "platforms": ["macos", "linux"],
+  "min_bolt_version": "0.1.182",
+  "requires": [{ "interpreter": "python", "min_version": "3.9" }],
+  "tests": []
+}

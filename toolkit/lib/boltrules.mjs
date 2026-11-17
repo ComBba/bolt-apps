@@ -41,7 +41,7 @@ export function structureProblems(root) {
 }
 
 // ---- 4: right_widget.bind per kind, as the launcher checks it (strict for schema_version 2 and for every pack)
-function bindVal(node, spec, where, out) {
+function bindVal(node, spec, where, out, ctx = {}) {
 	const bad = (m) => out.push({ code: 'bind_invalid', message: `${where}: ${m}` });
 	const t = spec.t;
 	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
@@ -50,21 +50,43 @@ function bindVal(node, spec, where, out) {
 	else if (t === 'bool') { const v = scalar(node); if (!(v === 'true' || v === 'false') || node.q) bad('must be true or false'); }
 	else if (t === 'int') { const v = num(node); if (!Number.isInteger(v) || v < spec.lo || v > spec.hi) bad(`must be a whole number from ${spec.lo} to ${spec.hi}`); }
 	else if (t === 'textList') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => { if (!x || x.t !== 's' || [...x.v].length > spec.max) bad(`entry ${i} must be text of at most ${spec.max} characters`); }); } }
-	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out)); } }
-	else if (t === 'map') bindMap(node, spec.keys, where, out);
+	else if (t === 'list') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => bindMap(x, spec.keys, `${where}[${i}]`, out, ctx)); } }
+	else if (t === 'map') bindMap(node, spec.keys, where, out, ctx);
 }
-function bindMap(node, keysSpec, where, out) {
+// A dotted version "0.1.182" as numbers; undefined when it is not one.
+export const parseBoltVersion = (v) => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(v ?? '')); return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : undefined; };
+const boltAtLeast = (have, need) => { for (let i = 0; i < 3; i++) if (have[i] !== need[i]) return have[i] > need[i]; return true; };
+// A key that only a newer Bolt reads ("since" in the rules file). A Bolt that does not know the key REFUSES THE WHOLE PACK, so an app that uses it must declare
+// min_bolt_version in bolt-app.json at or above the version. ctx.minBolt is that declaration; ctx.minBoltKnown says a bolt-app.json was read (a packed bundle carries none).
+function gateProblem(where, key, since, ctx) {
+	const have = parseBoltVersion(ctx.minBolt), need = parseBoltVersion(since);
+	if (have && need && boltAtLeast(have, need)) return null;
+	const ver = since.replace(/^0\.1\./, '');
+	const why = ctx.minBolt === undefined ? 'bolt-app.json declares no min_bolt_version' : `bolt-app.json says min_bolt_version "${ctx.minBolt}"`;
+	return { code: 'bind_needs_newer_bolt', gate: true, level: ctx.minBoltKnown === false ? 'warning' : 'error', message: `${where}.${key}: needs Bolt ${ver}. A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses it ("unknown key for a entity_preview pane"), so no app in the pack would install there. ${ctx.minBoltKnown === false ? 'This pack carries no bolt-app.json, so its minimum Bolt cannot be read; give it only to people on Bolt ' + ver + ' or newer' : `${why}. Set "min_bolt_version": "${since}" in bolt-app.json to confirm you will give the pack only to people on Bolt ${ver} or newer (Bolt 181 does not read the field and cannot stop the install, it just refuses the pack), or remove ${key}`}` };
+}
+const REF = /\{\{/g;
+function bindMap(node, keysSpec, where, out, ctx = {}) {
 	if (!node || node.t !== 'm') { out.push({ code: 'bind_invalid', message: `${where}: must be a mapping, got ${kindWord(node?.t)}` }); return; }
 	for (const e of node.entries) {
 		if (!Object.hasOwn(keysSpec, e.key)) out.push({ code: 'bind_unknown_key', message: `${where}.${e.key}: not a key this pane reads. Allowed: ${Object.keys(keysSpec).join(', ') || 'none'}` });
-		else bindVal(e.value, keysSpec[e.key], `${where}.${e.key}`, out);
+		else {
+			const sp = keysSpec[e.key];
+			if (sp.since) { const g = gateProblem(where, e.key, sp.since, ctx); if (g) out.push(g); }
+			bindVal(e.value, sp, `${where}.${e.key}`, out, ctx);
+			if (sp.max_refs && e.value && e.value.t === 's') {
+				const n = (e.value.v.match(REF) || []).length;
+				if (n > sp.max_refs) out.push({ code: 'bind_too_many_refs', message: `${where}.${e.key}: has ${n} {{ }} references, at most ${sp.max_refs} are read (Bolt drops the picture). A picture that needs more parts is too big: use a smaller one` });
+				else if (e.key === 'src' && !/^\s*\{\{\s*row\./.test(e.value.v) && !/^\s*data:image\//.test(e.value.v)) out.push({ code: 'hero_src_not_picture', level: 'warning', message: `${where}.${e.key}: is not a {{row.<field>}} reference or a data:image URI. A Bolt pane never loads a web address, so no hero would show` });
+			}
+		}
 	}
 	for (const [k, v] of Object.entries(keysSpec)) if (v.required && !get(node, k)) out.push({ code: 'bind_invalid', message: `${where}.${k}: is required` });
 }
-export function bindProblems(kind, bind, where) {
+export function bindProblems(kind, bind, where, ctx = {}) {
 	const out = [], spec = RULES.right_widget.bind[kind];
 	if (!spec || !bind) return out;
-	bindMap(bind, spec, where, out);
+	bindMap(bind, spec, where, out, ctx);
 	if (kind === 'cards' && scalar(get(bind, 'layout')?.value) === 'tiles' && !get(bind, 'value')) out.push({ code: 'bind_invalid', message: `${where}.value: is required when layout is tiles` });
 	return out;
 }
