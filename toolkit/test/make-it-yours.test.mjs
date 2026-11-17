@@ -26,7 +26,7 @@ test('new: every template gets a TODO listing and a README note, and lint warns 
 		const n = sh(home, root, 'new', t, id); assert.equal(n.status, 0, `${t}: ${n.stdout}${n.stderr}`);
 		const listing = readJson(path.join(root, id, 'bolt-app.json'));
 		for (const k of ['summary', 'role', 'saves']) assert.match(listing[k], /^TODO /, `${t}: ${k} is ${listing[k]}`);
-		assert.match(fs.readFileSync(path.join(root, id, 'README.md'), 'utf8'), /^> Template text below \(copied from /, t);
+		assert.match(fs.readFileSync(path.join(root, id, 'README.md'), 'utf8'), /^> Template text below: replace it with what your app does\./, t);
 		assert.match(n.stdout, /Make it yours/, t);
 		const l = sh(home, root, 'lint', id, '--personal'); assert.equal(l.status, 0, `${t}: ${l.stdout}`);
 		assert.match(l.stdout, /warning listing_todo/, t);

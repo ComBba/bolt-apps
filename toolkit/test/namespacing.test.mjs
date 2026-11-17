@@ -238,11 +238,11 @@ test('on_missing_key: sample shows the labelled data and a key hint; setup shows
 	assert.equal(cfg.api.on_missing_key, 'sample');
 	const run = (env) => spawnSync('/usr/bin/python3', ['-I', path.join(app, 'scripts', 'modeapp__engine.py'), 'overview'], { encoding: 'utf8', env: { HOME: home, PATH: '/usr/bin:/bin', ...env } });
 	let rows = JSON.parse(run({}).stdout);
-	// the overview is a tiles view: no label rows (a row with no number draws an empty "-" tile); the label and the key hint ride on a real tile
-	assert.ok(!rows.some((r) => /^(SAMPLE DATA|Add your)/.test(r.title)), 'no label or hint row in a tiles view');
-	assert.ok(rows.some((r) => /sample data/.test(`${r.kpi_foot || ''} ${r.kpi_note || ''}`)), 'the label is on a tile footer or note');
+	// the overview is an entity_preview pane (a tile above only for a row with a number), so the label and the key hint are rows with a body, and a row with a number keeps its tile
+	assert.ok(rows.some((r) => /^SAMPLE DATA/.test(r.title) && /sample data/i.test(r.body || '')), 'a SAMPLE DATA row whose pane says so');
+	assert.ok(rows.some((r) => /^Add your/.test(r.title) && r.body), 'a key hint row with its steps in the pane');
 	assert.ok(rows.length > 3, 'the sample data is shown');
-	for (const r of rows) if (/sample data/.test(`${r.kpi_foot || ''} ${r.kpi_note || ''}`)) assert.equal(typeof r.kpi_value, 'number', 'the label is on a row that has a tile');
+	for (const r of rows) if (/^(SAMPLE DATA|Add your)/.test(r.title)) assert.ok(r.kpi_value === undefined || r.kpi_value === '', 'a label row carries no tile');
 	cfg.api.on_missing_key = 'setup'; fs.writeFileSync(cfgp, JSON.stringify(cfg, null, 2) + '\n');
 	rows = JSON.parse(run({}).stdout); assert.equal(rows.length, 1); assert.match(rows[0].title, /^Add your .* API key$/); assert.ok(!rows[0].pane && !rows[0].kpi_label);
 	rows = JSON.parse(run({ BOLT_APP_FIXTURE: '0' }).stdout); assert.equal(rows.length, 1);
@@ -347,9 +347,9 @@ test('tile_row_without_value mutants: only a refresh nav arg and the exact Back 
 	assert.deepEqual(sampleVisibleProblems(chart, [{ ...tile(1), subtitle: '3 ms - sample data' }, tile(2)], 'overview'), []);
 });
 
-test('known_empty_tiles exists only in the four examples that were not redesigned; every demo has a visible-label case per list view', () => {
+test('no example carries a known_empty_tiles waiver any more (all were redesigned); every demo has a visible-label case per list view', () => {
 	const waived = examples.filter((n) => fs.existsSync(path.join(EX, n, 'check.json')) && JSON.parse(fs.readFileSync(path.join(EX, n, 'check.json'), 'utf8')).known_empty_tiles).sort();
-	assert.deepEqual(waived, ['lookup-template', 'portal-template', 'script-template', 'system-glance']);
+	assert.deepEqual(waived, [], 'a waiver is a redesign still pending: none is left');
 	const acme = JSON.parse(fs.readFileSync(path.join(EX, 'acme-dash', 'check.json'), 'utf8')).cases.filter((c) => c.fixture === 'unset').map((c) => c.args[0]);
 	for (const v of ['tasks', 'policies', 'controls', 'risks', 'vendors', 'devices', 'people']) assert.ok(acme.includes(v), `acme-dash ${v}`);
 });

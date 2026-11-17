@@ -85,7 +85,7 @@ export function newFromTemplate(template, id, root) {
 	if (fs.existsSync(sd0)) { const longest = fs.readdirSync(sd0).map((f) => `manifests/scripts/${f}`).filter((n) => n.length > 100)[0]; if (longest) fail(`the id "${id}" is too long: ${longest.slice(10)} would not fit: Bolt allows 128 characters per name (every file starts with <app id>__, ids are up to 64), and this toolkit packs at most 82 for a script name. Choose a shorter id.`); }
 	// The listing text (summary, role, saves) and the app description described the TEMPLATE. Say so plainly instead of leaving another app's words on yours: lint warns (listing_todo) until they are rewritten.
 	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; j.summary = `TODO describe your app: what =${chip} shows, in one line.`; j.role = 'TODO describe who this app is for.'; j.saves = 'TODO describe what it saves them.'; return JSON.stringify(j, null, 2) + '\n'; });
-	edit('README.md', (s) => `> Template text below (copied from ${template}): replace it with what your app does. The files \`new\` leaves for you to rewrite are listed in ENGINE.md, "Make it yours".\n\n${s}`);
+	edit('README.md', (s) => `> Template text below: replace it with what your app does. The files \`new\` leaves for you to rewrite are listed in ENGINE.md, "Make it yours".\n\n${s}`);
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; j.app.description = `TODO describe your app: one line on what =${chip} shows.`; } return JSON.stringify(j, null, 2) + '\n'; });
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
