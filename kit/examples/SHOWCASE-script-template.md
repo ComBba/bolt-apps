@@ -39,7 +39,7 @@ Drop the `.boltpack` on the Bolt launcher. Install it (the pack is self-signed: 
 | 11 | turn off the network, `=my-tool` | An old copy of the last results, labelled OLD COPY on the first tile. With nothing cached: one Could not reach row and Try again. |
 
 ## 4. Things to know before you record
-- The picture in the list pane is small by design of the entity preview pane (a 40 pixel avatar); the detail view shows it large in a markdown pane. The app puts it in the row itself because a personal app pane never loads a web address.
+- The list pane carries no picture: the entity preview pane only has a 40 pixel avatar slot on its own row in 181, which looks like a mistake, so the picture lives in the detail view (a markdown pane). The app puts it in the row itself because a personal app pane never loads a web address.
 - Grid views (tiles, pictures, chart, table) have no Back row: press Esc or Left to go back.
 - Sample data (`--sample`, and `check`) is labelled SAMPLE on its first row or tile. A shipped app always runs live.
 - The data is from the Art Institute of Chicago (artic.edu): metadata CC0, descriptions CC BY 4.0, images of public-domain works CC0. Say so in the video.

@@ -5,7 +5,7 @@ A working script app on the kit that doubles as a tour of what a Bolt 181 app ca
 
 What to see (type `=my-tool` after `new` and `ship`; the word `landscape` is the default search):
 1. Overview: four number tiles. Public domain share with a meter and a CC0 badge; the peak period with a sparkline, a delta and a PEAK badge; the top department with a meter; how many pictures. Each tile drills (Enter).
-2. List: `=my-tool items monet` (any word, two words work). A small picture (40 pixel avatar), facts, a markdown note and Open source and Copy summary buttons in the preview pane for the selected artwork; a tile for its period; one icon and badge per department and century.
+2. List: `=my-tool items monet` (any word, two words work). Facts, a markdown note and Open source and Copy summary buttons in the preview pane for the selected artwork; a tile for its period; one icon and badge per department and century.
 3. Pictures: Enter on the Pictured tile (or `=my-tool pictures cats`): a grid of cards with the artworks' pictures.
 4. Chart and table: Enter on the Peak period tile (a bar chart of artworks per period) and on the Top department tile (a table sorted by artworks, with a total).
 5. Detail: Enter on an artwork for a markdown pane with a big picture (about 400 pixels wide, in proportion), the title, the artist and date, a short facts list, the description, credit, size, attribution and the Open source and Copy summary buttons; a Back row, a Back row and a raw record tree (Record (JSON)).

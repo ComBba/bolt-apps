@@ -63,7 +63,6 @@ presentation:
         bind:
           title: "{{row.title}}"
           subtitle: "{{row.subtitle}}"
-          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
           tiles_above:
             title: "{{row.kpi_label}}"
             value: "{{row.kpi_value}}"

@@ -652,7 +652,6 @@ def _tile_bind(ind):
 _PREVIEW = [
     "kind: entity_preview", "mode: selected_row", "bind:",
     '  title: "{{row.title}}"', '  subtitle: "{{row.subtitle}}"',
-    '  image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"',
     "  tiles_above:"] + _tile_bind(4) + [
     "  fields:", '    - { label: ARTIST, value: "{{row.a_artist}}" }', '    - { label: DATE, value: "{{row.a_date}}" }', '    - { label: MEDIUM, value: "{{row.a_medium}}" }',
     '    - { label: ORIGIN, value: "{{row.a_origin}}" }', '    - { label: DEPARTMENT, value: "{{row.a_dept}}" }', '    - { label: RIGHTS, value: "{{row.a_rights}}" }',
