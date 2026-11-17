@@ -1970,6 +1970,32 @@
         "image_url": {
           "$ref": "#/$defs/text"
         },
+        "hero": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "src"
+          ],
+          "description": "A full-pane-width picture above the tile and title (Bolt 182 and later; a Bolt 0.1.181 refuses the whole pack that uses it). src is a template that must resolve to an inline data:image URI (png, jpeg, gif, webp, avif or bmp, at most 1 MiB); a web address is never loaded. src may join at most 16 {{ }} references, for example {{row.img1}}{{row.img2}}. A missing or invalid src draws no hero. image_url stays the small avatar.",
+          "properties": {
+            "src": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "alt": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "caption": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "credit": {
+              "type": "string",
+              "maxLength": 200
+            }
+          }
+        },
         "fields": {
           "type": "array",
           "maxItems": 40,

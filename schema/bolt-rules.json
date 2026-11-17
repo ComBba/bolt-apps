@@ -138,6 +138,30 @@
      "t": "text",
      "max": 4096
     },
+    "hero": {
+     "t": "map",
+     "since": "0.1.182",
+     "keys": {
+      "src": {
+       "t": "text",
+       "max": 4096,
+       "required": true,
+       "max_refs": 16
+      },
+      "alt": {
+       "t": "text",
+       "max": 200
+      },
+      "caption": {
+       "t": "text",
+       "max": 200
+      },
+      "credit": {
+       "t": "text",
+       "max": 200
+      }
+     }
+    },
     "fields": {
      "t": "list",
      "keys": {

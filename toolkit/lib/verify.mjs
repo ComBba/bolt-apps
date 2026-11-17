@@ -116,6 +116,9 @@ export const FIXES = {
 	right_widget_no_data: 'Use table, detail, cards or chart (image_grid for pictures). Bolt shows a plain "cannot show app data" message for image, color, weather, date and calc panes.',
 	right_widget_kind_invalid: 'Use a right_widget kind and mode Bolt accepts: kinds card, map, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (and the data-less image, color, weather, date, calc); modes selected_row or list_data.',
 	right_widget_bind_unread: 'Remove the bind key: the map, image, calc, color, weather and date panes read nothing from bind. For a chart, type is line, bar or sparkline.',
+	bind_needs_newer_bolt: 'Set "min_bolt_version": "0.1.182" in bolt-app.json to confirm you give the pack only to people on Bolt 182 or newer, or remove the bind key. Bolt does not read that field and cannot hold the pack back; a Bolt 181 refuses the whole pack when one app uses a key it does not know.',
+	bind_too_many_refs: 'hero.src may join at most 16 {{ }} references; Bolt draws no picture past that. Use a smaller picture so it fits in 16 parts or fewer (kit.hero_fields refuses a bigger one).',
+	hero_src_not_picture: 'Set hero.src to {{row.<field>}} joined from the row fields that hold the picture, or to a data:image URI. A pane never loads a web address.',
 	run_action_template: 'Give the run action a fixed query_template with no {{ }} (for example refresh), or remove the action.',
 	script_too_large: 'Bolt hashes a script only up to 2 MB and will not run an app that names a larger file. Keep scripts small; put big data outside the app.',
 	helper_not_hashed: 'Name the file in the command (for example python3 {{scripts_dir}}/my-app__engine.py {{scripts_dir}}/my-app__config.json). Bolt\'s approval hash covers only the manifest and the scripts named as {{scripts_dir}}/<file>, so an unnamed helper can change without asking again.',
@@ -166,7 +169,7 @@ export function checkManifests(files, opts = {}) {
 	for (const f of files.filter((x) => x.kind === 'user_utility')) {
 		const y = f.content.toString('utf8'), file = f.path;
 		const esc_ = escapeProblem(y); if (esc_) add('error', esc_.code, esc_.message, file, 1);
-		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms, platformsUnknown: opts.platformsUnknown, pack: true }); apps.push({ ...a, file });
+		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms, platformsUnknown: opts.platformsUnknown, pack: true, minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown }); apps.push({ ...a, file });
 		for (const r of a.refs) used.add(r);
 		if (a.unknown) { add('error', 'yaml_unreadable_here', `this tool cannot interpret ${a.why}; Bolt may read it differently. ${notYamlHint(y)}`.trim(), file, 1); unknownAssess = true; continue; }
 		const root = a.tree, E = (code, msg, line) => add('error', code, msg, file, line || 1);

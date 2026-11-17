@@ -316,6 +316,31 @@ The `edit` list of each template in [index.json](index.json) is the one answer (
 
 Never edit `<id>__bolt_app_kit.py`: re-vendor it with `bolt-apps kit vendor --flat <app>`. Every file in `scripts/` is named `<id>__<name>`: all installed apps share one scripts folder, and Bolt refuses a file another app already owns (`owned_by_other`). Every script that lists a helper file in its command names it as `{{scripts_dir}}/<id>__<file>` (`<id>__config.json`, `<id>__fixtures.json`, `<id>__bolt_app_kit.py`) so Bolt shows it in the approval.
 
+## Hero picture (Bolt 182)
+
+The `entity_preview` pane can draw the selected row's picture full width above the tile and title (newer than 181). `bind.hero` is a map: `src` (required), `alt`, `caption`, `credit`. `image_url` is unchanged: a 40 pixel avatar.
+
+```yaml
+right_widget:
+  kind: entity_preview
+  mode: selected_row
+  bind:
+    hero:
+      src: "{{row.img1}}{{row.img2}}{{row.img3}}"
+      alt: "{{row.hero_alt}}"
+      caption: "{{row.hero_caption}}"
+      credit: "{{row.hero_credit}}"
+    title: "{{row.title}}"
+    body: "{{row.body}}"
+```
+
+- The pane draws the picture at the full pane width, aspect kept, at most 360 px high, in a rounded frame, with the caption as a pill and the credit as a small line, then the tile, title, subtitle, fields, body and actions.
+- `src` must expand to an inline `data:image` URI (png, jpeg, gif, webp, avif or bmp, at most 1 MiB). A web address is blocked: the script fetches the picture and puts it in the row. A missing or invalid `src` draws no hero and the pane is as it was.
+- `alt`, `caption` and `credit` are at most 200 characters; `src` is at most 4096 characters and joins at most 16 `{{ }}` references.
+- A row text field is cut at 4,000 characters, so the picture is split over `img1`, `img2`, ... and `src` joins them. 16 parts is about 47 KB of picture. The kit does the split: `kit.hero_fields(bytes_or_data_uri)` returns the `imgN` fields and `kit.hero_src_template(n)` the `src` text. It refuses a picture over 1 MiB, one that is not png, jpeg, gif or webp (Bolt also takes avif and bmp, but the standard library cannot recognise or resize them, so the helper refuses avif and bmp bytes: pass a `data:image/avif;base64,...` string instead and it is trusted and split as it is) and one that needs more than 16 parts; in that case use a smaller picture (the standard library cannot resize, so hand it a small one; ask the picture host for a small size, or draw it small). Catch `kit.KitError` and send the row without the picture fields: the row still shows, with no hero.
+- Pane keys are read per Bolt version. **A Bolt 0.1.181 refuses the whole pack when one app uses `hero`** (`presentation.right_widget.bind.hero: unknown key for a entity_preview pane`), so no app in the pack installs; a local `schema_version: 1` file only warns and shows no hero. So an app that uses `hero` sets `"min_bolt_version": "0.1.182"` in `bolt-app.json`, and you give the pack only to people on Bolt 182 or newer. `lint`, `check` and `pack` fail an app that uses `hero` without it, with the message "needs Bolt 182". Bolt does not read `min_bolt_version`, so this is your promise, not a lock (the pack carries it in its signed listing, and `verify` reads it from there: it warns when a pack that uses `hero` declares nothing or less than 0.1.182).
+- Example: `kit/examples/hero-gallery` (offline; the script draws the pictures). Not seen in a running Bolt 182 yet: written from the 182 source and sample runs.
+
 ## Typing free text and views in a script app
 
 The view is read from query word 0 (`view_arg` bound to `query.word(0)`), so a script app that also takes free text treats the first word as a view only when it is one of its view names and otherwise reads every word as text (`=insights ~/data.csv`, `=insights trend`). A text that starts with a view name needs a leading `./` or a different spelling. Words before the view word would need plain-word defaults (lint `view_arg_lead_default`); a default of `-` is fine for words after it. A nav row carries no actions and cannot carry text with a slash; keep the last typed text in the kit cache. To give a drilled-in view a button, add an ordinary row with `kit.action_chain(id, label, target_chip, query)` pointing at the app's own chip: a utility action to itself. That is not yet proven in the launcher.

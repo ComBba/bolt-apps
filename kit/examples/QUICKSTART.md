@@ -61,6 +61,7 @@ Edit between `new` and `run`. After editing an engine app's `scripts/<id>__confi
 | Script timeout | 1 to 60 s, default 10 | engine requests 10 s each, 14 s together |
 | Pane kinds with app data | card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid | same |
 | Panes that cannot show app data | image, color, weather, date, calc (Bolt shows "This app asks for ... pane, which cannot show app data") | do not use |
+| Picture in an `entity_preview` pane | `image_url`: a 40 pixel avatar | the same; `hero` (a full-width picture, newer than 181) needs Bolt 182: a 181 refuses the whole pack that uses it. Set `min_bolt_version` 0.1.182 in `bolt-app.json` (see ENGINE.md, Hero picture) |
 | `map` pane | draws Bolt's own map, not your rows; any bind key is refused | do not use; open a place with a url action |
 | Footer action kinds | url, composer, utility, run | same |
 | App file `schema_version` | 1 or 2 (2 makes pane bind mistakes errors) | 1 |
@@ -87,6 +88,7 @@ The same numbers live in `schema/bolt-rules.json`; a test keeps this table equal
 | `This pack cannot be installed here. Nothing was changed.` (a refusal with no wording, such as `version_unreadable`) | The reason is in `bolt-startup.log`, search for `user_utils: install pack`. Run `./bolt-apps ship` again. |
 | Empty list after install and Enter | Not approved yet: Settings, Desktop, User Apps, expand the app, Review and accept. Every reship changes the files, so approve again. 181 shows an empty list instead of saying so. |
 | `chip_not_id` from lint, verify or pack | Set `chip` (app file and `config.json`, then regenerate) to the app's id. |
+| `presentation.right_widget.bind.hero: unknown key for a entity_preview pane` (the whole pack is refused) | The pack uses `hero`, which is newer than 181. Install it on Bolt 182 or newer, or remove `hero`. |
 | "Bundle rejected" | You dropped it in Admin settings. Drop it on the Bolt launcher or Bolt Apps. |
 | Remove | Remove the app in Settings, Desktop, User Apps (the Remove button is on the app's row in 181 (not yet seen on a running 181 build); newer builds also show it in the expanded panel next to Revoke approval). Do not delete files by hand: Bolt keeps an install record, and a hand-deleted file can leave `owned_by_other` behind. Remove deletes the app's YAML and, for a pack's last app, its scripts and install record. If you cannot find a Remove button on your build, tell us which Bolt version you have. If you built apps before a fix was announced for them: remove the app this way, then `./bolt-apps ship` it again. |
 
