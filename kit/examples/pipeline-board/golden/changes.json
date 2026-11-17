@@ -3,11 +3,12 @@
     "title": "Back",
     "subtitle": "2 changes",
     "icon": "arrow-left",
-    "body": "",
+    "body": "Press Enter, Esc or Left to go back. Select a row to see its details.",
     "nav": {
       "back": true
     },
     "actions": [],
+    "pane": "note",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",
@@ -61,13 +62,13 @@
     "title": "Refresh",
     "subtitle": "Enter to fetch fresh data",
     "icon": "RefreshCw",
-    "body": "",
+    "body": "Press Enter to read the data again. Select a row to see its details.",
     "nav": {
       "view": "changes",
       "arg": "refresh"
     },
     "actions": [],
-    "pane": "changes",
+    "pane": "note",
     "kpi_label": "",
     "kpi_value": "",
     "kpi_unit": "",

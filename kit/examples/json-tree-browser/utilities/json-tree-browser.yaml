@@ -44,6 +44,14 @@ presentation:
         mode: selected_row
         bind:
           source: "data"
+    note:
+      right_widget:
+        kind: markdown
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          body: "{{row.body}}"
 actions:
   - { id: open, kind: url, target: row, label: Open, url_template: "{{row.open_url}}" }
   - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }

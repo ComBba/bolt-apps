@@ -792,24 +792,30 @@ def item_row(cfg, view, item, glob, nav):
     return kit.safe_row(title, subtitle, copy=cp, url=url, manifest_actions=2, **kw)
 
 
+def noted(view_id, text):
+    """pane and body for a row with no fields of its own: the note view where the view's pane binds fields, else the view's own pane."""
+    return dict(pane=NOTE_ACTIVE[0] or view_id, body=text if NOTE_ACTIVE[0] else "")
+
+
 def back_row(subtitle):
-    return kit.back_row(subtitle)
+    return kit.back_row(subtitle, view=NOTE_ACTIVE[0])
 
 
 def refresh_row(view_id, arg="refresh", title="Refresh", sub="Enter to fetch fresh data"):
-    return kit.refresh_row(view_id, title=title, subtitle=sub) if arg == "refresh" else kit.row(
-        title, sub, icon="RefreshCw", nav={"view": view_id, "arg": arg}, pane=view_id, copy=False)
+    note = NOTE_ACTIVE[0]
+    return kit.refresh_row(view_id, title=title, subtitle=sub, pane=note) if arg == "refresh" else kit.row(
+        title, sub, icon="RefreshCw", nav={"view": view_id, "arg": arg}, pane=note or view_id, body=kit.REFRESH_BODY if note else "", copy=False)
 
 
 def notice_rows(L, view_id, arg, ttl):
     rows = []
     for kind, title, sub, age in L.notices:
         tile = kit.tile("Data age", age, "s", None, note="old copy") if age else None
-        rows.append(kit.row(title, sub, icon="AlertCircle", nav={"view": view_id, "arg": arg}, pane=view_id, copy=False,
+        rows.append(kit.row(title, sub, icon="AlertCircle", nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body=sub if NOTE_ACTIVE[0] else "", copy=False,
                             tile=tile, badge={"stale": "STALE", "partial": "PARTIAL", "page": "FIRST PAGE"}[kind]))
     if not rows and L.from_cache and L.cached_age >= 2:
         rows.append(kit.row("Loaded from cache, %d s old" % L.cached_age, "Enter to refresh (data is kept %d s)" % ttl, icon="RefreshCw",
-                            nav={"view": view_id, "arg": arg}, pane=view_id, copy=False,
+                            nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body="Enter to refresh (data is kept %d s)" % ttl if NOTE_ACTIVE[0] else "", copy=False,
                             tile=kit.tile("Data age", L.cached_age, "s", ttl, note="from cache, Enter to refresh"), badge="CACHED"))
     return rows
 
@@ -820,7 +826,7 @@ def stop_rows(L, view_id, arg):
         return [kit.row(title, sub, icon="Search", copy=False)]   # nothing to retry: no nav, no tile, no pane
     icon = {"auth": "Key", "nokey": "Key"}.get(kind, "AlertCircle")
     badge = {"auth": "KEY", "nokey": "KEY", "offline": "OFFLINE"}.get(kind, "")
-    return [kit.row(title, sub, icon=icon, nav={"view": view_id, "arg": arg}, copy=False, badge=badge)]   # no pane and no tile fields: a setup row must not draw an empty tile in the right pane
+    return [kit.row(title, sub, icon=icon, nav={"view": view_id, "arg": arg}, copy=False, badge=badge, pane=NOTE_ACTIVE[0], body=sub if NOTE_ACTIVE[0] else "")]   # no tile fields: a setup row must not draw an empty tile in the right pane; in a field-binding view it draws the note
 
 
 def overview_rows(cfg, glob):
@@ -877,10 +883,10 @@ def list_rows(cfg, view, data, glob, flt):
     head = [back_row("Back to the overview")]
     if flt:
         head.append(kit.row("Showing %d of %d" % (len(rows), total), "Enter to clear the filter \"%s\"" % flt, icon="Search",
-                            nav={"view": view["id"]}, pane=view["id"], copy=False))
+                            nav={"view": view["id"]}, copy=False, **noted(view["id"], "Enter to clear the filter \"%s\"" % flt)))
     if not rows:
         rows = [kit.row(view.get("empty", "Nothing to show"), "No matching rows" if flt else "The API returned no rows", icon=view.get("icon", "list"),
-                        pane=view["id"], copy=False, **dict(("f%d" % (i + 1), "") for i in range(MAX_FIELDS)))]
+                        copy=False, **dict(noted(view["id"], "No matching rows" if flt else "The API returned no rows"), **dict(("f%d" % (i + 1), "") for i in range(MAX_FIELDS))))]
     head[0] = back_row(sub)
     return head, rows
 
@@ -889,14 +895,14 @@ def detail_rows(cfg, view, data, glob, wanted, refresh_arg):
     vs = views_by_id(cfg)
     found = [x for x in data.get(view["endpoint"]) or [] if item_id(view, x) == wanted]
     if not found:
-        return [back_row("Back to the list"), kit.row("Not found", "No %s with id %s" % (view.get("title", view["id"]).lower(), wanted), icon="AlertCircle", pane=view["id"], copy=False)]
+        return [back_row("Back to the list"), kit.row("Not found", "No %s with id %s" % (view.get("title", view["id"]).lower(), wanted), icon="AlertCircle", copy=False, **noted(view["id"], "No %s with id %s" % (view.get("title", view["id"]).lower(), wanted)))]
     item = found[0]
     kids = children_of(cfg, view, item, data, glob)
     rows = [back_row("Back to %s" % view.get("title", view["id"]).lower()), item_row(cfg, view, item, glob, None)]
     for cv, x in kids[:MAX_ROWS - 4]:
         rows.append(item_row(cfg, cv, x, glob, {"view": cv["id"], "arg": item_id(cv, x)} if cv.get("children") and item_id(cv, x) else None))
     if not kids and view.get("children"):
-        rows.append(kit.row(view.get("no_children", "Nothing linked"), "No related rows", icon="list", pane=view["id"], copy=False))
+        rows.append(kit.row(view.get("no_children", "Nothing linked"), "No related rows", icon="list", copy=False, **noted(view["id"], "No related rows")))
     return rows
 
 
@@ -1011,6 +1017,8 @@ def emit_yaml(cfg):
         L += ["  views:", "    overview: {}"]
         for v in vs:
             L += ["    %s:" % v["id"], "      right_widget:"] + widget_lines(view_widget(v), 8)
+        if (note_plan(cfg) or (None, False))[1]:
+            L += note_lines()
     elif mode == "form":
         L.append("  right_widget:")
         L += widget_lines(cfg["form"]["widget"], 4)
@@ -1063,6 +1071,39 @@ SAMPLE_FALLBACK = [False]   # set by run(): no key was found and api.on_missing_
 
 def is_tiles_grid(w):
     return bool(w) and w.get("kind") == "cards" and (w.get("bind") or {}).get("layout") == "tiles"
+
+
+# The first row of a drilled list is selected when it opens, so the Back row is the first thing the right pane draws. A pane that binds fields (detail, card, diff, json_tree...)
+# draws "—" placeholders for a row that has none, so in a view like that the Back, Refresh and notice rows point at a small markdown view, "note", that draws their own words.
+NOTE_VIEW = kit.NOTE_VIEW
+NOTE_ACTIVE = [None]   # set by run_views for the view being drawn: the note view's id when its pane binds fields a nav row lacks, else None
+
+
+def pane_binds_fields(w):
+    return bool(w) and (w.get("mode") or "selected_row") == "selected_row" and w.get("kind") not in (None, "entity_preview", "markdown")
+
+
+MAX_VIEWS = 8   # Bolt refuses an app file with more than 8 entries in presentation.views (the overview counts as one)
+
+
+def note_plan(cfg):
+    """(view id, declare) for the pane of the Back, Refresh and notice rows, or None when no view draws a field-binding pane (or there is no room for the note view).
+    A markdown selected_row view that already binds exactly title, subtitle and body is reused (declare False); else the `note` view is added when the app has room for it."""
+    vs = cfg.get("views") or []
+    if cfg.get("mode", "views") != "views" or any(v.get("id") == NOTE_VIEW for v in vs):
+        return None
+    if not (any(pane_binds_fields(view_widget(v)) for v in vs) or pane_binds_fields((cfg.get("overview") or {}).get("widget"))):
+        return None
+    for v in vs:
+        w = view_widget(v)
+        b = w.get("bind") or {}
+        if w.get("kind") == "markdown" and (w.get("mode") or "selected_row") == "selected_row" and [b.get(k) for k in ("title", "subtitle", "body")] == ["{{row.title}}", "{{row.subtitle}}", "{{row.body}}"] and set(b) <= {"title", "subtitle", "body", "actions"}:
+            return v["id"], False
+    return (NOTE_VIEW, True) if len(vs) + 1 < MAX_VIEWS else None
+
+
+def note_lines():
+    return ["    %s:" % NOTE_VIEW, "      right_widget:"] + widget_lines({"kind": "markdown", "mode": "selected_row", "bind": {"title": "{{row.title}}", "subtitle": "{{row.subtitle}}", "body": "{{row.body}}"}}, 8)
 
 
 def view_widget_of(cfg, view_id):
@@ -1134,6 +1175,7 @@ def run_views(cfg, args, fx, fixtures):
     vs = views_by_id(cfg)
     if view_id not in vs:
         view_id = "overview"
+    NOTE_ACTIVE[0] = note_plan(cfg)[0] if note_plan(cfg) and pane_binds_fields(view_widget_of(cfg, view_id)) else None
     refresh = arg == "refresh" or arg.startswith("refresh.")
     detail_id = arg[len("refresh."):] if arg.startswith("refresh.") else ("" if arg in ("-", "refresh", "") else arg)
     demo = ""

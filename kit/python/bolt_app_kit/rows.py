@@ -257,12 +257,27 @@ def _nav(nav):
     raise KitError("nav must be {'back': True} or {'view': name, 'arg': token}")
 
 
-def back_row(subtitle="", view=None, label="Back"):
-    return row(label, subtitle, icon="arrow-left", nav={"back": True}, pane=view, copy=False)
+# The first row of a drilled list is selected when the list opens, so the app's own Back row is the first thing the right pane draws. A
+# `detail` pane (or card, diff, json_tree) binds fields a Back row does not have and draws "—" placeholders. Give those rows `pane="note"`:
+# a small markdown view (title, subtitle, body) the app declares. NOTE_VIEW is the one name every example uses.
+NOTE_VIEW = "note"
+BACK_BODY = "Press Enter, Esc or Left to go back. Select a row to see its details."
+REFRESH_BODY = "Press Enter to read the data again. Select a row to see its details."
 
 
-def refresh_row(view, title="Scan again", subtitle="Enter to refresh", icon="RefreshCw"):
-    return row(title, subtitle, icon=icon, nav={"view": view, "arg": "refresh"}, pane=view, copy=False)
+def back_row(subtitle="", view=None, label="Back", body=None):
+    """The Back row. `view` is the pane it draws (pass NOTE_VIEW when the view's own pane binds fields this row lacks); with a pane it carries a short body."""
+    return row(label, subtitle, icon="arrow-left", nav={"back": True}, pane=view, copy=False, body=(BACK_BODY if body is None and view else body or ""))
+
+
+def refresh_row(view, title="Scan again", subtitle="Enter to refresh", icon="RefreshCw", pane=None, body=None):
+    """The Refresh row. Its pane is the view it refreshes unless `pane` says otherwise (pass NOTE_VIEW when that view's pane binds fields this row lacks)."""
+    return row(title, subtitle, icon=icon, nav={"view": view, "arg": "refresh"}, pane=pane or view, copy=False, body=(REFRESH_BODY if body is None and pane else body or ""))
+
+
+def note_row(title, subtitle="", icon="AlertCircle", badge="", body=None, nav=None):
+    """A row with no data of its own (a stale-copy notice, a not-found, a key hint) in a view whose pane binds fields it lacks: its pane is the NOTE_VIEW note, so it draws its own words, never "—" placeholders."""
+    return safe_row(title, subtitle, icon=icon, badge=badge, nav=nav, pane=NOTE_VIEW, body=subtitle if body is None else body, copy=False)
 
 
 def error_row(message, title="This app could not run"):
