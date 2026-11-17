@@ -72,7 +72,16 @@ An HTTP 404 (or 410) on EVERY call of a run, with nothing else to show, means th
 More endpoint options: `hydrate` (`{ path, limit }`: the answer is a list of ids and `path` contains `{id}`; one request per id runs in parallel, `limit` 1 to 50, default 20; an id that fails is dropped; if none answer the endpoint fails), `flatten` (`true` or a field name: an object of lists keyed by date or name becomes one list, the key kept in that field, default `key`), `require` (on an object endpoint: dotted paths that must be present, otherwise the answer counts as failed, never as zero). A `path` may use the date tokens `{today}`, `{today-7d}` and `{today+1d}` (local dates, 0 to 9999 days). An answer that says there is more (a next link or cursor, `has_more`, or a total above the rows held; read from the answer, `meta` or `pagination`) shows a "first page only" notice.
 
 ## `stats` (named numbers for the overview)
-`{ endpoint, where, group }` counts rows. `where`: `{ "status": ["done"] }`, `{ "status": { "not": ["done"] } }`, `{ "n": { "gte": 1 } }`. `group` gives "7 a, 3 b". `{ "pct": [a, b] }` and `{ "sum": [a, b] }` combine other stats.
+`{ endpoint, where, group }` counts rows. `where`: `{ "status": ["done"] }`, `{ "status": { "not": ["done"] } }`, `{ "n": { "gte": 1 } }`. `group` gives "7 a, 3 b". A plain value in `where` means equals and works for booleans and numbers too (`{ "done": true }`, `{ "n": 3 }`); a list means any of; `gte`, `lte`, `gt`, `lt` compare numbers. `{ "pct": [a, b] }` and `{ "sum": [a, b] }` combine other stats.
+
+Totals over a field: `{ "endpoint": "tickets", "field_sum": "hours" }` adds the field over the rows (after `where`), `{ "endpoint": "tickets", "field_max": "hours" }` takes the largest. A value that is a number or a numeric string counts; a row with no number in the field is skipped; when no row has one, the stat is left out (a row template that uses it shows "unknown", never 0). `where` and the field name take a dotted path. When a stat has `field_sum` or `field_max`, `group` is ignored. The other stat forms (`pct`, `sum`) take stat names, not fields, so total a field first and combine the stats. Example:
+
+```
+"stats": { "hours_all": { "endpoint": "tickets", "field_sum": "hours" },
+           "hours_open": { "endpoint": "tickets", "where": { "status": ["open"] }, "field_sum": "hours" },
+           "longest": { "endpoint": "tickets", "field_max": "hours" },
+           "open_share": { "pct": ["hours_open", "hours_all"] } }
+```
 
 ## `overview.rows[]`
 `title`, `subtitle`, `icon`, `body`, `view` (drill to a view; `arg` filters it), `url` (opens a link), `tile`, `extra`, `trend` (list of numbers), `only_if`. `overview.widget` replaces the default tiles pane.
@@ -219,6 +228,9 @@ def main(argv):
 main(sys.argv)
 ```
 Limits: servers that need a login or a key are out of scope here (use `get_secret` and pass the key in the server's environment from the script, never in `config.json`); the server starts on every run, so slow servers feel slow; remote MCP servers over HTTP are a plain HTTP call and need no workaround.
+
+### Scoped and slashed names (`@types/node`)
+Every `{query}` and `{earlier_step.field}` in an endpoint `path` is percent-encoded as one path segment, with nothing left unescaped: `@types/node` goes out as `%40types%2Fnode`, so the `/` does not add a path level. A test runs a real lookup against a local server and checks the request line `/%40types%2Fnode/latest` (`kit/python/tests/test_cold_run2_engine.py`). What this proves: the engine sends exactly that. Whether a given service accepts `%2F` is up to the service: the npm registry answered `@types/node` this way in a live run by the author of pkg-peek; a service that wants a literal `/` or `@` cannot be reached with `{query}` in the path, so put the name in a query string (`?name={query}`) when it allows that. A query is at most three typed words, joined with a space (`%20`). Filters (`|name` in a row template) act on the answer text, not on the typed word, so nothing in a row template re-encodes a name: write the Open link as `https://www.npmjs.com/package/{latest.name}` (the name as the API returned it, `@types/node` stays readable).
 
 ### Recipe: a text-only lookup result (no tile)
 A lookup whose answer is words (a version, a status, a description) has no number to put in a tile. Use an `entity_preview` selected-row widget, not a tiles grid. `tiles_above` draws only for a row that has a number, so a row with no `tile` draws no empty "-" tile, and the row's `body` (markdown) is what the pane shows:

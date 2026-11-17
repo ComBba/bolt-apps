@@ -75,10 +75,11 @@ class FieldStats(unittest.TestCase):
     def test_field_sum_and_field_max_with_where(self):
         cfg = cfg_of("portal-template")
         ep = "tickets"
-        fx = {ep: [{"id": "a", "n": 3, "s": "x"}, {"id": "b", "n": 9, "s": "y"}, {"id": "c", "n": "4", "s": "x"}, {"id": "d", "s": "x"}]}
+        fx = {ep: [{"id": "a", "n": 3, "s": "x", "flag": True}, {"id": "b", "n": 9, "s": "y"}, {"id": "c", "n": "4", "s": "x"}, {"id": "d", "s": "x"}]}
         cfg["stats"] = {"total": {"endpoint": ep, "field_sum": "n"}, "biggest": {"endpoint": ep, "field_max": "n"},
-                        "x_total": {"endpoint": ep, "where": {"s": ["x"]}, "field_sum": "n"}, "none": {"endpoint": ep, "where": {"s": ["zzz"]}, "field_max": "n"}}
-        cfg["overview"] = {"rows": [{"title": "Total {total}", "subtitle": "max {biggest}, x {x_total}, none {none}"}]}
+                        "x_total": {"endpoint": ep, "where": {"s": ["x"]}, "field_sum": "n"}, "none": {"endpoint": ep, "where": {"s": ["zzz"]}, "field_max": "n"},
+                        "flagged": {"endpoint": ep, "where": {"flag": True}}}
+        cfg["overview"] = {"rows": [{"title": "Total {total}", "subtitle": "max {biggest}, x {x_total}, none {none}, flagged {flagged}"}]}
         cfg["app"]["noun"] = "thing"
         with open(os.path.join(EX, "portal-template", "scripts", "portal-template__fixtures.json")) as f:
             fixtures = json.load(f)
@@ -90,6 +91,7 @@ class FieldStats(unittest.TestCase):
         self.assertEqual(row[0]["title"], "Total 16")   # 3 + 9 + "4" (a numeric string counts), the row with no n is skipped
         self.assertIn("max 9", row[0]["subtitle"])
         self.assertIn("x 7", row[0]["subtitle"])
+        self.assertIn("flagged 1", row[0]["subtitle"])   # a plain true in where means equals, so a boolean flag works
         self.assertNotIn("none 0", row[0]["subtitle"])   # a stat with nothing to total is left out, never 0
 
 
