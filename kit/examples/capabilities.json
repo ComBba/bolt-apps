@@ -758,7 +758,7 @@
       "example": "kit/examples/portal-template",
       "snippet": "\"api\": {\"fixture_default\": false, \"fixture_file\": \"fixtures.json\"}",
       "test": "kit/python/tests/test_portal_engine.py",
-      "limit": "Ship live (api.fixture_default false). Put \"fixture\": true at the top of check.json; an installed pack cannot be switched to sample data.",
+      "limit": "Ship live (api.fixture_default false) unless the app is sample-only by design (see sample.offline_only). Put \"fixture\": true at the top of check.json; an installed pack cannot be switched to sample data.",
       "also": [
         "acme-dash",
         "script-template"
@@ -864,6 +864,39 @@
       "also": [
         "sky-watch"
       ]
+    },
+    {
+      "id": "nav.typed_word_and_drill",
+      "group": "navigation",
+      "name": "One app that takes a typed query AND drills (lookup plus views)",
+      "status": "partial",
+      "example": "kit/examples/portal-template",
+      "snippet": "=my-tool customers acme",
+      "test": "toolkit/test/cold-run.test.mjs",
+      "limit": "Not in one app when the API must be asked per typed word: lookup mode has {query} but no drill or Back, views mode has drill and Back but its first word is a view, never a query (an unknown first word shows the overview). What works in views mode: a view name then one word filters that list inside the app, and Enter drills through children. Otherwise build two apps (two chips). ENGINE.md, Two shapes of app.",
+      "also": [
+        "lookup-template"
+      ]
+    },
+    {
+      "id": "actions.lookup_row",
+      "group": "actions",
+      "name": "Buttons on a lookup row",
+      "status": "partial",
+      "example": "kit/examples/lookup-template",
+      "snippet": "\"lookup\": {\"rows\": [{\"title\": \"{place.name}\", \"url\": \"https://example.com/{place.id}\"}]}",
+      "test": "toolkit/test/cold-run.test.mjs",
+      "limit": "Open (url) and Copy only: no drill, no Back, no extra actions. In a chained lookup (steps and rows) a row's copy is ignored and Copy copies the row text; check warns (config_copy_ignored). With a single endpoint and an item, item.copy works."
+    },
+    {
+      "id": "sample.offline_only",
+      "group": "sample",
+      "name": "An app that only shows sample data (offline, no API)",
+      "status": "supported",
+      "example_note": "no shipped example sets api.fixture_default true; the recipe is in ENGINE.md",
+      "snippet": "\"api\": {\"base_url\": \"https://example.invalid\", \"fixture_default\": true, \"fixture_file\": \"fixtures.json\"}",
+      "test": "toolkit/test/cold-run.test.mjs",
+      "limit": "Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack."
     }
   ]
 }

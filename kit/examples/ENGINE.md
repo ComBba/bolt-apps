@@ -12,6 +12,8 @@ All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file
 python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml
 ```
 
+If the config is wrong (an unknown icon, a missing key, unreadable JSON), `--emit-yaml` prints the problem on screen (for an icon it also lists the valid names), writes nothing to stdout and exits 1. The shell still creates an empty `utilities/<id>.yaml` for `>`: an empty file means the command failed, so run it again without `> ...` to read the reason. `run`, `lint` and `check` say the same when they meet an app file that is empty or is not YAML.
+
 The engine never connects to anything unless `api.fixture_default` is `false` (or `BOLT_APP_FIXTURE=1` is unset and the config says live).
 
 ## Modes (`mode`)
@@ -22,14 +24,47 @@ The engine never connects to anything unless `api.fixture_default` is `false` (o
 | `form` | A typed input form, then a result pane | `form` |
 | `lookup` | One word in, one detail card out | `endpoints`, `lookup` |
 
+## Two shapes of app: lookup or views
+
+Pick before you build: the two shapes cannot be mixed in one app.
+
+| | `lookup` | `views` |
+|---|---|---|
+| The person types | a word (up to three): `=chip serde` | a view name, then optionally one word: `=chip customers acme` |
+| The word reaches | the API, as `{query}` in an endpoint path (URL-quoted) | nothing remote: it filters the list the endpoint already returned |
+| Drill and Back | none | yes (`nav` rows, `children`, Back row) |
+| Right pane | one for the result | one per view, from `views[].widget` |
+| Buttons on a row | Open (`url`) and Copy; see "Buttons in lookup mode" | Open and Copy in config; more in the app file's `actions:` |
+
+What a views-mode app does with a typed first word, from the engine and the launcher (written from source, run here only in sample mode): a first word that is not a declared view is not an error, but the engine ignores it and prints the overview rows, which the app-level right pane draws. So a views-mode app cannot take a typed query. What it can take: `=chip <view> <word>` keeps the rows of that view whose title, subtitle, badge or first five fields contain the word (case-insensitive, one word; a "Showing N of M" row clears it), and `=chip <view> <id>` opens one row when that view has `children`.
+
+**Recipe: type a name, see a summary, drill into related lists (views mode).** It works when the API's list endpoints already return every row you need (the engine filters on this side, up to the row limits in the rules table):
+
+```
+"endpoints": { "customers": { "path": "/customers" }, "orders": { "path": "/orders" } },
+"views": [
+  { "id": "customers", "title": "Customers", "endpoint": "customers",
+    "children": [{ "view": "orders", "match": "customer_id" }],
+    "item": { "title": "{name}", "subtitle": "{plan} · {city}", "fields": [{ "label": "Plan", "value": "{plan}" }] } },
+  { "id": "orders", "title": "Orders", "endpoint": "orders",
+    "item": { "title": "{number}", "subtitle": "{total|round2} · {status}" } } ]
+```
+
+The person types `=chip customers acme`, sees the customers that match (each row is a summary), presses Enter on one to see its summary with its orders listed below, and Back returns to the filtered list. The portal-template example is this shape (projects, each with its tickets).
+
+**Not possible in one app on 181:** "type a name, ask the API for exactly that name, then drill". Asking the API per word needs `lookup`, and lookup has no drill. The honest workaround is two apps: a `lookup` app for the typed name (rows, Open, Copy) and a `views` app for browsing (its own chip), or a script app that reads its own words (see `repo-radar`, and "Typing free text and views in a script app" below).
+
 ## `app`
-`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `searchable` (accepted and does nothing: once the app has rows, Bolt filters them as you type, matching the title and subtitle only; an app with `dispatch.choices` shows its confirm choices instead), `timeout` (seconds, 1 to 60).
+`id` (folder name), `chip` (the word typed after `=`), `title`, `icon` (a launcher icon name), `description`, `service` (name used in error rows), `noun` (what one typed word names, such as crate: a 404 shows "No such crate"; without it the row says the lookup's `none_title`, default "No match"), `searchable` (accepted and does nothing: once the app has rows, Bolt filters them as you type, matching the title and subtitle only; an app with `dispatch.choices` shows its confirm choices instead), `timeout` (seconds, 1 to 60).
 
 ## `api` (views and lookup)
-`on_missing_key` (`setup` or `sample`; see "Three starting states" below), `base_url` (https, or loopback http for tests), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.
+`on_missing_key` (`setup` or `sample`; see "Three starting states" below), `base_url` (https, or loopback http for tests; required unless the app is sample-only: `api.fixture_default` true, or no `api` section at all), `key_env` (variable name), `env_file` (a `.env` path, must be `chmod 600`), `auth_header`, `auth_prefix` (`"Bearer "`), `fixture_default` (true = sample data, no network), `fixture_file`, `fixture_banner` (show a Sample data row). `allowed_hosts` (extra https hosts an endpoint `path` may name; the key is sent only to the `base_url` host), `auth_in` (`header`, the default, or `query`), `auth_param` (the query parameter name for `auth_in: query`, default `api_key`; the key is stripped from every answer before it is cached or shown, so prefer a header when the API allows one), `user_agent`.
 
 ## `cache`
 `ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero.
+
+## When the API answers 404
+An HTTP 404 (or 410) on EVERY call of a run, with nothing else to show, means the service is up and has no such thing. The app then shows one row with the typed word in its subtitle and no Retry: "No such <app.noun>" when `noun` is set; in lookup mode "No match" (or the lookup's `none_title`); in views mode without a noun, "The service answered 404 for <endpoint names>". It is never shown as an outage, and an old copy is never shown for it. When only some calls answered 404 and others worked, the data that loaded is kept and a notice says "Some data did not load: <endpoint> answered 404". A 404 mixed with another failure shows the other failure (offline, rejected key, rate limit, "returned an error" for a 5xx). In a chained lookup only the first step, the one that takes the typed word, can say "No such"; a later 404 reads "Found it, but the next lookup answered 404". `demo-notfound` previews the row in sample mode.
 
 ## `endpoints`
 `name: { path, kind (list or object), data (where the rows sit in the response, default "data"), map }`. `map` renames fields: `{ "title": "name", "owner": "assignee.name" }` (dotted paths work). Fixture mode reads `fixtures.json[name]`, the raw response. `fixtures.json` may also hold `_now` (epoch seconds: a fixed clock for the date tokens in sample mode) and, for a form app, `seed` (sample rows shown after the saved ones).
@@ -54,14 +89,36 @@ More view options: `id_field` (the row field that holds its id, default `id`), `
 
 Templates use `{field}` and `{field|filter}`: `human`, `day`, `hhmm`, `when` (an epoch in seconds or milliseconds as local `2026-11-15 14:05`), `whenday` (the same, date only), `round`, `round1`, `round2` (a number to 0, 1 or 2 decimals), `upper`, `lower`, `yes`, `join`, `dots`, `count`, and any name from `maps`. A missing value reads `unknown`.
 
+What each filter takes and gives:
+
+| Filter | Input | Output |
+|---|---|---|
+| `when` | an epoch in seconds or milliseconds (a number or digits), or an ISO date string (checked as a real calendar date and time) | `2026-11-15 14:05` (local time) for an epoch; an ISO string `2026-07-18T09:30:00Z` gives `2026-07-18 09:30`, as written, with no time zone change; an impossible date such as 2026-02-30 or 2026-13-45 reads `unknown`, and so does an eight-digit string such as 20260718 (neither an epoch nor an ISO date) |
+| `whenday` | the same | the date only, `2026-11-15`; ISO strings work, so a crates.io or GitHub date needs no other filter |
+| `day` | any text that starts with a date | its first 10 characters (`2026-07-18`) |
+| `hhmm` | an ISO date-time | characters 12 to 16 (`05:30`) |
+| `yes` | a true or false value | Yes or No (it never prints blank, so a missing flag reads `unknown`; show a flag only on rows where it matters) |
+| `thousands` | a number or digits | `1,720,732,933`; with decimals `1,234.50`; not a number reads `unknown` |
+| `round`, `round1`, `round2` | a number | 0, 1 or 2 decimals, half up |
+| `human` | text | in_progress becomes In progress |
+| `upper`, `lower` | text | the case changed |
+| `join`, `dots`, `count` | a list | chips, ` · ` separated text, the length (`1 point`, never `1 points`) |
+
+A `tile` value must be a number (a text value draws a `-` tile), but a tile `label`, `note` and `foot` are templates: put text such as a version in the label (`"Latest {crate.max_stable_version}"`). Numbers in a tile get no separator; put the formatted number in the row title or subtitle with `thousands`.
+
 ## Words typed after the chip (views mode)
-`=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
+`=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
 
 ## `form`
 `inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
 
 ## `lookup`
 `endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `prompt_subtitle`, `none_title`, `examples`.
+
+### Buttons in lookup mode
+A lookup row has Open (when its `url` renders to an https address) and Copy, and nothing else: no nav, no drill, no Back, no per-row actions. What Copy puts on the clipboard depends on the form of the lookup:
+- `endpoint` + `match` + `item` (one endpoint): `item.copy` (a template) is honoured; with none, Copy copies the row text.
+- `steps` + `rows` (a chain): each `rows[]` entry is drawn like an overview row, so its `copy` is ignored and Copy copies the row text. The check command warns about it (config_copy_ignored). Put the text you want copied in `title` or `subtitle`.
 
 ## Files named in the command
 The app file lists `<id>__config.json`, `<id>__fixtures.json` and `<id>__bolt_app_kit.py` after the script, so Bolt includes them in what the person approves and asks again if any changes. The engine ignores them as input.
@@ -163,9 +220,25 @@ main(sys.argv)
 ```
 Limits: servers that need a login or a key are out of scope here (use `get_secret` and pass the key in the server's environment from the script, never in `config.json`); the server starts on every run, so slow servers feel slow; remote MCP servers over HTTP are a plain HTTP call and need no workaround.
 
+## An app that only shows sample data (offline, no API)
+
+Most apps ship live (`api.fixture_default` `false`). An app that is sample-only by design (a demo, a reference card, a checklist whose data you write yourself) ships with the sample switch on, so it never opens a connection:
+
+```
+"api": { "fixture_default": true, "fixture_file": "fixtures.json", "fixture_banner": true }
+```
+
+- `base_url` may be left out when `fixture_default` is `true`, and the whole `api` section may be left out (then the app is sample-only, and `fixture_file` is `fixtures.json`). Keep a name that cannot resolve, such as `https://example.invalid`, if you want the section for readers. Nothing connects to it.
+- A sample-only app draws no Refresh row: it never fetches, so there is nothing to refresh.
+- `fixtures.json[<endpoint name>]` holds your rows, shaped like an API answer. It is signed with the pack, so changing the data means reshipping.
+- Leave out `key_env`: no key, no setup row. `on_missing_key` does nothing here.
+- `fixture_banner` (default off) adds a row or tile note that says the data is sample. Turn it on when the person might take your rows for real data. The text is for the people who use the app ("This is sample data."), never an instruction to edit `config.json`; the author-facing hint is in the output of `bolt-apps run` and `doctor`. Label real-looking rows yourself too (a `SAMPLE` badge, "invented" in the body) if they could be mistaken for facts.
+- `ship` and `doctor` read the same words: "Start mode: sample data (api.fixture_default is true), so it never contacts a service." If the same config also names a `key_env`, both add that the key is never read and the app never goes live.
+- QUICKSTART rule 4 ("ship live") has this one exception: sample-only by design. If the app is meant to show someone's real data, `fixture_default` must be `false`.
+
 ## Sample mode, live mode and what check does
 
-- A shipped engine app is live: `api.fixture_default` is `false`. An installed pack cannot be switched to sample data, because `config.json` is signed and Bolt starts the script with no environment.
+- A shipped engine app is live (`api.fixture_default` is `false`) unless it is sample-only by design (see "An app that only shows sample data" above). An installed pack cannot be switched between the two, because `config.json` is signed and Bolt starts the script with no environment.
 - `check` runs the script in sample mode so tests need no key and no network: put `"fixture": true` at the top of `check.json` (every case) or on one case (a case wins over the top level; `"fixture": false` forces live). The script then reads `fixtures.json`. A terminal run can use `BOLT_APP_FIXTURE=1` (or `0`).
 - Live with no key shows one setup row with the exact one-line command. Live with the network down shows the offline row, or an old copy with its age when one was cached. These are checked in sample mode with `demo-nokey`, `demo-offline`, `demo-auth` and `demo-stale`.
 

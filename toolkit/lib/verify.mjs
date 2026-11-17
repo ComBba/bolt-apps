@@ -6,7 +6,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { chipMismatch, assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
-import { get, str } from './yamlsubset.mjs';
+import { get, str, notYamlHint } from './yamlsubset.mjs';
 import { layoutProblems, namespaceProblems, RULES as BOLT_RULES } from './boltrules.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -168,7 +168,7 @@ export function checkManifests(files, opts = {}) {
 		const esc_ = escapeProblem(y); if (esc_) add('error', esc_.code, esc_.message, file, 1);
 		const a = assessYaml(y, path.basename(file).replace(/\.[^.]+$/, ''), { platforms: opts.platforms, platformsUnknown: opts.platformsUnknown, pack: true }); apps.push({ ...a, file });
 		for (const r of a.refs) used.add(r);
-		if (a.unknown) { add('error', 'yaml_unreadable_here', `this tool cannot interpret ${a.why}; Bolt may read it differently`, file, 1); unknownAssess = true; continue; }
+		if (a.unknown) { add('error', 'yaml_unreadable_here', `this tool cannot interpret ${a.why}; Bolt may read it differently. ${notYamlHint(y)}`.trim(), file, 1); unknownAssess = true; continue; }
 		const root = a.tree, E = (code, msg, line) => add('error', code, msg, file, line || 1);
 		{ const cm = chipMismatch(root); if (cm) add('warning', 'description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, file, 1); }
 		const val = (m, k) => get(m, k)?.value, S = (m, k) => str(val(m, k)), ln = (m, k, d) => get(m, k)?.line ?? d;

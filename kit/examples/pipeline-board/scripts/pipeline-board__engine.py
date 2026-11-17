@@ -10,6 +10,7 @@ Other:   engine.py --emit-yaml    prints the launcher app file for this config
 An author edits config.json and fixtures.json only. Formatting, row structure, text safety, deadlines and the
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
 import concurrent.futures as cf
+import datetime
 import json
 import math
 import os
@@ -50,7 +51,7 @@ MAX_FIELDS = 5
 MAX_ROWS = 50
 REQ_TIMEOUT = 10.0
 TOTAL_BUDGET = 14.0      # all requests together; the bridge limit is 20 s
-DEMOS = ("demo-offline", "demo-stale", "demo-auth", "demo-nokey")
+DEMOS = ("demo-offline", "demo-stale", "demo-auth", "demo-nokey", "demo-notfound")
 
 
 class ConfigError(Exception):
@@ -81,10 +82,24 @@ def lookup(name, item, glob):
     return v if v is not None else get_path(glob, name)
 
 
+ISO_DATE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}))?")
+
+
 def _when(v, day_only=False):
     """An epoch in seconds or milliseconds (a number or a string of digits) as local time, 2026-11-15 14:05, or the date only.
     A value that is not a plausible epoch reads unknown, never 1970."""
     n = number(v)
+    if isinstance(v, str) and re.match(r"^\d{8}\Z", v.strip()):
+        return kit.UNKNOWN   # 20260718 is neither an epoch nor an ISO date here
+    iso = ISO_DATE.match(v.strip()) if isinstance(v, str) else None
+    if iso and n is None:   # 2026-07-18, 2026-07-18T09:30:00Z or 2026-07-18 09:30: shown as written (no time zone change); an impossible date reads unknown
+        try:
+            datetime.date(int(iso.group(1)[:4]), int(iso.group(1)[5:7]), int(iso.group(1)[8:10]))
+        except ValueError:
+            return kit.UNKNOWN
+        if iso.group(2) and not (int(iso.group(2)[:2]) < 24 and int(iso.group(2)[3:]) < 60):
+            return kit.UNKNOWN
+        return iso.group(1) if day_only or not iso.group(2) else "%s %s" % (iso.group(1), iso.group(2))
     if n is None or n <= 0:
         return kit.UNKNOWN
     if n >= 1e11:
@@ -111,6 +126,11 @@ def shown(v, filt):
         return str(v)[:10]
     if filt in ("when", "whenday"):
         return _when(v, filt == "whenday")
+    if filt == "thousands":
+        n = number(v)
+        if n is None or not math.isfinite(n):
+            return kit.UNKNOWN
+        return "{:,d}".format(int(n)) if n == int(n) else "{:,.2f}".format(n)
     if filt in ("round", "round1", "round2"):
         n = number(v)
         if n is None:
@@ -269,8 +289,8 @@ def validate_config(cfg):
             if f.get("type") not in ("text", "number", "date", "select", "toggle") or not re.match(r"^[a-z][a-z0-9_]{0,31}\Z", str(f.get("name", ""))):
                 p.append("each form input needs a lowercase name and a type of text, number, date, select or toggle")
         return p
-    if not isinstance(api.get("base_url"), str):
-        p.append("api.base_url is required")
+    if not isinstance(api.get("base_url"), str) and api and api.get("fixture_default") is not True:
+        p.append("api.base_url is required (an app that only shows sample data may leave out api, or set api.fixture_default to true)")
     eps = cfg.get("endpoints")
     if not isinstance(eps, dict) or not eps:
         p.append("endpoints must list at least one endpoint")
@@ -473,7 +493,7 @@ def hydrate(api, key, ep, raw, deadline):
 def cause_of(e):
     """auth | rate | timeout | conn | other"""
     if isinstance(e, urllib.error.HTTPError):
-        return "auth" if e.code in (401, 403) else ("rate" if e.code == 429 else "other")
+        return "auth" if e.code in (401, 403) else ("rate" if e.code == 429 else ("notfound" if e.code in (404, 410) else "other"))
     r = getattr(e, "reason", e)
     if isinstance(e, (socket.timeout, TimeoutError)) or isinstance(r, (socket.timeout, TimeoutError)):
         return "timeout"
@@ -567,7 +587,7 @@ def fill_path(path, pvars):
 
 def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
     L = Loaded()
-    eps, api, app = cfg["endpoints"], cfg["api"], cfg["app"]
+    eps, api, app = cfg["endpoints"], cfg.get("api") or {}, cfg["app"]
     name = app.get("service", app["title"])
     ttl = float((cfg.get("cache") or {}).get("ttl", 45))
     stale_max = float((cfg.get("cache") or {}).get("stale_max", 86400))
@@ -581,6 +601,23 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         if not failed:
             return L
         causes = list(failed.values())
+        nf = sorted(n for n, c in failed.items() if c == "notfound")
+        if causes and all(c == "notfound" for c in causes):
+            if not got:   # every call of the run answered 404 and nothing else is shown: the service is up and has no such thing
+                noun = str(app.get("noun") or "").strip()
+                q = (pvars or {}).get("query")
+                if noun:
+                    title = "No such %s" % noun
+                elif cfg.get("mode") == "lookup":
+                    title = (cfg.get("lookup") or {}).get("none_title", "No match")
+                else:
+                    title = "The service answered 404 for %s" % ", ".join(nf)
+                L.stop = ("notfound", title, 'Nothing found for "%s"' % q if q else "The service says there is nothing at that address (HTTP 404)", 0)
+                return L
+            # some calls worked: keep their data and say which one answered 404
+            L.notices.append(("partial", "Some data did not load: %s" % ", ".join(nf), "%s answered 404" % ", ".join(nf), 0))
+            return L
+        causes = [c for c in causes if c != "notfound"] or causes
         main = "auth" if "auth" in causes else max(set(causes), key=causes.count)
         text = {"timeout": "%s did not answer in %d s" % (name, int(REQ_TIMEOUT)), "auth": "%s rejected the API key" % name,
                 "rate": "%s is limiting requests, try again in a minute" % name, "conn": "Could not connect to %s" % name,
@@ -605,6 +642,8 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         if demo == "demo-nokey":
             L.stop = ("nokey", "Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), 0)
             return L
+        if demo == "demo-notfound":
+            return finish({}, dict((n, "notfound") for n in names), {})
         if demo in ("demo-offline", "demo-auth", "demo-stale"):
             cause = "auth" if demo == "demo-auth" else "conn"
             return finish({}, dict((n, cause) for n in names), {}) if demo != "demo-stale" else _stale_demo(L, cfg, names, fixtures, finish)
@@ -613,6 +652,8 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
             if n in fixtures:
                 got[n] = fixtures[n]
         return finish(got, dict((n, "other") for n in names if n not in fixtures), {})
+    if not api.get("base_url"):
+        raise ConfigError("this app has no api.base_url, so it can only show sample data")
     if not https_or_loopback(api["base_url"]):
         raise ConfigError("api.base_url must be https (http only to this machine) so the key is never sent in the clear")
     key, problem = find_key(app, api) if api.get("key_env") else ("", "")
@@ -656,8 +697,8 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
             fresh.put(ck, p.value)      # put() refuses failures; they are never cached
             old.put(ck, p.value)
         else:
-            failed[n] = "timeout" if p.timed_out else (p.reason if p.reason in ("auth", "rate", "timeout", "conn") else "other")
-            prev = old.get(ck)
+            failed[n] = "timeout" if p.timed_out else (p.reason if p.reason in ("auth", "rate", "timeout", "conn", "notfound") else "other")
+            prev = old.get(ck) if failed[n] != "notfound" else None   # a 404 means it is gone: never show an old copy of it
             if prev is not None:
                 got[n] = prev
                 stale_ages[n] = old.age(ck) or 0
@@ -760,6 +801,8 @@ def notice_rows(L, view_id, arg, ttl):
 
 def stop_rows(L, view_id, arg):
     kind, title, sub, _ = L.stop
+    if kind == "notfound":
+        return [kit.row(title, sub, icon="Search", copy=False)]   # nothing to retry: no nav, no tile, no pane
     icon = {"auth": "Key", "nokey": "Key"}.get(kind, "AlertCircle")
     badge = {"auth": "KEY", "nokey": "KEY", "offline": "OFFLINE"}.get(kind, "")
     return [kit.row(title, sub, icon=icon, nav={"view": view_id, "arg": arg}, copy=False, badge=badge)]   # no pane and no tile fields: a setup row must not draw an empty tile in the right pane
@@ -977,11 +1020,17 @@ def split_args(argv):
     return cfg, args
 
 
+def never_fetches(cfg):
+    """An app with no api section, or one that ships with api.fixture_default true, never contacts a service: it draws no Refresh row."""
+    api = cfg.get("api") or {}
+    return not api or api.get("fixture_default") is True
+
+
 def fixture_mode(cfg):
     e = os.environ.get("BOLT_APP_FIXTURE")
     if e in ("0", "1"):
         return e == "1"
-    return bool((cfg.get("api") or {}).get("fixture_default", False))
+    return bool((cfg.get("api") or {}).get("fixture_default", not cfg.get("api")))
 
 
 def read_fixtures(cfg, cfg_path):
@@ -1055,11 +1104,11 @@ def sample_banner(cfg, rows, fx=True, quiet=False, view_id="overview"):
         rows.insert(at, kit.row("SAMPLE DATA: add your %s API key to see live data" % name, "These rows are invented examples, not your data.", body="Sample data: these rows are invented examples. Add your %s API key to see live data." % name, icon="FileText", copy=False, badge="SAMPLE"))
         rows.insert(at + 1, kit.row("Add your %s API key" % name, "Select this row: the steps are in its pane", body="Sample data is shown until a key is found. " + kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), icon="Key", copy=False, badge="KEY"))
     elif fx and api.get("fixture_banner"):
-        if tiles and label_on_tile(rows, "sample data: no key and no network (api.fixture_default)"):
+        if tiles and label_on_tile(rows, "sample data"):
             return rows
         if kind not in (None, "entity_preview", "markdown"):
             return mark_subtitle(rows, "sample data")
-        rows.insert(at, kit.row("Sample data", "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.", body="Sample data: fixture mode, no key and no network.",
+        rows.insert(at, kit.row("Sample data", "This is sample data.", body="This is sample data.",
                                 icon="FileText", copy=False, badge="SAMPLE"))
     return rows
 
@@ -1092,7 +1141,7 @@ def run_views(cfg, args, fx, fixtures):
     glob.update(compute_stats(cfg, L.data))
     if view_id == "overview":
         # a tiles grid draws a "-" tile for a row with no number, so its overview has no Refresh row (the answer is cached for a short time; type the app, then refresh, to re-read)
-        rows = notice_rows(L, "overview", retry, ttl) + overview_rows(cfg, glob) + ([] if is_tiles_grid(view_widget_of(cfg, "overview")) else [refresh_row("overview")])
+        rows = notice_rows(L, "overview", retry, ttl) + overview_rows(cfg, glob) + ([] if is_tiles_grid(view_widget_of(cfg, "overview")) or never_fetches(cfg) else [refresh_row("overview")])
     else:
         v = vs[view_id]
         flt = ""
@@ -1102,13 +1151,13 @@ def run_views(cfg, args, fx, fixtures):
         notes = notice_rows(L, view_id, retry, ttl)
         if detail_id:
             body = detail_rows(cfg, v, L.data, glob, detail_id, retry)
-            rows = body[:1] + notes + body[1:] + [refresh_row(view_id, retry)]
+            rows = body[:1] + notes + body[1:] + ([] if never_fetches(cfg) else [refresh_row(view_id, retry)])
         else:
             head, body = list_rows(cfg, v, L.data, glob, flt)
             if data_view and body:   # only a stale or partial notice is worth a row among the data; a skipped cell shows as a gap
                 rows = [n for n in notes if n.get("kpi_badge") in ("STALE", "PARTIAL")] + body
             else:
-                rows = head[:1] + notes + head[1:] + body + [refresh_row(view_id)]
+                rows = head[:1] + notes + head[1:] + body + ([] if never_fetches(cfg) else [refresh_row(view_id)])
     kit.emit(sample_banner(cfg, rows, fx, quiet=view_id != "overview" and (vs[view_id].get("widget") or {}).get("kind") in ("chart", "table"), view_id=view_id))
 
 
@@ -1136,6 +1185,8 @@ def run_lookup(cfg, args, fx, fixtures):
         pvars, glob, notices = {"query": query}, {}, []
         for i, step in enumerate(lk["steps"]):
             L = load(cfg, [step], False, demo, fx, fixtures, pvars)
+            if L.stop and L.stop[0] == "notfound" and i > 0:   # only the lookup that takes the typed word may say "no such": a later 404 means the chain broke
+                kit.emit([kit.row("Found it, but the next lookup answered 404", "The first lookup worked; %s said there is nothing at that address. Try again later." % step, icon="AlertCircle", copy=False, badge="ERROR")])
             if L.stop:
                 kit.emit(stop_rows(L, "overview", "refresh"))
             notices += notice_rows(L, "overview", "refresh", 45)
@@ -1292,7 +1343,24 @@ def run(argv):
         run_views(cfg, args, fx, fixtures)
 
 
+def emit_yaml_failed(e):
+    """--emit-yaml must never write an error row into the app file: say what is wrong on stderr, list the valid icons when one is wrong, exit 1."""
+    msg = str(e) if isinstance(e, ConfigError) else ("config.json: %s" % e if isinstance(e, kit.KitError) else "%s while building the app file" % e.__class__.__name__)
+    sys.stderr.write("--emit-yaml failed, no app file was written: %s\n" % msg)
+    if "icon" in msg:
+        sys.stderr.write("Valid icons: %s\n" % ", ".join(sorted(kit.icons_data.ICONS)))
+    sys.exit(1)
+
+
 def main(argv):
+    if "--emit-yaml" in argv:
+        try:
+            run(argv)
+        except SystemExit:
+            raise
+        except Exception as e:
+            emit_yaml_failed(e)
+        return
     try:
         run(argv)
     except ConfigError as e:

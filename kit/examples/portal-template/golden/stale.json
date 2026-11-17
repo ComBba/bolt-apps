@@ -19,9 +19,9 @@
   },
   {
     "title": "Sample data",
-    "subtitle": "Fixture mode: no key and no network. Set api.fixture_default to false in config.json to go live.",
+    "subtitle": "This is sample data.",
     "icon": "FileText",
-    "body": "Sample data: fixture mode, no key and no network.",
+    "body": "This is sample data.",
     "actions": [],
     "kpi_label": "",
     "kpi_value": "",

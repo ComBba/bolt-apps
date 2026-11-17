@@ -143,3 +143,12 @@ export function parseYaml(text) {
 }
 export const get = (m, key) => (m && m.t === 'm' ? m.entries.find((e) => e.key === key) : undefined);
 export const str = (n) => (n && n.t === 's' ? n.v : undefined);
+
+// What a person should do about an app file that does not read as YAML. The common cause: `python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml` failed (an
+// older engine wrote its error row, which is JSON, into the file; a current one leaves the file empty and prints the problem on screen).
+export function notYamlHint(text) {
+	const t = String(text || '').replace(/^\uFEFF/, '').trim();
+	if (!t) return 'The app file is empty. If you made it with --emit-yaml, that command failed: run python3 scripts/<id>__engine.py --emit-yaml (no redirect) to see the reason, fix config.json, then regenerate.';
+	if (/^[\[{]/.test(t)) return 'The app file is JSON, not YAML. If you made it with --emit-yaml, that command failed and wrote its error into the file: run python3 scripts/<id>__engine.py --emit-yaml (no redirect) to see the reason, fix config.json, then regenerate.';
+	return '';
+}

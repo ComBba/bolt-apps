@@ -489,7 +489,7 @@ def overview(ctx, g, r, text):
     wiki = r["wiki"]["data"] if r["wiki"]["ok"] else None
     v = verdict(ctx, g, r, plist, docks, wx, wiki)
     if ctx.fixture:
-        rows.append(kit.safe_row("Sample data", "Real answers recorded 2026-11-15, no network. Set api.fixture_default to false for live data", icon="FileText", copy=False, badge="SAMPLE"))
+        rows.append(kit.safe_row("Sample data", "This is sample data. Real answers recorded 2026-11-15, no network.", icon="FileText", copy=False, badge="SAMPLE"))
     if v["total"] is None:
         rows.append(kit.safe_row("Verdict: not enough data", "No source answered", icon="AlertCircle", badge="NO DATA", copy=False))
     else:
@@ -670,7 +670,7 @@ def main(argv):
     gr = geocode(ctx, text)
     if not gr["ok"]:
         if fixture and gr["err"] == "not in the recorded sample":
-            kit.emit([kit.error_row("Sample mode knows only: %s. Set api.fixture_default to false for live data" % ", ".join(sorted(fx["places"])), title="Not in the recorded sample")])
+            kit.emit([kit.error_row("This is sample data, which covers only: %s" % ", ".join(sorted(fx["places"])), title="Not in the recorded sample")])
         kit.emit([kit.error_row("The place finder said: %s" % gr["err"], title="Could not find that place")])
     g = gr["data"]
     lastc.put("last", {"text": text})

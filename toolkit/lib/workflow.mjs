@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { parseYaml, get, str } from './yamlsubset.mjs';
+import { parseYaml, get, str, notYamlHint } from './yamlsubset.mjs';
 import { vendorKit } from './check.mjs';
 import { formatBoltSays } from './boltsays.mjs';
 import { versionProblem } from './boltrules.mjs';
@@ -100,18 +100,45 @@ export function newFromTemplate(template, id, root) {
 	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { fail(`could not vendor the kit: ${e.message}`); } }
 	let note = '';
 	if (fs.existsSync(path.join(dir, 'check.json'))) {   // goldens were not copied: record them for the new app and show that it passes
+		const pruned = pruneSampleExpectations(dir, id);
 		const r = bolt(['check', dir, '--update-golden']);
-		note = r.status === 0 ? 'check passes on the sample data' : `check did not pass yet:\n${r.stdout.slice(-900)}`;
+		const r2 = r.status === 0 ? bolt(['check', dir]) : r;   // a second plain run proves the recorded goldens agree with a fresh run
+		note = r2.status === 0 ? `check passes on the sample data${pruned ? ` (${pruned} expected-text line${pruned === 1 ? '' : 's'} about the template's own sample words were dropped from check.json; add your own once your data is in)` : ''}` : `CHECK DOES NOT PASS YET (it did not pass straight after the copy, which is a toolkit fault, not yours):\n${(r2.stdout + r2.stderr).slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n  1. edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}\n  2. ./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}\n  3. ./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)\n\nThe goldens and expected text recorded now describe the sample data. After you change your data, ./bolt-apps check will report golden_mismatch: run ./bolt-apps check ${q(dir)} --update-golden once your data is final, and read what changed.`);
+}
+
+// check.json lists expected texts. Some are the engine's own words (kept); others are the template's sample words ("Example Co", "Example Service"), which go stale the moment the
+// author puts their own data in. A copy keeps the first kind and drops the second, so a fresh app stays checkable after the first edit. Returns how many lines were dropped.
+function pruneSampleExpectations(dir, id) {
+	const p = path.join(dir, 'check.json'); let cfg; try { cfg = JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return 0; }
+	if (!fs.existsSync(path.join(dir, 'scripts', `${id}__config.json`))) return 0;   // only engine apps: their sample words live in config.json and fixtures.json
+	let engine = ''; try { const sd = path.join(dir, 'scripts'); for (const f of fs.readdirSync(sd)) if (f.endsWith('.py')) engine += fs.readFileSync(path.join(sd, f), 'utf8'); } catch { return 0; }
+	let dropped = 0;
+	for (const c of Array.isArray(cfg.cases) ? cfg.cases : []) {
+		const ex = c && c.expect; if (!ex || !Array.isArray(ex.text_present)) continue;
+		const keep = ex.text_present.filter((t) => typeof t !== 'string' || engine.includes(t) || t.includes(id));
+		dropped += ex.text_present.length - keep.length;
+		if (keep.length) ex.text_present = keep; else delete ex.text_present;
+	}
+	if (dropped) fs.writeFileSync(p, JSON.stringify(cfg, null, 2) + '\n');
+	return dropped;
 }
 
 // ---------------------------------------------------------------- run
+// When the app has an engine, ask it for the app file: if the config is what is wrong, its message (and the valid icons) is the real cause of an unreadable app file.
+function emitterProblem(dir) {
+	try {
+		const sd = path.join(dir, 'scripts'), em = fs.readdirSync(sd).filter((f) => f.endsWith('__engine.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')); if (!em) return '';
+		const r = spawnSync('python3', [path.join(sd, em), '--emit-yaml'], { cwd: sd, encoding: 'utf8', timeout: 20000 });
+		return r.status !== 0 && r.stderr ? `\nThe real cause, from the engine:\n${r.stderr.trim().split('\n').slice(0, 6).join('\n').slice(0, 900)}` : '';
+	} catch { return ''; }
+}
 function bridgeCommand(dir0, words) {
 	const dir = path.resolve(dir0);
 	const ud = path.join(dir, 'utilities');
 	let y; try { y = fs.readdirSync(ud).find((f) => /\.ya?ml$/.test(f)); } catch { die(`${q(ud)} is missing. An app folder has utilities/<id>.yaml`); } if (!y) die(`${q(ud)} has no app file`);
-	let root; try { root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')); } catch (e) { die(`${q(path.join(ud, y))} cannot be read as an app file (${String(e.message).slice(0, 120)}). Fix the YAML, or regenerate it from config.json`); }
+	let root; try { root = parseYaml(fs.readFileSync(path.join(ud, y), 'utf8')); } catch (e) { die(`${q(path.join(ud, y))} cannot be read as an app file (${String(e.message).slice(0, 120)}). ${notYamlHint(fs.readFileSync(path.join(ud, y), 'utf8')) || 'Fix the YAML, or regenerate it from config.json.'}${emitterProblem(dir)}`); }
 	const osKey = process.platform === 'darwin' ? 'macos' : process.platform === 'win32' ? 'windows' : 'linux';
 	const tpl = str(get(get(get(root, 'bridge')?.value, 'command')?.value, osKey)?.value);
 	if (!tpl) return { root, error: `the app file has no bridge command for ${osKey}` };
@@ -142,7 +169,9 @@ export function runApp(args) {
 	let rows; try { rows = JSON.parse(r.stdout); } catch { die(`the script did not print JSON rows. It printed: ${r.stdout.slice(0, 300)}${r.stderr ? '\nstderr: ' + r.stderr.trim().slice(-300) : ''}`); }
 	if (flags.includes('--json')) { console.log(JSON.stringify(rows, null, 2)); return; }
 	const view = words[0] || 'overview';
-	console.log(`${path.basename(path.resolve(dir))} · view ${view} · ${env.BOLT_APP_FIXTURE === '1' ? 'sample data' : env.BOLT_APP_FIXTURE === '0' ? 'live' : "the app's default mode"} · right pane: ${paneOf(b.root, view)}\n`);
+	console.log(`${path.basename(path.resolve(dir))} · view ${view} · ${env.BOLT_APP_FIXTURE === '1' ? 'sample data' : env.BOLT_APP_FIXTURE === '0' ? 'live' : "the app's default mode"} · right pane: ${paneOf(b.root, view)}`);
+	const sm = startMode(dir), sampleNow = env.BOLT_APP_FIXTURE === '1' || (env.BOLT_APP_FIXTURE !== '0' && /^Start mode: sample data/.test(sm || ''));
+	console.log(sampleNow ? `author note (not shown to the person using the app): these rows come from fixtures.json. ${sm && /^Start mode: sample/.test(sm) ? sm : 'To ship live, api.fixture_default must be false in config.json.'}\n` : '');
 	rows.forEach((x, i) => {
 		const badges = [x.kpi_badge, ...((x.badges || []).map((q) => q.label))].filter(Boolean);
 		console.log(`${String(i + 1).padStart(2)}. ${x.title}${badges.length ? '  [' + badges.join(', ') + ']' : ''}${x.nav ? (x.nav.back ? '   <- Back' : `   -> ${x.nav.view}${x.nav.arg ? ' ' + x.nav.arg : ''}`) : ''}`);
@@ -163,7 +192,8 @@ export function runApp(args) {
 export function startMode(dir) {
 	try {
 		const app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')), c = JSON.parse(fs.readFileSync(path.join(dir, 'scripts', `${app.id}__config.json`), 'utf8')), api = c.api || {};
-		if (api.fixture_default === true) return 'Start mode: sample data (api.fixture_default is true), so it never contacts a service.';
+		if (!Object.keys(api).length) return 'Start mode: sample data (this app has no api section), so it never contacts a service. Fine for an app that is sample-only by design.';
+		if (api.fixture_default === true) return `Start mode: sample data (api.fixture_default is true), so it never contacts a service.${api.key_env ? ` The config also names a key (api.key_env ${api.key_env}), but a sample-only app never reads it and never goes live: set api.fixture_default to false to ship it live, or leave key_env out if sample-only is what you want.` : ' Fine for an app that is sample-only by design (offline demo); a live app ships with it false.'}`;
 		if (!api.key_env) return 'Start mode: live. This app needs no key.';
 		return api.on_missing_key === 'sample'
 			? 'Start mode: live when your key is found; with no key it shows labelled SAMPLE DATA with a row that says how to add one (api.on_missing_key is sample).'

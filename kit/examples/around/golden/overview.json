@@ -1,7 +1,7 @@
 [
   {
     "title": "Sample data",
-    "subtitle": "Real answers recorded 2026-11-15, no network. Set api.fixture_default to false for live data",
+    "subtitle": "This is sample data. Real answers recorded 2026-11-15, no network.",
     "icon": "FileText",
     "body": "",
     "actions": [],
