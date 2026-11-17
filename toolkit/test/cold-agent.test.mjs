@@ -112,7 +112,7 @@ test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, wit
 	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
 	const n = sh('new', 'script-template', 'my-tool'); assert.equal(n.status, 0, n.stdout + n.stderr); assert.match(n.stdout, /check passes/);
 	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'golden', 'left-over.json')));
-	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Alpha service/); assert.match(r.stdout, /right pane: table/);
+	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Water Lilies/); assert.match(r.stdout, /right pane: entity_preview/); assert.match(n.stdout, /change first: the API: in scripts\/my-tool__config\.json set api\.base_url/);
 	const j = JSON.parse(sh('run', 'my-tool', '--sample', '--json').stdout); assert.ok(Array.isArray(j));
 	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.\d+/); assert.match(s1.stdout, /type =my-tool/);
 	const v1 = /Shipped my-tool (\S+):/.exec(s1.stdout)[1];
@@ -130,11 +130,15 @@ test('workflow: run and ship refuse a folder that holds a real-looking key; doct
 	const d = sh('doctor'); assert.equal(d.status, 1); assert.match(d.stdout, /bolt-apps keygen/);
 });
 
-test('check: text_on_disk fails a script that wrote an echoed key into its cache (script-template proves the kit strips it)', () => {
+test('check: text_on_disk fails a script that wrote a secret into its cache (the check case lists it in home_absent)', () => {
 	const root = tmp(), d = copyExample('script-template', path.join(root, 'script-template'));
+	const cj = path.join(d, 'check.json'), c = JSON.parse(fs.readFileSync(cj, 'utf8'));
+	c.cases.push({ name: 'a secret in the environment never reaches the cache', os: 'macos', args: ['overview'], env: { LEAK_TOKEN: 'tpl-leak-1234567890' }, expect: { home_absent: ['tpl-leak-1234567890'] } });
+	fs.writeFileSync(cj, JSON.stringify(c, null, 2));
 	assert.equal(run(root, 'check', d).status, 0);
 	const sp = path.join(d, 'scripts/script-template__app.py'), t = fs.readFileSync(sp, 'utf8');
-	fs.writeFileSync(sp, t.replace('raw = kit.redact_tree(raw, [self.key] if self.key else [], c["api"].get("auth_param"))', 'pass'));
+	assert.ok(t.includes('        self.fresh.put(key, val)'));
+	fs.writeFileSync(sp, t.replace('        self.fresh.put(key, val)', '        val["leak"] = os.environ.get("LEAK_TOKEN", "")\n        self.fresh.put(key, val)'));
 	const r = run(root, 'check', d); assert.equal(r.status, 1); assert.match(r.stdout, /text_on_disk/);
 });
 

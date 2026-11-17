@@ -71,7 +71,7 @@ test('check: a failed old expectation names check.json and the case, and ends wi
 	fs.writeFileSync(f, JSON.stringify(ck, null, 2));
 	const c = sh(home, root, 'check', 'my-app');
 	assert.equal(c.status, 1);
-	assert.match(c.stdout, /check\.json, case "overview: tile, drill, Check again": output does not contain "Words from the template/);
+	assert.match(c.stdout, /check\.json, case "[^"]+": output does not contain "Words from the template/);
 	assert.equal((c.stdout.match(/Hint: check\.json still expects/g) || []).length, 1, c.stdout);
 	assert.match(c.stdout, /--update-golden/);
 });

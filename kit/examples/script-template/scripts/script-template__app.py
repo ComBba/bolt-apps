@@ -364,7 +364,7 @@ def art_row(it, cfg, nav=True, full=False):
     kw.update(img_fields(it.get("img", ""), cfg))
     if nav:
         return kit.safe_row(it["title"], sub, icon="Image", nav={"view": "item", "arg": it["id"]}, copy=False, **kw)
-    return kit.safe_row(it["title"], sub, icon="Image", copy=share, **kw)
+    return kit.safe_row(it["title"], sub, icon="Image", copy_raw=share, **kw)
 
 
 def build(view, arg, items, total, state, cfg, fixture, word):
