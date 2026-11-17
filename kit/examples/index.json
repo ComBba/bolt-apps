@@ -500,26 +500,31 @@
     },
     {
       "id": "script-template",
-      "need": "a script app for an API or tool no engine template fits, working out of the box against a free keyless API (Art Institute of Chicago) with pictures",
-      "layout": "overview tiles and a featured artwork with a small picture in the preview pane, a list with a search word, a detail with Back, a card grid and a thumbnail grid of the pictures",
+      "need": "a script app for an API or tool no engine template fits, working out of the box against a free keyless API (Art Institute of Chicago) and showing what Bolt 181 can draw",
+      "layout": "overview of four number tiles (meter, sparkline, delta, badge) that drill, a list with a search word and a picture in the preview pane, a detail with Back, a card grid of pictures, a bar chart, a sorted table with a total, a json tree",
       "mode": "custom script on the flat kit",
       "script": "scripts/script-template__app.py",
       "backing": "remote HTTP API",
       "widgets": [
-        "entity_preview",
         "cards",
-        "image_grid"
+        "entity_preview",
+        "chart",
+        "table",
+        "json_tree",
+        "markdown"
       ],
       "techniques": [
         "views and nav",
-        "Back row",
+        "Back row with a note pane",
         "search word sent to the API, percent-encoded",
         "fixed host allowlist for the API and the image host",
         "thumbnails fetched by the script and sent as inline data: images split over row fields",
+        "number tiles: unit, meter, trend, delta, badge",
         "fresh and old cache in code",
         "offline row",
         "sample mode",
         "--emit-yaml",
+        "kit.safe_copy for everything pasted",
         "KitError text"
       ],
       "sources": [
@@ -533,9 +538,9 @@
       "check": "./bolt-apps check kit/examples/script-template",
       "verified": "not verified in real Bolt",
       "edit_in_script": [
-        "scripts/script-template__app.py: n_item, n_items, http_bytes, art_row, build, emit_yaml"
+        "scripts/script-template__app.py: n_item, n_items, n_facets, search_params, art_row, build, emit_yaml"
       ],
-      "first_edit": "the API: in scripts/script-template__config.json set api.base_url, hosts, endpoints and fields, then reword n_item() and art_row() in scripts/script-template__app.py"
+      "first_edit": "the API: in scripts/script-template__config.json set api.base_url, hosts, endpoints and fields, then reword n_item(), n_facets() and art_row() in scripts/script-template__app.py"
     },
     {
       "id": "feed-template",

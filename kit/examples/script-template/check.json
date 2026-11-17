@@ -6,7 +6,7 @@
   "fixture": true,
   "cases": [
     {
-      "name": "overview: tiles, a featured artwork, drills, Check again",
+      "name": "overview: four number tiles, drills, Check again",
       "os": "macos",
       "args": [
         "overview"
@@ -14,15 +14,15 @@
       "golden": "golden/overview.json",
       "expect": {
         "text_present": [
-          "Sample data",
-          "Shown: 6",
-          "Matches: 62,220",
-          "Water Lilies"
+          "Public domain: 60%",
+          "Peak period: 375 artworks",
+          "Top department: Prints and Drawings",
+          "Pictured: 9 artworks"
         ]
       }
     },
     {
-      "name": "items: a list, a drill per artwork",
+      "name": "items: a list with a picture and facts in the pane",
       "os": "macos",
       "args": [
         "items"
@@ -30,8 +30,9 @@
       "golden": "golden/items.json",
       "expect": {
         "text_present": [
-          "Water Lilies",
-          "Cliff Walk at Pourville"
+          "Landscape with Saint John on Patmos",
+          "Nicolas Poussin",
+          "17th c."
         ]
       }
     },
@@ -40,14 +41,31 @@
       "os": "macos",
       "args": [
         "items",
-        "cliff"
+        "poussin"
       ],
       "expect": {
         "text_present": [
-          "Cliff Walk at Pourville"
+          "Landscape with Saint John on Patmos"
         ],
         "text_absent": [
-          "Water Lilies"
+          "Kandinsky"
+        ]
+      }
+    },
+    {
+      "name": "two search words",
+      "os": "macos",
+      "args": [
+        "items",
+        "two",
+        "poplars"
+      ],
+      "expect": {
+        "text_present": [
+          "Landscape with Two Poplars"
+        ],
+        "text_absent": [
+          "Poussin"
         ]
       }
     },
@@ -55,14 +73,14 @@
       "name": "a first word that is not a view is a search word",
       "os": "macos",
       "args": [
-        "lilies"
+        "kandinsky"
       ],
       "expect": {
         "text_present": [
-          "Water Lilies"
+          "Landscape with Two Poplars"
         ],
         "text_absent": [
-          "Cliff Walk"
+          "Poussin"
         ]
       }
     },
@@ -97,15 +115,15 @@
       "os": "macos",
       "args": [
         "item",
-        "16568"
+        "5848"
       ],
       "golden": "golden/item.json",
       "expect": {
         "text_present": [
           "Back to the list",
-          "Water Lilies",
-          "CC BY 4.0",
-          "Public domain (CC0)"
+          "Landscape with Saint John on Patmos",
+          "Record (JSON)",
+          "Attribution"
         ]
       }
     },
@@ -114,12 +132,26 @@
       "os": "macos",
       "args": [
         "item",
-        "14598"
+        "874"
       ],
       "expect": {
         "text_present": [
-          "The Beach at Sainte-Adresse",
+          "Landscape",
           "Attribution"
+        ]
+      }
+    },
+    {
+      "name": "record: the fields as a tree",
+      "os": "macos",
+      "args": [
+        "record",
+        "5848"
+      ],
+      "expect": {
+        "text_present": [
+          "Record 5848",
+          "Back to the artwork"
         ]
       }
     },
@@ -145,20 +177,40 @@
       "golden": "golden/pictures.json",
       "expect": {
         "text_present": [
-          "Water Lilies"
+          "Landscape with Saint John on Patmos",
+          "sample data"
         ]
       }
     },
     {
-      "name": "grid: a thumbnail grid",
+      "name": "chart: artworks per period",
       "os": "macos",
       "args": [
-        "grid"
+        "chart"
       ],
-      "golden": "golden/grid.json",
+      "golden": "golden/chart.json",
       "expect": {
         "text_present": [
-          "Water Lilies"
+          "Before 1600",
+          "1600 to 1700",
+          "375 public-domain artworks",
+          "sample data"
+        ]
+      }
+    },
+    {
+      "name": "table: departments with shares",
+      "os": "macos",
+      "args": [
+        "table"
+      ],
+      "golden": "golden/table.json",
+      "expect": {
+        "text_present": [
+          "Prints and Drawings",
+          "894 artworks, 81%",
+          "Other departments",
+          "sample data"
         ]
       }
     },
@@ -177,7 +229,7 @@
       }
     },
     {
-      "name": "offline with an old copy: the data and a banner",
+      "name": "offline with an old copy: the data and a label",
       "os": "macos",
       "args": [
         "items",
@@ -186,7 +238,21 @@
       "expect": {
         "text_present": [
           "Showing an old copy",
-          "Water Lilies"
+          "Landscape with Saint John on Patmos"
+        ]
+      }
+    },
+    {
+      "name": "an old copy of the table says so on its first row",
+      "os": "macos",
+      "args": [
+        "table",
+        "demo-stale"
+      ],
+      "expect": {
+        "text_present": [
+          "old copy",
+          "Prints and Drawings"
         ]
       }
     },
@@ -195,7 +261,7 @@
       "os": "macos",
       "args": [
         "item",
-        "16568",
+        "5848",
         "demo-offline"
       ],
       "expect": {

@@ -112,7 +112,7 @@ test('workflow: new <template> <id> -> run -> ship passes from a fresh copy, wit
 	const sh = (...a) => spawnSync(process.execPath, [CLI, ...a], { cwd: root, encoding: 'utf8', env });
 	const n = sh('new', 'script-template', 'my-tool'); assert.equal(n.status, 0, n.stdout + n.stderr); assert.match(n.stdout, /check passes/);
 	assert.ok(!fs.existsSync(path.join(root, 'my-tool', 'golden', 'left-over.json')));
-	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Water Lilies/); assert.match(r.stdout, /right pane: entity_preview/); assert.match(n.stdout, /change first: the API: in scripts\/my-tool__config\.json set api\.base_url/);
+	const r = sh('run', 'my-tool', 'items', '--sample'); assert.equal(r.status, 0, r.stderr); assert.match(r.stdout, /Landscape with Saint John on Patmos/); assert.match(r.stdout, /right pane: entity_preview/); assert.match(n.stdout, /change first: the API: in scripts\/my-tool__config\.json set api\.base_url/);
 	const j = JSON.parse(sh('run', 'my-tool', '--sample', '--json').stdout); assert.ok(Array.isArray(j));
 	const s1 = sh('ship', 'my-tool'); assert.equal(s1.status, 0, s1.stdout + s1.stderr); assert.match(s1.stdout, /Shipped my-tool 1\.0\.\d+/); assert.match(s1.stdout, /type =my-tool/);
 	const v1 = /Shipped my-tool (\S+):/.exec(s1.stdout)[1];

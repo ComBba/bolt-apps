@@ -5,8 +5,8 @@ id: script-template
 chip: script-template
 title: "Script template"
 icon: Image
-description: "Search the Art Institute of Chicago's public-domain artworks, no key: a list with a picture in the preview pane, a detail view, a picture grid and tiles. Replace the API and the fields to make it yours."
-placeholder_examples: ["Enter for the overview", "items", "items water lilies", "pictures", "grid hokusai"]
+description: "Search the Art Institute of Chicago's public-domain artworks, no key: number tiles with meters and sparklines, a list with a picture in the preview pane, a chart, a table, a picture grid and a detail view. Replace the API and the fields to make it yours."
+placeholder_examples: ["Enter for the overview", "items monet", "chart", "table", "pictures cats", "hokusai"]
 emits: Generic
 args:
   - { name: view, from: "query.word(0)", default: overview }
@@ -25,55 +25,37 @@ presentation:
   subtitle_field: subtitle
   view_arg: view
   right_widget:
-    kind: entity_preview
-    mode: selected_row
+    kind: cards
+    mode: list_data
     bind:
-      title: "{{row.title}}"
-      subtitle: "{{row.subtitle}}"
-      image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
-      tiles_above:
-        title: "{{row.kpi_label}}"
-        value: "{{row.kpi_value}}"
-        unit: "{{row.kpi_unit}}"
-        max: "{{row.kpi_max}}"
-        subtitle: "{{row.kpi_note}}"
-        badge: "{{row.kpi_badge}}"
-      fields:
-        - { label: ARTIST, value: "{{row.a_artist}}" }
-        - { label: DATE, value: "{{row.a_date}}" }
-        - { label: MEDIUM, value: "{{row.a_medium}}" }
-        - { label: ORIGIN, value: "{{row.a_origin}}" }
-        - { label: RIGHTS, value: "{{row.a_rights}}" }
-      body: "{{row.body}}"
-      actions:
-        - "open"
-        - "copy"
+      layout: "tiles"
+      title: "{{row.kpi_label}}"
+      value: "{{row.kpi_value}}"
+      unit: "{{row.kpi_unit}}"
+      max: "{{row.kpi_max}}"
+      subtitle: "{{row.kpi_note}}"
+      badge: "{{row.kpi_badge}}"
+      footer: "{{row.kpi_foot}}"
+      delta: "{{row.delta}}"
+      delta_label: "{{row.since}}"
+      trend: "{{row.trend}}"
   views:
     overview:
       right_widget:
-        kind: entity_preview
-        mode: selected_row
+        kind: cards
+        mode: list_data
         bind:
-          title: "{{row.title}}"
-          subtitle: "{{row.subtitle}}"
-          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
-          tiles_above:
-            title: "{{row.kpi_label}}"
-            value: "{{row.kpi_value}}"
-            unit: "{{row.kpi_unit}}"
-            max: "{{row.kpi_max}}"
-            subtitle: "{{row.kpi_note}}"
-            badge: "{{row.kpi_badge}}"
-          fields:
-            - { label: ARTIST, value: "{{row.a_artist}}" }
-            - { label: DATE, value: "{{row.a_date}}" }
-            - { label: MEDIUM, value: "{{row.a_medium}}" }
-            - { label: ORIGIN, value: "{{row.a_origin}}" }
-            - { label: RIGHTS, value: "{{row.a_rights}}" }
-          body: "{{row.body}}"
-          actions:
-            - "open"
-            - "copy"
+          layout: "tiles"
+          title: "{{row.kpi_label}}"
+          value: "{{row.kpi_value}}"
+          unit: "{{row.kpi_unit}}"
+          max: "{{row.kpi_max}}"
+          subtitle: "{{row.kpi_note}}"
+          badge: "{{row.kpi_badge}}"
+          footer: "{{row.kpi_foot}}"
+          delta: "{{row.delta}}"
+          delta_label: "{{row.since}}"
+          trend: "{{row.trend}}"
     items:
       right_widget:
         kind: entity_preview
@@ -89,11 +71,13 @@ presentation:
             max: "{{row.kpi_max}}"
             subtitle: "{{row.kpi_note}}"
             badge: "{{row.kpi_badge}}"
+            footer: "{{row.kpi_foot}}"
           fields:
             - { label: ARTIST, value: "{{row.a_artist}}" }
             - { label: DATE, value: "{{row.a_date}}" }
             - { label: MEDIUM, value: "{{row.a_medium}}" }
             - { label: ORIGIN, value: "{{row.a_origin}}" }
+            - { label: DEPARTMENT, value: "{{row.a_dept}}" }
             - { label: RIGHTS, value: "{{row.a_rights}}" }
           body: "{{row.body}}"
           actions:
@@ -114,11 +98,13 @@ presentation:
             max: "{{row.kpi_max}}"
             subtitle: "{{row.kpi_note}}"
             badge: "{{row.kpi_badge}}"
+            footer: "{{row.kpi_foot}}"
           fields:
             - { label: ARTIST, value: "{{row.a_artist}}" }
             - { label: DATE, value: "{{row.a_date}}" }
             - { label: MEDIUM, value: "{{row.a_medium}}" }
             - { label: ORIGIN, value: "{{row.a_origin}}" }
+            - { label: DEPARTMENT, value: "{{row.a_dept}}" }
             - { label: RIGHTS, value: "{{row.a_rights}}" }
           body: "{{row.body}}"
           actions:
@@ -133,16 +119,42 @@ presentation:
           title: "{{row.title}}"
           subtitle: "{{row.a_artist}}"
           image: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          badge: "{{row.kpi_badge}}"
           footer: "{{row.a_date}}"
-    grid:
+    chart:
       right_widget:
-        kind: image_grid
+        kind: chart
         mode: list_data
         bind:
-          src: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
-          caption: "{{row.title}}"
-          alt: "{{row.title}}, {{row.a_artist}}"
-          columns: 3
+          type: bar
+          x: period
+          y: count
+          label: "Public-domain artworks by period"
+    table:
+      right_widget:
+        kind: table
+        mode: list_data
+        bind:
+          columns:
+            - { field: dept, label: Department }
+            - { field: count, label: Artworks, align: right, total: sum, format: number }
+            - { field: share, label: Share, align: right, unit: "%" }
+          sort: { field: count, dir: desc }
+          totals_label: "All departments"
+    record:
+      right_widget:
+        kind: json_tree
+        mode: selected_row
+        bind:
+          source: data
+    note:
+      right_widget:
+        kind: markdown
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          body: "{{row.body}}"
 actions:
   - { id: open, kind: url, target: row, label: "Open source", url_template: "{{row.open_url}}" }
   - { id: copy, kind: composer, target: row, label: "Copy summary", insert: "{{row.share_text}}" }
