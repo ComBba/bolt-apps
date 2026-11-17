@@ -64,7 +64,7 @@ The person types `=chip customers acme`, sees the customers that match (each row
 `ttl` seconds a result is fresh (a repeat run inside it makes no request), `stale_max` seconds an old copy may be shown when the API fails. A failed call is never cached and never shown as zero.
 
 ## When the API answers 404
-An HTTP 404 (or 410) on every call of a run means the service is up and has no such thing, so the app shows one row, "No such <`app.noun`>" (default "No match"), with the typed word in its subtitle, and no Retry. It is never shown as an outage, and an old copy is never shown for it. Any other failure keeps its own row (offline, rejected key, rate limit, "returned an error" for a 5xx). A mix of 404 and another failure shows the other failure. `demo-notfound` previews the row in sample mode.
+An HTTP 404 (or 410) on EVERY call of a run, with nothing else to show, means the service is up and has no such thing. The app then shows one row with the typed word in its subtitle and no Retry: "No such <app.noun>" when `noun` is set; in lookup mode "No match" (or the lookup's `none_title`); in views mode without a noun, "The service answered 404 for <endpoint names>". It is never shown as an outage, and an old copy is never shown for it. When only some calls answered 404 and others worked, the data that loaded is kept and a notice says "Some data did not load: <endpoint> answered 404". A 404 mixed with another failure shows the other failure (offline, rejected key, rate limit, "returned an error" for a 5xx). In a chained lookup only the first step, the one that takes the typed word, can say "No such"; a later 404 reads "Found it, but the next lookup answered 404". `demo-notfound` previews the row in sample mode.
 
 ## `endpoints`
 `name: { path, kind (list or object), data (where the rows sit in the response, default "data"), map }`. `map` renames fields: `{ "title": "name", "owner": "assignee.name" }` (dotted paths work). Fixture mode reads `fixtures.json[name]`, the raw response. `fixtures.json` may also hold `_now` (epoch seconds: a fixed clock for the date tokens in sample mode) and, for a form app, `seed` (sample rows shown after the saved ones).
@@ -93,7 +93,7 @@ What each filter takes and gives:
 
 | Filter | Input | Output |
 |---|---|---|
-| `when` | an epoch in seconds or milliseconds (a number or digits), or an ISO date string | `2026-11-15 14:05` (local time) for an epoch; an ISO string `2026-07-18T09:30:00Z` gives `2026-07-18 09:30`, as written, with no time zone change |
+| `when` | an epoch in seconds or milliseconds (a number or digits), or an ISO date string (checked as a real calendar date and time) | `2026-11-15 14:05` (local time) for an epoch; an ISO string `2026-07-18T09:30:00Z` gives `2026-07-18 09:30`, as written, with no time zone change; an impossible date such as 2026-02-30 or 2026-13-45 reads `unknown`, and so does an eight-digit string such as 20260718 (neither an epoch nor an ISO date) |
 | `whenday` | the same | the date only, `2026-11-15`; ISO strings work, so a crates.io or GitHub date needs no other filter |
 | `day` | any text that starts with a date | its first 10 characters (`2026-07-18`) |
 | `hhmm` | an ISO date-time | characters 12 to 16 (`05:30`) |

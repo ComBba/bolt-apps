@@ -10,6 +10,7 @@ Other:   engine.py --emit-yaml    prints the launcher app file for this config
 An author edits config.json and fixtures.json only. Formatting, row structure, text safety, deadlines and the
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
 import concurrent.futures as cf
+import datetime
 import json
 import math
 import os
@@ -88,8 +89,16 @@ def _when(v, day_only=False):
     """An epoch in seconds or milliseconds (a number or a string of digits) as local time, 2026-11-15 14:05, or the date only.
     A value that is not a plausible epoch reads unknown, never 1970."""
     n = number(v)
+    if isinstance(v, str) and re.match(r"^\d{8}\Z", v.strip()):
+        return kit.UNKNOWN   # 20260718 is neither an epoch nor an ISO date here
     iso = ISO_DATE.match(v.strip()) if isinstance(v, str) else None
-    if iso and n is None:   # 2026-07-18, 2026-07-18T09:30:00Z or 2026-07-18 09:30: shown as written (no time zone change)
+    if iso and n is None:   # 2026-07-18, 2026-07-18T09:30:00Z or 2026-07-18 09:30: shown as written (no time zone change); an impossible date reads unknown
+        try:
+            datetime.date(int(iso.group(1)[:4]), int(iso.group(1)[5:7]), int(iso.group(1)[8:10]))
+        except ValueError:
+            return kit.UNKNOWN
+        if iso.group(2) and not (int(iso.group(2)[:2]) < 24 and int(iso.group(2)[3:]) < 60):
+            return kit.UNKNOWN
         return iso.group(1) if day_only or not iso.group(2) else "%s %s" % (iso.group(1), iso.group(2))
     if n is None or n <= 0:
         return kit.UNKNOWN
@@ -592,11 +601,21 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         if not failed:
             return L
         causes = list(failed.values())
-        if causes and all(c == "notfound" for c in causes):   # the service answered, and there is no such thing: a row that says so, not an outage
-            noun = str(app.get("noun") or "").strip()
-            q = (pvars or {}).get("query")
-            L.stop = ("notfound", ("No such %s" % noun) if noun else (cfg.get("lookup") or {}).get("none_title", "No match"),
-                      'Nothing found for "%s"' % q if q else "The service has no item with that name (it answered 404)", 0)
+        nf = sorted(n for n, c in failed.items() if c == "notfound")
+        if causes and all(c == "notfound" for c in causes):
+            if not got:   # every call of the run answered 404 and nothing else is shown: the service is up and has no such thing
+                noun = str(app.get("noun") or "").strip()
+                q = (pvars or {}).get("query")
+                if noun:
+                    title = "No such %s" % noun
+                elif cfg.get("mode") == "lookup":
+                    title = (cfg.get("lookup") or {}).get("none_title", "No match")
+                else:
+                    title = "The service answered 404 for %s" % ", ".join(nf)
+                L.stop = ("notfound", title, 'Nothing found for "%s"' % q if q else "The service says there is nothing at that address (HTTP 404)", 0)
+                return L
+            # some calls worked: keep their data and say which one answered 404
+            L.notices.append(("partial", "Some data did not load: %s" % ", ".join(nf), "%s answered 404" % ", ".join(nf), 0))
             return L
         causes = [c for c in causes if c != "notfound"] or causes
         main = "auth" if "auth" in causes else max(set(causes), key=causes.count)
@@ -1166,6 +1185,8 @@ def run_lookup(cfg, args, fx, fixtures):
         pvars, glob, notices = {"query": query}, {}, []
         for i, step in enumerate(lk["steps"]):
             L = load(cfg, [step], False, demo, fx, fixtures, pvars)
+            if L.stop and L.stop[0] == "notfound" and i > 0:   # only the lookup that takes the typed word may say "no such": a later 404 means the chain broke
+                kit.emit([kit.row("Found it, but the next lookup answered 404", "The first lookup worked; %s said there is nothing at that address. Try again later." % step, icon="AlertCircle", copy=False, badge="ERROR")])
             if L.stop:
                 kit.emit(stop_rows(L, "overview", "refresh"))
             notices += notice_rows(L, "overview", "refresh", 45)

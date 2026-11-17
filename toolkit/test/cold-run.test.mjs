@@ -141,3 +141,25 @@ test('ENGINE.md documents the 404 row, the noun key, every filter and the sample
 	assert.doesNotMatch(rows, /fixture_default|author note/);
 	assert.match(rows, /This is sample data\./);
 });
+
+test('no example shows author-facing config text to the person using the app (sample-mode rows and goldens never name fixture_default or config.json)', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	let seen = 0;
+	for (const t of fs.readdirSync(EX)) {
+		const gd = path.join(EX, t, 'golden');
+		if (fs.existsSync(gd)) for (const g of fs.readdirSync(gd)) { const txt = fs.readFileSync(path.join(gd, g), 'utf8'); seen++; assert.ok(!/fixture_default|config\.json/.test(txt), `${t}/golden/${g}`); }
+	}
+	assert.ok(seen > 40, `only ${seen} goldens scanned`);
+	for (const [t, words] of [['around', ['Bryant', 'Park,', 'New', 'York']], ['repo-radar', ['expressjs/express']]]) {   // the sample banner row
+		const out = sh(home, root, 'run', path.join(EX, t), ...words, '--sample', '--json').stdout; assert.ok(!/fixture_default|config\.json/.test(out), t);
+		assert.match(out, /This is sample data/, t);
+	}
+	for (const [t, word] of [['around', 'zzzz-nowhere'], ['repo-radar', 'nobody/nothing']]) {   // outside the recorded sample
+		const o = sh(home, root, 'run', path.join(EX, t), word, '--sample', '--json').stdout; assert.ok(!/fixture_default|config\.json/.test(o) && /This is sample data/.test(o), t + ' ' + o.slice(0, 200));
+	}
+});
+
+test('new prints one line telling the author to re-record goldens after the data is final', () => {
+	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
+	assert.match(sh(home, root, 'new', 'portal-template', 'pt').stdout, /check [^\n]*--update-golden once your data is final/);
+});

@@ -521,7 +521,7 @@ def overview_rows(ctx, m, since, new_snapshot_note):
     sc = m["score"]
     rows = []
     if ctx.fixture:
-        rows.append(kit.safe_row("Sample data", "Recorded answers from 2026-11-15, no network. Set api.fixture_default to false in config.json for live data", icon="FileText", copy=False, badge="SAMPLE"))
+        rows.append(kit.safe_row("Sample data", "This is sample data. Recorded answers from 2026-11-15, no network.", icon="FileText", copy=False, badge="SAMPLE"))
     if sc["total"] is None:
         rows.append(kit.safe_row("Verdict: not enough data", "No source answered for %s" % m["spec"], icon="AlertCircle", badge="NO DATA", copy=False))
     else:
@@ -796,7 +796,7 @@ def main(argv):
         have = sorted(fx.get("repos", {}))
         for (o, r), _ in specs:
             if ("%s/%s" % (o, r)) not in have:
-                kit.emit([kit.error_row("Sample mode knows only: %s. Set api.fixture_default to false for live data" % ", ".join(have), title="Not in the recorded sample")])
+                kit.emit([kit.error_row("This is sample data, which covers only: %s" % ", ".join(have), title="Not in the recorded sample")])
     ms = model_pair(ctx, specs)
     for (spec, pk), m in zip(specs, ms):
         if m["raw"]["gh_repo"]["kind"] == "none" and not fixture:

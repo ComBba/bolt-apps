@@ -128,6 +128,91 @@ class NotFoundRow(unittest.TestCase):
         self.assertEqual(json.loads(r.stdout)[-1]["title"], "No such ticket")
 
 
+class Plan(http.server.BaseHTTPRequestHandler):
+    """Answers by path: Plan.status[name] is an HTTP status (default 200 with the example's recorded answer)."""
+    status = {}
+    payload = {}
+
+    def log_message(self, *a):
+        pass
+
+    def do_GET(self):
+        name = self.path.split("?")[0].strip("/").split("/")[-1]
+        code = Plan.status.get(name, 200)
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        if code == 200:
+            self.wfile.write(json.dumps(Plan.payload.get(name, {})).encode())
+
+
+class PartialAnd404(unittest.TestCase):
+    def setUp(self):
+        self.srv = http.server.HTTPServer(("localhost", 0), Plan)
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+        self.base = "http://localhost:%d" % self.srv.server_address[1]
+        Plan.status = {}
+        Plan.payload = fixtures_of("portal-template")
+
+    def tearDown(self):
+        self.srv.shutdown()
+        self.srv.server_close()
+
+    def portal(self, args, noun=None):
+        cfg = cfg_of("portal-template")
+        cfg["api"]["base_url"] = self.base
+        cfg["api"]["fixture_default"] = False
+        cfg["api"]["on_missing_key"] = "setup"
+        if noun:
+            cfg["app"]["noun"] = noun
+        r = run("portal-template", args, cfg=cfg, env={"BOLT_APP_FIXTURE": "0", "EXAMPLE_API_KEY": "abcdef123456"})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return json.loads(r.stdout)
+
+    def test_one_404_among_good_calls_keeps_the_data(self):
+        Plan.status = {"projects": 404}
+        rows = self.portal([])
+        text = json.dumps(rows)
+        self.assertIn("Some data did not load: projects", text)
+        self.assertIn("projects answered 404", text)
+        self.assertNotIn("No such", text)
+        self.assertNotIn("The service answered 404", text)
+        self.assertTrue(any("open tickets" in (r.get("subtitle") or "") or "Open tickets" in r["title"] for r in rows), "the good data is still drawn")
+        rows = self.portal(["tickets"])
+        self.assertTrue(any("Crash on startup" in r["title"] for r in rows) or any(r.get("nav") for r in rows))
+
+    def test_all_404_is_no_such_with_noun_and_a_plain_404_row_without(self):
+        Plan.status = {"projects": 404, "tickets": 404, "account": 404}
+        rows = self.portal([], noun="workspace")
+        self.assertEqual([r["title"] for r in rows if "No such" in r["title"]], ["No such workspace"])
+        rows = self.portal([])
+        self.assertEqual(len(rows), 1)
+        self.assertTrue(rows[0]["title"].startswith("The service answered 404 for "), rows[0]["title"])
+        self.assertNotIn("No match", rows[0]["title"])
+        self.assertNotIn("OFFLINE", json.dumps(rows))
+
+    def test_404_plus_500_shows_the_other_failure(self):
+        Plan.status = {"projects": 404, "tickets": 404, "account": 500}
+        rows = self.portal([], noun="workspace")
+        self.assertIn("returned an error", rows[0]["title"])
+        self.assertNotIn("No such", json.dumps(rows))
+
+    def test_lookup_chain_only_the_first_step_may_say_no_such(self):
+        cfg = cfg_of("lookup-template")
+        cfg["api"].update({"base_url": self.base, "fixture_default": False})
+        cfg["api"].pop("allowed_hosts", None)
+        cfg["app"]["noun"] = "place"
+        cfg["endpoints"] = {"geocode": {"path": "/geo?name={query}", "data": "results"},
+                            "weather": {"path": "/wx?lat={geocode.latitude}", "kind": "object", "data": ""}}
+        Plan.payload = {"geo": {"results": [{"latitude": 1, "longitude": 2}]}, "wx": {"current": {}}}
+        env = {"BOLT_APP_FIXTURE": "0"}
+        Plan.status = {"geo": 404}
+        self.assertEqual(json.loads(run("lookup-template", ["nowhere"], cfg=cfg, env=env).stdout)[0]["title"], "No such place")
+        Plan.status = {"wx": 404}
+        t = json.loads(run("lookup-template", ["paris"], cfg=cfg, env=env).stdout)[0]["title"]
+        self.assertEqual(t, "Found it, but the next lookup answered 404")
+
+
 class SampleText(unittest.TestCase):
     def test_banner_is_for_end_users(self):
         cfg = cfg_of("portal-template")
@@ -192,7 +277,12 @@ class Filters(unittest.TestCase):
         self.assertEqual(s(1700000000, "whenday"), self.m.time.strftime("%Y-%m-%d", self.m.time.localtime(1700000000)))
         self.assertEqual(s("1700000000000", "whenday"), s(1700000000, "whenday"))
         self.assertEqual(s("not a date", "whenday"), "unknown")
-        self.assertEqual(s("20260718", "when"), s(20260718, "when"))   # digits stay an epoch, as before
+        self.assertEqual(s("20260718", "when"), "unknown")   # eight digits are neither an epoch nor an ISO date
+        self.assertEqual(s("20260718", "whenday"), "unknown")
+        for bad in ("2026-13-45", "2026-02-30", "2026-00-10", "2026-07-18T25:00:00Z", "2026-07-18T09:75"):
+            self.assertEqual(s(bad, "whenday"), "unknown", bad) if "T" not in bad else self.assertEqual(s(bad, "when"), "unknown", bad)
+        self.assertEqual(s("2024-02-29", "whenday"), "2024-02-29")
+        self.assertEqual(s("2026-02-29", "whenday"), "unknown")
 
     def test_day_and_yes(self):
         s = self.m.shown

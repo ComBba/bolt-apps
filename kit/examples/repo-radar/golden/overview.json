@@ -1,7 +1,7 @@
 [
   {
     "title": "Sample data",
-    "subtitle": "Recorded answers from 2026-11-15, no network. Set api.fixture_default to false in config.json for live data",
+    "subtitle": "This is sample data. Recorded answers from 2026-11-15, no network.",
     "icon": "FileText",
     "body": "",
     "actions": [],

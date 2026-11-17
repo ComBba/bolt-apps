@@ -276,7 +276,7 @@
       ],
       "expect": {
         "text_present": [
-          "Sample"
+          "sample data"
         ]
       }
     }
