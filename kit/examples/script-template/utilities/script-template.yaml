@@ -5,7 +5,7 @@ id: script-template
 chip: script-template
 title: "Script template"
 icon: Image
-description: "Search the Art Institute of Chicago's public-domain artworks, no key: number tiles with meters and sparklines, a list with a picture in the preview pane, a chart, a table, a picture grid and a detail view. Replace the API and the fields to make it yours."
+description: "Search the Art Institute of Chicago's public-domain artworks, no key: number tiles with meters and sparklines, a list with a picture in the preview pane, a detail with a big picture, a chart, a table, a picture grid and a detail view. Replace the API and the fields to make it yours."
 placeholder_examples: ["Enter for the overview", "items monet", "chart", "table", "pictures cats", "hokusai"]
 emits: Generic
 args:
@@ -85,28 +85,10 @@ presentation:
             - "copy"
     item:
       right_widget:
-        kind: entity_preview
+        kind: markdown
         mode: selected_row
         bind:
-          title: "{{row.title}}"
-          subtitle: "{{row.subtitle}}"
-          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
-          tiles_above:
-            title: "{{row.kpi_label}}"
-            value: "{{row.kpi_value}}"
-            unit: "{{row.kpi_unit}}"
-            max: "{{row.kpi_max}}"
-            subtitle: "{{row.kpi_note}}"
-            badge: "{{row.kpi_badge}}"
-            footer: "{{row.kpi_foot}}"
-          fields:
-            - { label: ARTIST, value: "{{row.a_artist}}" }
-            - { label: DATE, value: "{{row.a_date}}" }
-            - { label: MEDIUM, value: "{{row.a_medium}}" }
-            - { label: ORIGIN, value: "{{row.a_origin}}" }
-            - { label: DEPARTMENT, value: "{{row.a_dept}}" }
-            - { label: RIGHTS, value: "{{row.a_rights}}" }
-          body: "{{row.body}}"
+          body: "![{{row.hero_alt}}]({{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}{{row.img5}}{{row.img6}}{{row.img7}}{{row.img8}}{{row.img9}}{{row.img10}}{{row.img11}}{{row.img12}}{{row.img13}}{{row.img14}}{{row.img15}}{{row.img16}}{{row.img17}}{{row.img18}}{{row.img19}}{{row.img20}}{{row.img21}}{{row.img22}}{{row.img23}}{{row.img24}}){{row.hero_lines}}"
           actions:
             - "open"
             - "copy"

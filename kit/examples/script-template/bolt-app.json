@@ -4,7 +4,7 @@
   "title": "Script template",
   "role": "Anyone writing a Bolt App as a script, or curious what one can show",
   "saves": "Working out the kit, the views, the pictures, the cache and the checks from scratch",
-  "summary": "Type =script-template: a showcase on free public-domain art (Art Institute of Chicago, no key): number tiles with meters and sparklines, a list with a picture in the preview pane, a chart, a table, a picture grid and a detail view. Copy it and point it at your own API.",
+  "summary": "Type =script-template: a showcase on free public-domain art (Art Institute of Chicago, no key): number tiles with meters and sparklines, a list with a picture in the preview pane, a detail with a big picture, a chart, a table, a picture grid and a detail view. Copy it and point it at your own API.",
   "author": {
     "name": "Bolt Apps examples",
     "link": "https://github.com/SparcleHQ/bolt-apps"

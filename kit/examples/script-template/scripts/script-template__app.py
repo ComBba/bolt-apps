@@ -3,11 +3,11 @@
 public-domain artworks (no key). Copy this folder, then edit the lines marked EDIT HERE to point it at your own API.
 
 What it shows, in code you can read top to bottom:
-  - the views: overview (number tiles with a meter, a sparkline and a delta), items (a list with a search word and a picture in the preview pane), item (one artwork, with
+  - the views: overview (number tiles with a meter, a sparkline and a delta), items (a list with a search word and a small picture in the preview pane), item (one artwork with a big picture in a markdown pane, and with
     its description), pictures (a card grid), chart (a bar chart), table (sorted, with a total) and record (a json tree), every drill with a Back row
   - a call to an API with a host allowlist (every host it contacts is named in config.json), a refused redirect to another host, a size cap, a timeout and no cookies
   - pictures: the script fetches a small thumbnail from the allowlisted image host and puts it in the row as an inline data: image, because a Bolt user app pane
-    never loads a web address. Row text fields are cut at 4,000 characters, so the image is split over fields img1 to img4 and the app file joins them
+    never loads a web address. Row text fields are cut at 4,000 characters, so the image is split over fields (img1 to img4 for a small one, up to img24 for the big picture of the detail pane) and the app file joins them
   - a cache in two layers: fresh (config cache.ttl) and an old copy (cache.stale_max) shown when the API fails; thumbnails are cached for 30 days
   - the offline row and sample mode (BOLT_APP_FIXTURE=1, used by check)
   - --emit-yaml, which writes the app file from config.json so the two never disagree
@@ -249,6 +249,8 @@ class Source(object):
         self.fresh = kit.Cache(APP, c["ttl"], lambda v: listy(v) or one(v), root=root + "/fresh")
         self.old = kit.Cache(APP, c["stale_max"], lambda v: listy(v) or one(v), root=root + "/old")
         self.thumbs = kit.Cache(APP, c["thumb_ttl"], thumb, root=root + "/thumbs", max_entries=400)
+        hero = lambda v: isinstance(v, dict) and isinstance(v.get("t"), str) and len(v["t"]) <= cfg["images"]["hero"]["chunk_chars"] * cfg["images"]["hero"]["max_chunks"] and bool(B64.match(v["t"]))
+        self.heroes = kit.Cache(APP, c["thumb_ttl"], hero, root=root + "/heroes", max_entries=100)   # the big pictures of the list pane, kept as long as the small ones
         self.misses = kit.Cache(APP, c["miss_ttl"], flag, root=root + "/misses", max_entries=400)   # an image that could not be fetched is not asked for again for a while
 
     def _budget(self):
@@ -323,12 +325,13 @@ class Source(object):
 
     # ---- thumbnails
 
-    def fetch_thumb(self, image_id):
-        """A JPEG from the picture host as base64, or None. Tries the widths in config images.widths, widest first, until one fits images.max_bytes."""
+    def fetch_thumb(self, image_id, hero=False):
+        """A JPEG from the picture host as base64, or None. Tries the widths in config images.widths (images.hero.widths for the big picture), widest first, until one fits max_bytes."""
         im = self.cfg["images"]
-        for w in im["widths"]:
+        spec = im["hero"] if hero else im
+        for w in spec["widths"]:
             try:
-                raw, big = http_bytes(self.cfg, "%s/%s/full/%d,/0/default.jpg" % (im["base_url"].rstrip("/"), image_id, w), "image/jpeg", im["max_bytes"], min(im["call_timeout_s"], self._thumb_left()))
+                raw, big = http_bytes(self.cfg, "%s/%s/full/%d,/0/default.jpg" % (im["base_url"].rstrip("/"), image_id, w), "image/jpeg", spec["max_bytes"], min(im["call_timeout_s"], self._thumb_left()))
             except Fail:
                 return None
             if big:
@@ -379,6 +382,51 @@ class Source(object):
                 self.misses.put(iid, {"m": 1})
 
 
+    def attach_heroes(self, items, network):
+        """The big picture of the detail pane. Set item["hero"] to an inline data: URL or "" (only the detail view asks, for the one artwork, so the row bytes and the picture time stay small).
+        Same rules as attach_thumbs: sample mode reads recorded pictures, a live run reads the cache and fetches the missing one within images.budget_s."""
+        im = self.cfg["images"]
+        hero = im["hero"]
+        room = hero["chunk_chars"] * hero["max_chunks"]
+        need = []
+        for k, it in enumerate(items):
+            it["hero"] = ""
+            if not it["image_id"]:
+                continue
+            if self.fixture:
+                b = self.fx.get("heroes", {}).get(it["image_id"])
+                b = b if isinstance(b, str) and B64.match(b) else None
+            else:
+                hit = self.heroes.get(it["image_id"])
+                b = hit["t"] if hit else None
+                if b is None and network and self.misses.get("h" + it["image_id"]) is None and it["image_id"] not in need:
+                    need.append(it["image_id"])
+            if b and len(DATA_PREFIX) + len(b) <= room:
+                it["hero"] = DATA_PREFIX + b
+        if not need:
+            return
+        self._thumb_end = time.time() + im["budget_s"]
+        ex = cf.ThreadPoolExecutor(max_workers=im["workers"])
+        futs = dict((ex.submit(self.fetch_thumb, i, True), i) for i in need)   # all together, each with the per-picture timeout
+        done, _ = cf.wait(list(futs), timeout=im["budget_s"])
+        ex.shutdown(wait=False)
+        got = {}
+        for f in done:
+            try:
+                got[futs[f]] = f.result()
+            except Exception:
+                got[futs[f]] = None
+        for iid in need:
+            b = got.get(iid)
+            if b and B64.match(b) and len(DATA_PREFIX) + len(b) <= room:
+                self.heroes.put(iid, {"t": b})
+                for it in items:
+                    if it["image_id"] == iid and it["hero"] == "":
+                        it["hero"] = DATA_PREFIX + b
+            elif iid in got:
+                self.misses.put("h" + iid, {"m": 1})
+
+
 # ------------------------------------------------------------------ rows
 
 def pct(n, whole):
@@ -427,6 +475,66 @@ def img_fields(img, cfg):
     if not img or len(img) > n * size:
         return {}
     return dict(("img%d" % (k + 1), img[k * size:(k + 1) * size]) for k in range(n) if img[k * size:(k + 1) * size])
+
+
+_PUNCT = re.compile(r"([!-/:-@\[-`{-~])")
+
+
+def md_escape(v):
+    """Text from the API that goes into a MARKDOWN body: every ASCII punctuation character gets a backslash, which markdown reads as the plain character. So brackets, parentheses, backticks,
+    asterisks, underscores, pipes, angle brackets, `![`, links, autolinks (the colon and the slashes) and html all show as the text they are and never become a link, an image or a tag."""
+    return _PUNCT.sub(r"\\\1", kit.clean_text(v) if isinstance(v, str) else "")
+
+
+def hero_markdown(it, cfg, facets, full=False):
+    """The text under the big picture (a markdown body): the title, the artist and date, a short list of facts (one says how many works share the period) and the attribution.
+    Every string that came from the API is md_escape()d; the rest is fixed text."""
+    a = cfg["attribution"]
+    out = ["&nbsp;", "", "### " + md_escape(it["title"])]   # the first line ends the picture's paragraph (the app file's YAML takes no \\n, so the line break lives in the row text)
+    who = " \u00b7 ".join(md_escape(x) for x in (it["artist"], it["date"]) if x)
+    if who:
+        out += ["", who]
+    facts = []
+    if facets and it["year"] is not None and period_index(cfg, it["year"]) is not None:
+        idx = period_index(cfg, it["year"])
+        facts.append("Same period: %s works, %s" % (md_escape(fmt(facets["periods"][idx])), md_escape(period_labels(cfg)[idx])))
+    for label, v in (("Medium", it["medium"]), ("Origin", it["place"]), ("Department", it["department"])):
+        if v:
+            facts.append("%s: %s" % (label, md_escape(v)))
+    if facts:
+        out += [""] + ["- " + x for x in facts]
+    if full:
+        if it.get("description"):
+            out += [""] + [md_escape(x) for x in it["description"][:1200].split("\n")]
+        extra = ["Credit: %s" % md_escape(it["credit"]) if it.get("credit") else "", "Size: %s" % md_escape(it["dimensions"]) if it.get("dimensions") else ""]
+        if any(extra):
+            out += [""] + [x for x in extra if x]
+    out += ["", "*%s*" % md_escape(a["line"] + (". " + a["description_line"] if full and it.get("description") else ""))]
+    return "\n".join(out)
+
+
+def hero_fields(img, cfg):
+    """The big picture as fields img1 to img24 (4,000 characters each), joined in the pane template."""
+    h = cfg["images"]["hero"]
+    n, size = h["max_chunks"], h["chunk_chars"]
+    if not img or len(img) > n * size:
+        return {}
+    return dict(("img%d" % (k + 1), img[k * size:(k + 1) * size]) for k in range(n) if img[k * size:(k + 1) * size])
+
+
+def hero_row(it, cfg, facets=None, full=True):
+    """The one artwork of the detail view: its pane is the markdown hero (hero_alt, hero_lines and img1 to img24). Only this row carries the big picture; the list rows carry the small one."""
+    page = cfg["links"]["item_page"] + it["id"]
+    sub = " \u00b7 ".join(x for x in (it["artist"], it["date"]) if x)
+    icon, tone, short = dept_style(cfg, it["department"])
+    share_raw = " - ".join(x for x in (it["title"], sub, page) if x)
+    kw = dict(hero_alt="Artwork" if it.get("hero") else "No picture here: it is on Open source", share_text=kit.safe_copy(share_raw), open_url=page, body=cfg["attribution"]["line"],
+              badges=[(short, tone)], multiline={"hero_lines": hero_markdown(it, cfg, facets, full)})
+    kw.update(hero_fields(it.get("hero", ""), cfg))
+    cent = century(it["year"])
+    if cent:
+        kw["badge"] = cent
+    return kit.safe_row(it["title"], sub, icon=icon, copy=share_raw, **kw)
 
 
 def art_row(it, cfg, facets=None, nav=True, full=False):
@@ -525,10 +633,10 @@ def build(view, arg, data, state, cfg, fixture, word):
 def build_item(view, it, state, cfg, fixture):
     head = [back("Back to the list" if view == "item" else "Back to the artwork")] + ([sample_row()] if fixture else []) + banner(state, cfg)
     if view == "record":
-        data = dict((k, v) for k, v in it.items() if k not in ("img", "image_id") and v not in (None, ""))
+        data = dict((k, v) for k, v in it.items() if k not in ("img", "hero", "image_id") and v not in (None, ""))
         return head + [kit.safe_row("Record %s" % it["id"], "the fields this app reads, as the API gave them", icon="Braces", data=data, body="Select a branch to open it.")]
-    return head + [art_row(it, cfg, None, nav=False, full=True),
-                   kit.row("Record (JSON)", "the same fields as a tree", icon="Braces", nav={"view": "record", "arg": it["id"]}, body="Press Enter for the raw record."),
+    return head + [hero_row(it, cfg),
+                   kit.row("Record (JSON)", "the same fields as a tree", icon="Braces", nav={"view": "record", "arg": it["id"]}, pane=kit.NOTE_VIEW, body="Press Enter for the raw record."),
                    kit.note_row("Attribution", cfg["attribution"]["line"], icon="BookOpen",
                                 body="\n".join([cfg["attribution"]["line"]] + ([cfg["attribution"]["description_line"]] if it.get("description") else []) + ["Source: " + cfg["links"]["item_page"] + it["id"]]))]
 
@@ -549,6 +657,8 @@ _PREVIEW = [
     "  fields:", '    - { label: ARTIST, value: "{{row.a_artist}}" }', '    - { label: DATE, value: "{{row.a_date}}" }', '    - { label: MEDIUM, value: "{{row.a_medium}}" }',
     '    - { label: ORIGIN, value: "{{row.a_origin}}" }', '    - { label: DEPARTMENT, value: "{{row.a_dept}}" }', '    - { label: RIGHTS, value: "{{row.a_rights}}" }',
     '  body: "{{row.body}}"', "  actions:", '    - "open"', '    - "copy"']
+_HERO = ["kind: markdown", "mode: selected_row", "bind:",
+         '  body: "![{{row.hero_alt}}](' + "".join("{{row.img%d}}" % k for k in range(1, 25)) + ')' + '{{row.hero_lines}}"', "  actions:", '    - "open"', '    - "copy"']   # the picture over the whole text, one markdown body
 _TILES = ["kind: cards", "mode: list_data", "bind:", '  layout: "tiles"'] + _tile_bind(2) + ['  delta: "{{row.delta}}"', '  delta_label: "{{row.since}}"', '  trend: "{{row.trend}}"']
 _NOTE = ["kind: markdown", "mode: selected_row", "bind:", '  title: "{{row.title}}"', '  subtitle: "{{row.subtitle}}"', '  body: "{{row.body}}"']   # the pane of the Back, notice and hint rows (kit.NOTE_VIEW)
 
@@ -570,7 +680,7 @@ def emit_yaml(cfg):
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:"]
     L += _indent(_TILES, 4)
     L += ["  views:", "    overview:", "      right_widget:"] + _indent(_TILES, 8)
-    L += ["    items:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    item:", "      right_widget:"] + _indent(_PREVIEW, 8)
+    L += ["    items:", "      right_widget:"] + _indent(_PREVIEW, 8) + ["    item:", "      right_widget:"] + _indent(_HERO, 8)
     L += ["    pictures:", "      right_widget:", "        kind: cards", "        mode: list_data", "        bind:", '          layout: "grid"', '          title: "{{row.title}}"', '          subtitle: "{{row.a_artist}}"',
           '          image: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"', '          badge: "{{row.kpi_badge}}"', '          footer: "{{row.a_date}}"']
     L += ["    chart:", "      right_widget:", "        kind: chart", "        mode: list_data", "        bind:", "          type: bar", "          x: period", "          y: count",
@@ -613,10 +723,10 @@ def main(argv):
             kit.emit([back(), kit.note_row("Not found", "no artwork with id %s" % rid, body="The collection has no artwork with this id.")])
         if it is None:
             kit.emit(offline_rows(cfg, state, view))
-        if it["public"] and it["image_id"]:
-            src.attach_thumbs([it], network=state["stale"] is None)
+        if view == "item" and it["public"] and it["image_id"]:
+            src.attach_heroes([it], network=state["stale"] is None)
         else:
-            it["img"] = ""
+            it["hero"] = ""
         kit.emit(build_item(view, it, state, cfg, fixture))
     default = cfg["endpoints"]["items"]["default_query"]
     word = "" if refresh else kit.clean_text(" ".join(w for w in rest if w not in demos), 40)
