@@ -190,5 +190,17 @@ class BackRowPane(unittest.TestCase):
             self.assertIn("\n    note:\n      right_widget:\n        kind: markdown\n        mode: selected_row\n", y, app)
 
 
+class NotePlanNames(unittest.TestCase):
+    def test_taken_note_name_falls_back_and_both_taken_gives_none(self):
+        eng = __import__("test_cold_run_engine").load_engine()
+        cfg = cfg_of("widget-gallery-2")
+        self.assertEqual(eng.note_plan(cfg), ("note", True))
+        cfg["views"] = cfg["views"] + [dict(cfg["views"][0], id="note")]
+        self.assertEqual(eng.note_plan(cfg), ("back-note", True))
+        cfg["views"] = cfg["views"] + [dict(cfg["views"][0], id="back-note")]
+        self.assertIsNone(eng.note_plan(cfg))
+        self.assertIn("    back-note:", "".join(l + "\n" for l in eng.note_lines("back-note")))
+
+
 if __name__ == "__main__":
     unittest.main()

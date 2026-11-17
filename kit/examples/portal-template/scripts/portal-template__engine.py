@@ -1017,8 +1017,9 @@ def emit_yaml(cfg):
         L += ["  views:", "    overview: {}"]
         for v in vs:
             L += ["    %s:" % v["id"], "      right_widget:"] + widget_lines(view_widget(v), 8)
-        if (note_plan(cfg) or (None, False))[1]:
-            L += note_lines()
+        plan = note_plan(cfg) or (None, False)
+        if plan[1]:
+            L += note_lines(plan[0])
     elif mode == "form":
         L.append("  right_widget:")
         L += widget_lines(cfg["form"]["widget"], 4)
@@ -1076,6 +1077,7 @@ def is_tiles_grid(w):
 # The first row of a drilled list is selected when it opens, so the Back row is the first thing the right pane draws. A pane that binds fields (detail, card, diff, json_tree...)
 # draws dash placeholders for a row that has none, so in a view like that the Back, Refresh and notice rows point at a small markdown view, "note", that draws their own words.
 NOTE_VIEW = kit.NOTE_VIEW
+NOTE_VIEW_ALT = "back-note"
 NOTE_ACTIVE = [None]   # set by run_views for the view being drawn: the note view's id when its pane binds fields a nav row lacks, else None
 
 
@@ -1090,7 +1092,7 @@ def note_plan(cfg):
     """(view id, declare) for the pane of the Back, Refresh and notice rows, or None when no view draws a field-binding pane (or there is no room for the note view).
     A markdown selected_row view that already binds exactly title, subtitle and body is reused (declare False); else the `note` view is added when the app has room for it."""
     vs = cfg.get("views") or []
-    if cfg.get("mode", "views") != "views" or any(v.get("id") == NOTE_VIEW for v in vs):
+    if cfg.get("mode", "views") != "views":
         return None
     if not (any(pane_binds_fields(view_widget(v)) for v in vs) or pane_binds_fields((cfg.get("overview") or {}).get("widget"))):
         return None
@@ -1099,11 +1101,12 @@ def note_plan(cfg):
         b = w.get("bind") or {}
         if w.get("kind") == "markdown" and (w.get("mode") or "selected_row") == "selected_row" and [b.get(k) for k in ("title", "subtitle", "body")] == ["{{row.title}}", "{{row.subtitle}}", "{{row.body}}"] and set(b) <= {"title", "subtitle", "body", "actions"}:
             return v["id"], False
-    return (NOTE_VIEW, True) if len(vs) + 1 < MAX_VIEWS else None
+    free = [n for n in (NOTE_VIEW, NOTE_VIEW_ALT) if not any(v.get("id") == n for v in vs)]   # the author's own `note` view is theirs: take the next name
+    return (free[0], True) if free and len(vs) + 1 < MAX_VIEWS else None
 
 
-def note_lines():
-    return ["    %s:" % NOTE_VIEW, "      right_widget:"] + widget_lines({"kind": "markdown", "mode": "selected_row", "bind": {"title": "{{row.title}}", "subtitle": "{{row.subtitle}}", "body": "{{row.body}}"}}, 8)
+def note_lines(name):
+    return ["    %s:" % name, "      right_widget:"] + widget_lines({"kind": "markdown", "mode": "selected_row", "bind": {"title": "{{row.title}}", "subtitle": "{{row.subtitle}}", "body": "{{row.body}}"}}, 8)
 
 
 def view_widget_of(cfg, view_id):
