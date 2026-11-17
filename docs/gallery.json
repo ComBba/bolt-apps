@@ -1,0 +1,287 @@
+{
+  "video": "https://sparcle.app/docs/extend/rich-apps",
+  "entries": [
+    {
+      "id": "tiles",
+      "title": "Tiles with meters, trends and badges",
+      "example": "acme-dash",
+      "caps": [
+        "pane.tiles",
+        "widget.cards"
+      ],
+      "caption": "Compliance posture as tiles: a number, a meter and a status badge for each.",
+      "images": [
+        {
+          "src": "acme-dash-overview.png",
+          "alt": "Bolt launcher with the =acme-dash chip: a list of compliance areas on the left and a grid of tiles on the right, each with a big number, a progress meter and a badge such as ON TRACK."
+        }
+      ],
+      "how": "Copy `kit/examples/acme-dash`; the overview view uses `kind: cards` with `bind.layout: \"tiles\"`."
+    },
+    {
+      "id": "drill",
+      "title": "Drill and Back",
+      "example": "acme-dash",
+      "caps": [
+        "nav.drill",
+        "nav.back"
+      ],
+      "caption": "Press Enter on a row to drill in; the first row is always Back.",
+      "images": [
+        {
+          "src": "acme-dash-drill.png",
+          "alt": "Launcher showing =acme-dash with the input \"controls C-017\": a Back row, then rows of linked tasks, with a detail pane on the right."
+        },
+        {
+          "src": "acme-dash-drill-and-back.gif",
+          "alt": "Animation: the =acme-dash list, Enter drills into controls, a detail pane appears, then Back returns to the overview."
+        }
+      ],
+      "how": "Give the overview rows a `nav` and set `presentation.view_arg`; see `acme-dash/utilities/acme-dash.yaml`."
+    },
+    {
+      "id": "story-pane",
+      "title": "Per-row detail pane with actions",
+      "example": "pulse-feed",
+      "caps": [
+        "pane.per_row",
+        "actions.footer",
+        "widget.entity_preview"
+      ],
+      "caption": "Each story gets its own pane, with Open post and Copy quote.",
+      "images": [
+        {
+          "src": "pulse-feed-story-pane.png",
+          "alt": "Launcher showing =pulse-feed: a ranked list of Hacker News stories and, for the selected story, a pane with source, author, age, score and two buttons, Open post and Copy quote."
+        },
+        {
+          "src": "pulse-feed-story-pane-actions.gif",
+          "alt": "Animation: moving down the story list while the pane on the right follows each story, then the Open post and Copy quote buttons."
+        }
+      ],
+      "how": "Copy `kit/examples/pulse-feed`: an `entity_preview` pane plus a top-level `actions` list."
+    },
+    {
+      "id": "entity-tile",
+      "title": "Entity preview with a tile above",
+      "example": "sky-watch",
+      "caps": [
+        "widget.entity_preview",
+        "pane.tiles"
+      ],
+      "caption": "Type a city and get a temperature tile with the facts below.",
+      "images": [
+        {
+          "src": "sky-watch-paris-pane.png",
+          "alt": "Launcher showing =sky-watch with the word paris: a temperature tile (13.6 C, Paris, France) above source, time and wind, with Open source and Copy summary buttons."
+        },
+        {
+          "src": "sky-watch-paris.gif",
+          "alt": "Animation: typing paris after =sky-watch and the weather pane filling in."
+        }
+      ],
+      "how": "Copy `kit/examples/sky-watch`: `bind.tiles_above` inside an `entity_preview`."
+    },
+    {
+      "id": "sources",
+      "title": "Several live sources in one list",
+      "example": "sky-watch",
+      "caps": [
+        "parallel.sources",
+        "api.keyless"
+      ],
+      "caption": "One word, four sources: the space station, launches, quakes and weather.",
+      "images": [
+        {
+          "src": "sky-watch-overview.png",
+          "alt": "Launcher showing =sky-watch: four rows (space station, next launch, earthquakes, weather) with a pane about the selected launch."
+        }
+      ],
+      "how": "Copy `kit/examples/sky-watch` (no key needed)."
+    },
+    {
+      "id": "chart",
+      "title": "Chart",
+      "example": "expense-tracker",
+      "caps": [
+        "widget.chart",
+        "pane.chart_mixed"
+      ],
+      "caption": "A bar chart of daily spending next to the numbers.",
+      "images": [
+        {
+          "src": "expense-tracker-chart.png",
+          "alt": "Launcher showing =expense-tracker chart: a list of days with amounts and a bar chart on the right with latest 21.8 and peak 188."
+        }
+      ],
+      "how": "Copy `kit/examples/expense-tracker`, the `chart` view (`kind: chart`, type bar)."
+    },
+    {
+      "id": "sample-tiles",
+      "title": "Tiles with a sparkline and a sample label",
+      "example": "expense-tracker",
+      "caps": [
+        "pane.tiles",
+        "sample.mode"
+      ],
+      "caption": "Spent this month against the budget, labelled as sample data.",
+      "images": [
+        {
+          "src": "expense-tracker-tiles.png",
+          "alt": "Launcher showing =expense-tracker: three menu rows and tiles for money spent (544 USD with a line), expenses logged and the biggest expense."
+        }
+      ],
+      "how": "Copy `kit/examples/expense-tracker`; sample data shows until a key is added."
+    },
+    {
+      "id": "before-after",
+      "title": "Detail pane with Before, After and What changed",
+      "example": "pipeline-board",
+      "caps": [
+        "widget.detail"
+      ],
+      "caption": "A change shown as Before and After next to the run list.",
+      "images": [
+        {
+          "src": "pipeline-board-detail-pane.png",
+          "alt": "Launcher showing =pipeline-board changes: Run 305 selected and a detail pane with Before, After and What changed."
+        },
+        {
+          "src": "pipeline-board-overview.png",
+          "alt": "Launcher showing =pipeline-board: three menu rows and tiles for runs, passed and failed, labelled as sample data."
+        }
+      ],
+      "how": "Copy `kit/examples/pipeline-board`, the `changes` view."
+    },
+    {
+      "id": "maps",
+      "title": "Row Open and Copy (a place in Maps)",
+      "example": "places-list",
+      "caps": [
+        "actions.maps_link",
+        "actions.row"
+      ],
+      "caption": "Each place opens in the browser map and copies as text.",
+      "images": [
+        {
+          "src": "places-list-detail-pane.png",
+          "alt": "Launcher showing =places-list: five places and a pane for Lantern Park with kind, distance, coordinates and Open and Copy buttons."
+        },
+        {
+          "src": "places-list-overview.png",
+          "alt": "Launcher showing =places-list: one Nearby places row and a tile showing 3 of 5 places open now, labelled as sample data."
+        }
+      ],
+      "how": "Copy `kit/examples/places-list`; the row carries `open_url`."
+    },
+    {
+      "id": "form",
+      "title": "Form app",
+      "example": "unit-convert",
+      "caps": [
+        "inputs.form"
+      ],
+      "caption": "Fill Amount, From and To, press Convert.",
+      "images": [
+        {
+          "src": "unit-convert-form.png",
+          "alt": "Launcher showing =unit-convert as a form: Amount 12500, From km, To mi, with Cancel and Convert buttons."
+        },
+        {
+          "src": "unit-convert-form.gif",
+          "alt": "Animation: filling the Amount, From and To fields and pressing Convert."
+        }
+      ],
+      "how": "Copy `kit/examples/unit-convert`; `inputs` plus `submit.label`."
+    },
+    {
+      "id": "form-result",
+      "title": "Form result and detail pane",
+      "example": "unit-convert",
+      "caps": [
+        "widget.detail"
+      ],
+      "caption": "One row per unit; the pane shows result, formula and reverse.",
+      "images": [
+        {
+          "src": "unit-convert-result-detail.png",
+          "alt": "Launcher after Convert: seven rows from 12500 km = 7767.14 mi to yards, with a pane showing Result, Formula, Reverse and Kind."
+        },
+        {
+          "src": "unit-convert-result-row-copy.png",
+          "alt": "The same result list with the feet row selected and its Copy button showing at the right of the row."
+        }
+      ],
+      "how": "Same example; `right_widget.kind: detail`."
+    },
+    {
+      "id": "install",
+      "title": "Install flow",
+      "example": "acme-dash",
+      "caps": [
+        "platform.reapprove",
+        "permissions.block"
+      ],
+      "caption": "Review what the pack can do, accept, then approve the first run.",
+      "images": [
+        {
+          "src": "install-review-card.png",
+          "alt": "Bolt dialog Install utility pack for Acme Dash, listing a HIGH RISK block and the pack files, with Cancel and Accept and install buttons."
+        },
+        {
+          "src": "acme-dash-run-approval.png",
+          "alt": "Bolt dialog Run Acme Dash, with the list of files and their hashes and the Review files and Accept and continue buttons."
+        },
+        {
+          "src": "install-flow.gif",
+          "alt": "Animation: the install review card, then the first-run approval dialog."
+        }
+      ],
+      "how": "Drop the `.boltpack` on the launcher; see `kit/examples/QUICKSTART.md`."
+    },
+    {
+      "id": "terminal",
+      "title": "Terminal flow",
+      "example": "script-template",
+      "caps": [],
+      "caption": "`new`, `check`, `ship`: from template to a pack you can install (the app is named my-tool).",
+      "images": [
+        {
+          "src": "terminal-new-check.png",
+          "alt": "Terminal showing ./bolt-apps new script-template my-tool, then ./bolt-apps check my-tool passing ten cases."
+        },
+        {
+          "src": "terminal-ship.png",
+          "alt": "Terminal showing the ship output: the pack file name and the five install steps."
+        }
+      ],
+      "how": "See `kit/examples/QUICKSTART.md`."
+    }
+  ],
+  "anatomy": [
+    {
+      "id": "acme-dash-overview",
+      "title": "acme-dash: overview",
+      "src": "acme-dash-overview-anatomy.png",
+      "alt": "Annotated acme-dash overview: call-outs 1 to 4 on the launcher word, the list rows, the right pane and a tile"
+    },
+    {
+      "id": "acme-dash-drill",
+      "title": "acme-dash: drill",
+      "src": "acme-dash-drill-anatomy.png",
+      "alt": "Annotated acme-dash drill: call-outs 1 to 5 on the input, the rows with Back first, the detail pane, a tile strip and the Open and Copy buttons"
+    },
+    {
+      "id": "pulse-feed-story",
+      "title": "pulse-feed: story pane",
+      "src": "pulse-feed-story-anatomy.png",
+      "alt": "Annotated pulse-feed: call-outs 1, 2, 3 and 5 on the launcher word, the story rows, the story pane and the Open post and Copy quote buttons"
+    },
+    {
+      "id": "unit-convert",
+      "title": "unit-convert: form, rows, detail",
+      "src": "unit-convert-anatomy.png",
+      "alt": "Annotated unit-convert: the form on the left with call-outs 1 and 6, the result rows and detail pane on the right with call-outs 1, 2, 3 and 5"
+    }
+  ]
+}
