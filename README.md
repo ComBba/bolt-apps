@@ -39,6 +39,15 @@ Bolt supports more kinds than these (skills, agents, connectors, detectors, comp
 packs). The gallery starts with the three above. See
 [Extend Bolt](https://sparcle.app/docs/extend/) for everything Bolt can load today.
 
+## See it in action
+
+![Bolt launcher with =acme-dash: compliance areas on the left, tiles with numbers, meters and badges on the right](docs/images/acme-dash-overview.png)
+![Animation: =acme-dash drills into a control, shows its detail pane, then goes Back](docs/images/acme-dash-drill-and-back.gif)
+![Launcher showing =pulse-feed with a pane for the selected story and Open post and Copy quote buttons](docs/images/pulse-feed-story-pane.png)
+![Launcher showing =unit-convert as a form with Amount, From, To and a Convert button](docs/images/unit-convert-form.png)
+
+Every picture is a folder you can copy from [`kit/examples/`](kit/examples/). See which key draws what in [Anatomy of a Bolt App](docs/anatomy.md), and all screens in the [gallery](docs/gallery.md).
+
 ## Safety tiers
 
 Every app has a tier. The checker works it out from the content and refuses an app that
