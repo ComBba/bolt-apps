@@ -288,7 +288,7 @@ class ScriptTemplateLive(unittest.TestCase):
         self.assertEqual(len(self.m.hero_fields(self.m.DATA_PREFIX + big[:room - 100], self.cfg)), im["max_chunks"])
 
     def test_every_api_string_that_enters_a_markdown_body_is_escaped_to_plain_text(self):
-        hostile = "](javascript:alert(1)) ![x](https://evil/x.png) <img src=x onerror=alert(1)> **bold** `code` [a](b) <https://evil.example> a_b_c | x &lt; www.evil.example me@evil.example # h\\"
+        hostile = "](javascript:alert(1)) ![x](https://evil/x.png) <img src=x onerror=alert(1)> **bold** `code` [a](b) <https://evil.example> a_b_c | x &lt; www.evil.example me@example.com # h\\"
         it = self.m.n_item(self.rec(title=hostile, artist_display=hostile, date_display=hostile, medium_display=hostile, place_of_origin=hostile, department_title=hostile, description=hostile, credit_line=hostile, dimensions=hostile), self.cfg)
         facets = {"periods": [1, 2, 3, 4, 5, 6, 7]}
         for full in (False, True):
