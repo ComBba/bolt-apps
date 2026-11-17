@@ -182,16 +182,24 @@ def token(s):
     return t if NAV_OK.match(t) and ".." not in t else ""
 
 
+def finite(x):
+    try:
+        return math.isfinite(x)
+    except OverflowError:   # an integer too large for a float (10**400)
+        return False
+
+
 def number(v):
     if isinstance(v, bool):
         return None
     if isinstance(v, (int, float)):
-        return v
+        return v if finite(v) else None   # a JSON Infinity, NaN or a huge integer is not a number a total can use
     if isinstance(v, str):
         try:
-            return float(v)
+            f = float(v)
         except ValueError:
             return None
+        return f if finite(f) else None   # "inf", "nan", "1e999" are text, not numbers
     return None
 
 
@@ -363,6 +371,8 @@ def match(item, where):
                 return False
         elif isinstance(cond, dict):
             for op, arg in cond.items():
+                if op not in ("not", ">=", "<=", ">", "<", "gte", "lte", "gt", "lt"):
+                    raise ConfigError("where: unknown comparison %r; use one of gt, gte, lt, lte, not" % op)
                 if op == "not" and v in arg:
                     return False
                 if op in (">=", "<=", ">", "<", "gte", "lte", "gt", "lt"):
@@ -391,6 +401,7 @@ def compute_stats(cfg, data):
         elif "sum" in s:
             parts = [one(n, depth + 1) for n in s["sum"]]
             v = None if any(x is None for x in parts) else sum(parts)
+            v = v if v is None or finite(v) else None   # 1e308 + 1e308 is not a number
         else:
             items = data.get(s.get("endpoint"))
             if isinstance(items, list):
@@ -399,6 +410,7 @@ def compute_stats(cfg, data):
                     nums = [number(get_path(x, s.get("field_sum") or s.get("field_max"))) for x in rows]
                     nums = [n for n in nums if n is not None]
                     v = (sum(nums) if "field_sum" in s else max(nums)) if nums else None
+                    v = v if v is None or finite(v) else None   # a sum that overflows is left out, like any non-number
                 elif "group" in s:
                     counts = {}
                     for x in rows:
@@ -582,7 +594,10 @@ def _day(delta):
 def fill_path(path, pvars):
     """Fill {today}, {today-7d}, {today+1d} (local dates), then {name} and {name.field} from earlier results and the typed query, URL-quoted."""
     path = DATE_TOKEN.sub(lambda m: _day(int(m.group(2) or 0) * (-1 if m.group(1) == "-" else 1)), path)
-    return TOKEN.sub(lambda m: urllib.parse.quote(str(lookup(m.group(1), pvars, {}) if lookup(m.group(1), pvars, {}) is not None else ""), safe=""), path) if pvars else path
+    def quoted(m):
+        q = urllib.parse.quote(str(lookup(m.group(1), pvars, {}) if lookup(m.group(1), pvars, {}) is not None else ""), safe="")
+        return q.replace(".", "%2E") if q in (".", "..") else q   # a lone dot segment would be resolved away by the server or a proxy
+    return TOKEN.sub(quoted, path) if pvars else path
 
 
 def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):

@@ -228,8 +228,9 @@ def emit_yaml(cfg):
     for osn in ("macos", "linux"):
         L.append(('    %s: "python3 {{scripts_dir}}/' + _SELF + ' {{view}} {{arg}} %s"') % (osn, words))
     L += ["  parse: json", "  timeout_seconds: %d" % app["timeout"], "presentation:", "  widget: list", "  title_field: title", "  subtitle_field: subtitle", "  view_arg: view", "  right_widget:",
-          "    kind: cards", "    mode: list_data", "    bind:", '      layout: "tiles"', '      title: "{{row.kpi_label}}"', '      value: "{{row.kpi_value}}"', '      unit: "{{row.kpi_unit}}"',
-          '      max: "{{row.kpi_max}}"', '      subtitle: "{{row.kpi_note}}"', '      badge: "{{row.kpi_badge}}"', "  views:", "    overview: {}",
+          "    kind: entity_preview", "    mode: selected_row", "    bind:", '      title: "{{row.title}}"', '      subtitle: "{{row.subtitle}}"', "      tiles_above:", '        title: "{{row.kpi_label}}"',
+          '        value: "{{row.kpi_value}}"', '        unit: "{{row.kpi_unit}}"', '        max: "{{row.kpi_max}}"', '        subtitle: "{{row.kpi_note}}"', '        badge: "{{row.kpi_badge}}"',
+          "      actions: [copy]", "  views:", "    overview: {}",
           "    items:", "      right_widget:", "        kind: table", "        mode: list_data", "        bind:", "          columns:", "            - { field: item_name, label: Name }",
           "            - { field: status, label: Status }", "            - { field: count, label: Count, align: right }",
           "    item:", "      right_widget:", "        kind: detail", "        mode: selected_row", "        bind:", '          title: "{{row.item_name}}"', '          subtitle: "{{row.status}}"', "          fields:",

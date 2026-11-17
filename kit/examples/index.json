@@ -78,8 +78,8 @@
   "apps": [
     {
       "id": "portal-template",
-      "need": "a web API with a key: summary tiles, drill down with Back, a detail pane per row",
-      "layout": "overview tiles, drill down to lists, detail with related rows, per-row detail panel",
+      "need": "a web API with a key: a summary list with a tile in the preview pane, drill down with Back, a detail pane per row",
+      "layout": "overview list with a tile in the preview pane, drill down to lists, detail with related rows, per-row detail panel",
       "mode": "views",
       "widgets": [
         "cards",
@@ -237,7 +237,7 @@
     {
       "id": "lookup-template",
       "need": "one typed word in, one detail card out, from chained calls",
-      "layout": "one word in, weather tiles with a sparkline out",
+      "layout": "one word in, a list with a preview pane out: tiles with a sparkline on the number rows, text on the others",
       "mode": "lookup",
       "widgets": [
         "cards"
@@ -334,8 +334,8 @@
     },
     {
       "id": "system-glance",
-      "need": "several quick local probes shown as tiles",
-      "layout": "three parallel command probes as tiles, Disk drill view",
+      "need": "several quick local probes shown as a list with a preview pane (a tile above for each number)",
+      "layout": "three parallel command probes as list rows with a preview pane (tile above the number rows), Disk drill view",
       "mode": "custom script on the flat kit",
       "script": "scripts/system-glance__system-glance.py",
       "backing": "CLI command",
@@ -501,7 +501,7 @@
     {
       "id": "script-template",
       "need": "a script app on the kit for an API or tool no engine template fits",
-      "layout": "overview tiles, list with a filter word, detail with Back",
+      "layout": "overview list with a tile in the preview pane, list with a filter word, detail with Back",
       "mode": "custom script on the flat kit",
       "script": "scripts/script-template__app.py",
       "backing": "remote HTTP API",

@@ -11,7 +11,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Pane: entity_preview | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Facts list up to 40 entries, one tile above. Config default for a detail view. |
 | Pane: chart | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Types line, bar and sparkline only. Title is the label bind as literal text. |
 | Pane: table | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Up to 40 columns; totals sum, avg, min, max, count; the engine hands it at most 50 rows. |
-| Pane: cards | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Layout tiles (a tile per row, at most 24 rows, and a row with no number draws an empty "-" tile) or the default grid (up to 500 cards, no number needed); tile label cut at 24 characters. The 24 cap applies only to bind.layout tiles. |
+| Pane: cards | supported | [acme-dash](acme-dash) | `kit/examples/acme-dash/check.json` | Layout tiles (a tile per row, at most 24 rows, and a row with no number draws an empty "-" tile) or the default grid (up to 500 cards, no number needed); tile label cut at 24 characters. The 24 cap applies only to bind.layout tiles. |
 | Pane: detail | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Label and value fields of the selected row. |
 | Pane: json_tree | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Reads a nested object from the row field named in bind.source. |
 | Pane: diff | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Two texts, line by line. It draws only the text its bind gives it: left and right templates of the selected row, and in 181 it can show an empty Compare box when a row carries none. For what changed, prefer a detail pane (Before, After, Change). Verified in a launcher: not yet. |
@@ -76,6 +76,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | One app that takes a typed query AND drills (lookup plus views) | partial | [portal-template](portal-template) | `toolkit/test/cold-run.test.mjs` | Not in one app when the API must be asked per typed word: lookup mode has {query} but no drill or Back, views mode has drill and Back but its first word is a view, never a query (an unknown first word shows the overview). What works in views mode: a view name then one word filters that list inside the app, and Enter drills through children. Otherwise build two apps (two chips). ENGINE.md, Two shapes of app. |
 | Buttons on a lookup row | partial | [lookup-template](lookup-template) | `toolkit/test/cold-run.test.mjs` | Open (url) and Copy only: no drill, no Back, no extra actions. In a chained lookup (steps and rows) a row's copy is ignored and Copy copies the row text; check warns (config_copy_ignored). With a single endpoint and an item, item.copy works. |
 | An app that only shows sample data (offline, no API) | supported | no shipped example sets api.fixture_default true; the recipe is in ENGINE.md | `toolkit/test/cold-run.test.mjs` | Sample-only by design: fixture_default true, a base_url that cannot resolve, no key_env. ship and doctor print the same start mode. The data is signed with the pack. |
+| A text-only lookup result (no empty tile) | supported | [lookup-template](lookup-template) | `kit/python/tests/test_cold_run2_engine.py` | tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt. |
 
 ## Snippets
 
@@ -477,4 +478,10 @@ Settings, Desktop, User Apps, expand the app, Review and accept
 
 ```
 "api": {"base_url": "https://example.invalid", "fixture_default": true, "fixture_file": "fixtures.json"}
+```
+
+### A text-only lookup result (no empty tile) (`lookup.text_only`)
+
+```
+{"kind": "entity_preview", "mode": "selected_row", "bind": {"title": "{{row.title}}", "subtitle": "{{row.subtitle}}", "tiles_above": {"title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}"}, "body": "{{row.body}}", "actions": ["open", "copy"]}}
 ```

@@ -1,5 +1,20 @@
 [
   {
+    "title": "Sample data",
+    "subtitle": "This is sample data.",
+    "icon": "FileText",
+    "body": "This is sample data.",
+    "actions": [],
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "SAMPLE",
+    "copy_text": ""
+  },
+  {
     "title": "Example Co · Summary",
     "subtitle": "4 open tickets · 2 active projects",
     "icon": "globe",
@@ -9,7 +24,7 @@
     "kpi_value": 33,
     "kpi_unit": "%",
     "kpi_max": 100,
-    "kpi_note": "closed / all · sample data",
+    "kpi_note": "closed / all",
     "kpi_foot": "4 of 12 closed",
     "kpi_badge": "BEHIND",
     "copy_text": "- Example Co Summary - 4 open tickets 2 active projects",
@@ -58,7 +73,7 @@
     "title": "Documentation",
     "subtitle": "example.com/docs. Enter opens the page",
     "icon": "book",
-    "body": "",
+    "body": "## Documentation\n\nEnter opens the documentation page in your browser.",
     "actions": [],
     "url": "https://example.com/docs",
     "kpi_label": "",
@@ -70,5 +85,25 @@
     "kpi_badge": "",
     "copy_text": "- Documentation - example.com/docs. Enter opens the page",
     "open_url": "https://example.com/docs"
+  },
+  {
+    "title": "Refresh",
+    "subtitle": "Enter to fetch fresh data",
+    "icon": "RefreshCw",
+    "body": "",
+    "nav": {
+      "view": "overview",
+      "arg": "refresh"
+    },
+    "actions": [],
+    "pane": "overview",
+    "kpi_label": "",
+    "kpi_value": "",
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": ""
   }
 ]

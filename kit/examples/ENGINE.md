@@ -72,7 +72,16 @@ An HTTP 404 (or 410) on EVERY call of a run, with nothing else to show, means th
 More endpoint options: `hydrate` (`{ path, limit }`: the answer is a list of ids and `path` contains `{id}`; one request per id runs in parallel, `limit` 1 to 50, default 20; an id that fails is dropped; if none answer the endpoint fails), `flatten` (`true` or a field name: an object of lists keyed by date or name becomes one list, the key kept in that field, default `key`), `require` (on an object endpoint: dotted paths that must be present, otherwise the answer counts as failed, never as zero). A `path` may use the date tokens `{today}`, `{today-7d}` and `{today+1d}` (local dates, 0 to 9999 days). An answer that says there is more (a next link or cursor, `has_more`, or a total above the rows held; read from the answer, `meta` or `pagination`) shows a "first page only" notice.
 
 ## `stats` (named numbers for the overview)
-`{ endpoint, where, group }` counts rows. `where`: `{ "status": ["done"] }`, `{ "status": { "not": ["done"] } }`, `{ "n": { "gte": 1 } }`. `group` gives "7 a, 3 b". `{ "pct": [a, b] }` and `{ "sum": [a, b] }` combine other stats.
+`{ endpoint, where, group }` counts rows. `where`: `{ "status": ["done"] }`, `{ "status": { "not": ["done"] } }`, `{ "n": { "gte": 1 } }`. `group` gives "7 a, 3 b". A plain value in `where` means equals and works for booleans and numbers too (`{ "done": true }`, `{ "n": 3 }`); a list means any of; a comparison object such as `{ "n": { "gte": 1 } }` compares numbers (also lte, gt, lt); any other operator name (such as between) is a config error that names the allowed ones. Equality is type-strict: `{ "neg": "-2" }` does not match the number -2, and `{ "d.x": 7 }` does not match the text "7"; write the value the way the API sends it. `{ "pct": [a, b] }` and `{ "sum": [a, b] }` combine other stats.
+
+Totals over a field: `{ "endpoint": "tickets", "field_sum": "hours" }` adds the field over the rows (after `where`), `{ "endpoint": "tickets", "field_max": "hours" }` takes the largest. A value that is a number or a numeric string counts ("2e2" is 200; "1,000" is not a number and is skipped, as are "inf", "nan", "1e999" and a JSON Infinity: never a crash); a row with no number in the field is skipped; when no row has one, the stat is left out (a row template that uses it shows "unknown", never 0). `where` and the field name take a dotted path. When a stat has `field_sum` or `field_max`, `group` is ignored. The other stat forms (`pct`, `sum`) take stat names, not fields, so total a field first and combine the stats. Example:
+
+```
+"stats": { "hours_all": { "endpoint": "tickets", "field_sum": "hours" },
+           "hours_open": { "endpoint": "tickets", "where": { "status": ["open"] }, "field_sum": "hours" },
+           "longest": { "endpoint": "tickets", "field_max": "hours" },
+           "open_share": { "pct": ["hours_open", "hours_all"] } }
+```
 
 ## `overview.rows[]`
 `title`, `subtitle`, `icon`, `body`, `view` (drill to a view; `arg` filters it), `url` (opens a link), `tile`, `extra`, `trend` (list of numbers), `only_if`. `overview.widget` replaces the default tiles pane.
@@ -220,6 +229,22 @@ main(sys.argv)
 ```
 Limits: servers that need a login or a key are out of scope here (use `get_secret` and pass the key in the server's environment from the script, never in `config.json`); the server starts on every run, so slow servers feel slow; remote MCP servers over HTTP are a plain HTTP call and need no workaround.
 
+### Scoped and slashed names (`@types/node`)
+Every `{query}` and `{earlier_step.field}` in an endpoint `path` is percent-encoded as one path segment, with nothing left unescaped: `@types/node` goes out as `%40types%2Fnode`, so the `/` does not add a path level. A test runs a real lookup against a local server and checks the request line `/%40types%2Fnode/latest` (`kit/python/tests/test_cold_run2_engine.py`). What this proves: the engine sends exactly that. Whether a given service accepts `%2F` is up to the service: the npm registry answered `@types/node` this way in a live run by the author of pkg-peek; a service that wants a literal `/` or `@` cannot be reached with `{query}` in the path, so put the name in a query string (`?name={query}`) when it allows that. A query is at most three typed words, joined with a space (`%20`). A query that is only `.` or `..` is sent as `%2E` or `%2E%2E`, so a server or proxy cannot resolve it as a dot segment. Filters (`|name` in a row template) act on the answer text, not on the typed word, so nothing in a row template re-encodes a name: write the Open link as `https://www.npmjs.com/package/{latest.name}` (the name as the API returned it, `@types/node` stays readable).
+
+### Recipe: a text-only lookup result (no tile)
+A lookup whose answer is words (a version, a status, a description) has no number to put in a tile. Use an `entity_preview` selected-row widget, not a tiles grid. `tiles_above` draws only for a row that has a number, so a row with no `tile` draws no empty "-" tile, and the row's `body` (markdown) is what the pane shows:
+
+```
+"lookup": { "rows": [
+  { "title": "{latest.name} {latest.version}", "subtitle": "latest version", "body": "## {latest.name}\n\n{latest.description}", "url": "https://www.npmjs.com/package/{latest.name}" } ],
+  "widget": { "kind": "entity_preview", "mode": "selected_row", "bind": { "title": "{{row.title}}", "subtitle": "{{row.subtitle}}",
+    "tiles_above": { "title": "{{row.kpi_label}}", "value": "{{row.kpi_value}}", "unit": "{{row.kpi_unit}}", "max": "{{row.kpi_max}}", "trend": "{{row.trend}}", "subtitle": "{{row.kpi_note}}", "badge": "{{row.kpi_badge}}", "footer": "{{row.kpi_foot}}" },
+    "body": "{{row.body}}", "actions": ["open", "copy"] } } }
+```
+
+Give a row that has a number a `tile` and it draws one above its text; give every text-only row a `body` (its pane shows title, subtitle and body; a row that binds none of the pane's fields is `pane_blank_row`). A plain `markdown` widget (title, subtitle, body) is the same without tiles. lookup-template is this shape: tiles on the temperature rows, plain text on Coordinates and the forecast link. check treats a tiles grid (`cards` with `bind.layout: tiles`) over rows without numbers as an error (`tile_row_without_value`); the `known_empty_tiles` waiver is gone from lookup-template.
+
 ## An app that only shows sample data (offline, no API)
 
 Most apps ship live (`api.fixture_default` `false`). An app that is sample-only by design (a demo, a reference card, a checklist whose data you write yourself) ships with the sample switch on, so it never opens a connection:
@@ -241,6 +266,29 @@ Most apps ship live (`api.fixture_default` `false`). An app that is sample-only 
 - A shipped engine app is live (`api.fixture_default` is `false`) unless it is sample-only by design (see "An app that only shows sample data" above). An installed pack cannot be switched between the two, because `config.json` is signed and Bolt starts the script with no environment.
 - `check` runs the script in sample mode so tests need no key and no network: put `"fixture": true` at the top of `check.json` (every case) or on one case (a case wins over the top level; `"fixture": false` forces live). The script then reads `fixtures.json`. A terminal run can use `BOLT_APP_FIXTURE=1` (or `0`).
 - Live with no key shows one setup row with the exact one-line command. Live with the network down shows the offline row, or an old copy with its age when one was cached. These are checked in sample mode with `demo-nokey`, `demo-offline`, `demo-auth` and `demo-stale`.
+
+## Make it yours (the files `new` leaves)
+
+`./bolt-apps new <template> <id>` copies a working app, renames it and makes `check` pass on its sample data. It does not know what your app is for, so these files still describe the template until you rewrite them:
+
+| File | What `new` leaves | What to do |
+|---|---|---|
+| `scripts/<id>__config.json` | the template's endpoints, views, rows; `app.description` says TODO | rewrite for your API (this file is the app) |
+| `scripts/<id>__fixtures.json` | the template's recorded answers | replace with answers from your API (trim them), or your own sample rows |
+| `check.json` | engine apps (views or lookup): one case per view or typed word, no expected text, no goldens. Other templates: the template's cases | add a case per view you add; add `expect.text_present` words your app prints; add `"golden": "golden/<name>.json"` to a case and run `check --update-golden` once your data is final |
+| `README.md` | a first line saying "Template text below"; the rest is the template's | rewrite it, delete the note |
+| `bolt-app.json` | `title` from the id; `summary`, `role`, `saves` say TODO (lint warns `listing_todo`) | one real line each; `permissions` are the real ids the template needs, check them |
+| `utilities/<id>.yaml` | generated from the config | regenerate after every config change: `python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml` |
+
+The TODO description is shipped: `utilities/<id>.yaml` carries `app.description` into the pack and the launcher shows it. `lint`, `pack --personal` and `ship` print `description_todo` and `listing_todo` as warnings (not errors: the pack still builds), and `ship` adds a plain line saying the description still says TODO. Rewrite it before you share the pack.
+
+`check` also fails any case, whatever it expects, when the run prints no rows, a row has no title, a row of a shared-engine app has an empty or missing subtitle, a sample-labelled app shows no row that says "sample", or the case names a view the config no longer has (`case_unknown_view`: the engine would draw the overview and the case would test nothing; `expect.view_fallback: true` marks a case that tests that fallback on purpose). `expect.min_rows` sets a floor on the rows.
+
+The generated `check.json` proves that your app runs and draws well-formed rows (at least one row per case, titles, subtitles, a sample label); it does not prove your data is right. One useless row per case, or emptied fixtures, still pass.
+
+Checklist step: when your data is final, run `check <dir> --update-golden` once (after adding `"golden": "golden/<name>.json"` to the cases you want compared); from then on check compares your real output.
+
+When `check` fails after an edit because an old expectation no longer holds, it names `check.json` and the case, and ends with one hint: change `cases[].expect.text_present` to words your app prints (or delete the line), then run `check --update-golden` once your data is final and read the goldens it rewrites.
 
 ## What check tells you
 

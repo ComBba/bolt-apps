@@ -255,7 +255,7 @@ export function widgetNumber(v) {
 	return Number.isFinite(n) && Math.abs(n) <= 1e15 ? n : null;
 }
 export function paneProblems(pres, rows, view, opts = {}) {
-	const out = [], E = (code, message) => out.push({ level: opts.waiveEmptyTiles && code === 'tile_row_without_value' ? 'warning' : 'error', code, message });
+	const out = [], E = (code, message) => out.push({ level: 'error', code, message });
 	if (!pres || !Array.isArray(rows)) return out;
 	// the launcher draws the view named by the first word; a first word that is not a declared view (a place, a repo, a host name) is drawn by the APP-LEVEL right_widget
 	const fallback = pres.viewArg && view !== 'overview' && !pres.views.has(view);
@@ -408,6 +408,28 @@ export function checkRows(rows, manifestActions = 1) {
 	return f;
 }
 
+// The shared engine's config for an app (null for a script app with no engine): used to know the views a case may name and whether the app promises a sample label.
+function engineConfig(appDir) {
+	try { const sd = path.join(appDir, 'scripts'), cf = fs.readdirSync(sd).find((f) => f.endsWith('__config.json')), id = cf && cf.slice(0, -'__config.json'.length); if (!cf || !fs.existsSync(path.join(sd, `${id}__engine.py`))) return null; return JSON.parse(fs.readFileSync(path.join(sd, cf), 'utf8')); } catch { return null; }
+}
+const SAMPLE_WORD = /sample/i;
+// Rules every case must meet, whatever it expects: a run that prints nothing, a row with no title or no subtitle, or a sample-only app with no visible sample marker would otherwise pass unseen.
+export function presenceProblems(rows, { sampleMode, bannerPromised, minRows, strictSubtitle } = {}) {
+	const out = [], E = (code, message) => out.push({ level: 'error', code, message });
+	if (!Array.isArray(rows)) return out;
+	if (rows.length === 0) { E('no_rows', 'the run printed no rows: the launcher would show an empty list. Print at least one row (a not-found or setup row counts)'); return out; }
+	if (minRows !== undefined && rows.length < minRows) E('too_few_rows', `expect.min_rows is ${minRows}, the run printed ${rows.length}`);
+	rows.forEach((r, i) => {
+		if (!r || typeof r !== 'object') return;
+		if (typeof r.title !== 'string' || !r.title.trim()) E('row_title_empty', `row ${i} has no title: it draws as a blank line`);
+		else if (!strictSubtitle) return;
+		else if (r.subtitle !== undefined && (typeof r.subtitle !== 'string' || !r.subtitle.trim())) E('row_subtitle_empty', `row ${i} ("${r.title.slice(0, 40)}") has an empty subtitle: leave the field out or give it text`);
+		else if (r.subtitle === undefined && !r.nav) E('row_subtitle_empty', `row ${i} ("${r.title.slice(0, 40)}") has no subtitle: every row needs a second line (a not-found or note row too)`);
+	});
+	if (sampleMode && bannerPromised && !rows.some((r) => r && ['title', 'subtitle', 'body', 'kpi_badge', 'kpi_foot', 'kpi_note'].some((k) => typeof r[k] === 'string' && SAMPLE_WORD.test(r[k])) || (r && Array.isArray(r.badges) && JSON.stringify(r.badges).match(SAMPLE_WORD)))) E('sample_marker_missing', 'this app shows sample data (fixture_banner is on) but no row says so: someone could take the rows for real data. Keep api.fixture_banner on, or put "sample" in a title, subtitle, badge or note');
+	return out;
+}
+
 export async function checkApp(appDir, opts = {}) {
 	const cfgFile = path.join(appDir, 'check.json');
 	const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
@@ -417,6 +439,7 @@ export async function checkApp(appDir, opts = {}) {
 	let listing = null;
 	try { listing = JSON.parse(fs.readFileSync(path.join(appDir, 'bolt-app.json'), 'utf8')); } catch {}
 	if (listing) for (const x of platformFindings(listing)) report.findings.push(x);
+	if ('known_empty_tiles' in cfg) report.findings.push({ level: 'error', code: 'waiver_removed', message: 'check.json: known_empty_tiles no longer exists. A tiles view with rows that have no number now always fails (tile_row_without_value). Delete the key and give those rows a body in an entity_preview pane (a tile draws only for a number), as lookup-template does (ENGINE.md, "a text-only lookup result")', path: 'check.json' });
 	report.findings.push(...kitGuard(appDir, cfg));
 	// lookup.rows (a chained lookup) are drawn like overview rows: a row's own `copy` is not read, so Copy puts the row text on the clipboard. Only an `item` (single endpoint) honours `copy`.
 	try { const sd = path.join(appDir, 'scripts'), cf = fs.readdirSync(sd).find((f) => f.endsWith('__config.json')); const ec = cf ? JSON.parse(fs.readFileSync(path.join(sd, cf), 'utf8')) : null; const ig = ec && ec.mode === 'lookup' && ec.lookup && Array.isArray(ec.lookup.rows) ? ec.lookup.rows.map((r, i) => (r && typeof r === 'object' && 'copy' in r ? `lookup.rows[${i}]` : null)).filter(Boolean) : []; if (ig.length) top('warning', 'config_copy_ignored', `${ig.join(', ')} in scripts/${cf} declare "copy", which lookup rows ignore: Copy puts the row's own text on the clipboard. Remove it, or use a lookup with a single endpoint and an "item", where "copy" works (ENGINE.md, "Buttons in lookup mode")`, `scripts/${cf}`); } catch { /* no engine config: nothing to say */ }
@@ -459,16 +482,22 @@ export async function checkApp(appDir, opts = {}) {
 			try { rows = JSON.parse(r.out); } catch { E('non_json_output', `stdout is not JSON (${r.out.length} bytes)`); }
 			if (rows !== null) {
 				for (const x of checkRows(rows, cfg.manifest_actions ?? 1)) f.push(x);
+				if ((ex.exit ?? 0) === 0) {
+					const ecfg = engineConfig(appDir), sm = sample === undefined || sample === 'unset' ? !!(ecfg && ecfg.api && ecfg.api.fixture_default) : !!sample;
+					for (const x of presenceProblems(rows, { sampleMode: sm && !(kase.args || []).some((a) => /^demo-/.test(a)) && rows.length > 1, bannerPromised: !!(ecfg && ecfg.api && ecfg.api.fixture_banner), minRows: ex.min_rows, strictSubtitle: !!ecfg })) f.push(x);
+					const first = (kase.args || [])[0];
+					if (ecfg && (ecfg.mode || 'views') === 'views' && Array.isArray(ecfg.views) && first && first !== 'overview' && !ecfg.views.some((v) => v && v.id === first) && !/^demo-/.test(first) && !ex.view_fallback) f.push({ level: 'error', code: 'case_unknown_view', message: `check.json, case "${kase.name}": args[0] "${first}" is not a view in the app's config.json (views: overview, ${ecfg.views.map((v) => v && v.id).join(', ')}). The engine would draw the overview and this case would pass without testing what you meant. Fix the view name or delete the case` });
+				}
 				for (const x of blankPaneProblems(pres, rows, (kase.args || [])[0] || 'overview')) f.push(x);
 				if (sample === 'unset') for (const x of sampleVisibleProblems(pres, rows, (kase.args || [])[0] || 'overview')) f.push(x);
-				for (const x of paneProblems(pres, rows, (kase.args || [])[0] || 'overview', { waiveEmptyTiles: typeof cfg.known_empty_tiles === 'string' && cfg.known_empty_tiles.trim().length > 10 })) f.push(x);
+				for (const x of paneProblems(pres, rows, (kase.args || [])[0] || 'overview')) f.push(x);
 				for (const x of chainProblems(rows, listing && listing.id)) f.push(x);
 				if (/[^\x00-\x7f]/.test(r.out)) f.push({ level: 'warning', code: 'non_ascii_output', message: 'stdout has non-ASCII bytes; ensure_ascii JSON is safe on any console code page' });
 				const flat = strings(rows, '$', []).map(([, s]) => s).join('\n');
 				const bad = rows.find((r) => r && typeof r.title === 'string' && /^This app (is not set up correctly|could not run)$/.test(r.title));
 				const head = rows.slice(0, 5).map((r) => `"${String(r && r.title).slice(0, 60)}"${r && r.subtitle ? ` / "${String(r.subtitle).slice(0, 80)}"` : ''}`).join('; ');
 				if (bad) E('app_error_row', `the script printed its own error row instead of rows: "${bad.title}": ${String(bad.subtitle).slice(0, 300)}. Fix that first, then the expected text`);
-				else for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `output does not contain "${t}". The first rows were: ${head}`);
+				else for (const t of ex.text_present || []) if (!flat.includes(t)) E('expected_text_missing', `check.json, case "${kase.name}": output does not contain "${t}". The first rows were: ${head}`);
 				for (const t of ex.text_absent || []) if (flat.includes(t)) E('forbidden_text_present', `output contains "${t}"`);
 				// home_absent: text that must not be on disk after the run (a key echoed by the API must never reach the cache). HOME is the temporary folder of this case.
 				if ((ex.home_absent || []).length) { const hits = []; const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walk(f); else if (e.isFile()) { const b = fs.readFileSync(f, 'utf8'); for (const t of ex.home_absent) if (b.includes(t)) hits.push(`${path.relative(home, f)} holds "${t}"`); } } }; walk(home); for (const h of hits) E('text_on_disk', `${h}. The kit strips a secret from an API answer before it is cached: call kit.redact_tree on the parsed answer`); }
@@ -477,7 +506,7 @@ export async function checkApp(appDir, opts = {}) {
 					if (opts.updateGolden && f.some((x) => x.level === 'error')) E('golden_not_written', 'not writing a golden from a failing run');
 					else if (opts.updateGolden) { fs.mkdirSync(path.dirname(gp), { recursive: true }); fs.writeFileSync(gp, JSON.stringify(rows, null, 2) + '\n'); }
 					else if (!fs.existsSync(gp)) E('golden_missing', `${kase.golden} does not exist (run with --update-golden once, then review it)`);
-					else if (!deepEq(JSON.parse(fs.readFileSync(gp, 'utf8')), rows)) E('golden_mismatch', `output differs from ${kase.golden}. If you changed the app's data or text on purpose, run: ./bolt-apps check <app-folder> --update-golden (it rewrites the goldens; read the change first)`);
+					else if (!deepEq(JSON.parse(fs.readFileSync(gp, 'utf8')), rows)) E('golden_mismatch', `check.json, case "${kase.name}": output differs from ${kase.golden}. If you changed the app's data or text on purpose, run: ./bolt-apps check <app-folder> --update-golden (it rewrites the goldens; read the change first)`);
 				}
 			}
 		} catch (e) { E('check_error', String(e.message || e)); }
@@ -493,11 +522,14 @@ function whichSync(name) {
 	for (const d of (process.env.PATH || '').split(path.delimiter)) { const p = path.join(d, name); try { fs.accessSync(p, fs.constants.X_OK); if (fs.statSync(p).isFile()) return p; } catch {} }
 	return null;
 }
+// One line for the whole report when an expectation failed because the app's text changed (a copied template's words, an old golden): which file, and the two ways out.
+export const TEMPLATE_WORDS_HINT = 'check.json still expects words or goldens from before your edit (a copied template brings its own). Edit cases[].expect.text_present in check.json to words your app prints (or delete the line), and run ./bolt-apps check <app-folder> --update-golden once your data is final; read the goldens it rewrites.';
 export const reportOk = (r) => !r.findings.some((x) => x.level === 'error') && r.cases.every((c) => c.ok);
 export function formatReport(r) {
 	const L = [`${reportOk(r) ? 'PASS' : 'FAIL'}  ${r.app}  (host ${r.host_os})`];
 	for (const f of r.findings) L.push(`  ${f.level} ${f.code}: ${f.message}`);
 	for (const c of r.cases) { L.push(`  ${c.ok ? 'ok  ' : 'FAIL'} [${c.os}] ${c.name}`); for (const f of c.findings) L.push(`       ${f.level} ${f.code}: ${f.message}`); }
+	if (r.cases.some((c) => c.findings.some((f) => ['expected_text_missing', 'golden_mismatch', 'golden_missing'].includes(f.code)))) L.push('', `Hint: ${TEMPLATE_WORDS_HINT}`);
 	const fx = [...new Set(r.cases.filter((c) => c.os !== r.host_os).map((c) => c.os))];
 	L.push('', fx.length ? `Fixture-tested only: ${fx.join(', ')}. That logic was not run on those systems.` : 'All cases ran with stubbed commands on this OS. Not run: the real launcher, Windows, other OS tools.');
 	return L.join('\n');

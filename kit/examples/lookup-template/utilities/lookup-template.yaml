@@ -5,7 +5,7 @@ id: lookup-template
 chip: lookup-template
 title: "Forecast lookup"
 icon: cloud-sun
-description: "Type a place, get its weather. One query in, tiles and rows out, from two keyless Open-Meteo calls."
+description: "Type a place, get its weather. One query in, a list with a preview pane out, from two keyless Open-Meteo calls."
 placeholder_examples: ["New York", "Paris", "Tokyo"]
 emits: Generic
 args:
@@ -24,18 +24,24 @@ presentation:
   title_field: title
   subtitle_field: subtitle
   right_widget:
-    kind: cards
-    mode: list_data
+    kind: entity_preview
+    mode: selected_row
     bind:
-      layout: "tiles"
-      title: "{{row.kpi_label}}"
-      value: "{{row.kpi_value}}"
-      unit: "{{row.kpi_unit}}"
-      max: "{{row.kpi_max}}"
-      trend: "{{row.trend}}"
-      subtitle: "{{row.kpi_note}}"
-      badge: "{{row.kpi_badge}}"
-      footer: "{{row.kpi_foot}}"
+      title: "{{row.title}}"
+      subtitle: "{{row.subtitle}}"
+      tiles_above:
+        title: "{{row.kpi_label}}"
+        value: "{{row.kpi_value}}"
+        unit: "{{row.kpi_unit}}"
+        max: "{{row.kpi_max}}"
+        trend: "{{row.trend}}"
+        subtitle: "{{row.kpi_note}}"
+        badge: "{{row.kpi_badge}}"
+        footer: "{{row.kpi_foot}}"
+      body: "{{row.body}}"
+      actions:
+        - "open"
+        - "copy"
 actions:
   - { id: open, kind: url, target: row, label: Open, url_template: "{{row.open_url}}" }
   - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }

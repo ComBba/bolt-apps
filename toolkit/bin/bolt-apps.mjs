@@ -40,6 +40,11 @@ export function lintApp(dir, opts = {}) {
 	if (app.schema_version !== 1) E('schema_version', 'schema_version must be 1', 'bolt-app.json');
 	if (app.id !== id || !ID.test(String(app.id))) E('id_mismatch', `id must match ${ID} and equal the folder name "${id}"`, 'bolt-app.json');
 	for (const k of ['title', 'role', 'saves']) if (typeof app[k] !== 'string' || !app[k].trim()) E('field_missing', `${k} is required`, 'bolt-app.json');
+	{ const todo = ['summary', 'role', 'saves'].filter((k) => typeof app[k] === 'string' && /\bTODO\b/.test(app[k])); if (todo.length) W('listing_todo', `${todo.join(', ')} in bolt-app.json still say TODO (./bolt-apps new leaves them for you). Write one real line each before you share the pack`, 'bolt-app.json'); }
+	// The description is SHIPPED (utilities/<id>.yaml, shown in the launcher): a TODO there reaches the people who install the pack. A warning, not an error: the pack still builds.
+	{ const where = []; try { for (const y of fs.existsSync(path.join(dir, 'utilities')) ? fs.readdirSync(path.join(dir, 'utilities')).filter((f) => /\.ya?ml$/.test(f)) : []) if (/^description:\s*["']?TODO\b/m.test(rd(path.join(dir, 'utilities', y)))) where.push(`utilities/${y}`); } catch { /* unreadable: other checks say so */ }
+	  try { const sd = path.join(dir, 'scripts'); for (const c of fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('__config.json')) : []) { const j = JSON.parse(rd(path.join(sd, c))); if (j && j.app && typeof j.app.description === 'string' && /^TODO\b/.test(j.app.description)) where.push(`scripts/${c}`); } } catch { /* not an engine config */ }
+	  if (where.length) W('description_todo', `your app description still says TODO (${where.join(', ')}). It is shipped in the pack and shown in the launcher: write one line about what the app shows in the config's app.description and regenerate the app file`, where[0]); }
 	if (!app.author || typeof app.author.name !== 'string' || !app.author.name.trim()) E('field_missing', 'author.name is required', 'bolt-app.json');
 	if (app.author?.link && !String(app.author.link).startsWith('https://')) E('author_link', 'author.link must start with https://', 'bolt-app.json');
 	// files
@@ -322,6 +327,7 @@ function cmdPack(args) {
 	console.log(`packed ${out} (${manifests.size} file${manifests.size === 1 ? '' : 's'}, tier ${r.tier}, signed with key ${pub.slice(0, 16)}...)`);
 	const skipped = [...manifests.keys()].filter((p) => /^(snippets|search_engines)\//.test(p));
 	if (skipped.length) console.log(`note: dropping a pack on the launcher installs User Apps and scripts only; Bolt skips ${skipped.join(', ')}.`);
+	for (const w of r.out.filter((x) => x.level === 'warning')) console.log(`warning ${w.code}: ${w.message} (${w.path})`);
 	for (const w of packWarnings) console.log(`warning ${w.code}: ${w.message} (${w.file})`);
 	// The launcher maps "is already installed" to same_or_older_version: Bolt refuses a pack whose bundle_version is not newer than the installed one
 	console.log(`\nversion ${version}: Bolt refuses to install a pack whose version is the same as, or older than, the one already installed (same_or_older_version). If you installed an earlier build of ${app.id}, rebuild with a higher number: bump --version (for example --version ${bumpVersion(version)}).`);
