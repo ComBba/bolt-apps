@@ -3,49 +3,167 @@
     "id": "script-template",
     "chip": "script-template",
     "title": "Script template",
-    "icon": "list",
-    "description": "A blank script app on the kit: overview, a list with a filter word, a detail view, Back, cache with an old copy, offline row. Replace the API and the fields.",
-    "timeout": 20,
-    "service": "Example API"
+    "icon": "Image",
+    "description": "Search the Art Institute of Chicago's public-domain artworks, no key: number tiles with meters and sparklines, a list with a picture in the preview pane, a chart, a table, a picture grid and a detail view. Replace the API and the fields to make it yours.",
+    "timeout": 25,
+    "service": "Art Institute of Chicago"
   },
   "api": {
-    "base_url": "https://api.example.com",
-    "key_env": "TEMPLATE_API_KEY",
-    "auth_in": "query",
-    "auth_param": "api_key",
+    "base_url": "https://api.artic.edu",
     "user_agent": "bolt-app-example/1.0 (script-template)",
     "call_timeout_s": 8,
-    "deadline_s": 12,
-    "max_bytes": 2000000,
+    "deadline_s": 14,
+    "max_bytes": 1000000,
     "fixture_default": false
   },
   "hosts": [
-    "api.example.com"
+    "api.artic.edu",
+    "www.artic.edu"
   ],
+  "images": {
+    "base_url": "https://www.artic.edu/iiif/2",
+    "widths": [
+      140,
+      110,
+      80
+    ],
+    "max_bytes": 11900,
+    "call_timeout_s": 5,
+    "budget_s": 8,
+    "workers": 4,
+    "chunk_chars": 4000,
+    "max_chunks": 4
+  },
   "cache": {
-    "ttl": 60,
-    "stale_max": 86400
+    "ttl": 600,
+    "stale_max": 86400,
+    "thumb_ttl": 2592000,
+    "miss_ttl": 900
   },
   "endpoints": {
     "items": {
-      "path": "/v1/items",
-      "data": "items"
+      "path": "/api/v1/artworks/search",
+      "data": "data",
+      "limit": 9,
+      "default_query": "landscape",
+      "search_fields": [
+        "title",
+        "artist_title",
+        "medium_display"
+      ],
+      "fields": "id,title,artist_display,date_display,date_start,image_id,is_public_domain,medium_display,place_of_origin,department_title",
+      "periods": [
+        [
+          null,
+          1600
+        ],
+        [
+          1600,
+          1700
+        ],
+        [
+          1700,
+          1800
+        ],
+        [
+          1800,
+          1850
+        ],
+        [
+          1850,
+          1900
+        ],
+        [
+          1900,
+          1950
+        ],
+        [
+          1950,
+          null
+        ]
+      ],
+      "department_count": 6
+    },
+    "item": {
+      "path": "/api/v1/artworks/",
+      "data": "data",
+      "fields": "id,title,artist_display,date_display,date_start,image_id,is_public_domain,medium_display,place_of_origin,department_title,description,credit_line,dimensions"
     }
   },
   "fields": {
     "id": "id",
-    "name": "name",
-    "status": "status",
-    "count": "count"
+    "title": "title",
+    "artist": "artist_display",
+    "date": "date_display",
+    "year": "date_start",
+    "image": "image_id",
+    "public": "is_public_domain",
+    "medium": "medium_display",
+    "place": "place_of_origin",
+    "department": "department_title",
+    "description": "description",
+    "credit": "credit_line",
+    "dimensions": "dimensions"
   },
-  "status_badges": {
-    "ok": "OK",
-    "late": "LATE",
-    "down": "DOWN"
+  "links": {
+    "item_page": "https://www.artic.edu/artworks/"
+  },
+  "attribution": {
+    "line": "Image and data: Art Institute of Chicago, public domain (CC0)",
+    "description_line": "Description: Art Institute of Chicago, CC BY 4.0"
   },
   "tiles": {
-    "count_label": "Items",
-    "late_label": "Late"
+    "share_label": "Public domain",
+    "peak_label": "Peak period",
+    "dept_label": "Top department",
+    "pictured_label": "Pictured"
   },
-  "charts_note": "none: add a chart view by copying the items view and changing its right_widget in emit_yaml()"
+  "charts_note": "none: add a chart view by copying the items view and changing its right_widget in emit_yaml()",
+  "departments": {
+    "Prints and Drawings": [
+      "PenTool",
+      "open",
+      "Prints"
+    ],
+    "Arts of Asia": [
+      "Globe",
+      "success",
+      "Asia"
+    ],
+    "Textiles": [
+      "Layers",
+      "warn",
+      "Textiles"
+    ],
+    "Painting and Sculpture of Europe": [
+      "Palette",
+      "merged",
+      "Paintings"
+    ],
+    "Photography and Media": [
+      "Eye",
+      "draft",
+      "Photography"
+    ],
+    "Arts of the Americas": [
+      "MapPin",
+      "neutral",
+      "Americas"
+    ],
+    "Applied Arts of Europe": [
+      "Landmark",
+      "neutral",
+      "Applied arts"
+    ],
+    "Modern Art": [
+      "Sparkles",
+      "draft",
+      "Modern"
+    ],
+    "Contemporary Art": [
+      "Zap",
+      "draft",
+      "Contemporary"
+    ]
+  }
 }

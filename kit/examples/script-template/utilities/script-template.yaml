@@ -4,59 +4,149 @@ runtime: bridge
 id: script-template
 chip: script-template
 title: "Script template"
-icon: list
-description: "A blank script app on the kit: overview, a list with a filter word, a detail view, Back, cache with an old copy, offline row. Replace the API and the fields."
-placeholder_examples: ["Enter for the overview", "items", "items alpha"]
+icon: Image
+description: "Search the Art Institute of Chicago's public-domain artworks, no key: number tiles with meters and sparklines, a list with a picture in the preview pane, a chart, a table, a picture grid and a detail view. Replace the API and the fields to make it yours."
+placeholder_examples: ["Enter for the overview", "items monet", "chart", "table", "pictures cats", "hokusai"]
 emits: Generic
 args:
   - { name: view, from: "query.word(0)", default: overview }
   - { name: arg, from: "query.word(1)", default: "-" }
+  - { name: arg2, from: "query.word(2)", default: "-" }
+  - { name: arg3, from: "query.word(3)", default: "-" }
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
-    linux: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
+    macos: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{arg2}} {{arg3}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
+    linux: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{arg2}} {{arg3}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
   parse: json
-  timeout_seconds: 20
+  timeout_seconds: 25
 presentation:
   widget: list
   title_field: title
   subtitle_field: subtitle
   view_arg: view
   right_widget:
-    kind: entity_preview
-    mode: selected_row
+    kind: cards
+    mode: list_data
     bind:
-      title: "{{row.title}}"
-      subtitle: "{{row.subtitle}}"
-      tiles_above:
-        title: "{{row.kpi_label}}"
-        value: "{{row.kpi_value}}"
-        unit: "{{row.kpi_unit}}"
-        max: "{{row.kpi_max}}"
-        subtitle: "{{row.kpi_note}}"
-        badge: "{{row.kpi_badge}}"
-      actions: [copy]
+      layout: "tiles"
+      title: "{{row.kpi_label}}"
+      value: "{{row.kpi_value}}"
+      unit: "{{row.kpi_unit}}"
+      max: "{{row.kpi_max}}"
+      subtitle: "{{row.kpi_note}}"
+      badge: "{{row.kpi_badge}}"
+      footer: "{{row.kpi_foot}}"
+      delta: "{{row.delta}}"
+      delta_label: "{{row.since}}"
+      trend: "{{row.trend}}"
   views:
-    overview: {}
+    overview:
+      right_widget:
+        kind: cards
+        mode: list_data
+        bind:
+          layout: "tiles"
+          title: "{{row.kpi_label}}"
+          value: "{{row.kpi_value}}"
+          unit: "{{row.kpi_unit}}"
+          max: "{{row.kpi_max}}"
+          subtitle: "{{row.kpi_note}}"
+          badge: "{{row.kpi_badge}}"
+          footer: "{{row.kpi_foot}}"
+          delta: "{{row.delta}}"
+          delta_label: "{{row.since}}"
+          trend: "{{row.trend}}"
     items:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          tiles_above:
+            title: "{{row.kpi_label}}"
+            value: "{{row.kpi_value}}"
+            unit: "{{row.kpi_unit}}"
+            max: "{{row.kpi_max}}"
+            subtitle: "{{row.kpi_note}}"
+            badge: "{{row.kpi_badge}}"
+            footer: "{{row.kpi_foot}}"
+          fields:
+            - { label: ARTIST, value: "{{row.a_artist}}" }
+            - { label: DATE, value: "{{row.a_date}}" }
+            - { label: MEDIUM, value: "{{row.a_medium}}" }
+            - { label: ORIGIN, value: "{{row.a_origin}}" }
+            - { label: DEPARTMENT, value: "{{row.a_dept}}" }
+            - { label: RIGHTS, value: "{{row.a_rights}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "copy"
+    item:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          tiles_above:
+            title: "{{row.kpi_label}}"
+            value: "{{row.kpi_value}}"
+            unit: "{{row.kpi_unit}}"
+            max: "{{row.kpi_max}}"
+            subtitle: "{{row.kpi_note}}"
+            badge: "{{row.kpi_badge}}"
+            footer: "{{row.kpi_foot}}"
+          fields:
+            - { label: ARTIST, value: "{{row.a_artist}}" }
+            - { label: DATE, value: "{{row.a_date}}" }
+            - { label: MEDIUM, value: "{{row.a_medium}}" }
+            - { label: ORIGIN, value: "{{row.a_origin}}" }
+            - { label: DEPARTMENT, value: "{{row.a_dept}}" }
+            - { label: RIGHTS, value: "{{row.a_rights}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "copy"
+    pictures:
+      right_widget:
+        kind: cards
+        mode: list_data
+        bind:
+          layout: "grid"
+          title: "{{row.title}}"
+          subtitle: "{{row.a_artist}}"
+          image: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          badge: "{{row.kpi_badge}}"
+          footer: "{{row.a_date}}"
+    chart:
+      right_widget:
+        kind: chart
+        mode: list_data
+        bind:
+          type: bar
+          x: period
+          y: count
+          label: "Public-domain artworks by period"
+    table:
       right_widget:
         kind: table
         mode: list_data
         bind:
           columns:
-            - { field: item_name, label: Name }
-            - { field: status, label: Status }
-            - { field: count, label: Count, align: right }
-    item:
+            - { field: dept, label: Department }
+            - { field: count, label: Artworks, align: right, total: sum, format: number }
+            - { field: share, label: Share, align: right, unit: "%" }
+          sort: { field: count, dir: desc }
+          totals_label: "All departments"
+    record:
       right_widget:
-        kind: detail
+        kind: json_tree
         mode: selected_row
         bind:
-          title: "{{row.item_name}}"
-          subtitle: "{{row.status}}"
-          fields:
-            - { label: Status, value: "{{row.status}}" }
-            - { label: Count, value: "{{row.count}}", copy: true }
+          source: data
     note:
       right_widget:
         kind: markdown
@@ -66,4 +156,5 @@ presentation:
           subtitle: "{{row.subtitle}}"
           body: "{{row.body}}"
 actions:
-  - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }
+  - { id: open, kind: url, target: row, label: "Open source", url_template: "{{row.open_url}}" }
+  - { id: copy, kind: composer, target: row, label: "Copy summary", insert: "{{row.share_text}}" }
