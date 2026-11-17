@@ -46,7 +46,7 @@ test('every file in docs/images is used by a doc, and sizes are capped', () => {
 
 test('the new docs have no em dash or en dash and no non-ASCII', () => {
 	for (const f of NEW_DOCS) assert.ok(!/[^\x00-\x7f]/.test(read(f)), `${f} has a non-ASCII character`);
-	assert.ok(!/[–—]/.test(read('README.md')), 'README.md has a dash character');
+	assert.ok(!/[\u2013\u2014]/.test(read('README.md')), 'README.md has a dash character');
 });
 
 test('gallery.md equals what gallery.json says, and every entry is real', () => {
