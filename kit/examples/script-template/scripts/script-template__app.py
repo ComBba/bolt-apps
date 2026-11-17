@@ -98,7 +98,7 @@ def http_bytes(cfg, url, accept, cap, timeout):
         with urllib.request.build_opener(_SameHost).open(urllib.request.Request(url, headers=headers), timeout=max(1.0, timeout)) as r:
             raw = r.read(cap + 1)
     except urllib.error.HTTPError as e:
-        raise Fail("notfound" if e.code == 404 else ("rate" if e.code == 429 else "fail"), "answered %d" % e.code)
+        raise Fail("notfound" if e.code == 404 else ("rate" if e.code == 429 else ("http" if 400 <= e.code < 500 else "fail")), "answered %d" % e.code)
     except http.client.HTTPException:   # IncompleteRead, BadStatusLine and the like
         raise Fail("fail", "the answer was cut short")
     except (urllib.error.URLError, OSError, ValueError) as e:
@@ -121,8 +121,15 @@ def http_json(cfg, url, budget):
 
 # ------------------------------------------------------------------ reading the API's answer
 
+def tidy(v, limit=None):
+    """kit.clean_text, and the long dashes some API text carries become a comma (em dash) or a plain hyphen (en dash, as in 1594-1665). Normal hyphens are left alone."""
+    if isinstance(v, str):
+        v = re.sub(r"\s*\u2014\s*", ", ", v).replace("\u2013", "-")
+    return kit.clean_text(v, limit)
+
+
 def one_line(v, limit):
-    return kit.clean_text(v.split("\n")[0] if isinstance(v, str) else "", limit)
+    return tidy(v.split("\n")[0] if isinstance(v, str) else "", limit)
 
 
 def count(v):
@@ -140,17 +147,17 @@ def n_item(r, cfg):
         return None
     rid, title = str(r.get(f["id"], "")), r.get(f["title"])
     img = r.get(f["image"])
-    if not ITEM_ID.match(rid) or not isinstance(title, str) or not kit.clean_text(title):
+    if not ITEM_ID.match(rid) or not isinstance(title, str) or not tidy(title):
         return None
     year = r.get(f["year"])
-    out = {"id": rid, "title": kit.clean_text(title, 140), "artist": one_line(r.get(f["artist"]), 90), "date": kit.clean_text(r.get(f["date"]), 40),
+    out = {"id": rid, "title": tidy(title, 140), "artist": one_line(r.get(f["artist"]), 90), "date": tidy(r.get(f["date"]), 40),
            "year": year if isinstance(year, int) and not isinstance(year, bool) and -5000 < year < 3000 else None,
-           "medium": kit.clean_text(r.get(f["medium"]), 120), "place": kit.clean_text(r.get(f["place"]), 60), "department": kit.clean_text(r.get(f["department"]), 80),
+           "medium": tidy(r.get(f["medium"]), 120), "place": tidy(r.get(f["place"]), 60), "department": tidy(r.get(f["department"]), 80),
            "public": r.get(f["public"]) is True,
            "image_id": img if isinstance(img, str) and IMAGE_ID.match(img) else ""}
     d = r.get(f["description"])
     if isinstance(d, str) and d:
-        out["description"] = kit.clean_lines(re.sub(r"<[^>]+>", "", html.unescape(re.sub(r"</p>|<br\s*/?>", "\n\n", d))), 12, 1400)
+        out["description"] = kit.clean_lines(re.sub(r"\s*\u2014\s*", ", ", re.sub(r"<[^>]+>", "", html.unescape(re.sub(r"</p>|<br\s*/?>", "\n\n", d)))).replace("\u2013", "-"), 12, 1400)
     for k in ("credit", "dimensions"):
         if isinstance(r.get(f[k]), str):
             out[k] = one_line(r.get(f[k]), 160)
@@ -263,18 +270,18 @@ class Source(object):
         except Fail as e:
             if e.kind == "notfound":
                 return {"missing": True}, {"stale": None, "err": "", "cached": 0}
-            return self._fallback(key, e.msg)
+            return self._fallback(key, e.msg, e.kind)
         except Exception:   # an odd answer (a null, a huge number, a wrong shape) is unread, never a traceback
             return self._fallback(key, "unexpected answer")
         self.fresh.put(key, val)
         self.old.put(key, val)
         return val, {"stale": None, "err": "", "cached": 0}
 
-    def _fallback(self, key, why):
+    def _fallback(self, key, why, kind="fail"):
         old = self.old.get(key)
         if old is not None:
-            return old, {"stale": self.old.age(key) or 0, "err": why, "cached": 0}
-        return None, {"stale": None, "err": why, "cached": 0}
+            return old, {"stale": self.old.age(key) or 0, "err": why, "cached": 0, "kind": kind}
+        return None, {"stale": None, "err": why, "cached": 0, "kind": kind}
 
     def search(self, word, typed, refresh):
         """The artworks and the counts for a search word. In sample mode the recorded answers are used (a typed word narrows the recorded list on this side)."""
@@ -399,11 +406,13 @@ def sample_row():
 
 
 def offline_rows(cfg, state, view):
-    title = "Could not reach %s" % cfg["app"]["service"]
-    sub = "%s. If this is your copy, check api.base_url and hosts in config.json" % state["err"] if state["err"] else "Enter to try again"
+    kind = state.get("kind", "fail")
+    title = {"http": "The %s did not accept that search" % cfg["app"]["service"], "rate": "%s is busy" % cfg["app"]["service"]}.get(kind, "Could not reach %s" % cfg["app"]["service"])
+    sub = ("%s. Try other words" % state["err"] if kind == "http" else "%s. Wait a minute, then try again" % state["err"] if kind == "rate" else
+           "%s. If this is your copy, check api.base_url and hosts in config.json" % state["err"]) if state["err"] else "Enter to try again"
     sel = view in ("items", "item", "record")   # a view that draws a pane per selected row
     target = view if view in ("overview", "items", "pictures", "chart", "table") else "overview"
-    return ([back()] if sel else []) + [kit.note_row(title, sub, badge="OFFLINE"), kit.refresh_row(target, title="Try again", subtitle="Enter to run again", pane=kit.NOTE_VIEW)]
+    return ([back()] if sel else []) + [kit.note_row(title, sub, badge="OFFLINE" if kind == "fail" else "REFUSED"), kit.refresh_row(target, title="Try again", subtitle="Enter to run again", pane=kit.NOTE_VIEW)]
 
 
 def dept_style(cfg, dept):
@@ -611,6 +620,8 @@ def main(argv):
         kit.emit(build_item(view, it, state, cfg, fixture))
     default = cfg["endpoints"]["items"]["default_query"]
     word = "" if refresh else kit.clean_text(" ".join(w for w in rest if w not in demos), 40)
+    if re.search(r"\.\.|[/\\]", word):
+        kit.emit([back(), kit.note_row("Type a word or two", "a name or a subject, for example: =%s items monet" % cfg["app"]["chip"], icon="Search")])
     typed = len(word) >= 2
     if word and not typed:
         kit.emit([back(), kit.note_row("Type a longer word", "at least two letters, for example: =%s items monet" % cfg["app"]["chip"], icon="Search")])

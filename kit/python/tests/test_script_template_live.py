@@ -245,6 +245,67 @@ class ScriptTemplateLive(unittest.TestCase):
             self.assertIn(kind, y)
         self.assertNotIn("http", y.split("presentation:")[1].split("actions:")[0])   # no web address in any pane bind
 
+    def test_no_long_dashes_in_the_example_and_api_text_is_tidied(self):
+        root = os.path.abspath(os.path.join(EX))
+        for d, _, files in os.walk(root):
+            for fn in files:
+                if fn.endswith("__bolt_app_kit.py") or not fn.endswith((".json", ".py", ".md", ".yaml")):
+                    continue   # the vendored kit is generated, not ours
+                with open(os.path.join(d, fn), encoding="utf-8") as f:
+                    t = f.read()
+                self.assertNotIn("\u2014", t, fn)
+                self.assertNotIn("\u2013", t, fn)
+        it = self.m.n_item(self.rec(title="A \u2014 B", artist_display="X (1594\u20131665)", description="<p>one\u2014but two\u2013three, well-known</p>"), self.cfg)
+        self.assertEqual(it["title"], "A, B"); self.assertEqual(it["artist"], "X (1594-1665)")
+        self.assertIn("one, but two-three, well-known", it["description"])
+
+    def test_a_4xx_is_not_offline_and_429_says_busy(self):
+        for code, kind, title in ((403, "http", "did not accept that search"), (429, "rate", "is busy")):
+            def boom(*a, **k):
+                raise self.m.Fail(kind, "answered %d" % code)
+            self.m.http_json = boom
+            data, state = self.src(fixture=False).search("zzqq%d" % code, True, True)
+            self.assertIsNone(data)
+            rows = self.m.offline_rows(self.cfg, state, "items")
+            text = json.dumps(rows)
+            self.assertIn(title, text); self.assertNotIn("Could not reach", text); self.assertNotIn("OFFLINE", text)
+        def conn(*a, **k):
+            raise self.m.Fail("fail", "could not connect")
+        self.m.http_json = conn
+        data, state = self.src(fixture=False).search("zzqq", True, True)
+        self.assertIn("OFFLINE", json.dumps(self.m.offline_rows(self.cfg, state, "items")))
+
+    def run_cli(self, args, env=None):
+        import subprocess
+        e = dict(os.environ, HOME=self.home, BOLT_APP_FIXTURE="0"); e.update(env or {})
+        k = [os.path.join(EX, "scripts", "script-template__" + n) for n in ("config.json", "fixtures.json", "bolt_app_kit.py")]
+        r = subprocess.run([sys.executable, os.path.join(EX, "scripts", "script-template__app.py")] + args + k, capture_output=True, text=True, env=e, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return json.loads(r.stdout)
+
+    def test_path_looking_words_are_refused_before_any_request(self):
+        for w in ("../x", "a/b", "..", "a\\b"):
+            rows = self.run_cli(["items", w], {"https_proxy": "http://127.0.0.1:9"})
+            self.assertEqual([r["title"] for r in rows], ["Back", "Type a word or two"], w)
+
+    def test_cold_offline_is_one_retry_row_and_a_blocked_picture_host_leaves_rows_without_pictures(self):
+        dead = {"https_proxy": "http://127.0.0.1:9", "HTTPS_PROXY": "http://127.0.0.1:9"}
+        rows = self.run_cli(["overview"], dead)
+        self.assertEqual([r["title"] for r in rows], ["Could not reach Art Institute of Chicago", "Try again"])
+        self.assertEqual(rows[0]["kpi_badge"], "OFFLINE")
+        m = self.m
+        m.http_json = lambda cfg, url, budget: self.fx_raw(url)
+        def nopic(*a, **k):
+            raise m.Fail("fail", "could not connect")
+        m.http_bytes = nopic
+        s = self.src(fixture=False)
+        data, state = s.search("landscape", False, True)
+        s.attach_thumbs(data["items"], network=True)
+        rows = m.build("items", "", data, state, self.cfg, False, "landscape")
+        self.assertEqual(kit.validate_rows(rows), [])
+        self.assertTrue(any(r.get("nav") and r["nav"].get("view") == "item" for r in rows))
+        self.assertFalse(any(r.get("img1") for r in rows))
+
     def test_no_key_is_asked_for(self):
         self.assertNotIn("key_env", self.cfg["api"])
 
