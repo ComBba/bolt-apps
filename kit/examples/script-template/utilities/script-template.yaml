@@ -4,19 +4,21 @@ runtime: bridge
 id: script-template
 chip: script-template
 title: "Script template"
-icon: list
-description: "A blank script app on the kit: overview, a list with a filter word, a detail view, Back, cache with an old copy, offline row. Replace the API and the fields."
-placeholder_examples: ["Enter for the overview", "items", "items alpha"]
+icon: Image
+description: "Search the Art Institute of Chicago's public-domain artworks, no key: a list with a picture in the preview pane, a detail view, a picture grid and tiles. Replace the API and the fields to make it yours."
+placeholder_examples: ["Enter for the overview", "items", "items water lilies", "pictures", "grid hokusai"]
 emits: Generic
 args:
   - { name: view, from: "query.word(0)", default: overview }
   - { name: arg, from: "query.word(1)", default: "-" }
+  - { name: arg2, from: "query.word(2)", default: "-" }
+  - { name: arg3, from: "query.word(3)", default: "-" }
 bridge:
   command:
-    macos: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
-    linux: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
+    macos: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{arg2}} {{arg3}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
+    linux: "python3 {{scripts_dir}}/script-template__app.py {{view}} {{arg}} {{arg2}} {{arg3}} {{scripts_dir}}/script-template__config.json {{scripts_dir}}/script-template__fixtures.json {{scripts_dir}}/script-template__bolt_app_kit.py"
   parse: json
-  timeout_seconds: 20
+  timeout_seconds: 25
 presentation:
   widget: list
   title_field: title
@@ -28,6 +30,7 @@ presentation:
     bind:
       title: "{{row.title}}"
       subtitle: "{{row.subtitle}}"
+      image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
       tiles_above:
         title: "{{row.kpi_label}}"
         value: "{{row.kpi_value}}"
@@ -35,27 +38,111 @@ presentation:
         max: "{{row.kpi_max}}"
         subtitle: "{{row.kpi_note}}"
         badge: "{{row.kpi_badge}}"
-      actions: [copy]
+      fields:
+        - { label: ARTIST, value: "{{row.a_artist}}" }
+        - { label: DATE, value: "{{row.a_date}}" }
+        - { label: MEDIUM, value: "{{row.a_medium}}" }
+        - { label: ORIGIN, value: "{{row.a_origin}}" }
+        - { label: RIGHTS, value: "{{row.a_rights}}" }
+      body: "{{row.body}}"
+      actions:
+        - "open"
+        - "copy"
   views:
-    overview: {}
-    items:
+    overview:
       right_widget:
-        kind: table
-        mode: list_data
-        bind:
-          columns:
-            - { field: item_name, label: Name }
-            - { field: status, label: Status }
-            - { field: count, label: Count, align: right }
-    item:
-      right_widget:
-        kind: detail
+        kind: entity_preview
         mode: selected_row
         bind:
-          title: "{{row.item_name}}"
-          subtitle: "{{row.status}}"
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          tiles_above:
+            title: "{{row.kpi_label}}"
+            value: "{{row.kpi_value}}"
+            unit: "{{row.kpi_unit}}"
+            max: "{{row.kpi_max}}"
+            subtitle: "{{row.kpi_note}}"
+            badge: "{{row.kpi_badge}}"
           fields:
-            - { label: Status, value: "{{row.status}}" }
-            - { label: Count, value: "{{row.count}}", copy: true }
+            - { label: ARTIST, value: "{{row.a_artist}}" }
+            - { label: DATE, value: "{{row.a_date}}" }
+            - { label: MEDIUM, value: "{{row.a_medium}}" }
+            - { label: ORIGIN, value: "{{row.a_origin}}" }
+            - { label: RIGHTS, value: "{{row.a_rights}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "copy"
+    items:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          tiles_above:
+            title: "{{row.kpi_label}}"
+            value: "{{row.kpi_value}}"
+            unit: "{{row.kpi_unit}}"
+            max: "{{row.kpi_max}}"
+            subtitle: "{{row.kpi_note}}"
+            badge: "{{row.kpi_badge}}"
+          fields:
+            - { label: ARTIST, value: "{{row.a_artist}}" }
+            - { label: DATE, value: "{{row.a_date}}" }
+            - { label: MEDIUM, value: "{{row.a_medium}}" }
+            - { label: ORIGIN, value: "{{row.a_origin}}" }
+            - { label: RIGHTS, value: "{{row.a_rights}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "copy"
+    item:
+      right_widget:
+        kind: entity_preview
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          tiles_above:
+            title: "{{row.kpi_label}}"
+            value: "{{row.kpi_value}}"
+            unit: "{{row.kpi_unit}}"
+            max: "{{row.kpi_max}}"
+            subtitle: "{{row.kpi_note}}"
+            badge: "{{row.kpi_badge}}"
+          fields:
+            - { label: ARTIST, value: "{{row.a_artist}}" }
+            - { label: DATE, value: "{{row.a_date}}" }
+            - { label: MEDIUM, value: "{{row.a_medium}}" }
+            - { label: ORIGIN, value: "{{row.a_origin}}" }
+            - { label: RIGHTS, value: "{{row.a_rights}}" }
+          body: "{{row.body}}"
+          actions:
+            - "open"
+            - "copy"
+    pictures:
+      right_widget:
+        kind: cards
+        mode: list_data
+        bind:
+          layout: "grid"
+          title: "{{row.title}}"
+          subtitle: "{{row.a_artist}}"
+          image: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          footer: "{{row.a_date}}"
+    grid:
+      right_widget:
+        kind: image_grid
+        mode: list_data
+        bind:
+          src: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"
+          caption: "{{row.title}}"
+          alt: "{{row.title}}, {{row.a_artist}}"
+          columns: 3
 actions:
-  - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }
+  - { id: open, kind: url, target: row, label: "Open source", url_template: "{{row.open_url}}" }
+  - { id: copy, kind: composer, target: row, label: "Copy summary", insert: "{{row.share_text}}" }
