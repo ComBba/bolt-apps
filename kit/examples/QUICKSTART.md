@@ -117,6 +117,6 @@ From the Bolt 0.1.181 source; not run live unless stated. Tell the person what y
 
 ## 7. Where things stand
 
-Sharing common code: on 181 every pack carries its own copy of the kit (a kit fix means re-vendoring and reshipping each app); a shared library is a Bolt 182 feature.
+Sharing common code: on 181 every pack carries its own kit copy, so a kit fix means re-vendoring and reshipping. Bolt 182 adds a shared kit (ENGINE.md, "Shared kit"); it is not yet proven in a real Bolt, and an old app keeps its own copy until reshipped.
 
 Sample mode (`run --sample`, `check`) needs no key and no network. Live mode: put the key in the keychain or the `.env` file, then `run --live`. Not shipped: confinement of scripts, native MCP (a script can call one tool over stdio, tested only against a stand-in), Windows runs. The `permissions` block in an app file is shown at install and not enforced.

@@ -18,6 +18,7 @@ import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUs
 import { iconProblem, chipMismatch } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
 import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote } from '../lib/workflow.mjs';
+import { exportShared } from '../lib/shared.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
@@ -417,9 +418,10 @@ const HELP = `bolt-apps: author toolkit for Bolt Apps
   ship <app-folder>                                       lint, check, pack, verify with the next version picked; prints how to install
   doctor [app-folder]                                     check node, python, your key, folders and what would block an install
   lint [path] [--personal] [--json]                       offline shape checks (--personal: your own tier 3 or script app)
-  check <app-folder> [--os macos|linux|windows] [--case text] [--update-golden] [--json]
+  check <app-folder> [--os macos|linux|windows] [--case text] [--shared] [--update-golden] [--json]
                                                           run a script app's check.json cases against stubbed commands and goldens
   kit vendor [--flat] <app-folder>                        copy the current bolt_app_kit into an app with a check.json
+  kit export-shared <empty-folder> [--source-sha <sha>]   write the one read-only kit folder Bolt ships (manifest.json, bolt_app_kit.py, LICENSE)
   keygen [--out file]                                     make your signing key (default ~/.bolt-apps/key.pem); run once before the first pack
   pack <app-folder> [--key file] [--out file] [--version X] [--notes text] [--personal]
                                                           build and self-sign a .boltpack (raise --version on every rebuild)
@@ -436,7 +438,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 			const osi = args.indexOf('--os'), osArg = osi >= 0 ? args[osi + 1] : undefined;
 			if (osi >= 0 && !OSES.includes(osArg)) die(`--os must be one of ${OSES.join(', ')}`);
 			const ci = args.indexOf('--case');
-			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden') });
+			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden'), shared: args.includes('--shared') });
 			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
 			process.exit(reportOk(r) ? 0 : 1);
 		}
@@ -447,6 +449,14 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 		die('check for snippets, search engines and transforms runs through Bolt\'s own engines and is not published yet. Use lint for offline shape checks; Bolt runs the tests when you add the app. Script apps (a check.json in the folder) run here: see kit/examples/system-glance.');
 	};
 	const cmdKit = (args) => {
+		if (args[0] === 'export-shared' && args.includes('--help')) { console.log('usage: ./bolt-apps kit export-shared <empty-folder> [--source-sha <40 hex>]\nwrites manifest.json, bolt_app_kit.py and LICENSE: the one read-only kit folder Bolt ships'); return; }
+		if (args[0] === 'export-shared') {
+			const si = args.indexOf('--source-sha'), sha = si >= 0 ? args[si + 1] : undefined;
+			const dir = args.slice(1).find((x, i, a) => !x.startsWith('--') && a[i - 1] !== '--source-sha');
+			let r; try { r = exportShared(dir, { sourceSha: sha }); } catch (e) { die(e.message); }
+			console.log(`exported the shared kit ${r.manifest.kit.version} (api ${r.manifest.kit.api}, sha256 ${r.manifest.kit.sha256.slice(0, 16)}...) to ${r.dir}: ${r.files.join(', ')}`);
+			return;
+		}
 		const target = args.slice(1).find((x) => !x.startsWith('--'));
 		if (args[0] !== 'vendor' || !target || !fs.existsSync(path.join(target, 'check.json'))) die('usage: ./bolt-apps kit vendor [--flat] <app-folder with check.json>');
 		let dest, lock; try { ({ dest, lock } = vendorKit(target, { flat: args.includes('--flat') })); } catch (e) { die(e.message); }
