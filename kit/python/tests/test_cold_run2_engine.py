@@ -95,5 +95,32 @@ class FieldStats(unittest.TestCase):
         self.assertNotIn("none 0", row[0]["subtitle"])   # a stat with nothing to total is left out, never 0
 
 
+class Hardening(unittest.TestCase):
+    def portal(self, stats, rows, rowtpl="{s}"):
+        cfg = cfg_of("portal-template")
+        cfg["stats"] = stats
+        cfg["overview"] = {"rows": [{"title": "T " + rowtpl, "subtitle": "x"}]}
+        with open(os.path.join(EX, "portal-template", "scripts", "portal-template__fixtures.json")) as f:
+            fx = json.load(f)
+        fx["tickets"] = rows
+        return run("portal-template", ["overview"], cfg=cfg, fixtures=fx, env={"BOLT_APP_FIXTURE": "1"})
+
+    def test_non_finite_values_are_skipped_not_a_crash(self):
+        rows = [{"n": x} for x in ("inf", "nan", "1e999", "-Infinity", "5", 7)] + [{"n": float("inf")}]
+        r = self.portal({"s": {"endpoint": "tickets", "field_sum": "n"}, "m": {"endpoint": "tickets", "field_max": "n"}}, rows, "{s} {m}")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual([x for x in json.loads(r.stdout) if x["title"].startswith("T ")][0]["title"], "T 12.0 7")
+
+    def test_unknown_where_comparison_is_a_config_error(self):
+        r = self.portal({"s": {"endpoint": "tickets", "where": {"n": {"between": [1, 5]}}}}, [{"n": 3}])
+        self.assertIn("unknown comparison", r.stdout)
+        self.assertIn("gt, gte, lt, lte", r.stdout)
+
+    def test_a_lone_dot_segment_query_is_percent_encoded(self):
+        eng = __import__("test_cold_run_engine").load_engine()
+        for q, want in (("..", "/%2E%2E/x"), (".", "/%2E/x"), ("a.b", "/a.b/x")):
+            self.assertEqual(eng.fill_path("/{query}/x", {"query": q}), want)
+
+
 if __name__ == "__main__":
     unittest.main()

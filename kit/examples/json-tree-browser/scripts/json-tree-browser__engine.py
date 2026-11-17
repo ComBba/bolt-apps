@@ -186,12 +186,13 @@ def number(v):
     if isinstance(v, bool):
         return None
     if isinstance(v, (int, float)):
-        return v
+        return v if math.isfinite(v) else None   # a JSON Infinity or NaN is not a number a total can use
     if isinstance(v, str):
         try:
-            return float(v)
+            f = float(v)
         except ValueError:
             return None
+        return f if math.isfinite(f) else None   # "inf", "nan", "1e999" are text, not numbers
     return None
 
 
@@ -363,6 +364,8 @@ def match(item, where):
                 return False
         elif isinstance(cond, dict):
             for op, arg in cond.items():
+                if op not in ("not", ">=", "<=", ">", "<", "gte", "lte", "gt", "lt"):
+                    raise ConfigError("where: unknown comparison %r; use one of gt, gte, lt, lte, not" % op)
                 if op == "not" and v in arg:
                     return False
                 if op in (">=", "<=", ">", "<", "gte", "lte", "gt", "lt"):
@@ -582,7 +585,10 @@ def _day(delta):
 def fill_path(path, pvars):
     """Fill {today}, {today-7d}, {today+1d} (local dates), then {name} and {name.field} from earlier results and the typed query, URL-quoted."""
     path = DATE_TOKEN.sub(lambda m: _day(int(m.group(2) or 0) * (-1 if m.group(1) == "-" else 1)), path)
-    return TOKEN.sub(lambda m: urllib.parse.quote(str(lookup(m.group(1), pvars, {}) if lookup(m.group(1), pvars, {}) is not None else ""), safe=""), path) if pvars else path
+    def quoted(m):
+        q = urllib.parse.quote(str(lookup(m.group(1), pvars, {}) if lookup(m.group(1), pvars, {}) is not None else ""), safe="")
+        return q.replace(".", "%2E") if q in (".", "..") else q   # a lone dot segment would be resolved away by the server or a proxy
+    return TOKEN.sub(quoted, path) if pvars else path
 
 
 def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
