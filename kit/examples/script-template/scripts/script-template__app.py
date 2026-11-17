@@ -163,8 +163,9 @@ class Source(object):
 
 # ------------------------------------------------------------------ rows
 
-def back():
-    return kit.back_row("Back to the overview")
+def back(note=False):
+    """In the item view the pane is a detail pane that binds fields a Back row lacks, so Back (selected first) draws the note view; the table view plots every row and needs none."""
+    return kit.back_row("Back to the overview", view=kit.NOTE_VIEW if note else None)
 
 
 def banner(state, cfg):
@@ -178,7 +179,9 @@ def banner(state, cfg):
 def offline_rows(cfg, state, view):
     title = "Could not reach %s" % cfg["app"]["service"]
     sub = "%s. If this is your copy, set api.base_url and hosts in config.json" % state["err"] if state["err"] else "Enter to try again"
-    return ([back()] if view != "overview" else []) + [kit.row(title, sub, icon="AlertCircle", badge="OFFLINE", copy=False), kit.refresh_row(view if view in VIEWS else "overview", title="Try again", subtitle="Enter to run again")]
+    note = view == "item"
+    return ([back(note)] if view != "overview" else []) + [kit.note_row(title, sub, badge="OFFLINE") if note else kit.row(title, sub, icon="AlertCircle", badge="OFFLINE", copy=False),
+                                                           kit.refresh_row(view if view in VIEWS else "overview", title="Try again", subtitle="Enter to run again", pane=kit.NOTE_VIEW if note else None)]
 
 
 def setup_rows(cfg):
@@ -214,9 +217,12 @@ def build(view, arg, items, state, cfg, fixture):
         return out
     it = next((i for i in items if i["id"] == arg), None)
     if it is None:
-        return [back(), kit.row("Not found", "no item with id %s" % kit.clean_text(arg, 30), icon="AlertCircle", copy=False)]
-    return [back(), kit.safe_row(it["name"], "%s · %s" % (it["status"], kit.fmt_num(it["count"], 0)), icon="file", item_name=it["name"], status=it["status"], count=it["count"],
+        return [back(True), kit.note_row("Not found", "no item with id %s" % kit.clean_text(arg, 30))]
+    return [back(True), kit.safe_row(it["name"], "%s · %s" % (it["status"], kit.fmt_num(it["count"], 0)), icon="file", item_name=it["name"], status=it["status"], count=it["count"],
                                  copy_raw=it["name"], tile=kit.safe_tile("Count", it["count"], note=it["status"]))]
+
+
+NOTE_PANE = ["    note:", "      right_widget:", "        kind: markdown", "        mode: selected_row", "        bind:", '          title: "{{row.title}}"', '          subtitle: "{{row.subtitle}}"', '          body: "{{row.body}}"']   # the pane of the Back, notice and hint rows: they carry none of the detail fields, so they draw their own words (kit.NOTE_VIEW)
 
 
 def emit_yaml(cfg):
@@ -235,7 +241,7 @@ def emit_yaml(cfg):
           "            - { field: status, label: Status }", "            - { field: count, label: Count, align: right }",
           "    item:", "      right_widget:", "        kind: detail", "        mode: selected_row", "        bind:", '          title: "{{row.item_name}}"', '          subtitle: "{{row.status}}"', "          fields:",
           '            - { label: Status, value: "{{row.status}}" }', '            - { label: Count, value: "{{row.count}}", copy: true }',
-          "actions:", '  - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }']
+          *NOTE_PANE, "actions:", '  - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }']
     return "\n".join(L) + "\n"
 
 

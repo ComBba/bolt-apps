@@ -219,7 +219,7 @@
       "example": "kit/examples/portal-template",
       "snippet": "(automatic: the engine adds a Back row to every drilled-in view)",
       "test": "kit/examples/portal-template/check.json",
-      "limit": "A nav row carries no actions.",
+      "limit": "A nav row carries no actions. The first row of a drilled list is selected when it opens: give your Back row a pane text (title, subtitle, body), or a detail, card, diff or json_tree pane draws only \"—\" placeholders. The engine does it for you (it declares a `note` view); a script app passes `kit.back_row(subtitle, view=kit.NOTE_VIEW)` and declares a `note` markdown view. check fails a selectable row that binds nothing (`pane_blank_row`).",
       "also": [
         "branch-explorer"
       ]

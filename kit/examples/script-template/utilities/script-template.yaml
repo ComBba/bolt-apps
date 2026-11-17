@@ -57,5 +57,13 @@ presentation:
           fields:
             - { label: Status, value: "{{row.status}}" }
             - { label: Count, value: "{{row.count}}", copy: true }
+    note:
+      right_widget:
+        kind: markdown
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          body: "{{row.body}}"
 actions:
   - { id: copy, kind: composer, target: row, label: Copy, insert: "{{row.copy_text}}" }

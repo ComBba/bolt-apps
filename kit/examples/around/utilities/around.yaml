@@ -110,6 +110,14 @@ presentation:
             - { label: Sent as, value: "{{row.sample}}" }
             - { label: Sent in, value: "{{row.how}}" }
             - { label: Read from, value: "{{row.where}}" }
+    note:
+      right_widget:
+        kind: markdown
+        mode: selected_row
+        bind:
+          title: "{{row.title}}"
+          subtitle: "{{row.subtitle}}"
+          body: "{{row.body}}"
 actions:
   - { id: open, kind: url, target: row, label: Open in Maps, url_template: "{{row.open_url}}" }
   - { id: copy, kind: composer, target: row, label: Copy address, insert: "{{row.copy_text}}" }

@@ -366,7 +366,8 @@ test('a first word that is not a view is drawn by the APP-LEVEL widget: a tiles 
 	// every selectable row must give its pane a field to draw (the old pipeline-board changes: a key-hint row in a diff view)
 	const diff = { top: null, views: new Map([['changes', { kind: 'diff', mode: 'selected_row', fields: ['left', 'right'] }]]), viewArg: 'view' };
 	assert.equal(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true } }, { title: 'Add your key' }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes')[0].code, 'pane_blank_row');
-	assert.deepEqual(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true } }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes'), []);
+	assert.equal(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true } }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes')[0].code, 'pane_blank_row', 'a bare Back is the first row selected in a drilled list: it is no longer exempt');
+	assert.deepEqual(blankPaneProblems(diff, [{ title: 'Back', nav: { back: true }, left: 'Back', right: 'to the overview' }, { title: 'Run 303', left: 'a', right: 'b' }], 'changes'), []);
 	assert.deepEqual(blankPaneProblems(diff, [{ title: 'Not found' }], 'changes'), [], 'a run with no data row at all');
 });
 
@@ -374,4 +375,29 @@ test('goldens never say "1 <plural>", the unit-convert pane title is a sentence,
 	for (const n of examples) { const g = path.join(EX, n, 'golden'); if (!fs.existsSync(g)) continue; for (const f of fs.readdirSync(g)) for (const m of fs.readFileSync(path.join(g, f), 'utf8').matchAll(/"([^"]*)"/g)) assert.ok(!/(?<![\d.,-])\b1 [a-z]{3,}s\b/.test(m[1]), `${n}/${f}: ${m[1].slice(0, 80)}`); }
 	const y = fs.readFileSync(path.join(EX, 'unit-convert', 'utilities', 'unit-convert.yaml'), 'utf8');
 	assert.match(y, /title: "Conversion"/); assert.match(y, /subtitle: "\{\{row\.title\}\}"/);
+});
+
+// The first row of a drilled list is selected on arrival: a Back row that binds none of a detail pane's fields draws a blank title and "—" for every field.
+test('a Back or refresh row is not exempt from pane_blank_row: around landmarks with a bare Back fails, with the note pane it passes (mutation of the old exemption)', async () => {
+	const { blankPaneProblems, presentationOf } = await import('../lib/check.mjs');
+	const pres = presentationOf(path.join(EX, 'around'));
+	assert.equal(pres.views.get('landmarks').kind, 'detail');
+	assert.equal(pres.views.get('note').kind, 'markdown', 'the note view the Back rows point at is declared');
+	const data = { title: 'Bryant Park', subtitle: '1 m north', pname: 'Bryant Park', dist: '1 m', src: 'Wikipedia (CC BY-SA)' };
+	const bare = { title: 'Back', subtitle: 'Back to the overview', nav: { back: true } };
+	const bad = blankPaneProblems(pres, [bare, data], 'landmarks');
+	assert.deepEqual(bad.map((x) => x.code), ['pane_blank_row'], 'the old rule exempted every Back row, which is the bug the founder saw');
+	assert.match(bad[0].message, /Back or refresh row is selected first/);
+	assert.deepEqual(blankPaneProblems(pres, [{ ...bare, pane: 'note', body: 'x' }, data], 'landmarks'), []);
+	assert.equal(blankPaneProblems(pres, [{ ...bare, pane: 'nope' }, data], 'landmarks')[0].code, 'pane_blank_row', 'a pane that is not a declared view does not count');
+	assert.equal(blankPaneProblems(pres, [{ title: 'Check again', nav: { view: 'landmarks', arg: 'refresh' } }, data], 'landmarks')[0].code, 'pane_blank_row', 'refresh is not exempt either');
+	assert.deepEqual(blankPaneProblems(pres, [bare, { title: 'Not found' }], 'landmarks'), [], 'a run with no data row at all has nothing to draw');
+});
+
+test('every example run in sample mode: a Back or Refresh row is selectable only with a pane text or a bound field (no example ships the bare Back)', () => {
+	for (const n of examples.filter((x) => fs.existsSync(path.join(EX, x, 'check.json')))) {
+		const r = cli(tmp('home-'), REPO, 'check', path.join(EX, n), '--json'); const o = JSON.parse(r.stdout);
+		const blank = JSON.stringify(o).match(/pane_blank_row/g);
+		assert.equal(blank, null, `${n}: pane_blank_row`);
+	}
 });
