@@ -15,6 +15,19 @@ This software is provided as it is, with no warranty, as Apache-2.0 sections 7 a
 example apps are illustrations of how to build an app. They are not finished products and they
 are not advice.
 
+## Apps you build
+
+This repository (the toolkit, the kit, the engine and the examples) is open source under the
+Apache License 2.0, and community contributions are welcome under the same licence, with a
+sign-off on each commit (see [CONTRIBUTING.md](../CONTRIBUTING.md)).
+
+An app you build with it is yours. You choose its licence: open source, internal or commercial.
+If you copy kit or engine code into your app, the Apache-2.0 notice (a copy of the
+LICENSE file) must stay with that code.
+
+Bolt, the desktop application, is proprietary and is not part of this repository. Apps that
+Sparcle ships inside Bolt belong to Sparcle unless their folder says otherwise.
+
 ## Do not rely on the examples for safety or money decisions
 
 Examples such as `around`, `sky-watch` and `repo-radar` show data from free public services,
@@ -26,7 +39,8 @@ the official source. An example's sample data is invented.
 
 Data an example shows belongs to its provider and is used under the provider's terms. See
 [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md). Some free services are for non-commercial
-use only (for example Open-Meteo): check before you use an app at work.
+use only. Open-Meteo's free API is one: `around`, `sky-watch` and `lookup-template` are demos, and for
+commercial use you need an Open-Meteo commercial plan and API key.
 
 ## Privacy
 

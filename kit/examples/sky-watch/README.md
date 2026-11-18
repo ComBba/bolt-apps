@@ -15,3 +15,5 @@ node toolkit/bin/bolt-apps.mjs verify ../sky-watch-1.0.1.boltpack
 - The app-level right pane is the same preview as every view, so a typed city never draws an empty tile.
 - Sample data is recorded and invented (`example` places, labelled SAMPLE DATA with `demo`). Not verified in real Bolt: the live runs were written against the documented answers and one real Launch Library answer saved as the sample (list shape, captured 2026-11-15); the other four sources were not captured live. The preview pane and the Open source link were checked against the row contract and the check rules only. A source that fails shows its last good copy (up to 24 h) marked OLD COPY on every row, else one offline row.
 After editing `config.json`, rebuild the app file: `python3 scripts/sky-watch__sky-watch.py --emit-yaml > utilities/sky-watch.yaml`.
+
+Credit: Weather data by Open-Meteo.com (CC BY 4.0). Open-Meteo's free API is for non-commercial use (see https://open-meteo.com/en/terms); this example is a demo: for commercial use get an Open-Meteo commercial plan and API key.
