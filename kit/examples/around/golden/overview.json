@@ -187,7 +187,7 @@
   },
   {
     "title": "About the data",
-    "subtitle": "Map data (c) OpenStreetMap contributors, ODbL. Weather by Open-Meteo.com (CC BY 4.0). Landmarks from Wikipedia (CC BY-SA). Bikes by CityBikes",
+    "subtitle": "Map data (c) OpenStreetMap contributors, ODbL. Weather by Open-Meteo.com (CC BY 4.0). Landmarks from Wikipedia (CC BY-SA). Bikes by CityBikes (https://citybik.es)",
     "icon": "FileText",
     "body": "",
     "actions": [],

@@ -526,7 +526,7 @@ def overview(ctx, g, r, text):
     else:
         rows.append(kit.safe_row("Landmarks · unavailable", r["wiki"]["err"], icon="AlertCircle", nav={"view": "landmarks"}, copy=False))
     rows.append(kit.safe_row("Keys and sign-in styles", "how each API here asks for a key, and the one that needs yours", icon="Key", nav={"view": "keys"}, copy=False))   # no pane: the overview preview draws this row; the keys detail pane binds fields it lacks
-    rows.append(kit.safe_row("About the data", "Map data (c) OpenStreetMap contributors, ODbL. Weather by Open-Meteo.com (CC BY 4.0). Landmarks from Wikipedia (CC BY-SA). Bikes by CityBikes", icon="FileText", copy=False))
+    rows.append(kit.safe_row("About the data", "Map data (c) OpenStreetMap contributors, ODbL. Weather by Open-Meteo.com (CC BY 4.0). Landmarks from Wikipedia (CC BY-SA). Bikes by CityBikes (https://citybik.es)", icon="FileText", copy=False))
     rows.append(kit.refresh_row("overview", title="Check again", subtitle="Enter to fetch fresh data (bikes are kept 30 s)"))
     return rows
 
@@ -598,8 +598,8 @@ def keys_rows(ctx, g):
                 sec = s.value if s else None
         hdr, qry, masked = build_auth(a["mode"], sec)
         if a["mode"] == "required free key" and not sec:
-            out.append(kit.safe_row("Add your free key to see attractions", "%s needs a free key. Enter for the setup line" % a["service"], icon="Key", badge="SETUP", copy=kit.setup_hint(APP, name),
-                               mode=a["mode"], how=a["send"], where="keychain or ~/.config/%s/.env" % APP, state="key missing", sample="sign up: " + cfg["keys"]["attractions"]["signup"]))
+            out.append(kit.safe_row("Add your free NASA key to see the picture of the day", "%s needs a free key. Enter for the setup line" % a["service"], icon="Key", badge="SETUP", copy=kit.setup_hint(APP, name),
+                               mode=a["mode"], how=a["send"], where="keychain or ~/.config/%s/.env" % APP, state="key missing", sample="sign up: " + cfg["keys"]["apod"]["signup"]))
             continue
         state = "no key needed" if not name else ("key found" if sec else ("not set (optional)" if a.get("optional") else "not set"))
         shown = masked if sec or not name else build_auth(a["mode"], "x")[2]

@@ -1,19 +1,15 @@
 {
- "_note": "All answers are real, recorded 2026-11-15 (trimmed): Nominatim, Overpass (it took 34 s under load that day), CityBikes, Open-Meteo, Wikipedia. attractions_sample is NOT recorded: it is a hand-written sample in the OpenTripMap shape for a key-set demo.",
+ "_note": "All answers are real, recorded 2026-11-15 (trimmed): Nominatim, Overpass (it took 34 s under load that day), CityBikes, Open-Meteo, Wikipedia. nasa_apod is a real answer from api.nasa.gov/planetary/apod recorded 2026-11-18 with the public DEMO_KEY (trimmed, image link shortened); the keys demo does not read it, because the app never calls NASA without the user's own key.",
  "_now": 1794742303,
  "places_is_sample": false,
- "attractions_sample": [
-  {
-   "name": "SAMPLE Landmark One",
-   "dist": 150.0,
-   "kinds": "architecture,historic"
-  },
-  {
-   "name": "SAMPLE Landmark Two",
-   "dist": 320.0,
-   "kinds": "museums"
-  }
- ],
+ "nasa_apod": {
+  "date": "2026-11-18",
+  "explanation": "Are these two giant arches battling for control of the sky? No, but it sure looks like it! The arch on the left is the central band of our Milky Way Galaxy, an ancient system of stars, gas, and dust t (trimmed)",
+  "media_type": "image",
+  "service_version": "v1",
+  "title": "NASA Science",
+  "url": "https://science.nasa.gov/wp-content/themes/nasa-child/assets/images/nasa-logo.png"
+ },
  "places": {
   "bryant park, new york": {
    "geocode": [
