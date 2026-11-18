@@ -117,7 +117,7 @@
       ],
       "expect": {
         "text_present": [
-          "Add your free key to see attractions",
+          "Add your free NASA key to see the picture of the day",
           "would send"
         ]
       }

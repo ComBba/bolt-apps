@@ -594,7 +594,10 @@ def overview_rows(data, state, cfg, fixture, word):
     tags = ([("SAMPLE", "recorded answers, no network")] if fixture else []) + ([("OLD COPY", "an old copy, %s old" % kit.fmt_duration(state["stale"]))] if state["stale"] is not None else [])
     if tags:   # a tiles grid draws no label row: the label rides on the first tile
         rows[0] = dict(rows[0], kpi_badge=tags[0][0], kpi_foot=kit.text("; ".join(x[1] for x in tags), 80))
-    rows.append(kit.refresh_row("overview", title="Check again", subtitle="Enter to fetch fresh data past the cache"))
+    # a tiles grid draws a tile for EVERY row, so the refresh row is a real tile too: its number is how old the data on screen is (0 when it is fresh)
+    age = int(state["stale"] if state["stale"] is not None else (state.get("cached") or 0))
+    rows.append(kit.row("Check again", "Enter to fetch fresh data past the cache", icon="RefreshCw", nav={"view": "overview", "arg": "refresh"}, copy=False,
+                        tile=kit.safe_tile("Data age", age, unit="s", note="Enter to fetch fresh data"), body="Press Enter to fetch fresh data past the cache."))
     return rows
 
 

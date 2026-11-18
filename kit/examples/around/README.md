@@ -22,9 +22,9 @@ Stitching independent systems on coordinates. `=around Bryant Park, New York` ge
 | CityBikes `api.citybik.es/v2` | none | Free, no key. | The network answer is large, so only stations within 1.5 km are used. The network is chosen from a short table in `config.json` (`bike_networks`, every id checked to exist); a place with no network within 40 km says "none nearby". |
 | Open-Meteo `api.open-meteo.com` | none | Free for non-commercial use, credit Open-Meteo (CC BY 4.0). `X-RateLimit-Limit: 600` a minute. | |
 | Wikipedia geosearch `en.wikipedia.org/w/api.php` | none | A descriptive User-Agent is expected. Content CC BY-SA. | |
-| OpenTripMap `api.opentripmap.com` | free key, required | Answers 401 without a key. Used only by the keys demo; no request is made without a key. | |
+| NASA APOD `api.nasa.gov/planetary/apod` | free key, required | Answers 403 without a key. Sign-up is https://api.nasa.gov/#signUp (an api.data.gov form on the real NASA site). NASA also publishes a shared `DEMO_KEY` with a very tight limit (its response header showed 10 requests on 2026-11-18); the app never uses it, so the demo shows the setup row until you add your own key. Used only by the keys demo; no request is made without a key. | |
 
-Attribution shown in the app: map data (c) OpenStreetMap contributors (ODbL), Open-Meteo, Wikipedia, CityBikes.
+Attribution shown in the app: map data (c) OpenStreetMap contributors (ODbL), Open-Meteo, Wikipedia, CityBikes (project page: https://citybik.es).
 
 ## TTLs and "live"
 Bikes 30 s, places 1 h, weather 15 min, Wikipedia 1 day, geocode 30 days (`sources` in `config.json`). Bolt refreshes only when you press Enter, so "live" means as fresh as the last Enter. The bike rows show "updated N s ago", counted from the station's own timestamp, so a cached answer shows its true age. Each source falls back to a copy up to 7 days old with an "old copy" badge; a failed call is never cached.
@@ -34,11 +34,11 @@ Bikes 30 s, places 1 h, weather 15 min, Wikipedia 1 day, geocode 30 days (`sourc
 |---|---|
 | no key | sends nothing (the four main sources) |
 | optional key | would send `Authorization: Bearer ...` and works without it |
-| required free key | OpenTripMap: with no key the view shows an "Add your free key" setup row with the exact one-line command from `kit.setup_hint`; the key goes in the `apikey` query value |
+| required free key | NASA APOD: with no key the view shows an "Add your free NASA key" setup row with the exact one-line command from `kit.setup_hint`; the key goes in the `api_key` query value |
 | bearer | `Authorization: Bearer ...` |
 | basic | `Authorization: Basic ...` built from `user:password` |
 
-`build_auth()` makes the headers; only a masked form is ever shown (`********`). Keys are read with `kit.get_secret` (keychain, then `~/.config/around/.env` mode 0600), never from a shell variable, which does not reach the script under Bolt. The bearer, basic and optional rows are a pattern demo: no real service is called with them. Add `demo-secrets` to the query to see fake secrets built into requests and masked. Not built: the attractions call itself (the key is verified to be required; I had no key to record a real answer).
+`build_auth()` makes the headers; only a masked form is ever shown (`********`). Keys are read with `kit.get_secret` (keychain, then `~/.config/around/.env` mode 0600), never from a shell variable, which does not reach the script under Bolt. The bearer, basic and optional rows are a pattern demo: no real service is called with them. Add `demo-secrets` to the query to see fake secrets built into requests and masked. Not built: the NASA call itself (the key is verified to be required; one real APOD answer, recorded with the public DEMO_KEY on 2026-11-18, sits in the fixtures but is not read).
 
 ## Sample data
 The app ships live (`api.fixture_default` is false); `check` runs it in sample mode (`"fixture": true` in `check.json`) on real answers recorded 2026-11-15 for "Bryant Park, New York" (trimmed), clock fixed at the recording time. `attractions_sample` in `fixtures.json` is hand-written and unused. Any place works in the live app; set `api.fixture_default` to true only to demo sample mode. Failure previews: add `demo-places-down`, `demo-bikes-down`, `demo-weather-down` or `demo-wiki-down`.

@@ -94,18 +94,17 @@
     "title": "Check again",
     "subtitle": "Enter to fetch fresh data past the cache",
     "icon": "RefreshCw",
-    "body": "",
+    "body": "Press Enter to fetch fresh data past the cache.",
     "nav": {
       "view": "overview",
       "arg": "refresh"
     },
     "actions": [],
-    "pane": "overview",
-    "kpi_label": "",
-    "kpi_value": "",
-    "kpi_unit": "",
+    "kpi_label": "Data age",
+    "kpi_value": 0,
+    "kpi_unit": "s",
     "kpi_max": "",
-    "kpi_note": "",
+    "kpi_note": "Enter to fetch fresh data",
     "kpi_foot": "",
     "kpi_badge": "",
     "copy_text": ""

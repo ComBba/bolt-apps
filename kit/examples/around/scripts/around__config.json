@@ -5,13 +5,13 @@
     "title": "Around",
     "icon": "map-pin",
     "description": "Type a place: cafes, gyms, live bike docks, the next hours of weather and landmarks nearby, stitched by distance into one verdict.",
-    "timeout": 25
+    "timeout": 12
   },
   "api": {
     "fixture_default": false,
     "user_agent": "bolt-app-example/1.0 (around; github.com/SparcleHQ/bolt-apps)",
-    "deadline_s": 16,
-    "call_timeout_s": 14,
+    "deadline_s": 8,
+    "call_timeout_s": 7,
     "max_bytes": 3000000,
     "workers": 5,
     "geocode_min_gap_s": 1.1
@@ -22,7 +22,7 @@
     "api.citybik.es",
     "api.open-meteo.com",
     "en.wikipedia.org",
-    "api.opentripmap.com"
+    "api.nasa.gov"
   ],
   "radius_m": 800,
   "near_m": 400,
@@ -164,10 +164,10 @@
     }
   },
   "keys": {
-    "attractions": {
-      "name": "OPENTRIPMAP_KEY",
-      "signup": "https://opentripmap.io/product",
-      "host": "api.opentripmap.com"
+    "apod": {
+      "name": "NASA_API_KEY",
+      "signup": "https://api.nasa.gov/#signUp",
+      "host": "api.nasa.gov"
     }
   },
   "auth_demo": [
@@ -186,9 +186,9 @@
     },
     {
       "mode": "required free key",
-      "service": "OpenTripMap attractions",
-      "send": "query apikey",
-      "secret": "OPENTRIPMAP_KEY"
+      "service": "NASA Astronomy Picture of the Day",
+      "send": "query api_key",
+      "secret": "NASA_API_KEY"
     },
     {
       "mode": "bearer",
