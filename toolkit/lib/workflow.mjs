@@ -10,6 +10,7 @@ import { parseYaml, get, str, notYamlHint } from './yamlsubset.mjs';
 import { vendorKit } from './check.mjs';
 import { formatBoltSays } from './boltsays.mjs';
 import { versionProblem } from './boltrules.mjs';
+import { pythonCmd, spawnPython, PYTHON_MISSING } from './python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.resolve(HERE, '../bin/bolt-apps.mjs');
@@ -144,8 +145,8 @@ export function newFromTemplate(template, id, root) {
 	const emitter = fs.existsSync(sd) ? fs.readdirSync(sd).filter((f) => f.endsWith('.py') && !f.endsWith('__bolt_app_kit.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')) : null;
 	const ud = path.join(dir, 'utilities');
 	if (emitter) {
-		const r = spawnSync('python3', [`scripts/${emitter}`, '--emit-yaml'], { cwd: dir, encoding: 'utf8' });
-		if (r.status !== 0) fail(`could not generate the app file: ${String(r.stderr || (r.error && r.error.message) || 'python3 was not found').slice(-300)}. Install Python 3.9 or newer`);
+		const r = spawnPython([`scripts/${emitter}`, '--emit-yaml'], { cwd: dir, encoding: 'utf8' });
+		if (r.status !== 0) fail(`could not generate the app file: ${String(r.stderr || (r.error && r.error.message) || PYTHON_MISSING).slice(-300)}`);
 		for (const y of fs.readdirSync(ud)) fs.rmSync(path.join(ud, y));
 		fs.writeFileSync(path.join(ud, `${id}.yaml`), r.stdout);
 	} else if (fs.existsSync(ud)) for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
@@ -211,7 +212,7 @@ function pruneSampleExpectations(dir, id) {
 function emitterProblem(dir) {
 	try {
 		const sd = path.join(dir, 'scripts'), em = fs.readdirSync(sd).filter((f) => f.endsWith('__engine.py')).find((f) => fs.readFileSync(path.join(sd, f), 'utf8').includes('--emit-yaml')); if (!em) return '';
-		const r = spawnSync('python3', [path.join(sd, em), '--emit-yaml'], { cwd: sd, encoding: 'utf8', timeout: 20000 });
+		const r = spawnPython([path.join(sd, em), '--emit-yaml'], { cwd: sd, encoding: 'utf8', timeout: 20000 });
 		return r.status !== 0 && r.stderr ? `\nThe real cause, from the engine:\n${r.stderr.trim().split('\n').slice(0, 6).join('\n').slice(0, 900)}` : '';
 	} catch { return ''; }
 }
@@ -369,8 +370,8 @@ Windows %APPDATA%\\app.sparcle.bolt.enterprise\\user-utils, Linux ~/.config/app.
 	const line = (ok, what, fix) => console.log(`${ok ? 'ok  ' : 'FIX '} ${what}${ok ? '' : `\n       ${fix}`}`);
 	let bad = 0; const chk = (ok, what, fix) => { if (!ok) bad++; line(ok, what, fix); };
 	const nodeMajor = Number(process.versions.node.split('.')[0]); chk(nodeMajor >= 18, `node ${process.versions.node}`, 'Install Node 18 or newer (https://nodejs.org).');
-	const py = spawnSync('python3', ['--version'], { encoding: 'utf8' }); const pv = /(\d+)\.(\d+)/.exec(py.stdout || py.stderr || '');
-	chk(!!pv && (Number(pv[1]) > 3 || (Number(pv[1]) === 3 && Number(pv[2]) >= 9)), `python3 ${pv ? pv[0] : 'not found'}`, 'Install Python 3.9 or newer; script apps run with python3.');
+	const py = pythonCmd();
+	chk(!!py, `python ${py ? `(${py.label})` : 'not found'}`, `${PYTHON_MISSING}; script apps run with Python 3.`);
 	chk(fs.existsSync(path.join(STATE, 'key.pem')), `signing key (${q(path.join(STATE, 'key.pem'))})`, 'Run: ./bolt-apps keygen   (once; ship also makes it for you)');
 	try { fs.mkdirSync(STATE, { recursive: true, mode: 0o700 }); fs.accessSync(STATE, fs.constants.W_OK); chk(true, '~/.bolt-apps is writable'); } catch { chk(false, '~/.bolt-apps is writable', `Run: mkdir -p ${q(STATE)} && chmod 700 ${q(STATE)}`); }
 	if (dir && fs.existsSync(path.join(dir, 'bolt-app.json'))) {
