@@ -6,9 +6,7 @@ Small things people add to [Bolt](https://sparcle.app/bolt/) to do their job fas
 snippet that cleans a list, a search prefix for a site you use every day, a launcher key
 that turns pasted CSV into a Markdown table.
 
-> **The gallery is closed.** You can read everything here, use the toolkit and build apps for yourself today.
->
-> **The gallery is not open yet.**
+> **The gallery is not open yet.** You can read everything here, use the toolkit and build apps for yourself today.
 > This repository will become the community gallery of Bolt Apps. It opens only when
 > Bolt enforces each app's declared permissions at run time and shows them in plain
 > words when you install it, and when the rules and docs here are final. App submissions
