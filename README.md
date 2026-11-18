@@ -11,8 +11,10 @@ that turns pasted CSV into a Markdown table.
 > **The gallery is not open yet.**
 > This repository will become the community gallery of Bolt Apps. It opens only when
 > Bolt enforces each app's declared permissions at run time and shows them in plain
-> words when you install it, and when the rules and docs here are final. Until then,
-> contributions are not accepted and pull requests from outside Sparcle are closed.
+> words when you install it, and when the rules and docs here are final. App submissions
+> open later. Fixes to the toolkit, the kit, the examples and the docs are welcome as pull
+> requests under Apache-2.0 with a Developer Certificate of Origin sign-off (`git commit -s`).
+> Pull requests that add a new app to `apps/` are closed until the gallery opens.
 
 ## What a Bolt App is
 
@@ -62,8 +64,8 @@ claims a lower one.
 **Reviewed by Sparcle** means Sparcle checked this version's declared permissions and
 behaviour. It is not a guarantee.
 
-A company's device settings always win over any app. An admin can allow only approved
-apps.
+A company's device settings win over any app, on macOS and Windows; Linux has no managed
+device policy yet. An admin can allow only approved apps.
 
 ## Installing an app
 
@@ -113,7 +115,7 @@ Walkthrough with the row formats: <https://sparcle.app/docs/extend/rich-apps/>. 
 
 ## Contributing
 
-Not open yet (see the note at the top). When it opens:
+App submissions are not open yet (see the note at the top); fixes to the toolkit, kit, examples and docs are welcome now. When the gallery opens:
 
 1. Build the app in Bolt with made-up data.
 2. Run `bolt-apps check` on its folder ([CHECKER.md](CHECKER.md)).
@@ -154,10 +156,10 @@ and [legal notes](docs/LEGAL.md) (as is, no safety use). Company policies:
 [privacy](https://sparcle.app/privacy/) and [terms](https://sparcle.app/terms/). The Apache licence
 covers this repository, not the Bolt application.
 
-**Apps you build:** this repository is Apache-2.0 open source and contributions are welcome under the same licence (DCO sign-off). An app you build with it is yours: you choose its licence (open source, internal or commercial). If you copy kit or engine code into your app, keep the Apache-2.0 notice (a copy of the LICENSE file) with that code. Bolt, the desktop application, is proprietary and is not part of this repo; apps Sparcle ships inside Bolt are Sparcle's unless their folder says otherwise. More in [legal notes](docs/LEGAL.md).
+**Apps you build:** this repository is Apache-2.0 open source and contributions to the toolkit, kit, examples and docs are welcome under the same licence (DCO sign-off); new apps in the gallery are not open yet. An app you build with it is yours: you choose its licence (open source, internal or commercial). If you copy kit or engine code into your app, keep the Apache-2.0 notice (a copy of the LICENSE file) with that code. Bolt, the desktop application, is proprietary and is not part of this repo; apps Sparcle ships inside Bolt are Sparcle's unless their folder says otherwise. More in [legal notes](docs/LEGAL.md).
 
 ## Licence
 
-[Apache License 2.0](LICENSE). Contributions are accepted under the same licence, with a
+[Apache License 2.0](LICENSE). Contributions are made under the same licence, with a
 [Developer Certificate of Origin](https://developercertificate.org/) sign-off on every
 commit; see [CONTRIBUTING.md](CONTRIBUTING.md).

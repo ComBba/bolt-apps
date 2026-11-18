@@ -1,8 +1,10 @@
 # Contributing a Bolt App
 
-> **The gallery is not open yet, and contributions are not accepted.** This guide describes
-> how it will work. Pull requests from outside Sparcle are closed until the gallery opens
-> (see the [README](README.md)).
+> **The gallery of community apps is not open yet: app submissions open later.** This guide
+> describes how they will work. Fixes to the toolkit, the kit, the examples and the docs are
+> welcome as pull requests under Apache-2.0 with a Developer Certificate of Origin sign-off
+> (`git commit -s`). Pull requests that add a new app to `apps/` are closed until the gallery
+> opens (see the [README](README.md)).
 
 AI coding agents: read [AGENTS.md](AGENTS.md) instead; it is the same process in a stricter
 form.

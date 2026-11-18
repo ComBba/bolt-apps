@@ -18,7 +18,7 @@ are not advice.
 ## Apps you build
 
 This repository (the toolkit, the kit, the engine and the examples) is open source under the
-Apache License 2.0, and community contributions are welcome under the same licence, with a
+Apache License 2.0, and contributions to it (not new gallery apps, which are not open yet) are welcome under the same licence, with a
 sign-off on each commit (see [CONTRIBUTING.md](../CONTRIBUTING.md)).
 
 An app you build with it is yours. You choose its licence: open source, internal or commercial.
@@ -57,5 +57,7 @@ company policy is at <https://sparcle.app/privacy/>.
 
 ## Contributions
 
-Contributions are not open yet. When they are, you license your work under the same Apache
-License 2.0 and sign off each commit; see [CONTRIBUTING.md](../CONTRIBUTING.md).
+The gallery of community apps is not open yet: app submissions open later. Fixes to the toolkit,
+the kit, the examples and the docs are welcome now. You license your work under the same Apache
+License 2.0 and sign off each commit (`git commit -s`); see [CONTRIBUTING.md](../CONTRIBUTING.md).
+Pull requests that add a new app to `apps/` are closed until the gallery opens.

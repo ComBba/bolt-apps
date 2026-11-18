@@ -1,6 +1,6 @@
 <!--
-The gallery is not open yet and contributions are not accepted (see README.md). Until the gallery opens, only Sparcle
-maintainers merge here. One app per pull request. Sign off every commit: git commit -s
+The gallery of community apps is not open yet. Fixes to the toolkit, kit, examples and docs are welcome; pull requests
+that add a new app to apps/ are closed until the gallery opens (see README.md). Sign off every commit: git commit -s
 -->
 
 ## App
