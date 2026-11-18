@@ -3,7 +3,7 @@ runtime: transform
 id: csv2md
 chip: csv2md
 title: CSV to Markdown table
-icon: table
+icon: list
 description: Turn pasted CSV or spreadsheet cells into a Markdown table
 emits: Generic
 placeholder_examples:
