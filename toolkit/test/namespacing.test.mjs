@@ -377,7 +377,7 @@ test('goldens never say "1 <plural>", the unit-convert pane title is a sentence,
 	assert.match(y, /title: "Conversion"/); assert.match(y, /subtitle: "\{\{row\.title\}\}"/);
 });
 
-// The first row of a drilled list is selected on arrival: a Back row that binds none of a detail pane's fields draws a blank title and "—" for every field.
+// The first row of a drilled list is selected on arrival: a Back row that binds none of a detail pane's fields draws a blank title and a dash for every field.
 test('a Back or refresh row is not exempt from pane_blank_row: around landmarks with a bare Back fails, with the note pane it passes (mutation of the old exemption)', async () => {
 	const { blankPaneProblems, presentationOf } = await import('../lib/check.mjs');
 	const pres = presentationOf(path.join(EX, 'around'));
@@ -400,4 +400,33 @@ test('every example run in sample mode: a Back or Refresh row is selectable only
 		const blank = JSON.stringify(o).match(/pane_blank_row/g);
 		assert.equal(blank, null, `${n}: pane_blank_row`);
 	}
+});
+
+test('a row that names another pane must carry a field THAT view binds: Back naming keys fails, the around keys row without fields fails, the fixed rows pass', async () => {
+	const { blankPaneProblems, presentationOf } = await import('../lib/check.mjs');
+	const pres = presentationOf(path.join(EX, 'around'));
+	const data = { title: 'Bryant Park', subtitle: '1 m north', pname: 'Bryant Park', dist: '1 m', src: 'x' };
+	const back = { title: 'Back', subtitle: 'Back to the overview', nav: { back: true } };
+	const named = blankPaneProblems(pres, [{ ...back, pane: 'keys' }, data], 'landmarks');
+	assert.ok(named.some((x) => x.code === 'pane_blank_row' && /pane "keys"/.test(x.message)), 'Back naming pane keys binds none of the keys fields');
+	const keysRow = { title: 'Keys and sign-in styles', subtitle: 'how each API asks', nav: { view: 'keys' }, pane: 'keys' };
+	assert.equal(blankPaneProblems(pres, [keysRow, { title: 'Other', subtitle: 'y' }], 'overview')[0].code, 'pane_blank_row', 'the old around overview row drew an all-dash detail pane while check passed');
+	assert.deepEqual(blankPaneProblems(pres, [{ ...keysRow, pane: undefined }, { title: 'Other', subtitle: 'y' }], 'overview'), []);
+	assert.deepEqual(blankPaneProblems(pres, [{ ...keysRow, pane: 'keys', mode: 'm', state: 's' }], 'overview'), [], 'a row carrying the keys fields is fine');
+	assert.deepEqual(blankPaneProblems(pres, [{ ...back, pane: 'note', body: 'x' }, data], 'landmarks'), []);
+});
+
+test('the pane_blank_row advice does not tell the author to add a note view they cannot add', async () => {
+	const { blankPaneProblems } = await import('../lib/check.mjs');
+	const detail = { kind: 'detail', mode: 'selected_row', fields: ['pname', 'dist'] }, md = { kind: 'markdown', mode: 'selected_row', fields: ['title', 'subtitle', 'body'] };
+	const back = { title: 'Back', nav: { back: true } }, data = { title: 'a', pname: 'a', dist: '1' };
+	const room = { top: null, views: new Map([['places', detail]]), viewArg: 'view' };
+	assert.match(blankPaneProblems(room, [back, data], 'places')[0].message, /small markdown view \(named "note"/, 'room: say how to add it');
+	assert.doesNotMatch(blankPaneProblems(room, [back, data], 'places')[0].message, /entity_preview/);
+	const taken = { ...room, views: new Map([['places', detail], ['note', { kind: 'detail', mode: 'selected_row', fields: ['x'] }]]) };
+	assert.match(blankPaneProblems(taken, [back, data], 'places')[0].message, /rename it/, 'an author view named note');
+	const full = { ...room, views: new Map([['places', detail], ...Array.from({ length: 7 }, (_, i) => [`v${i}`, { kind: 'chart', mode: 'list_data', fields: [] }])]) };
+	assert.match(blankPaneProblems(full, [back, data], 'places')[0].message, /8 views.*drop a view/, '8 views and no reusable markdown view');
+	const reuse = { ...full, views: new Map([...[...full.views].slice(0, 7), ['m', md]]) };
+	assert.doesNotMatch(blankPaneProblems(reuse, [back, data], 'places')[0].message, /8 views/, 'a markdown view that binds title, subtitle and body is reusable');
 });
