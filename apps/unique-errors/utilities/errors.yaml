@@ -3,7 +3,7 @@ runtime: transform
 id: errors
 chip: errors
 title: Unique errors
-icon: triangle-alert
+icon: AlertCircle
 description: Keep only the error lines from a pasted log, timestamps removed, each error once
 emits: Generic
 placeholder_examples:
