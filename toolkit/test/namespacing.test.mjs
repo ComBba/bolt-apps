@@ -450,8 +450,18 @@ test('the install-prompt scan says which curl or wget host is not declared, as B
 	assert.deepEqual(scanMentions(f('ls app.other.bolt/x')), []);
 });
 
-test('declared hosts come from permissions.network in the app file and reach the scan through verify', () => {
+test('declaredHostsOf reads permissions.network in the app file', () => {
 	const y = 'id: h\nname: H\nruntime: bridge\nchip: h\npermissions:\n  network:\n    - host: api.example.com\n    - host: "b.example.org"\n';
 	assert.deepEqual(declaredHostsOf(assessYaml(y, 'h').tree), ['api.example.com', 'b.example.org']);
 	assert.deepEqual(declaredHostsOf(assessYaml('id: h\nruntime: bridge\n', 'h').tree), []);
+});
+
+test('verify lists a curl host the app file does not declare, with Bolt\'s sentence', () => {
+	const d = tmp('ns-host-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'hosty', '--dir', d).status, 0);
+	const fx = path.join(d, 'hosty', 'scripts', 'hosty__fixtures.json'), j = JSON.parse(fs.readFileSync(fx, 'utf8'));
+	j.note = 'curl https://api.undeclared.example.org/x'; fs.writeFileSync(fx, JSON.stringify(j));
+	const v = JSON.parse(cli(home, d, 'verify', path.join(d, 'hosty'), '--json').stdout);
+	const m = v.findings.filter((f) => f.code === 'script_mentions').map((f) => f.message).join('\n');
+	assert.match(m, /curl or wget to api\.undeclared\.example\.org, which it does not declare \(in hosty__fixtures\.json\)/);
 });

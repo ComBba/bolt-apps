@@ -10,7 +10,7 @@
   ],
   "properties": {
     "schema_version": { "const": 1, "description": "BUNDLE_SCHEMA_VERSION. Any other value is refused." },
-    "bundle_version": { "type": "string", "minLength": 1, "description": "The pack's own version, semver by convention (1.2.0). Bolt compares it at install: a pack replaces an installed one of the same name only if its version is newer, otherwise the install is refused (same_or_older_version). A version Bolt cannot read as a number is refused too." },
+    "bundle_version": { "type": "string", "minLength": 1, "description": "The pack's own version, semver by convention (1.2.0). Bolt compares it at install: a pack replaces an installed one of the same name only if its version is newer (installing the same version again is allowed only over a record an earlier Bolt wrote without a signed bundle); otherwise the install is refused (same_or_older_version). A version Bolt cannot read as a number is refused too." },
     "signed_by": { "type": "string", "description": "Author email or name as written by the signer. Not proof of identity." },
     "signed_at": { "type": "string", "format": "date-time", "description": "RFC 3339. Must fall inside the key's validity window for an allowlisted key." },
     "min_bolt_api_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+", "description": "Checked on the admin org-bundle import path only; the personal install path does not check it today." },
