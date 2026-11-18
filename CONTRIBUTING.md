@@ -100,6 +100,17 @@ git rebase --signoff origin/main
 git push --force-with-lease
 ```
 
+### File headers
+
+No licence header is required in any file. The [LICENSE](LICENSE) and [NOTICE](NOTICE) files
+cover the whole repository. You may add `SPDX-License-Identifier: Apache-2.0` as a comment at
+the top of a file you write, but do not add it to existing files, and never edit the kit
+sources (`kit/python/bolt_app_kit/`) or any vendored copy (`*__bolt_app_kit.py`): Bolt pins
+them by content, so a changed byte breaks them. Do not copy code or text from other projects
+or from the third-party services listed in
+[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) unless its licence allows it, and say where
+it came from in your pull request.
+
 ## Credit and spotlights
 
 Your name and link from `bolt-app.json` are shown on the app's card and on Bolt's install

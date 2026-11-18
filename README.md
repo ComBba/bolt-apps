@@ -146,6 +146,14 @@ Thumbs-up reactions and counts are recognition only. Nothing depends on them.
 
 Do not report a security problem in a public issue. See [SECURITY.md](SECURITY.md).
 
+## Legal
+
+[Licence](LICENSE) (Apache 2.0) and [NOTICE](NOTICE), [third-party notices](THIRD-PARTY-NOTICES.md)
+for the data the examples show, [privacy of this repository](PRIVACY.md), [trademarks](TRADEMARKS.md),
+and [legal notes](docs/LEGAL.md) (as is, no safety use). Company policies:
+[privacy](https://sparcle.app/privacy/) and [terms](https://sparcle.app/terms/). The Apache licence
+covers this repository, not the Bolt application.
+
 ## Licence
 
 [Apache License 2.0](LICENSE). Contributions are accepted under the same licence, with a
