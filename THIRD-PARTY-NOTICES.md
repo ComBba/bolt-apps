@@ -37,7 +37,7 @@ License.
 ## Sites only linked to
 
 Some rows and the apps under `apps/` open a web page in your browser when you press Open:
-caniuse.com, nvd.nist.gov, cve.org, npmjs.com, github.com, news.ycombinator.com and
+caniuse.com, nvd.nist.gov, cve.org, npmjs.com, github.com, news.ycombinator.com, science.nasa.gov and
 openstreetmap.org. Opening a page is your choice, and that site's own terms and privacy
 policy apply. Nothing is fetched or stored by us.
 
