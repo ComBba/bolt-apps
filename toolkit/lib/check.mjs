@@ -10,6 +10,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { pythonCmd } from './python.mjs';
 import { isNavToken, assessYaml } from './assess.mjs';
 import { parseYaml, get, str, notYamlHint } from './yamlsubset.mjs';
 
@@ -385,10 +386,11 @@ try:
 finally:
     _probe()
 `;
-function runScript(py, script, osName, args, env, cwd) {
+function runScript(pyArg, script, osName, args, env, cwd) {
 	return new Promise((resolve) => {
 		const t0 = Date.now();
-		const ch = spawn(py, ['-c', WRAPPER, script, PY_PLATFORM[osName], ...args], { env, cwd, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
+		const [py, ...pyPre] = Array.isArray(pyArg) ? pyArg : [pyArg];
+		const ch = spawn(py, [...pyPre, '-c', WRAPPER, script, PY_PLATFORM[osName], ...args], { env, cwd, detached: true, stdio: ['ignore', 'pipe', 'pipe'] });
 		let out = '', err = '', killed = false;
 		ch.stdout.on('data', (d) => { out += d; }); ch.stderr.on('data', (d) => { err += d; });
 		const timer = setTimeout(() => { killed = true; try { process.kill(-ch.pid, 'SIGKILL'); } catch {} }, BRIDGE_LIMIT_S * 1000 + 3000);
@@ -494,7 +496,8 @@ async function checkAppRun(appDir, opts = {}) {
 	try { const sd = path.join(appDir, 'scripts'), cf = fs.readdirSync(sd).find((f) => f.endsWith('__config.json')); const ec = cf ? JSON.parse(fs.readFileSync(path.join(sd, cf), 'utf8')) : null; const ig = ec && ec.mode === 'lookup' && ec.lookup && Array.isArray(ec.lookup.rows) ? ec.lookup.rows.map((r, i) => (r && typeof r === 'object' && 'copy' in r ? `lookup.rows[${i}]` : null)).filter(Boolean) : []; if (ig.length) top('warning', 'config_copy_ignored', `${ig.join(', ')} in scripts/${cf} declare "copy", which lookup rows ignore: Copy puts the row's own text on the clipboard. Remove it, or use a lookup with a single endpoint and an "item", where "copy" works (ENGINE.md, "Buttons in lookup mode")`, `scripts/${cf}`); } catch { /* no engine config: nothing to say */ }
 	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) { const txt = fs.readFileSync(path.join(ud, y), 'utf8'); try { parseYaml(txt); } catch (e) { top('error', 'app_file_not_yaml', `utilities/${y} cannot be read as YAML (${String(e.message).slice(0, 100)}). ${notYamlHint(txt) || 'Write plain YAML (AGENTS.md section 2), or regenerate it: python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml'}`, `utilities/${y}`); } } } catch { /* no utilities folder: other checks say so */ }
 	if (host === 'windows') { top('error', 'host_unsupported', 'check v0.1 needs a POSIX host (sh stubs); run it on macOS or Linux', '.'); return report; }
-	const py = cfg.interpreter ? whichSync(cfg.interpreter) : null;
+	const pyc = /^python3?$/.test(cfg.interpreter || '') ? pythonCmd() : null;
+	const py = pyc ? [pyc.cmd, ...pyc.args] : (cfg.interpreter ? whichSync(cfg.interpreter) : null);
 	if (!py) { top('error', 'interpreter_missing', `${cfg.interpreter || 'interpreter'} was not found on this machine`, 'check.json'); return report; }
 	let script; try { script = inside(appDir, cfg.script); } catch (e) { top('error', 'path_outside_app', e.message, 'check.json'); return report; }
 	if (!fs.existsSync(script)) { top('error', 'script_missing', `${cfg.script} does not exist`, 'check.json'); return report; }
@@ -570,7 +573,8 @@ async function checkAppRun(appDir, opts = {}) {
 
 function whichSync(name) {
 	if (path.isAbsolute(name)) return fs.existsSync(name) ? name : null;
-	for (const d of (process.env.PATH || '').split(path.delimiter)) { const p = path.join(d, name); try { fs.accessSync(p, fs.constants.X_OK); if (fs.statSync(p).isFile()) return p; } catch {} }
+	const exts = process.platform === 'win32' ? ['', ...(process.env.PATHEXT || '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean)] : [''];
+	for (const d of (process.env.PATH || '').split(path.delimiter)) for (const x of exts) { const p = path.join(d, name + x); try { fs.accessSync(p, fs.constants.X_OK); if (fs.statSync(p).isFile()) return p; } catch {} }
 	return null;
 }
 // One line for the whole report when an expectation failed because the app's text changed (a copied template's words, an old golden): which file, and the two ways out.
