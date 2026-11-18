@@ -319,17 +319,20 @@ test('tile_row_without_value: the old sample behaviour (label rows in a tiles vi
 	assert.deepEqual(codes(fixed), []);
 	assert.deepEqual(codes([{ title: 'Add your X API key' }]), [], 'a lone setup row');
 	assert.deepEqual(codes([{ title: 'Could not reach X' }, { title: 'Try again', nav: { view: 'overview', arg: 'refresh' } }]), [], 'a run with no data row at all');
-	assert.deepEqual(codes([tile(1), { title: 'Back', nav: { back: true } }, { title: 'Refresh', nav: { view: 'overview', arg: 'refresh' } }]), [], 'Back and refresh rows are navigation');
+	assert.deepEqual(codes([tile(1), { title: 'Check again', nav: { view: 'overview', arg: 'refresh' } }]), ['error:tile_row_without_value'], 'Bolt draws a tile for a refresh row: it is an empty tile unless it has a number');
+	assert.deepEqual(codes([tile(1), { title: 'Check again', nav: { view: 'overview', arg: 'refresh' }, kpi_label: 'Data age', kpi_value: 0, kpi_unit: 's' }]), [], 'a refresh row with a number is a real tile');
+	assert.deepEqual(codes([tile(1), { title: 'Back', nav: { back: true } }]), ['error:tile_row_without_value'], 'Bolt draws a tile for a Back row too: a tiles view has no exempt row kind');
+	assert.deepEqual(codes([tile(1), { title: 'Back', nav: { back: true }, kpi_label: 'Back', kpi_value: 0 }]), [], 'a Back row with a number is a real tile');
 	// the shipped demos: every check case passes with no waiver except the four named in their check.json
 	for (const n of examples) { const cj = path.join(EX, n, 'check.json'); if (!fs.existsSync(cj)) continue; const c = JSON.parse(fs.readFileSync(cj, 'utf8')); assert.ok(!('known_empty_tiles' in c), n); }
 });
 
-test('tile_row_without_value mutants: only a refresh nav arg and the exact Back row are exempt, and "n/a" or "-" is not a number', async () => {
+test('tile_row_without_value mutants: no row kind is exempt (refresh and Back rows are tiles in Bolt), and "n/a" or "-" is not a number', async () => {
 	const { paneProblems, widgetNumber, sampleVisibleProblems } = await import('../lib/check.mjs');
 	const pres = { top: { kind: 'cards', mode: 'list_data', layout: 'tiles', valueField: 'kpi_value' }, views: new Map([['overview', null]]), viewArg: 'view' };
 	const tile = (n) => ({ title: `T${n}`, kpi_label: 'x', kpi_value: n });
 	const codes = (rows) => paneProblems(pres, rows, 'overview').map((x) => x.code);
-	assert.deepEqual(codes([tile(1), { title: 'Refresh', nav: { view: 'overview', arg: 'refresh' } }, { title: 'Again', nav: { view: 'overview', arg: 'refresh.x' } }, { title: 'Back to the overview', nav: { back: true } }]), []);
+	assert.deepEqual(codes([tile(1), { title: 'Refresh', nav: { view: 'overview', arg: 'refresh' } }, { title: 'Again', nav: { view: 'overview', arg: 'refresh.x' } }, { title: 'Back to the overview', nav: { back: true } }]), ['tile_row_without_value'], 'three empty tiles, one finding');
 	assert.deepEqual(codes([tile(1), { title: 'Refreshments 12', nav: { view: 'overview', arg: 'refreshments' } }]), ['tile_row_without_value'], 'a word that merely starts with refresh is data');
 	assert.deepEqual(codes([tile(1), { title: 'Total', nav: { back: true } }]), ['tile_row_without_value'], 'a data row with back:true is not the Back row');
 	assert.deepEqual(codes([tile(1), { title: 'Back', nav: { back: true, view: 'x' } }]), ['tile_row_without_value'], 'the Back row has only nav.back');

@@ -269,11 +269,10 @@ export function paneProblems(pres, rows, view, opts = {}) {
 		const vf = w.valueField, loose = rows.filter((r) => !goodPane(r)), empty = loose.filter((r) => r && widgetNumber(r[vf]) === null).length;
 		// a tiles view draws a tile per row and shows "-" for a row with no number, so a non-data row (a label, a hint, a retry or a Back row) is an empty tile; a run of one row (a lone setup or error state) is allowed
 		const noVal = (r) => r && widgetNumber(r[vf]) === null;
-		// the app's own navigation rows are allowed: a refresh row (nav.arg refresh or refresh.<x>) and the exact Back row (nav is only {back: true}, title Back or Back to ..., no tile fields)
-		const navOnly = (r) => r && r.nav && ((/^refresh(\.|$)/.test(String(r.nav.arg || ''))) || (r.nav.back === true && Object.keys(r.nav).length === 1 && /^Back( to .+)?$/.test(String(r.title)) && !Object.keys(r).some((k) => k.startsWith('kpi_') && r[k] !== '' && r[k] !== undefined)));
+		// Bolt maps EVERY row to a tile (CardsWidget kpiCapped.rows.map(kpiTile)): it skips no row kind, so a refresh row and a Back row are empty "no value" tiles like any other label row
 		// allowed: a run with no data row at all (a lone setup, error or retry state)
-		const bare = rows.some((r) => !noVal(r)) ? loose.filter((r) => noVal(r) && !navOnly(r)) : [];
-		if (bare.length) E('tile_row_without_value', `the view "${shown}" is a tiles view (cards, bind.layout tiles) and ${bare.length} of ${rows.length} rows carry no ${vf}: ${bare.slice(0, 3).map((r) => JSON.stringify(String(r.title).slice(0, 40))).join(', ')}. Each draws as an empty "-" tile. Put the text on a real tile (badge or footer), or use a view that is not a tiles grid`);
+		const bare = rows.some((r) => !noVal(r)) ? loose.filter((r) => noVal(r)) : [];
+		if (bare.length) E('tile_row_without_value', `the view "${shown}" is a tiles view (cards, bind.layout tiles) and ${bare.length} of ${rows.length} rows carry no ${vf}: ${bare.slice(0, 3).map((r) => JSON.stringify(String(r.title).slice(0, 40))).join(', ')}. Each draws as an empty "-" tile (Bolt draws a tile for every row, a refresh or Back row included). Give the row a number (for a refresh row: kpi_label 'Data age', kpi_value seconds since the copy was made, kpi_unit 's'), put the text on a real tile (badge or footer), or move the refresh and Back rows to a view that is not a tiles grid`);
 		// the 8-row floor keeps a lone setup or error row in a tiles view from being refused; a run of 8 or more rows where half have no tile is a grid of empty tiles
 		if (rows.length >= 8 && empty * 2 >= rows.length) E('empty_tile_grid', `the view "${shown}" draws a tile per row (cards, tiles), but ${empty} of ${rows.length} rows carry no ${vf} and no valid pane, so they draw as empty tiles ("no value"). Give those rows a tile, or give the view a selected_row preview (entity_preview) in presentation.views.${shown}.right_widget`);
 	}

@@ -187,11 +187,12 @@ class ScriptTemplateLive(unittest.TestCase):
         data, state = s.search("landscape", False, False)
         rows = self.m.build("overview", "", data, state, self.cfg, True, "landscape")
         tiles = [r for r in rows if r.get("kpi_label")]
-        self.assertEqual(len(tiles), 4)
+        self.assertEqual(len(tiles), 5)   # four data tiles and the refresh row, which Bolt draws as a tile too
         for r in tiles:
             self.assertIsInstance(r["kpi_value"], (int, float))
             self.assertTrue(r["nav"])   # every tile drills somewhere
-        share, peak, top, pictured = tiles
+        share, peak, top, pictured, again = tiles
+        self.assertEqual((again["title"], again["kpi_label"], again["kpi_value"], again["kpi_unit"], again["nav"]["arg"]), ("Check again", "Data age", 0, "s", "refresh"))
         self.assertEqual((share["kpi_value"], share["kpi_unit"], share["kpi_max"]), (60, "%", 100))   # a meter
         self.assertEqual(peak["trend"], data["facets"]["periods"]); self.assertIn("delta", peak)       # a sparkline and a delta
         self.assertEqual(share["kpi_badge"], "SAMPLE")   # the sample label rides on the first tile
