@@ -358,7 +358,7 @@ def gather(ctx, g):
         if ctx.fixture:
             return fx["places"]
         flt = "".join('nwr%s(around:%d,%s,%s);' % (c["filter"], rad, lat, lon) for c in cfg["categories"])
-        return http(cfg, "https://overpass-api.de/api/interpreter", form={"data": "[out:json][timeout:25];(%s);out center tags %d;" % (flt, cfg["places_limit"])})
+        return http(cfg, "https://overpass-api.de/api/interpreter", form={"data": "[out:json][timeout:8];(%s);out center tags %d;" % (flt, cfg["places_limit"])})
 
     def bikes_raw():
         if net is None:
