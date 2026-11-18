@@ -574,8 +574,7 @@ async function checkAppRun(appDir, opts = {}) {
 
 function whichSync(name) {
 	if (path.isAbsolute(name)) return fs.existsSync(name) ? name : null;
-	const exts = process.platform === 'win32' ? ['', ...(process.env.PATHEXT || '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean)] : [''];
-	for (const d of (process.env.PATH || '').split(path.delimiter)) for (const x of exts) { const p = path.join(d, name + x); try { fs.accessSync(p, fs.constants.X_OK); if (fs.statSync(p).isFile()) return p; } catch {} }
+	for (const d of (process.env.PATH || '').split(path.delimiter)) { const p = path.join(d, name); try { fs.accessSync(p, fs.constants.X_OK); if (fs.statSync(p).isFile()) return p; } catch {} }
 	return null;
 }
 // One line for the whole report when an expectation failed because the app's text changed (a copied template's words, an old golden): which file, and the two ways out.

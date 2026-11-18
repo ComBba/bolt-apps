@@ -15,29 +15,36 @@ export function candidates(platform = process.platform) {
 }
 
 const versionOk = (text) => { const m = /Python\s+(\d+)\.(\d+)/i.exec(text || ''); return !!m && (Number(m[1]) > 3 || (Number(m[1]) === 3 && Number(m[2]) >= 9)); };
-const same = (a, b) => path.resolve(a) === path.resolve(b);
+// Compare folders by realpath (falling back to the plain path when it does not exist), lowercased on win32 where paths are case-insensitive.
+const norm = (p, win) => { let r; try { r = fs.realpathSync(p); } catch { r = (win ? path.win32.resolve : path.resolve)(p); } return win ? r.toLowerCase() : r; };
 
-// First executable file called `name` on PATH (PATHEXT on win32), skipping an empty entry, "." and any folder in `skip` (the cwd, the app folder).
-export function resolveOnPath(name, { env = process.env, platform = process.platform, skip = [], isFile = (p) => { try { return fs.statSync(p).isFile(); } catch { return false; } } } = {}) {
+// Every executable file called `name` on PATH, in order. On win32 only .exe and .com are accepted (never .bat or .cmd, which run through cmd.exe).
+// Skipped: empty and relative entries, UNC entries (\\server\share), and any folder in `skip` (the cwd, the app folder). Quotes around an entry are stripped first.
+export function resolveAllOnPath(name, { env = process.env, platform = process.platform, skip = [], isFile = (p) => { try { return fs.statSync(p).isFile(); } catch { return false; } } } = {}) {
 	const win = platform === 'win32';
-	const sep = win ? ';' : ':';
-	const exts = win ? ['', ...(env.PATHEXT || '.COM;.EXE;.BAT;.CMD').split(';').filter(Boolean)] : [''];
+	const exts = win ? (env.PATHEXT || '.COM;.EXE').split(';').filter((x) => /^\.(exe|com)$/i.test(x)) : [''];
 	const join = win ? path.win32.join : path.join;
-	for (const d of (env.PATH || env.Path || '').split(sep)) {
-		if (!d || d === '.' || skip.some((s) => same(d, s))) continue;
-		if (!(win ? path.win32.isAbsolute(d) : path.isAbsolute(d))) continue;   // a relative PATH entry means "the cwd" by another name
-		for (const x of exts) { const p = join(d, name + x); if (isFile(p)) return p; }
+	const skipN = skip.map((s) => norm(s, win));
+	const out = [];
+	for (const raw of (env.PATH || env.Path || '').split(win ? ';' : ':')) {
+		const d = raw.trim().replace(/^"(.*)"$/, '$1');
+		if (!d || (win && /^[\\/]{2}/.test(d))) continue;
+		if (!(win ? path.win32.isAbsolute(d) : path.isAbsolute(d))) continue;   // a relative entry means "the cwd" by another name
+		if (skipN.includes(norm(d, win))) continue;
+		for (const x of exts) { const p = join(d, name + x); if (isFile(p)) out.push(p); }
 	}
-	return null;
+	return out;
 }
+export const resolveOnPath = (name, o) => resolveAllOnPath(name, o)[0] || null;
 
 // Returns { cmd (absolute path), args (leading arguments, such as ['-3'] for `py -3`), label } or null when none works.
 // `spawn`, `resolve`, `env`, `platform` and `skip` are injectable for tests.
-export function findPython({ spawn = spawnSync, platform = process.platform, env = process.env, skip = [process.cwd()], resolve = resolveOnPath } = {}) {
+export function findPython({ spawn = spawnSync, platform = process.platform, env = process.env, skip = [process.cwd()], resolve = resolveAllOnPath } = {}) {
 	for (const [name, ...args] of candidates(platform)) {
-		const cmd = resolve(name, { env, platform, skip }); if (!cmd) continue;
-		let r; try { r = spawn(cmd, [...args, '--version'], { encoding: 'utf8', timeout: 10000, cwd: path.dirname(cmd) }); } catch { continue; }
-		if (r && !r.error && r.status === 0 && versionOk(`${r.stdout || ''} ${r.stderr || ''}`)) return { cmd, args, label: [name, ...args].join(' ') };
+		for (const cmd of resolve(name, { env, platform, skip })) {   // every hit: a Store stub first must not hide a real python behind it
+			let r; try { r = spawn(cmd, [...args, '--version'], { encoding: 'utf8', timeout: 10000, cwd: path.dirname(cmd) }); } catch { continue; }
+			if (r && !r.error && r.status === 0 && versionOk(`${r.stdout || ''} ${r.stderr || ''}`)) return { cmd, args, label: [name, ...args].join(' ') };
+		}
 	}
 	return null;
 }
@@ -45,7 +52,7 @@ export function findPython({ spawn = spawnSync, platform = process.platform, env
 let cached;
 // Cached for the process. Extra `skip` folders (the app folder) are honoured on the first call and when the cached answer lives inside one.
 export function pythonCmd({ skip = [] } = {}) {
-	if (cached === undefined || (cached && skip.some((s) => same(path.dirname(cached.cmd), s)))) cached = findPython({ skip: [process.cwd(), ...skip] });
+	if (cached === undefined || (cached && skip.some((s) => norm(s, process.platform === 'win32') === norm(path.dirname(cached.cmd), process.platform === 'win32')))) cached = findPython({ skip: [process.cwd(), ...skip] });
 	return cached;
 }
 export function resetPythonCache() { cached = undefined; }
