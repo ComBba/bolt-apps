@@ -18,7 +18,7 @@ Any app that shows data in a chart, table, tree, diff or detail pane. Pick the v
 | detail | selected_row | title, subtitle, fields (label, value, copy) | any |
 | json_tree | selected_row | source | `data` (an object) |
 | diff | selected_row | left, right, leftLabel, rightLabel | text with line breaks |
-| entity_preview | selected_row | title, subtitle, image_url, tiles_above, fields (label, value, kind, tone), body, actions | tile and `f1..f5` |
+| entity_preview | selected_row | title, subtitle, image_url (a 40 px avatar), hero (src, alt, caption, credit: Bolt 182 and later, see ../ENGINE.md), tiles_above, fields (label, value, kind, tone), body, actions | tile and `f1..f5` |
 | markdown | selected_row | title, subtitle, body, actions | markdown text |
 
 A chart or table plots every row, so those views carry no Back or refresh rows.

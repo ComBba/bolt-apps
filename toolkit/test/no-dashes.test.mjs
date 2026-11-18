@@ -8,11 +8,13 @@ import { fileURLToPath } from 'node:url';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DASH = new RegExp(`[${String.fromCharCode(0x2013)}${String.fromCharCode(0x2014)}]`);
+// The kit source and its vendored copies are hashed (Bolt pins the kit by content), so their text changes only with a kit version bump. Their dash cleanup ships with the next kit version (see release-183 PLAN).
+function isHashedKitText(p) { const r = path.relative(REPO, p).split(path.sep).join('/'); return r.startsWith('kit/python/bolt_app_kit/') || /__bolt_app_kit\.py$/.test(r); }
 function* walk(d) {
 	for (const e of fs.readdirSync(d, { withFileTypes: true })) {
 		if (e.name === 'node_modules' || e.name === '.git') continue;
 		const p = path.join(d, e.name);
-		if (e.isDirectory()) yield* walk(p); else if (/\.(mjs|js|json|md|py|yaml|yml|txt)$/.test(e.name)) yield p;
+		if (e.isDirectory()) yield* walk(p); else if (isHashedKitText(p)) continue; else if (/\.(mjs|js|json|md|py|yaml|yml|txt)$/.test(e.name)) yield p;
 	}
 }
 test('no em dash or en dash in kit/, toolkit/ or docs/', () => {

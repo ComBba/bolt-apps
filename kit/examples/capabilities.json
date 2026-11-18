@@ -146,7 +146,27 @@
       "example": "kit/examples/script-template",
       "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"image_url\": \"{{row.img1}}{{row.img2}}\"}}",
       "test": "kit/python/tests/test_script_template_live.py",
-      "limit": "The selected row's picture draws above the title, but as a 40 pixel square avatar (181 gives a User App no large variant). image_url must expand to an inline data:image (up to 1 MiB); a web address draws nothing. A row text field is cut at 4,000 characters, so a picture of more than about 3 KB is split over fields and joined in the template (img1 to img4 in script-template). Read from the launcher source and sample runs, not seen in a running Bolt."
+      "limit": "The selected row's picture draws above the title, but as a 40 pixel square avatar by design of the entity preview (181 gives a User App no large variant): for a large picture use a markdown pane (row markdown.inline_picture), or from Bolt 182 the entity_preview hero (row widget.entity_preview_hero). image_url must expand to an inline data:image (up to 1 MiB); a web address draws nothing. A row text field is cut at 4,000 characters, so a picture of more than about 3 KB is split over fields and joined in the template. Read from the launcher source and sample runs, not seen in a running Bolt."
+    },
+    {
+      "id": "widget.entity_preview_hero",
+      "group": "layout",
+      "name": "Pane: entity_preview hero picture (Bolt 182)",
+      "status": "partial",
+      "example": "kit/examples/hero-gallery",
+      "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"hero\": {\"src\": \"{{row.img1}}{{row.img2}}\", \"alt\": \"{{row.hero_alt}}\", \"caption\": \"{{row.hero_caption}}\", \"credit\": \"{{row.hero_credit}}\"}, \"title\": \"{{row.title}}\", \"body\": \"{{row.body}}\"}}",
+      "test": "kit/python/tests/test_hero.py",
+      "limit": "Needs Bolt 182. A full-width picture above the tile and title, aspect kept, at most 360 px high, with a rounded frame, an optional caption and credit line (caption, alt and credit at most 200 characters each). src must expand to an inline data:image (png, jpeg, gif, webp, avif or bmp, up to 1 MiB); a web address is blocked, and a missing or invalid src draws no hero and leaves the pane as it was. src is a template that may join at most 16 {{ }} references (4096 characters), and a row text field is cut at 4,000 characters, so a picture can take at most 16 fields: about 47 KB. The stdlib cannot resize, so give kit.hero_fields() an already small png, jpeg, gif or webp (it refuses avif and bmp bytes, which Bolt takes: pass a data:image/avif;base64 string and it is split as it is) (it refuses one that needs more than 16 parts: use a smaller picture). A Bolt 0.1.181 REFUSES THE WHOLE PACK when one app uses hero (\"unknown key for a entity_preview pane\"), and a local schema_version 1 file only warns and shows no hero: so bolt-app.json must say min_bolt_version 0.1.182 (a proposal: Bolt does not read it, bolt-apps lint, check and pack require it, and the pack carries it in its listing) and the pack must go only to people on Bolt 182 or newer. image_url stays the 40 pixel avatar. From the Bolt 182 source and sample runs, not seen in a running Bolt 182."
+    },
+    {
+      "id": "markdown.inline_picture",
+      "group": "layout",
+      "name": "Pane: markdown with a big inline picture",
+      "status": "partial",
+      "example": "kit/examples/script-template",
+      "snippet": "{\"kind\": \"markdown\", \"mode\": \"selected_row\", \"bind\": {\"body\": \"![{{row.hero_alt}}]({{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}){{row.hero_lines}}\", \"actions\": [\"open\", \"copy\"]}}",
+      "test": "kit/python/tests/test_script_template_live.py",
+      "limit": "A markdown body keeps an inline data:image (png, jpeg, gif, webp, avif, bmp; up to 1 MiB, 4 MiB a render) and draws it at its own size, shrunk to the pane width with its proportions kept (Tailwind base rule max-width 100%, height auto; no crop, no fixed height); a tall picture scrolls in the pane. The bind.body template is limited to 16384 characters (the expanded body is not), so about 24 fields of 4,000 characters (a 400 pixel wide JPEG of 70 KB); keep it to one row (the detail), not every list row. Text from an API must be escaped for markdown (script-template md_escape) or its brackets, links and html act as markdown. Read from the pane source, a vitest on the real MarkdownWidget and a browser measurement of the same CSS, not seen in a running Bolt."
     },
     {
       "id": "data.web_picture",
@@ -927,6 +947,16 @@
       "snippet": "{\"kind\": \"entity_preview\", \"mode\": \"selected_row\", \"bind\": {\"title\": \"{{row.title}}\", \"subtitle\": \"{{row.subtitle}}\", \"tiles_above\": {\"title\": \"{{row.kpi_label}}\", \"value\": \"{{row.kpi_value}}\"}, \"body\": \"{{row.body}}\", \"actions\": [\"open\", \"copy\"]}}",
       "test": "kit/python/tests/test_cold_run2_engine.py",
       "limit": "tiles_above draws only for a row with a number, so rows with text only draw no tile. Give every text-only row a body. A tiles grid (cards, bind.layout tiles) over rows with no number is an error in check. From source and sample runs, not seen in a running Bolt."
+    },
+    {
+      "id": "kit.shared",
+      "group": "platform",
+      "name": "Shared kit from Bolt (Bolt 182)",
+      "status": "partial",
+      "example": "kit/examples/unit-convert",
+      "snippet": "WANT_SHARED = False   # in the loader block of the app's script: True runs Bolt's shared kit even when it differs from the app's own copy",
+      "test": "toolkit/test/shared-kit.test.mjs",
+      "limit": "Needs Bolt 182; on 181 the app runs its own vendored kit. Bolt offers BOLT_APP_SHARED_DIR only after a hash check against a table compiled into Bolt, and the loader checks the folder again; any doubt means the app's own copy. WANT_SHARED = True trusts whoever controls that variable (Bolt does). Not seen in a running Bolt; the engine is not shared; existing apps keep their own copy until their author reships with the new loader; only unit-convert has the loader so far."
     }
   ]
 }

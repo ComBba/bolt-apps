@@ -30,7 +30,7 @@ const OK_IP = (ip) => /^(127\.\d+\.\d+\.\d+|0\.0\.0\.0|1\.1\.1\.1|1\.0\.0\.1|8\.
 // "sparcle" is allowed only: in an author block, inside a URL (github.com/SparcleHQ, sparcle.app), or in these public product phrases.
 // The project's own governance files may name the company that publishes it.
 const OK_SPARCLE_FILES = /^(\.github\/|[A-Z_]+\.md$|toolkit\/README\.md$)/;
-const OK_SPARCLE_PHRASES = [/signed by a Sparcle or company key/, /Sparcle or your company signed it/, /Sparcle-signed bundles/, /Reviewed by Sparcle/, /Sparcle maintainer/, /pull requests from outside Sparcle/, /Sparcle checked this version/, /signed by Sparcle\. This pack/, /signed by its author, not by Sparcle\."/];   // the last is the literal 181 install-dialog sentence
+const OK_SPARCLE_PHRASES = [/app\.sparcle\.bolt\.enterprise/, /signed by a Sparcle or company key/, /Sparcle or your company signed it/, /Sparcle-signed bundles/, /Reviewed by Sparcle/, /Sparcle maintainer/, /pull requests from outside Sparcle/, /Sparcle checked this version/, /signed by Sparcle\. This pack/, /signed by its author, not by Sparcle\."/];   // the last is the literal 181 install-dialog sentence
 const SUPPRESSED = [
 	[/Claude Code/, 'AGENTS.md addresses AI coding agents by product name; no device or fleet name'],
 ];
@@ -65,6 +65,8 @@ export function scan(text, rel = '') {
 					if (/github\.com\/SparcleHQ/i.test(around) || /https?:\/\/[^\s"')>]*sparcle\.app/i.test(around) || /\bsparcle\.app\b/i.test(around)) continue;
 					if (/"author"\s*:/.test(line) || /^\s*(author|"name")\s*:.*sparcle/i.test(line)) continue;
 					if (OK_SPARCLE_PHRASES.some((p) => p.test(line))) continue;
+					// One deliberate, narrow exception: the shared-kit manifest names this public repository as its source. Those bytes are pinned by a hash table in the Bolt app, so the string cannot be reworded.
+					if (rel === 'toolkit/lib/shared.mjs' && line.trim().includes("manifest.source = { repo: 'SparcleHQ/bolt-apps', sha:")) continue;
 				}
 				add(rule, m[0]);
 			}
@@ -88,4 +90,11 @@ test('leak scan: every tracked file holds nothing internal', () => {
 	const found = [];
 	for (const f of files()) for (const h of scan(fs.readFileSync(f, 'utf8'), path.relative(REPO, f))) found.push(`${path.relative(REPO, f)}:${h.line} [${h.rule}] ${h.text}`);
 	assert.deepEqual(found, [], `leaks found:\n${found.join('\n')}`);
+});
+
+test('leak scan: the one shared-kit manifest exception is narrow (that file, that line, nothing else)', () => {
+	const line = "if (opts.sourceSha) manifest.source = { repo: 'SparcleHQ/bolt-apps', sha: opts.sourceSha };";
+	assert.deepEqual(scan(line, 'toolkit/lib/shared.mjs'), []);
+	assert.ok(scan(line, 'toolkit/lib/other.mjs').some((h) => h.rule === 'the word sparcle'));
+	assert.ok(scan("const x = 'Sparcle internal';", 'toolkit/lib/shared.mjs').some((h) => h.rule === 'the word sparcle'));
 });

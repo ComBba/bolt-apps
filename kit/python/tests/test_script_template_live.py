@@ -166,7 +166,7 @@ class ScriptTemplateLive(unittest.TestCase):
             s = self.src()
             if view in ("item", "record"):
                 it, state = s.detail(arg, False)
-                s.attach_thumbs([it], network=False)
+                s.attach_heroes([it], network=False)
                 rows = self.m.build_item(view, it, state, self.cfg, True)
             else:
                 data, state = s.search("landscape", False, False)
@@ -174,12 +174,13 @@ class ScriptTemplateLive(unittest.TestCase):
                 rows = self.m.build(view, arg, data, state, self.cfg, True, "landscape")
             self.assertEqual(kit.validate_rows(rows), [], view)
             pics = [r for r in rows if r.get("img1")]
-            if view in ("items", "pictures", "item"):
+            if view in ("items", "pictures") or (view, arg) == ("item", "5848"):
                 self.assertTrue(pics, view)
             for r in pics:
-                joined = "".join(r.get("img%d" % k, "") for k in (1, 2, 3, 4))
+                n = 24 if view == "item" else 4
+                joined = "".join(r.get("img%d" % k, "") for k in range(1, n + 1))
                 self.assertTrue(joined.startswith("data:image/jpeg;base64,/9j/"))
-                self.assertLessEqual(len(joined), 16000)
+                self.assertLessEqual(len(joined), n * 4000)
 
     def test_the_overview_tiles_carry_a_meter_a_sparkline_and_a_delta_and_only_numbers(self):
         s = self.src()
@@ -240,10 +241,134 @@ class ScriptTemplateLive(unittest.TestCase):
         y = self.m.emit_yaml(self.cfg)
         with open(os.path.join(EX, "utilities", "script-template.yaml"), encoding="utf-8") as f:
             self.assertEqual(f.read(), y)
-        self.assertIn('image_url: "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"', y)
+        self.assertIn("{{row.img1}}{{row.img2}}{{row.img3}}", y)
+        self.assertIn("{{row.img24}}){{row.hero_lines}}", y)   # the big picture of the list and detail panes: markdown over img1 to img24
         for kind in ("kind: cards", "kind: chart", "kind: table", "kind: json_tree", "kind: entity_preview", "kind: markdown"):
             self.assertIn(kind, y)
         self.assertNotIn("http", y.split("presentation:")[1].split("actions:")[0])   # no web address in any pane bind
+
+    def test_only_the_detail_row_carries_the_big_picture_and_the_list_rows_stay_small(self):
+        s = self.src()
+        data, state = s.search("landscape", False, False)
+        s.attach_thumbs(data["items"], network=False)
+        rows = self.m.build("items", "", data, state, self.cfg, True, "landscape")
+        for r in rows:
+            self.assertNotIn("hero_lines", r)
+            self.assertNotIn("img5", r)   # the list rows hold the small picture only (img1 to img4)
+        it, state = s.detail("5848", False)
+        s.attach_heroes([it], network=False)
+        row = [r for r in self.m.build_item("item", it, state, self.cfg, True) if r.get("hero_lines")]
+        self.assertEqual(len(row), 1)
+        r = row[0]
+        self.assertTrue(r["hero_lines"].startswith("&nbsp;"))
+        self.assertIn("Image and data", r["hero_lines"])
+        self.assertEqual(r["hero_alt"], "Artwork")
+        self.assertTrue(r["open_url"] and r["share_text"])   # the Open source and Copy summary buttons still have their values
+        f = [r["img%d" % k] for k in range(1, 25) if r.get("img%d" % k)]
+        self.assertGreater(len(f), 10)
+        self.assertTrue(all(len(x) <= 4000 for x in f))
+        self.assertTrue("".join(f).startswith("data:image/jpeg;base64,/9j/"))
+        self.assertLess(len(json.dumps(r)), 120000)
+        it2, state2 = s.detail("874", False)   # no recorded big picture: the same pane as text, with the note
+        s.attach_heroes([it2], network=False)
+        r2 = [x for x in self.m.build_item("item", it2, state2, self.cfg, True) if x.get("hero_lines")][0]
+        self.assertEqual(r2["hero_alt"], "No picture here: it is on Open source")
+        self.assertNotIn("img1", r2)
+
+    def test_a_big_picture_that_does_not_fit_the_fields_is_dropped_and_the_row_stays(self):
+        s = self.src(fixture=False)
+        im = self.cfg["images"]["hero"]
+        room = im["chunk_chars"] * im["max_chunks"]
+        big = "/9j/" + "A" * room
+        s.heroes.put(IMG, {"t": "/9j/AAAA"})
+        items = [{"image_id": IMG}]
+        s.attach_heroes(items, network=False)
+        self.assertTrue(items[0]["hero"].startswith("data:image/jpeg;base64,/9j/"))
+        self.assertEqual(self.m.hero_fields("x" * (room + 1), self.cfg), {})
+        self.assertEqual(len(self.m.hero_fields(self.m.DATA_PREFIX + big[:room - 100], self.cfg)), im["max_chunks"])
+
+    def test_every_api_string_that_enters_a_markdown_body_is_escaped_to_plain_text(self):
+        hostile = "](javascript:alert(1)) ![x](https://evil/x.png) <img src=x onerror=alert(1)> **bold** `code` [a](b) <https://evil.example> a_b_c | x &lt; www.evil.example me@example.com # h\\"
+        it = self.m.n_item(self.rec(title=hostile, artist_display=hostile, date_display=hostile, medium_display=hostile, place_of_origin=hostile, department_title=hostile, description=hostile, credit_line=hostile, dimensions=hostile), self.cfg)
+        facets = {"periods": [1, 2, 3, 4, 5, 6, 7]}
+        for full in (False, True):
+            body = self.m.hero_markdown(it, self.cfg, facets, full)
+            for line in body.split("\n"):
+                if line.startswith(("### ", "- ", "*")) or ":" in line or "\\" in line:
+                    # the only markdown that is NOT an escape: the heading hash, the list dash, the emphasis stars, our own labels
+                    plain = __import__("re").sub(r"\\.", "", line)
+                    plain = plain.replace("### ", "", 1) if plain.startswith("### ") else plain
+                    plain = plain[2:] if plain.startswith("- ") else plain
+                    plain = plain[1:-1] if plain.startswith("*") and plain.endswith("*") else plain
+                    for ch in "[]()<>`*_|!#&~{}":
+                        self.assertNotIn(ch, plain, (ch, line))
+        # an escaped string reads back as the cleaned text
+        un = lambda t: __import__("re").sub(r"\\(.)", r"\1", t)
+        self.assertEqual(un(self.m.md_escape(hostile)), kit.clean_text(hostile))
+        row = self.m.hero_row(it, self.cfg, facets)
+        self.assertEqual(kit.validate_rows([row]), [])
+        self.assertNotIn("](javascript", row["hero_lines"].replace("\\]\\(", ""))
+
+    def test_no_long_dashes_in_the_example_and_api_text_is_tidied(self):
+        root = os.path.abspath(os.path.join(EX))
+        for d, _, files in os.walk(root):
+            for fn in files:
+                if fn.endswith("__bolt_app_kit.py") or not fn.endswith((".json", ".py", ".md", ".yaml")):
+                    continue   # the vendored kit is generated, not ours
+                with open(os.path.join(d, fn), encoding="utf-8") as f:
+                    t = f.read()
+                self.assertNotIn("\u2014", t, fn)
+                self.assertNotIn("\u2013", t, fn)
+        it = self.m.n_item(self.rec(title="A \u2014 B", artist_display="X (1594\u20131665)", description="<p>one\u2014but two\u2013three, well-known</p>"), self.cfg)
+        self.assertEqual(it["title"], "A, B"); self.assertEqual(it["artist"], "X (1594-1665)")
+        self.assertIn("one, but two-three, well-known", it["description"])
+
+    def test_a_4xx_is_not_offline_and_429_says_busy(self):
+        for code, kind, title in ((403, "http", "did not accept that search"), (429, "rate", "is busy")):
+            def boom(*a, **k):
+                raise self.m.Fail(kind, "answered %d" % code)
+            self.m.http_json = boom
+            data, state = self.src(fixture=False).search("zzqq%d" % code, True, True)
+            self.assertIsNone(data)
+            rows = self.m.offline_rows(self.cfg, state, "items")
+            text = json.dumps(rows)
+            self.assertIn(title, text); self.assertNotIn("Could not reach", text); self.assertNotIn("OFFLINE", text)
+        def conn(*a, **k):
+            raise self.m.Fail("fail", "could not connect")
+        self.m.http_json = conn
+        data, state = self.src(fixture=False).search("zzqq", True, True)
+        self.assertIn("OFFLINE", json.dumps(self.m.offline_rows(self.cfg, state, "items")))
+
+    def run_cli(self, args, env=None):
+        import subprocess
+        e = dict(os.environ, HOME=self.home, BOLT_APP_FIXTURE="0"); e.update(env or {})
+        k = [os.path.join(EX, "scripts", "script-template__" + n) for n in ("config.json", "fixtures.json", "bolt_app_kit.py")]
+        r = subprocess.run([sys.executable, os.path.join(EX, "scripts", "script-template__app.py")] + args + k, capture_output=True, text=True, env=e, timeout=60)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return json.loads(r.stdout)
+
+    def test_path_looking_words_are_refused_before_any_request(self):
+        for w in ("../x", "a/b", "..", "a\\b"):
+            rows = self.run_cli(["items", w], {"https_proxy": "http://127.0.0.1:9"})
+            self.assertEqual([r["title"] for r in rows], ["Back", "Type a word or two"], w)
+
+    def test_cold_offline_is_one_retry_row_and_a_blocked_picture_host_leaves_rows_without_pictures(self):
+        dead = {"https_proxy": "http://127.0.0.1:9", "HTTPS_PROXY": "http://127.0.0.1:9"}
+        rows = self.run_cli(["overview"], dead)
+        self.assertEqual([r["title"] for r in rows], ["Could not reach Art Institute of Chicago", "Try again"])
+        self.assertEqual(rows[0]["kpi_badge"], "OFFLINE")
+        m = self.m
+        m.http_json = lambda cfg, url, budget: self.fx_raw(url)
+        def nopic(*a, **k):
+            raise m.Fail("fail", "could not connect")
+        m.http_bytes = nopic
+        s = self.src(fixture=False)
+        data, state = s.search("landscape", False, True)
+        s.attach_thumbs(data["items"], network=True)
+        rows = m.build("items", "", data, state, self.cfg, False, "landscape")
+        self.assertEqual(kit.validate_rows(rows), [])
+        self.assertTrue(any(r.get("nav") and r["nav"].get("view") == "item" for r in rows))
+        self.assertFalse(any(r.get("img1") for r in rows))
 
     def test_no_key_is_asked_for(self):
         self.assertNotIn("key_env", self.cfg["api"])

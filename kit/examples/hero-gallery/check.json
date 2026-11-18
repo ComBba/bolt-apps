@@ -1,0 +1,23 @@
+{
+  "script": "scripts/hero-gallery__app.py",
+  "interpreter": "python3",
+  "manifest_actions": 1,
+  "kit": "scripts/hero-gallery__bolt_app_kit.py",
+  "cases": [
+    {
+      "name": "pictures: three rows with a hero picture and one without",
+      "os": "macos",
+      "args": [],
+      "golden": "golden/pictures.json",
+      "expect": {
+        "text_present": [
+          "Dawn",
+          "Stripes",
+          "Rings",
+          "No picture",
+          "Drawn by this example's script"
+        ]
+      }
+    }
+  ]
+}

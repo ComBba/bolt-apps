@@ -4,13 +4,13 @@
 // schema validation of every output; footer button and label limits; the numeric tile rule; text safety scan;
 // vendored-kit divergence guard. Not built: see docs/kit-design.md, section "What check does not do".
 import fs from 'node:fs';
-import { RULES } from './boltrules.mjs';
+import { RULES, parseBoltVersion } from './boltrules.mjs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { isNavToken } from './assess.mjs';
+import { isNavToken, assessYaml } from './assess.mjs';
 import { parseYaml, get, str, notYamlHint } from './yamlsubset.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -63,6 +63,7 @@ export function platformFindings(app) {
 		const p = app.platforms;
 		if (!Array.isArray(p) || !p.length || p.some((x) => !OSES.includes(x)) || new Set(p).size !== p.length) E('platforms_invalid', `platforms must be a non-empty list of unique values from ${OSES.join(', ')}`);
 	}
+	if ('min_bolt_version' in app && !(typeof app.min_bolt_version === 'string' && parseBoltVersion(app.min_bolt_version))) E('min_bolt_version_invalid', 'min_bolt_version must be a dotted version such as "0.1.182"');
 	if ('requires' in app) {
 		const r = app.requires;
 		if (!Array.isArray(r) || r.length > 8 || r.some((x) => !x || typeof x !== 'object' || !REQ_INTERP.includes(x.interpreter) || (x.min_version !== undefined && !/^\d+(\.\d+){0,2}$/.test(String(x.min_version))) || Object.keys(x).some((k) => !['interpreter', 'min_version', 'platforms'].includes(k)) || (x.platforms !== undefined && (!Array.isArray(x.platforms) || x.platforms.some((q) => !OSES.includes(q))))))
@@ -366,7 +367,24 @@ except ImportError:
     pass
 sys.platform = plat
 sys.dont_write_bytecode = True
-runpy.run_path(script, run_name="__main__")
+_probed = []
+def _probe():
+    # check --shared: say which file the kit module came from, so the check can prove which copy ran. Only when the shared folder was offered.
+    if _probed or not os.environ.get("BOLT_APP_SHARED_DIR"):
+        return
+    _probed.append(1)
+    _k = sys.modules.get("bolt_app_kit")
+    sys.stderr.write("\\n@@bolt-check-kit-file@@ " + (getattr(_k, "__file__", None) or "(none)") + "\\n")
+    sys.stderr.flush()
+_real_exit = os._exit
+def _exit_after_probe(code=0):
+    _probe()
+    _real_exit(code)
+os._exit = _exit_after_probe   # the kit ends a run with os._exit, which skips finally and atexit
+try:
+    runpy.run_path(script, run_name="__main__")
+finally:
+    _probe()
 `;
 function runScript(py, script, osName, args, env, cwd) {
 	return new Promise((resolve) => {
@@ -375,7 +393,12 @@ function runScript(py, script, osName, args, env, cwd) {
 		let out = '', err = '', killed = false;
 		ch.stdout.on('data', (d) => { out += d; }); ch.stderr.on('data', (d) => { err += d; });
 		const timer = setTimeout(() => { killed = true; try { process.kill(-ch.pid, 'SIGKILL'); } catch {} }, BRIDGE_LIMIT_S * 1000 + 3000);
-		ch.on('close', (rc) => { clearTimeout(timer); try { process.kill(-ch.pid, 'SIGKILL'); } catch {} resolve({ rc, out, err, killed, seconds: (Date.now() - t0) / 1000 }); });
+		ch.on('close', (rc) => {
+			clearTimeout(timer); try { process.kill(-ch.pid, 'SIGKILL'); } catch {}
+			const m = /\n@@bolt-check-kit-file@@ (.*)\n$/.exec(err); let kitFile = null;
+			if (m) { kitFile = m[1]; err = err.slice(0, m.index); }   // the probe line is ours, not the script's
+			resolve({ rc, out, err, killed, kitFile, seconds: (Date.now() - t0) / 1000 });
+		});
 		ch.on('error', (e) => { clearTimeout(timer); resolve({ rc: null, out, err: String(e), killed, seconds: (Date.now() - t0) / 1000 }); });
 	});
 }
@@ -444,7 +467,18 @@ export function presenceProblems(rows, { sampleMode, bannerPromised, minRows, st
 	return out;
 }
 
+// opts.shared: run every case as Bolt 182+ would, with BOLT_APP_SHARED_DIR naming a fresh export of THIS repo's kit. The rows must still match the
+// golden files and the expectations, so a shared kit and an app's own copy are proven to give the same answer.
 export async function checkApp(appDir, opts = {}) {
+	if (!opts.shared) return checkAppRun(appDir, opts);
+	const { exportShared } = await import('./shared.mjs');
+	const base = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-apps-shared-'));
+	try {
+		exportShared(path.join(base, 'bolt-apps-shared'));
+		return await checkAppRun(appDir, { ...opts, sharedDir: path.join(base, 'bolt-apps-shared') });
+	} finally { fs.rmSync(base, { recursive: true, force: true }); }
+}
+async function checkAppRun(appDir, opts = {}) {
 	const cfgFile = path.join(appDir, 'check.json');
 	const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
 	const host = hostOs();
@@ -453,6 +487,8 @@ export async function checkApp(appDir, opts = {}) {
 	let listing = null;
 	try { listing = JSON.parse(fs.readFileSync(path.join(appDir, 'bolt-app.json'), 'utf8')); } catch {}
 	if (listing) for (const x of platformFindings(listing)) report.findings.push(x);
+	// a key only a newer Bolt reads (hero, Bolt 182): the app file must be offered only to that Bolt, because an older one refuses the whole pack
+	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) for (const pr of assessYaml(fs.readFileSync(path.join(ud, y), 'utf8'), undefined, { pack: true, minBolt: listing?.min_bolt_version, minBoltKnown: !!listing }).problems) if (['bind_needs_newer_bolt', 'bind_too_many_refs', 'hero_src_not_picture'].includes(pr.code)) report.findings.push({ level: pr.level, code: pr.code, message: `utilities/${y}: ${pr.message}`, path: `utilities/${y}` }); } catch { /* an unreadable app file is reported below */ }
 	if ('known_empty_tiles' in cfg) report.findings.push({ level: 'error', code: 'waiver_removed', message: 'check.json: known_empty_tiles no longer exists. A tiles view with rows that have no number now always fails (tile_row_without_value). Delete the key and give those rows a body in an entity_preview pane (a tile draws only for a number), as lookup-template does (ENGINE.md, "a text-only lookup result")', path: 'check.json' });
 	report.findings.push(...kitGuard(appDir, cfg));
 	// lookup.rows (a chained lookup) are drawn like overview rows: a row's own `copy` is not read, so Copy puts the row text on the clipboard. Only an `item` (single endpoint) honours `copy`.
@@ -485,8 +521,10 @@ export async function checkApp(appDir, opts = {}) {
 			makeStubs(stubDir, appDir, osName, kase, files);
 			// Sample mode: a case (or check.json as a whole) sets "fixture": true, so the script runs on its recorded answers while the shipped app stays live.
 			const sample = kase.fixture ?? cfg.fixture;
-			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }) }, home);
+			const r = await runScript(py, script, osName, kase.args || [], { ...Object.fromEntries(Object.entries(kase.env || {}).filter(([k]) => /^[A-Z_][A-Z0-9_]*$/.test(k) && k !== 'PATH' && k !== 'HOME').map(([k, v]) => [k, String(v)])), ...RULES.runner_env.fixed, USER: 'bolt', LOGNAME: 'bolt', PATH: stubDir, HOME: home, ...((sample === undefined || sample === 'unset') ? {} : { BOLT_APP_FIXTURE: sample ? '1' : '0' }), ...(opts.sharedDir ? { BOLT_APP_SHARED_DIR: opts.sharedDir } : {}) }, home);
 			const ex = kase.expect || {};
+			// check --shared: the point is to run on Bolt's shared kit, so prove it. An app that kept its own different copy (or never asks) ran on that copy and says nothing about the shared one.
+			if (opts.sharedDir && !(r.kitFile && path.resolve(r.kitFile).startsWith(path.resolve(opts.sharedDir) + path.sep))) E('shared_kit_not_used', `--shared: the script ran on ${r.kitFile && r.kitFile !== '(none)' ? r.kitFile : 'a kit that is not Bolt\'s shared one'}, not the shared kit. The loader uses the shared kit only when the app's own copy has the same bytes, or the app sets WANT_SHARED = True (and KIT_MIN is met). Re-vendor the kit, or use the loader from toolkit/lib/loader.mjs`);
 			secs = r.seconds;
 			const maxS = ex.max_seconds ?? DEFAULT_MAX_S;
 			if (r.killed) E('deadline_exceeded', `the script was still running after ${BRIDGE_LIMIT_S} s (the bridge limit); a global deadline of 14 s must bound every command`);

@@ -163,5 +163,5 @@ test('no example shows author-facing config text to the person using the app (sa
 
 test('new prints one line telling the author to re-record goldens after the data is final', () => {
 	const root = tmp(), home = path.join(root, 'home'); fs.mkdirSync(home);
-	assert.match(sh(home, root, 'new', 'portal-template', 'pt').stdout, /check [^\n]*--update-golden once your data is final/);
+	assert.match(sh(home, root, 'new', 'portal-template', 'pt').stdout, /once your data is final, run [^\n]*check [^\n]*--update-golden/);
 });

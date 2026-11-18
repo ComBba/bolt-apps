@@ -17,7 +17,8 @@ import { get, str, notYamlHint } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem, chipMismatch } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
-import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor } from '../lib/workflow.mjs';
+import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote } from '../lib/workflow.mjs';
+import { exportShared } from '../lib/shared.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
 const ID = /^[a-z0-9][a-z0-9-]{0,63}$/, KEY = /^[a-z][a-z0-9_-]{0,23}$/, PREFIX = /^[a-z][a-z0-9]{0,11}$/;
@@ -106,7 +107,7 @@ export function lintApp(dir, opts = {}) {
 		const p = `utilities/${f}`; const y = rd(path.join(dir, p));
 		const esc_ = personal ? escapeProblem(y) : null; if (esc_) E(esc_.code, esc_.message, p);
 		{ const ia = assessYaml(y, undefined, {}); const ic = ia.tree ? str(get(ia.tree, 'icon')?.value) : undefined; const ip = ic && iconProblem(ic); if (ip) W('icon_unknown', `${p}: ${ip} (a warning here: the launcher still shows the app; an icon in scripts/config.json is an error because the kit refuses it)`, p); }
-		const a = assessYaml(y, undefined, { platforms: app.platforms, pack: personal }), rt = a.runtime, yid = a.unknown || !a.tree ? undefined : (str(get(a.tree, 'id')?.value) || '').trim() || undefined;
+		const a = assessYaml(y, undefined, { platforms: app.platforms, pack: personal, minBolt: app.min_bolt_version, minBoltKnown: true }), rt = a.runtime, yid = a.unknown || !a.tree ? undefined : (str(get(a.tree, 'id')?.value) || '').trim() || undefined;
 		if (a.unknown) { tier = 3; E('yaml_unreadable_here', `this tool cannot interpret ${a.why}, so it cannot tell what the app can do; Bolt may read it differently. Write plain YAML in the supported subset (see AGENTS.md section 2). ${notYamlHint(y)}`.trim(), p); if (personal) assessed.push(a); continue; }
 		if (personal) {
 			if (`manifests/utilities/${f}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/utilities/<name> must be at most 100 bytes)', p);
@@ -205,6 +206,7 @@ const keyOf = (id) => { let k = id.replace(/[^a-z0-9_-]/g, '').slice(0, 24); ret
 const prefixOf = (id) => { let k = id.replace(/[^a-z0-9]/g, '').slice(0, 12); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 12); };
 function flag(args, name, dflt) { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : dflt; }
 function cmdNew(args) {
+	staleCloneNote();
 	if (args[0] === '--list' || args[0] === 'list') return newList();
 	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
@@ -293,7 +295,7 @@ function cmdPack(args) {
 	let packWarnings = [];
 	if (personal) { // never write a pack that verify would refuse
 		const vf = []; for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) vf.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(dir, folder, n)) });
-		const cm = checkManifests(vf, { platforms: r.app.platforms, appId: r.app.id }); packWarnings = cm.findings.filter((x) => x.level === 'warning' && x.code !== 'script_mentions'); const bad = cm.findings.filter((x) => x.level === 'error');
+		const cm = checkManifests(vf, { platforms: r.app.platforms, appId: r.app.id, minBolt: r.app.min_bolt_version, minBoltKnown: true }); packWarnings = cm.findings.filter((x) => x.level === 'warning' && x.code !== 'script_mentions'); const bad = cm.findings.filter((x) => x.level === 'error');
 		if (bad.length) { bad.forEach((e) => console.error(`  ${e.code}: ${e.message} (${e.file}${e.line ? ':' + e.line : ''})\n    fix: ${e.fix}`)); die('fix the findings above first (./bolt-apps verify shows them)', 1); }
 	}
 	const keyFile = flag(args, '--key', DEFAULT_KEY);
@@ -377,7 +379,7 @@ function cmdVerify(args) {
 		if (r.app) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
-			const c = checkManifests(files, { platforms: r.app.platforms, appId: r.app.id }); findings.push(...c.findings);
+			const c = checkManifests(files, { platforms: r.app.platforms, appId: r.app.id, minBolt: r.app.min_bolt_version, minBoltKnown: true }); findings.push(...c.findings);
 			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
 		}
 	} else {
@@ -387,7 +389,7 @@ function cmdVerify(args) {
 		else {
 			findings.push(...checkPackShape(r.meta, r.files, r.count));
 			const files = (r.meta.entries || []).filter((e) => ['user_utility', 'script'].includes(e.kind) && r.files.has(String(e.path).replace(/^manifests\//, ''))).map((e) => ({ path: String(e.path).replace(/^manifests\//, ''), kind: e.kind, content: r.files.get(String(e.path).replace(/^manifests\//, '')) }));
-			const c = checkManifests(files, { platformsUnknown: true, appId: r.meta.pack?.pack_id }); findings.push(...c.findings);   // a pack does not record platforms, so a missing OS command is not reported here
+			const c = checkManifests(files, { platformsUnknown: true, minBoltKnown: false, minBolt: r.meta.listing && typeof r.meta.listing === 'object' ? r.meta.listing.min_bolt_version : undefined, appId: r.meta.pack?.pack_id }); findings.push(...c.findings);   // a pack does not record platforms, so a missing OS command is not reported here
 			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
 		}
 	}
@@ -416,9 +418,10 @@ const HELP = `bolt-apps: author toolkit for Bolt Apps
   ship <app-folder>                                       lint, check, pack, verify with the next version picked; prints how to install
   doctor [app-folder]                                     check node, python, your key, folders and what would block an install
   lint [path] [--personal] [--json]                       offline shape checks (--personal: your own tier 3 or script app)
-  check <app-folder> [--os macos|linux|windows] [--case text] [--update-golden] [--json]
+  check <app-folder> [--os macos|linux|windows] [--case text] [--shared] [--update-golden] [--json]
                                                           run a script app's check.json cases against stubbed commands and goldens
   kit vendor [--flat] <app-folder>                        copy the current bolt_app_kit into an app with a check.json
+  kit export-shared <empty-folder> [--source-sha <sha>]   write the one read-only kit folder Bolt ships (manifest.json, bolt_app_kit.py, LICENSE)
   keygen [--out file]                                     make your signing key (default ~/.bolt-apps/key.pem); run once before the first pack
   pack <app-folder> [--key file] [--out file] [--version X] [--notes text] [--personal]
                                                           build and self-sign a .boltpack (raise --version on every rebuild)
@@ -435,13 +438,25 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 			const osi = args.indexOf('--os'), osArg = osi >= 0 ? args[osi + 1] : undefined;
 			if (osi >= 0 && !OSES.includes(osArg)) die(`--os must be one of ${OSES.join(', ')}`);
 			const ci = args.indexOf('--case');
-			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden') });
+			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden'), shared: args.includes('--shared') });
 			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
 			process.exit(reportOk(r) ? 0 : 1);
 		}
+		if (!target) die('usage: ./bolt-apps check <app-folder>');
+		const has = (sub) => fs.existsSync(path.join(target, sub));
+		const yamls = (() => { try { return fs.readdirSync(path.join(target, 'utilities')).filter((f) => /\.ya?ml$/.test(f)); } catch { return []; } })();
+		if (!fs.existsSync(target) || !(has('snippets') || has('search_engines') || yamls.length)) die(`no app found in ${target}: an app folder holds utilities/<id>.yaml`);
 		die('check for snippets, search engines and transforms runs through Bolt\'s own engines and is not published yet. Use lint for offline shape checks; Bolt runs the tests when you add the app. Script apps (a check.json in the folder) run here: see kit/examples/system-glance.');
 	};
 	const cmdKit = (args) => {
+		if (args[0] === 'export-shared' && args.includes('--help')) { console.log('usage: ./bolt-apps kit export-shared <empty-folder> [--source-sha <40 hex>]\nwrites manifest.json, bolt_app_kit.py and LICENSE: the one read-only kit folder Bolt ships'); return; }
+		if (args[0] === 'export-shared') {
+			const si = args.indexOf('--source-sha'), sha = si >= 0 ? args[si + 1] : undefined;
+			const dir = args.slice(1).find((x, i, a) => !x.startsWith('--') && a[i - 1] !== '--source-sha');
+			let r; try { r = exportShared(dir, { sourceSha: sha }); } catch (e) { die(e.message); }
+			console.log(`exported the shared kit ${r.manifest.kit.version} (api ${r.manifest.kit.api}, sha256 ${r.manifest.kit.sha256.slice(0, 16)}...) to ${r.dir}: ${r.files.join(', ')}`);
+			return;
+		}
 		const target = args.slice(1).find((x) => !x.startsWith('--'));
 		if (args[0] !== 'vendor' || !target || !fs.existsSync(path.join(target, 'check.json'))) die('usage: ./bolt-apps kit vendor [--flat] <app-folder with check.json>');
 		let dest, lock; try { ({ dest, lock } = vendorKit(target, { flat: args.includes('--flat') })); } catch (e) { die(e.message); }
