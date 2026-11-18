@@ -10,7 +10,7 @@
   ],
   "properties": {
     "schema_version": { "const": 1, "description": "BUNDLE_SCHEMA_VERSION. Any other value is refused." },
-    "bundle_version": { "type": "string", "minLength": 1, "description": "The pack's own version, semver by convention (1.2.0). Not compared by the installer today." },
+    "bundle_version": { "type": "string", "minLength": 1, "description": "The pack's own version, semver by convention (1.2.0). Bolt compares it at install: a pack replaces an installed one of the same name only if its version is newer, otherwise the install is refused (same_or_older_version). A version Bolt cannot read as a number is refused too." },
     "signed_by": { "type": "string", "description": "Author email or name as written by the signer. Not proof of identity." },
     "signed_at": { "type": "string", "format": "date-time", "description": "RFC 3339. Must fall inside the key's validity window for an allowlisted key." },
     "min_bolt_api_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+", "description": "Checked on the admin org-bundle import path only; the personal install path does not check it today." },
@@ -29,7 +29,7 @@
       "description": "util_pack for a personal Boltpack. Absent (or manifest_bundle) is an admin org bundle, which only an allowlisted key may sign."
     },
     "pack": { "$ref": "#/$defs/pack" },
-    "risk": { "$ref": "#/$defs/risk", "description": "Advisory. Bolt recomputes risk from the entries' declared capabilities and uses its own result." },
+    "risk": { "$ref": "#/$defs/risk", "description": "Advisory, and Bolt does not use it. Bolt works out the tier from the app files (any script entry makes it tier 3) and the risk word as the higher of what that tier says and what the entries' declared capabilities say. Declared capabilities can only raise the level and add their host list to the review card; they are written by the author, are not verified, and are not enforced when the app runs." },
     "signer_pubkey": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$",

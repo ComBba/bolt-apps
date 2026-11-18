@@ -236,7 +236,7 @@ export function dataFilesUsed(used, names, read) {
 // (the launcher scan_scripts). Mirrored here so an author sees the same findings
 // before the person installing does. A courtesy, never a boundary. `files` is [{ name, text }].
 const SCAN_RULES = [
-	["Bolt's app data folder", /app\.[a-z0-9-]+\.bolt|bolt-startup\.log|local-api\.key|user-utils[/\\]/i],
+	["Bolt's app data folder", /app\.sparcle\.bolt|bolt-startup\.log|local-api\.key|user-utils[/\\]/i],
 	['the .ssh folder', /(^|[^A-Za-z0-9])\.ssh([/\\\s"']|$)/],
 	['credential folders or files (.aws, .gnupg, .kube, .npmrc, .git-credentials, private keys)', /(^|[^A-Za-z0-9])\.(aws|gnupg|kube|npmrc|git-credentials|netrc)\b|\bid_(rsa|ed25519|ecdsa)\b/i],
 	['the system keychain or the security command', /(^|[\s;&|(`"'\[,])security\s+(find|add|delete|dump|import|export|unlock)[a-z-]*|\bkeychain\b|\bsecret-tool\b|\bcmdkey\b/i],
@@ -248,14 +248,30 @@ const SCAN_RULES = [
 	['system account files', /\/etc\/(passwd|shadow|sudoers)\b/],
 	['the Windows registry', /\breg(\.exe)?\s+(add|query|delete|export)\b|HKEY_/i],
 ];
-export function scanMentions(files) {
+// The network hosts an app file declares under permissions.network (a list of { host }), as Bolt reads them for this scan.
+export function declaredHostsOf(tree) {
+	const items = get(get(tree, 'permissions')?.value, 'network')?.value?.items || [];
+	return items.map((it) => str(get(it, 'host')?.value)).filter((h) => typeof h === 'string' && h.trim());
+}
+// Bolt's authority_host: after the last @, no port, no brackets or trailing dot, lower case.
+const authorityHost = (auth) => {
+	const at = auth.slice(auth.lastIndexOf('@') + 1), m = /^(.*):(\d+)$/.exec(at);
+	return (m ? m[1] : at).replace(/^[[\]]+|[[\]]+$/g, '').replace(/\.+$/, '').toLowerCase();
+};
+export function scanMentions(files, declaredHosts = []) {
+	const declared = (h) => declaredHosts.some((d) => { d = String(d).trim().toLowerCase(); return h === d || h.endsWith(`.${d}`); });
 	const out = new Set();
 	for (const { name, text } of files) {
 		for (const [what, re] of SCAN_RULES) if (re.test(text)) out.add(`${what} (in ${name})`);
 		for (const m of text.matchAll(/https?:\/\/[^\s"']+/g)) if (/[@\\]/.test(m[0])) out.add(`a web address with a user name or a backslash in it (in ${name})`);
 		for (const line of text.split('\n').filter((l) => /\b(curl|wget)\b/.test(l))) {
 			const auths = [...line.matchAll(/https?:\/\/([^/\\\s"'?#]+)/g)].map((m) => m[1]);
-			if (!auths.length || auths.some((a) => /[$`{%<*]/.test(a))) out.add(`curl or wget with an address not written out here (in ${name})`);
+			if (!auths.length) out.add(`curl or wget with an address not written out here (in ${name})`);
+			for (const a of auths) {
+				if (/[$`{%<*]/.test(a)) out.add(`curl or wget with an address not written out here (in ${name})`);
+				else if (a.includes('@')) { /* listed above whatever the host */ }
+				else if (!declared(authorityHost(a))) out.add(`curl or wget to ${authorityHost(a)}, which it does not declare (in ${name})`);
+			}
 		}
 	}
 	return [...out].sort();

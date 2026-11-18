@@ -47,7 +47,7 @@ unused one (`permission_unused`).
 (`tier3_not_accepted`): `runtime: bridge` or `http_local` User Apps, a `detect` block, scripts,
 anything that runs commands, reads files, calls the network (`runs_commands`, `files`,
 `network`) or gives an AI agent tools (`agent_tools`). Do not create tier 3 content in this
-repository.
+repository. Tier 3 apps stay personal today (`pack --personal`); a Sparcle-reviewed route for them may follow, but none exists yet, so do not promise one.
 
 **An app for the user's own use may be tier 3.** If the person wants an app that runs a
 program or a script for themselves, do not tell them it is impossible and do not hand them a
