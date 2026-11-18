@@ -146,6 +146,16 @@ Thumbs-up reactions and counts are recognition only. Nothing depends on them.
 
 Do not report a security problem in a public issue. See [SECURITY.md](SECURITY.md).
 
+## Legal
+
+[Licence](LICENSE) (Apache 2.0) and [NOTICE](NOTICE), [third-party notices](THIRD-PARTY-NOTICES.md)
+for the data the examples show, [privacy of this repository](PRIVACY.md), [trademarks](TRADEMARKS.md),
+and [legal notes](docs/LEGAL.md) (as is, no safety use). Company policies:
+[privacy](https://sparcle.app/privacy/) and [terms](https://sparcle.app/terms/). The Apache licence
+covers this repository, not the Bolt application.
+
+**Apps you build:** this repository is Apache-2.0 open source and contributions are welcome under the same licence (DCO sign-off). An app you build with it is yours: you choose its licence (open source, internal or commercial). If you copy kit or engine code into your app, keep the Apache-2.0 notice (a copy of the LICENSE file) with that code. Bolt, the desktop application, is proprietary and is not part of this repo; apps Sparcle ships inside Bolt are Sparcle's unless their folder says otherwise. More in [legal notes](docs/LEGAL.md).
+
 ## Licence
 
 [Apache License 2.0](LICENSE). Contributions are accepted under the same licence, with a

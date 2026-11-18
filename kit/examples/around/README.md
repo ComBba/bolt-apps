@@ -62,3 +62,5 @@ Use: `=around Bryant Park, New York`. A map pane is not used: personal apps cann
 
 ## Not covered
 Only English Wikipedia. Opening hours are shown as OpenStreetMap writes them, not evaluated against the clock. The weather is for the searched point, not each place. Not run in the real launcher or on Windows.
+
+Credit: Weather data by Open-Meteo.com (CC BY 4.0). Open-Meteo's free API is for non-commercial use (see https://open-meteo.com/en/terms); this example is a demo: for commercial use get an Open-Meteo commercial plan and API key.

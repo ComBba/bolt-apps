@@ -26,3 +26,5 @@ python3 kit/examples/lookup-template/scripts/lookup-template__engine.py --emit-y
 ./bolt-apps pack kit/examples/lookup-template --personal --version 1.0.1 --out lookup-template-1.0.1.boltpack
 ```
 Live is the default. `check` runs sample mode through `"fixture": true` in `check.json`.
+
+Credit: Weather data by Open-Meteo.com (CC BY 4.0). Open-Meteo's free API is for non-commercial use (see https://open-meteo.com/en/terms); this example is a demo: for commercial use get an Open-Meteo commercial plan and API key.
