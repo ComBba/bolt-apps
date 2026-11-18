@@ -497,7 +497,8 @@ async function checkAppRun(appDir, opts = {}) {
 	try { const ud = path.join(appDir, 'utilities'); for (const y of fs.existsSync(ud) ? fs.readdirSync(ud).filter((f) => /\.ya?ml$/.test(f)) : []) { const txt = fs.readFileSync(path.join(ud, y), 'utf8'); try { parseYaml(txt); } catch (e) { top('error', 'app_file_not_yaml', `utilities/${y} cannot be read as YAML (${String(e.message).slice(0, 100)}). ${notYamlHint(txt) || 'Write plain YAML (AGENTS.md section 2), or regenerate it: python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml'}`, `utilities/${y}`); } } } catch { /* no utilities folder: other checks say so */ }
 	if (host === 'windows') { top('error', 'host_unsupported', 'check v0.1 needs a POSIX host (sh stubs); run it on macOS or Linux', '.'); return report; }
 	const pyc = /^python3?$/.test(cfg.interpreter || '') ? pythonCmd() : null;
-	const py = pyc ? [pyc.cmd, ...pyc.args] : (cfg.interpreter ? whichSync(cfg.interpreter) : null);
+	const pyAbs = pyc ? whichSync(pyc.cmd) : null;   // the case runs with a stubbed PATH, so hand spawn an absolute path
+	const py = pyAbs ? [pyAbs, ...pyc.args] : (cfg.interpreter ? whichSync(cfg.interpreter) : null);
 	if (!py) { top('error', 'interpreter_missing', `${cfg.interpreter || 'interpreter'} was not found on this machine`, 'check.json'); return report; }
 	let script; try { script = inside(appDir, cfg.script); } catch (e) { top('error', 'path_outside_app', e.message, 'check.json'); return report; }
 	if (!fs.existsSync(script)) { top('error', 'script_missing', `${cfg.script} does not exist`, 'check.json'); return report; }
