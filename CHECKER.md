@@ -97,7 +97,7 @@ These codes come from Bolt's own checker, which is not published. The toolkit em
 
 | Code | Why |
 |---|---|
-| `tier3_not_accepted` | runs commands, calls the network or uses agent tools; the gallery takes tier 1 and 2 only. For your own use, `bolt-apps pack <folder> --personal` builds a self-signed pack that Bolt asks the installer to confirm |
+| `tier3_not_accepted` | runs commands, calls the network or uses agent tools; the community gallery takes tier 1 and 2 only today, and tier 3 apps stay personal; a Sparcle-reviewed route for them may follow. For your own use, `bolt-apps pack <folder> --personal` builds a self-signed pack that Bolt asks the installer to confirm |
 | `tier_understated` | listing claims a lower tier than the content |
 | `permission_undeclared` | content needs a permission the listing does not declare |
 | `sensitive_secret`, `sensitive_email`, `sensitive_internal_url` | a key, token, email address or internal link is still in the content (`@example.com` addresses are fine) |

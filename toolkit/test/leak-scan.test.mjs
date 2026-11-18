@@ -31,7 +31,8 @@ const OK_IP = (ip) => /^(127\.\d+\.\d+\.\d+|0\.0\.0\.0|1\.1\.1\.1|1\.0\.0\.1|8\.
 // The project's own governance files may name the company that publishes it.
 // The legal notices must name the company that holds the copyright and the trademarks (Apache-2.0 NOTICE, third-party notices, legal notes): exactly these files.
 const OK_SPARCLE_FILES = /^(\.github\/|[A-Z_]+\.md$|toolkit\/README\.md$|NOTICE$|THIRD-PARTY-NOTICES\.md$|docs\/LEGAL\.md$)/;
-const OK_SPARCLE_PHRASES = [/app\.sparcle\.bolt\.enterprise/, /signed by a Sparcle or company key/, /Sparcle or your company signed it/, /Sparcle-signed bundles/, /Reviewed by Sparcle/, /Sparcle maintainer/, /pull requests from outside Sparcle/, /Sparcle checked this version/, /signed by Sparcle\. This pack/, /signed by its author, not by Sparcle\."/];   // the last is the literal 181 install-dialog sentence
+// app.sparcle.bolt is the public product data folder name that Bolt itself shows in its install screens; the Mentions mirror must match Bolt's regex exactly (the second entry is that regex as written in source).
+const OK_SPARCLE_PHRASES = [/app\.sparcle\.bolt\b/, /app\\\.sparcle\\\.bolt/, /app\.sparcle\.bolt\.enterprise/, /signed by a Sparcle or company key/, /Sparcle or your company signed it/, /Sparcle-signed bundles/, /Reviewed by Sparcle/, /Sparcle maintainer/, /pull requests from outside Sparcle/, /Sparcle checked this version/, /signed by Sparcle\. This pack/, /signed by its author, not by Sparcle\."/];   // the last is the literal 181 install-dialog sentence
 const SUPPRESSED = [
 	[/Claude Code/, 'AGENTS.md addresses AI coding agents by product name; no device or fleet name'],
 ];

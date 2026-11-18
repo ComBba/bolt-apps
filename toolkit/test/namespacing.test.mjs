@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { readPack } from '../bin/bolt-apps.mjs';
 import { clockVersion, newer } from '../lib/workflow.mjs';
 import { BOLT_SAYS, markdownTable } from '../lib/boltsays.mjs';
+import { scanMentions, declaredHostsOf, assessYaml } from '../lib/assess.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.resolve(HERE, '../..');
@@ -432,4 +433,35 @@ test('the pane_blank_row advice does not tell the author to add a note view they
 	assert.match(blankPaneProblems(full, [back, data], 'places')[0].message, /8 views.*drop a view/, '8 views and no reusable markdown view');
 	const reuse = { ...full, views: new Map([...[...full.views].slice(0, 7), ['m', md]]) };
 	assert.doesNotMatch(blankPaneProblems(reuse, [back, data], 'places')[0].message, /8 views/, 'a markdown view that binds title, subtitle and body is reusable');
+});
+
+// Mirror of Bolt's trust.rs scan_scripts: a curl or wget line names a host the app file does not declare.
+test('the install-prompt scan says which curl or wget host is not declared, as Bolt does', () => {
+	const f = (text) => [{ name: 'a.sh', text }];
+	assert.deepEqual(scanMentions(f('curl https://api.example.com/x')), ['curl or wget to api.example.com, which it does not declare (in a.sh)']);
+	assert.deepEqual(scanMentions(f('curl https://api.example.com/x'), ['api.example.com']), []);
+	assert.deepEqual(scanMentions(f('wget https://v1.API.example.com:8443/x'), ['example.com']), []);
+	assert.deepEqual(scanMentions(f('curl https://evilexample.com/x'), ['example.com']), ['curl or wget to evilexample.com, which it does not declare (in a.sh)']);
+	assert.deepEqual(scanMentions(f('curl https://$HOST/x https://ok.example.com'), ['ok.example.com']), ['curl or wget with an address not written out here (in a.sh)']);
+	assert.deepEqual(scanMentions(f('curl localhost')), ['curl or wget with an address not written out here (in a.sh)']);
+	assert.ok(scanMentions(f('curl https://u:p@ok.example.com/x'), ['ok.example.com']).some((m) => /user name or a backslash/.test(m)));
+	// Bolt's app data folder rule names its own folder only
+	assert.deepEqual(scanMentions(f('ls app.sparcle.bolt/x')), ["Bolt's app data folder (in a.sh)"]);
+	assert.deepEqual(scanMentions(f('ls app.other.bolt/x')), []);
+});
+
+test('declaredHostsOf reads permissions.network in the app file', () => {
+	const y = 'id: h\nname: H\nruntime: bridge\nchip: h\npermissions:\n  network:\n    - host: api.example.com\n    - host: "b.example.org"\n';
+	assert.deepEqual(declaredHostsOf(assessYaml(y, 'h').tree), ['api.example.com', 'b.example.org']);
+	assert.deepEqual(declaredHostsOf(assessYaml('id: h\nruntime: bridge\n', 'h').tree), []);
+});
+
+test('verify lists a curl host the app file does not declare, with Bolt\'s sentence', () => {
+	const d = tmp('ns-host-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'hosty', '--dir', d).status, 0);
+	const fx = path.join(d, 'hosty', 'scripts', 'hosty__fixtures.json'), j = JSON.parse(fs.readFileSync(fx, 'utf8'));
+	j.note = 'curl https://api.undeclared.example.org/x'; fs.writeFileSync(fx, JSON.stringify(j));
+	const v = JSON.parse(cli(home, d, 'verify', path.join(d, 'hosty'), '--json').stdout);
+	const m = v.findings.filter((f) => f.code === 'script_mentions').map((f) => f.message).join('\n');
+	assert.match(m, /curl or wget to api\.undeclared\.example\.org, which it does not declare \(in hosty__fixtures\.json\)/);
 });

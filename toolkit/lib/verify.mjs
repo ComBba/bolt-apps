@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { chipMismatch, assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
+import { chipMismatch, assessYaml, plainPermission, plainName, scriptRefs, dataFilesUsed, scanMentions, declaredHostsOf, escapeProblem, MAX_HASHED_FILE_BYTES } from './assess.mjs';
 import { get, str, notYamlHint } from './yamlsubset.mjs';
 import { layoutProblems, namespaceProblems, RULES as BOLT_RULES } from './boltrules.mjs';
 
@@ -238,8 +238,10 @@ export function checkManifests(files, opts = {}) {
 	// what the install prompt's text search will list for the person installing: the manifests and the scripts they run
 	// Bolt reads every file the app file names as {{scripts_dir}}/<file> (a .json helper as well as a script) and the app file itself; a file only imported or read by a script is not scanned
 	const scanned = [...used].filter((n) => scripts.has(n)).map((n) => ({ name: n, text: scripts.get(n).toString('utf8') }));
+	// Declared hosts are unioned across every app in the pack; Bolt scans per app, so a multi-app pack may show fewer of these warnings than Bolt (never more).
+	const declaredHosts = []; for (const a of apps) declaredHosts.push(...declaredHostsOf(a.tree));
 	for (const f of files.filter((x) => x.kind === 'user_utility')) scanned.push({ name: path.basename(f.path), text: f.content.toString('utf8') });
-	for (const m of scanMentions(scanned)) add('warning', 'script_mentions', `the install prompt will list: ${m}. A courtesy search, not a verdict: change the text if it is not what the app does${/keychain/.test(m) && /bolt_app_kit\.py/.test(m) ? '. The vendored kit contains the keychain reader; it runs only if your script calls kit.get_secret. The prompt lists it either way, and that is true of what the file can do' : ''}`, 'scripts');
+	for (const m of scanMentions(scanned, declaredHosts)) add('warning', 'script_mentions', `the install prompt will list: ${m}. A courtesy search, not a verdict: change the text if it is not what the app does${/keychain/.test(m) && /bolt_app_kit\.py/.test(m) ? '. The vendored kit contains the keychain reader; it runs only if your script calls kit.get_secret. The prompt lists it either way, and that is true of what the file can do' : ''}`, 'scripts');
 	return { findings: dedupe(findings), apps, unknownAssess };
 }
 const dedupe = (fs_) => { const seen = new Set(); return fs_.filter((f) => { const k = `${f.code}|${f.file}|${f.message}`; if (seen.has(k)) return false; seen.add(k); return true; }); };
