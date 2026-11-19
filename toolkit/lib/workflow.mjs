@@ -129,8 +129,12 @@ export function newFromTemplate(template, id, root) {
 	if (oldChip && oldChip !== chip) parts.push(`=${esc(oldChip)}(?![A-Za-z0-9_-])`);
 	if (oldTitle && oldTitle !== title) parts.push(`(?<![A-Za-z0-9_-])${esc(oldTitle)}(?![A-Za-z0-9_-])`);
 	const oneRe = new RegExp(parts.map((x) => `(${x})`).join('|'), 'g');
+	// The copy's one app file is utilities/<id>.yaml (lint: utilities_name_mismatch), whatever the template named its own; its README and notes say so too.
+	const oldAppFiles = fs.existsSync(tud) ? fs.readdirSync(tud).filter((f) => /\.ya?ml$/.test(f)) : [];
+	const oldAppFile = oldAppFiles.length === 1 && oldAppFiles[0] !== `${id}.yaml` ? oldAppFiles[0] : undefined;
+	const renameAppFile = (s) => (oldAppFile ? s.split(`utilities/${oldAppFile}`).join(`utilities/${id}.yaml`) : s);
 	const reword = (s) => (template === id ? s : s.replace(oneRe, (m, g1, g2, g3, g4) => (g1 ? `${id}__` : g2 ? id : g3 ? `=${chip}` : title)));
-	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = reword(s); if (r !== s) fs.writeFileSync(f, r); } } };
+	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = renameAppFile(reword(s)); if (r !== s) fs.writeFileSync(f, r); } } };
 	// the template's README runs its commands from the repo root; the copy lives elsewhere, so they run from inside the folder
 	edit('README.md', (s) => s.split('node toolkit/bin/bolt-apps.mjs').join('bolt-apps').split(`kit/examples/${template}`).join('.'));
 	walkText(dir);
@@ -149,7 +153,10 @@ export function newFromTemplate(template, id, root) {
 		if (r.status !== 0) fail(`could not generate the app file: ${String(r.stderr || (r.error && r.error.message) || PYTHON_MISSING).slice(-300)}`);
 		for (const y of fs.readdirSync(ud)) fs.rmSync(path.join(ud, y));
 		fs.writeFileSync(path.join(ud, `${id}.yaml`), r.stdout);
-	} else if (fs.existsSync(ud)) for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
+	} else if (fs.existsSync(ud)) {
+		for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
+		if (oldAppFile && fs.existsSync(path.join(ud, oldAppFile))) fs.renameSync(path.join(ud, oldAppFile), path.join(ud, `${id}.yaml`));
+	}
 	// the vendored kit is named for its app: re-vendor it under the new name (the template's lock and file name carry the old id)
 	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { fail(`could not vendor the kit: ${e.message}`); } }
 	let note = '', minimal = false;

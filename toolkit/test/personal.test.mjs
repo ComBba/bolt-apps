@@ -134,3 +134,32 @@ test('a failed gallery pack of a tier 3 app or an app with scripts/ ends with th
 	run(d, 'new', 'other', '--type', 'transform'); write(path.join(d, 'apps', 'other', 'notes.txt'), 'x');
 	const r = run(d, 'pack', 'apps/other', '--key', key); assert.equal(r.status, 1); assert.doesNotMatch(r.stderr, /personal/);
 });
+
+test('lint refuses an app whose ids disagree: the app file name, the id in it, config app.id and bolt-app.json id', () => {
+	const REPO = path.resolve(HERE, '../..');
+	const d = tmp(), codes = (r) => JSON.parse(r.stdout).reports[0].findings.map((x) => `${x.level}:${x.code}`);
+	assert.equal(run(d, 'new', 'portal-template', 'zz', '--dir', d).status, 0);
+	const app = path.join(d, 'zz'), ud = path.join(app, 'utilities'), cfg = path.join(app, 'scripts', 'zz__config.json');
+	assert.equal(run(d, 'lint', app, '--personal').status, 0);
+	// a renamed app file: the file name is no longer the id the copy was made for
+	fs.renameSync(path.join(ud, 'zz.yaml'), path.join(ud, 'other.yaml'));
+	let r = run(d, 'lint', app, '--personal', '--json'); assert.equal(r.status, 1, r.stdout); assert.ok(codes(r).includes('error:utilities_name_mismatch'), r.stdout);
+	fs.renameSync(path.join(ud, 'other.yaml'), path.join(ud, 'zz.yaml'));
+	// config app.id (and chip) changed and the app file generated again from it: bolt-app.json still says zz
+	const j = JSON.parse(fs.readFileSync(cfg, 'utf8')); j.app.id = 'otherid'; j.app.chip = 'otherid'; fs.writeFileSync(cfg, JSON.stringify(j, null, 2));
+	const y = spawnSync('python3', ['scripts/zz__engine.py', '--emit-yaml'], { cwd: app, encoding: 'utf8' }); assert.equal(y.status, 0, y.stderr);
+	fs.rmSync(path.join(ud, 'zz.yaml')); fs.writeFileSync(path.join(ud, 'otherid.yaml'), y.stdout);
+	r = run(d, 'lint', app, '--personal', '--json'); assert.equal(r.status, 1, r.stdout);
+	for (const c of ['error:config_id_mismatch', 'error:utilities_id_mismatch']) assert.ok(codes(r).includes(c), c + r.stdout);
+	// new renames the app file of a template that has no emitter, so the copy passes as made
+	assert.equal(run(d, 'new', 'local-service-template', 'zz-local', '--dir', d).status, 0);
+	assert.deepEqual(fs.readdirSync(path.join(d, 'zz-local', 'utilities')), ['zz-local.yaml']);
+	assert.doesNotMatch(fs.readFileSync(path.join(d, 'zz-local', 'README.md'), 'utf8'), /localmodels\.yaml/);
+	r = run(d, 'lint', path.join(d, 'zz-local'), '--personal', '--json'); assert.equal(r.status, 0, r.stdout); assert.ok(!codes(r).some((c) => /_mismatch$/.test(c)), r.stdout);
+	// a script app not built on the engine may name its file another way: a warning, not an error
+	r = run(REPO, 'lint', 'kit/examples/local-service-template', '--personal', '--json'); assert.equal(r.status, 0, r.stdout); assert.ok(codes(r).includes('warning:utilities_name_mismatch'), r.stdout);
+	// the gallery: utilities/<name>.yaml carries id <name> (AGENTS.md section 9: utilities/sortu.yaml holds id sortu)
+	run(d, 'new', 'g', '--type', 'transform', '--author', 'T');
+	fs.renameSync(path.join(d, 'apps', 'g', 'utilities', 'g.yaml'), path.join(d, 'apps', 'g', 'utilities', 'h.yaml'));
+	r = run(d, 'lint', 'apps/g', '--json'); assert.equal(r.status, 1, r.stdout); assert.ok(codes(r).includes('error:utilities_name_mismatch'), r.stdout);
+});
