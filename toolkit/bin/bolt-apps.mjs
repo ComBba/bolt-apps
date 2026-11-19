@@ -130,6 +130,9 @@ export function lintApp(dir, opts = {}) {
 		if (rt !== 'transform') { tier = 3; E('tier3_not_accepted', `runtime "${rt}" runs commands or the network; only runtime: transform is allowed here`, p); continue; }
 		if (a.tier >= 3 || a.permissions.includes('runs_own_command_on_press')) { tier = 3; E('tier3_not_accepted', `${a.reasons[0] || (a.tier < 3 ? 'it has a button that runs a command (Bolt rates it tier 2, the gallery does not take it)' : 'it can act outside Bolt')}; only apps that act inside Bolt (no detect block, fixed https links) are allowed here`, p); continue; }
 		tier = Math.max(tier, 2); need(...a.permissions.filter((x) => PERMS.includes(x) || x.startsWith('opens_links:')));
+		// The app file rules verify and pack --personal apply (top-level keys, required keys, blocks, the launcher rules, pipe steps and patterns), so a
+		// gallery app that Bolt would refuse does not lint clean. The install prompt text search (script_mentions) is a note for self-signed packs only.
+		for (const x of checkManifests([{ path: p, kind: 'user_utility', content: Buffer.from(y) }], { platforms: app.platforms, appId: app.id, minBolt: app.min_bolt_version, minBoltKnown: true }).findings) if (x.code !== 'script_mentions') out.push({ level: x.level, code: x.code, message: x.message, path: p, ...(x.line ? { line: x.line } : {}) });
 		if (!yid) E('field_missing', 'id is required', p); else targets.add(`transform:${yid}`), targets.add(`recognizer:${yid}`);
 	}
 	const cfgRel = personal ? ['config.json', `${app.id}__config.json`].find((n) => fs.existsSync(path.join(dir, 'scripts', n))) : undefined;
