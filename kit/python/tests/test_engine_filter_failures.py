@@ -170,8 +170,28 @@ class Live(unittest.TestCase):
         Answers.status = {"account": 500}
         rows = self.rows(["projects", long_id])
         self.assertIn("Website refresh", [r["title"] for r in rows], "the detail opens")
-        navs = [r["nav"] for r in rows if (r.get("nav") or {}).get("view") == "projects" and r["title"] in ("Some data did not load: account", "Refresh")]
+        navs = [r["nav"] for r in rows if (r.get("nav") or {}).get("view") == "projects" and r["title"] in ("Some data did not load: account", "Reload")]
         self.assertEqual(navs, [{"view": "projects", "arg": long_id}] * 2, "retry opens the detail, not the list")
+
+    def test_a_64_character_id_does_not_promise_fresh_data(self):
+        long_id = "P" * 64
+        projects = json.loads(json.dumps(Answers.payload["projects"]))
+        projects["data"][0]["id"] = long_id
+        Answers.payload = dict(Answers.payload, projects=projects)
+        d = self.folder()
+        self.rows(["projects", long_id], d)   # fills the cache
+        time.sleep(2.2)                       # the cache row is drawn once the copy is 2 s old
+        rows = self.rows(["projects", long_id], d)
+        cached = [r for r in rows if r.get("kpi_badge") == "CACHED"]
+        self.assertEqual([(r["subtitle"], r["kpi_note"], r["nav"]) for r in cached],
+                         [("Data is kept 45 s; this id is too long for a forced refresh", "from cache", {"view": "projects", "arg": long_id})])
+        last = rows[-1]
+        self.assertEqual((last["title"], last["subtitle"], last["nav"]),
+                         ("Reload", "Enter reads the calls that failed again; the rest comes from the cache (kept 45 s)", {"view": "projects", "arg": long_id}))
+        self.assertNotIn("fetch fresh data", json.dumps(rows))
+        rows = self.rows(["projects", "P-2"], d)   # a short id keeps the forced refresh and its words
+        self.assertEqual((rows[-1]["title"], rows[-1]["subtitle"], rows[-1]["nav"]), ("Refresh", "Enter to fetch fresh data", {"view": "projects", "arg": "refresh.P-2"}))
+        self.assertIn("Enter to refresh (data is kept 45 s)", [r["subtitle"] for r in rows if r.get("kpi_badge") == "CACHED"])
 
     def test_a_tile_whose_value_did_not_load_has_no_badge(self):
         Answers.status = {"tickets": 500}
@@ -201,6 +221,11 @@ class TileBadge(unittest.TestCase):
         self.assertEqual(self.m.make_tile({"value": "remaining", "badge": rules}, {"remaining": "N/A", "status": "closed"}, {}), (None, ""))
         self.assertEqual(self.m.make_tile({"value": "remaining", "badge": rules}, {"remaining": "N/A", "status": "open"}, {}), (None, "OPEN"))
         self.assertEqual(self.m.make_tile({"value": "remaining", "badge": [{"if": "limit<remaining", "badge": "OVER"}]}, {"remaining": "N/A", "limit": "0"}, {}), (None, ""))
+
+    def test_the_value_field_name_as_plain_text_on_the_right_is_kept(self):
+        rules = [{"if": "status==active", "badge": "ON"}, {"badge": "OFF"}]
+        self.assertEqual(self.m.make_tile({"value": "active", "badge": rules}, {"status": "active"}, {}), (None, "ON"))
+        self.assertEqual(self.m.make_tile({"value": "active", "badge": rules}, {"status": "active", "active": "N/A"}, {}), (None, ""))
 
     def test_no_value_drops_a_plain_word_badge(self):
         self.assertEqual(self.m.make_tile({"value": "priority", "badge": "NEW"}, {"status": "open"}, {}), (None, ""))

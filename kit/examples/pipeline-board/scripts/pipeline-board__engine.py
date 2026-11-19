@@ -248,9 +248,9 @@ def make_tile(spec, item, glob):
     if v is None:
         own = val if isinstance(val, str) else None
 
-        def other_field(r):
+        def other_field(r):   # skipped: a rule whose left side is the value's field, or whose right side reads that field (the same word as plain text is kept)
             m = RULE.match(str(r.get("if") or ""))
-            return bool(m) and own not in (m.group(1), m.group(3))
+            return bool(m) and m.group(1) != own and not (m.group(3) == own and lookup(own, item, glob) is not None)
         return None, (badge_for([r for r in rules if isinstance(r, dict) and other_field(r)], item, glob) if rules else "")
     badge = badge_for(rules, item, glob) if rules is not None else str(spec.get("badge", ""))
     mx = spec.get("max")
@@ -827,9 +827,11 @@ def notice_rows(L, view_id, arg, ttl):
         rows.append(kit.row(title, sub, icon="AlertCircle", nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body=sub if NOTE_ACTIVE[0] else "", copy=False,
                             tile=tile, badge={"stale": "STALE", "partial": "PARTIAL", "page": "FIRST PAGE"}[kind]))
     if not rows and L.from_cache and L.cached_age >= 2:
-        rows.append(kit.row("Loaded from cache, %d s old" % L.cached_age, "Enter to refresh (data is kept %d s)" % ttl, icon="RefreshCw",
-                            nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body="Enter to refresh (data is kept %d s)" % ttl if NOTE_ACTIVE[0] else "", copy=False,
-                            tile=kit.tile("Data age", L.cached_age, "s", ttl, note="from cache, Enter to refresh"), badge="CACHED"))
+        forced = arg == "refresh" or arg.startswith("refresh.")   # not for an id too long for "refresh.<id>": Enter reopens it from the cache
+        sub = "Enter to refresh (data is kept %d s)" % ttl if forced else "Data is kept %d s; this id is too long for a forced refresh" % ttl
+        rows.append(kit.row("Loaded from cache, %d s old" % L.cached_age, sub, icon="RefreshCw",
+                            nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body=sub if NOTE_ACTIVE[0] else "", copy=False,
+                            tile=kit.tile("Data age", L.cached_age, "s", ttl, note="from cache, Enter to refresh" if forced else "from cache"), badge="CACHED"))
     return rows
 
 
@@ -1243,7 +1245,9 @@ def run_views(cfg, args, fx, fixtures):
         notes = notice_rows(L, view_id, retry, ttl)
         if detail_id:
             body = detail_rows(cfg, v, L.data, glob, detail_id, retry)
-            rows = body[:1] + notes + body[1:] + ([] if never_fetches(cfg) else [refresh_row(view_id, retry)])
+            again = refresh_row(view_id, retry) if retry == "refresh" or retry.startswith("refresh.") else refresh_row(   # a long id: Enter reopens the item, it does not skip the cache
+                view_id, retry, title="Reload", sub="Enter reads the calls that failed again; the rest comes from the cache (kept %d s)" % ttl)
+            rows = body[:1] + notes + body[1:] + ([] if never_fetches(cfg) else [again])
         else:
             head, body = list_rows(cfg, v, L.data, glob, flt)
             if data_view and body:   # only a stale or partial notice is worth a row among the data; a skipped cell shows as a gap
