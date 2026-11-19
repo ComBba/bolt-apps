@@ -107,6 +107,7 @@ test('gallery lint and pack check the app file the way verify does: keys, pipe s
 	const at = (r_, code) => JSON.parse(r_.stdout).reports[0].findings.filter((x) => x.code === code).map((x) => x.line);
 	assert.deepEqual(at(r, 'transform_step_unknown'), [lineOf('g-pipe', 'frobnicate'), lineOf('g-pipe', 'split:')], r.stdout);
 	assert.deepEqual(at(r, 'transform_pipe_count'), [lineOf('g-pipe', 'pipe:')], r.stdout);
+	const rp = run(d, 'lint', b, '--personal', '--json'); assert.deepEqual(at(rp, 'transform_step_unknown'), [lineOf('g-pipe', 'frobnicate'), lineOf('g-pipe', 'split:')], rp.stdout);
 	const v = JSON.parse(run(d, 'verify', b, '--json').stdout); assert.ok(v.findings.some((x) => x.code === 'transform_step_unknown' && x.fix !== 'See the message.'), JSON.stringify(v.findings));
 	// an empty pipe
 	const e = app('g-empty', 'transform', (s) => s.replace('  pipe:\n    - trim\n    - upper\n', '  pipe: []\n'));

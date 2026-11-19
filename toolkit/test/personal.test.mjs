@@ -184,6 +184,13 @@ test('an id finding never says to delete the file it asks you to generate again'
 	fs.renameSync(f, path.join(app, 'utilities', 'other.yaml'));
 	const r2 = run(d, 'lint', app, '--personal', '--json'), m2 = JSON.parse(r2.stdout).reports[0].findings.find((y) => y.code === 'utilities_id_mismatch');
 	assert.ok(m2 && /and delete utilities\/other\.yaml$/.test(m2.message), r2.stdout);
+	// a name that differs from utilities/zz.yaml only in case: on a file system that ignores case (the macOS default) writing utilities/zz.yaml lands in this
+	// same file, so deleting it afterwards would delete the new one. The fix renames it instead.
+	fs.renameSync(path.join(app, 'utilities', 'other.yaml'), path.join(app, 'utilities', 'ZZ.yaml'));
+	const r3 = run(d, 'lint', app, '--personal', '--json'), f3 = JSON.parse(r3.stdout).reports[0].findings, m3 = (c) => f3.find((y) => y.code === c)?.message;
+	assert.equal(m3('utilities_name_mismatch'), 'utilities/ZZ.yaml holds the app "other"; the file name must be the id. Rename it (the names differ only in case, so a file system that ignores case treats them as one file): mv utilities/ZZ.yaml utilities/zz.yaml, then generate it again: python3 scripts/zz__engine.py --emit-yaml > utilities/zz.yaml', r3.stdout);
+	assert.equal(m3('utilities_id_mismatch'), 'utilities/ZZ.yaml has the id "other", but bolt-app.json and the folder name say "zz". Set app.id to zz in scripts/zz__config.json, rename the file (mv utilities/ZZ.yaml utilities/zz.yaml) and generate the app file again as utilities/zz.yaml', r3.stdout);
+	for (const m of [m3('utilities_name_mismatch'), m3('utilities_id_mismatch')]) assert.doesNotMatch(m, /delete/);
 });
 
 test('a script app without the engine may keep its own app.id in its config: the id checks are for engine apps', () => {
