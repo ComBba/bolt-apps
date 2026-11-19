@@ -73,8 +73,11 @@ hand:
 
 - **Snippet:** Settings, Search & Commands, Snippets, Add snippet; paste the `content`.
 - **Search engine:** Settings, Search & Commands, Search Engines, Add engine.
-- **User App:** Settings, Desktop App, User Apps, Open folder; save the `.yaml` there and
-  click Reload.
+- **User App:** Open Settings, then Desktop App. If User Apps is hidden, switch Settings to
+  Advanced. Under User Apps, click Open folder, save the `.yaml` there, and click Reload.
+  If the app says Needs approval, expand its row, choose Review and accept, and review
+  the files before clicking Accept. Bolt 0.1.181 shows this step for a manually installed
+  transform such as [CSV to Markdown](apps/csv-to-markdown).
 
 ## Toolkit: build your own
 
