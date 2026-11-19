@@ -232,14 +232,15 @@ def badge_for(rules, item, glob):
 
 
 def make_tile(spec, item, glob):
-    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero."""
+    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero,
+    and no badge: the last rule has no `if`, so it would otherwise say CLEAR or BEHIND about a number that did not load."""
     if not spec:
         return None, ""
-    badge = badge_for(spec.get("badge"), item, glob) if isinstance(spec.get("badge"), list) else str(spec.get("badge", ""))
     val = spec.get("value")
     v = number(val) if not isinstance(val, str) or number(val) is not None else number(lookup(val, item, glob))
     if v is None:
-        return None, badge
+        return None, ""
+    badge = badge_for(spec.get("badge"), item, glob) if isinstance(spec.get("badge"), list) else str(spec.get("badge", ""))
     mx = spec.get("max")
     mxv = None if mx is None else (number(mx) if number(mx) is not None else number(lookup(mx, item, glob)))
     return kit.safe_tile(render(spec.get("label", ""), item, glob), v, unit=spec.get("unit", ""), max=mxv,
@@ -863,7 +864,17 @@ def children_of(cfg, view, item, data, glob):
     return rows
 
 
+def unread_row(view, at, arg="refresh"):
+    """The row for a list whose call failed with no old copy to show: it says the list did not load, never "0 rows" or "nothing linked".
+    Enter reloads the view `at` (the list itself, or the detail the list belongs to)."""
+    sub = "The list did not load, so it is not shown as empty. Enter to retry"
+    return kit.row("Could not read %s" % view.get("title", view["id"]).lower(), sub, icon="AlertCircle", nav={"view": at, "arg": arg},
+                   copy=False, badge="ERROR", **dict(noted(at, sub), **dict(("f%d" % (i + 1), "") for i in range(MAX_FIELDS))))
+
+
 def list_rows(cfg, view, data, glob, flt):
+    if data.get(view["endpoint"]) is None:   # not read: a failed call is never shown as an empty list
+        return [back_row("Back to the overview")], [unread_row(view, view["id"])]
     vs = views_by_id(cfg)
     items = sort_items(view, data.get(view["endpoint"]) or [])
     nav_to_detail = bool(view.get("children"))
@@ -901,7 +912,10 @@ def detail_rows(cfg, view, data, glob, wanted, refresh_arg):
     rows = [back_row("Back to %s" % view.get("title", view["id"]).lower()), item_row(cfg, view, item, glob, None)]
     for cv, x in kids[:MAX_ROWS - 4]:
         rows.append(item_row(cfg, cv, x, glob, {"view": cv["id"], "arg": item_id(cv, x)} if cv.get("children") and item_id(cv, x) else None))
-    if not kids and view.get("children"):
+    unread = [vs[c["view"]] for c in view.get("children") or [] if data.get(vs[c["view"]]["endpoint"]) is None]
+    if not kids and unread:
+        rows.append(unread_row(unread[0], view["id"], refresh_arg))
+    elif not kids and view.get("children"):
         rows.append(kit.row(view.get("no_children", "Nothing linked"), "No related rows", icon="list", copy=False, **noted(view["id"], "No related rows")))
     return rows
 

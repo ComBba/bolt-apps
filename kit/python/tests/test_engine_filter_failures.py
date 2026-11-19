@@ -1,5 +1,6 @@
-"""Shared engine: a filter word that cannot ride in a nav arg (C++, cafe with an accent, #12, a/b) keeps the list and its
-notice, cache and retry rows; the portal template reads its Started date. Runs on Python 3.9."""
+"""Shared engine: a filter word that cannot ride in a nav arg (C++, cafe with an accent, #12, a/b) keeps the list; a list whose call
+failed says it did not load instead of showing zero rows; a tile whose value did not load carries no badge; the portal template
+reads its Started date. Runs on Python 3.9."""
 import http.server
 import json
 import os
@@ -113,6 +114,38 @@ class Live(unittest.TestCase):
         rows = self.rows(["projects", "P-1"])
         navs = [r["nav"] for r in rows if (r.get("nav") or {}).get("arg", "").startswith("refresh")]
         self.assertIn({"view": "projects", "arg": "refresh.P-1"}, navs)
+
+    def test_a_failed_list_is_not_shown_as_zero_rows(self):
+        Answers.status = {"tickets": 500}
+        for args in (["tickets"], ["tickets", "open"]):
+            rows = self.rows(args)
+            text = json.dumps(rows)
+            self.assertNotIn("The API returned no rows", text, args)
+            self.assertNotIn("0 tickets", text, args)
+            self.assertNotIn("0 of 0", text, args)
+            self.assertIn("Some data did not load: tickets", text, args)
+            unread = [r for r in rows if r["title"] == "Could not read tickets"]
+            self.assertEqual(len(unread), 1, args)
+            self.assertEqual(unread[0]["nav"], {"view": "tickets", "arg": "refresh"})
+            self.assertEqual(unread[0]["kpi_badge"], "ERROR")
+
+    def test_a_detail_whose_child_list_failed_does_not_say_nothing_linked(self):
+        Answers.status = {"tickets": 500}
+        rows = self.rows(["projects", "P-1"])
+        text = json.dumps(rows)
+        self.assertIn("Website refresh", text)
+        self.assertNotIn("No tickets in this project", text)
+        unread = [r for r in rows if r["title"] == "Could not read tickets"]
+        self.assertEqual(len(unread), 1)
+        self.assertEqual(unread[0]["nav"], {"view": "projects", "arg": "refresh.P-1"})
+
+    def test_a_tile_whose_value_did_not_load_has_no_badge(self):
+        Answers.status = {"tickets": 500}
+        rows = dict((r["title"], r) for r in self.rows([]))
+        for title in ("Open tickets", "Example Co · Summary"):
+            self.assertEqual(rows[title]["kpi_value"], "", title)
+            self.assertEqual(rows[title]["kpi_badge"], "", "no CLEAR or BEHIND for a count that did not load: " + title)
+        self.assertEqual(rows["Projects · 4"]["kpi_badge"], "MIXED", "a tile that loaded keeps its badge")
 
 
 class PortalStarted(unittest.TestCase):
