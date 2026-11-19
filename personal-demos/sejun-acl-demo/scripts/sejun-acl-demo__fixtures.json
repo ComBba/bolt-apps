@@ -1,0 +1,22 @@
+[
+  {
+    "id": "DOC-101",
+    "title": "Product roadmap",
+    "snippet": "The sample team will review onboarding milestones next month.",
+    "source": "Fixture Library / Planning / DOC-101",
+    "allow_roles": ["reader", "reviewer"]
+  },
+  {
+    "id": "DOC-202",
+    "title": "Roadmap roadmap roadmap: review packet",
+    "snippet": "Sample reviewer-only roadmap forecast and tradeoffs.",
+    "source": "Fixture Library / Review / DOC-202",
+    "allow_roles": ["reviewer"]
+  },
+  {
+    "id": "DOC-303",
+    "title": "Roadmap with an unknown ACL",
+    "snippet": "Unknown-access fixture deliberately missing its allow list.",
+    "source": "Fixture Library / Unclassified / DOC-303"
+  }
+]

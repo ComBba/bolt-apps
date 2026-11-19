@@ -1,0 +1,80 @@
+{
+  "script": "scripts/sejun-acl-demo__app.py",
+  "interpreter": "python3",
+  "manifest_actions": 0,
+  "cases": [
+    {
+      "name": "reader sees the shared roadmap and its source",
+      "args": [
+        "reader",
+        "roadmap"
+      ],
+      "expect": {
+        "text_present": [
+          "Product roadmap",
+          "onboarding milestones",
+          "Fixture Library / Planning / DOC-101"
+        ],
+        "text_absent": [
+          "DOC-202",
+          "DOC-303",
+          "Sample reviewer-only"
+        ]
+      }
+    },
+    {
+      "name": "reviewer sees the review packet and shared roadmap",
+      "args": [
+        "reviewer",
+        "roadmap"
+      ],
+      "expect": {
+        "text_present": [
+          "Product roadmap",
+          "Sample reviewer-only",
+          "Fixture Library / Review / DOC-202"
+        ],
+        "text_absent": [
+          "DOC-303",
+          "Unknown-access fixture"
+        ]
+      }
+    },
+    {
+      "name": "invalid role fails closed",
+      "args": [
+        "administrator",
+        "roadmap"
+      ],
+      "expect": {
+        "text_present": [
+          "Unknown sample role"
+        ],
+        "text_absent": [
+          "DOC-101",
+          "DOC-202",
+          "DOC-303"
+        ]
+      }
+    },
+    {
+      "name": "unavailable source emits only a status row",
+      "args": [
+        "reader",
+        "roadmap",
+        "absent.json"
+      ],
+      "expect": {
+        "text_present": [
+          "Sample search unavailable"
+        ],
+        "text_absent": [
+          "DOC-101",
+          "DOC-202",
+          "DOC-303"
+        ]
+      }
+    }
+  ],
+  "kit": "scripts/sejun-acl-demo__bolt_app_kit.py"
+}

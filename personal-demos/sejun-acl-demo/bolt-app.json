@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "sejun-acl-demo",
+  "title": "Sample document search",
+  "role": "Anyone evaluating permission-aware search behavior with fictional documents",
+  "saves": "Repeating the same sample permission and source checks by hand",
+  "summary": "Open =sejun-acl-demo, choose a sample role and search roadmap to see the documents that role can read.",
+  "author": {
+    "name": "Sejun Kim",
+    "link": "https://github.com/ComBba"
+  },
+  "tier": 3,
+  "permissions": ["reads_launcher_input", "runs_commands", "files"],
+  "platforms": ["macos"],
+  "requires": [{"interpreter": "python", "min_version": "3.9"}],
+  "tests": []
+}

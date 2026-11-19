@@ -1,0 +1,29 @@
+schema_version: 1
+runtime: bridge
+id: sejun-acl-demo
+chip: sejun-acl-demo
+title: "Sample document search"
+description: "Search a fictional document library as a sample reader or reviewer."
+icon: file
+emits: Generic
+inputs:
+  - { name: "role", type: "select", label: "Sample role", required: true, default: "reader", options: ["reader", "reviewer"] }
+  - { name: "query", type: "text", label: "Search sample documents", required: true, placeholder: "roadmap" }
+submit:
+  label: "Search"
+bridge:
+  command:
+    macos: "python3 {{scripts_dir}}/sejun-acl-demo__app.py {{role}} {{query}} {{scripts_dir}}/sejun-acl-demo__fixtures.json {{scripts_dir}}/sejun-acl-demo__bolt_app_kit.py"
+  parse: json
+  timeout_seconds: 5
+presentation:
+  widget: list
+  title_field: title
+  subtitle_field: subtitle
+  right_widget:
+    kind: entity_preview
+    mode: selected_row
+    bind:
+      title: "{{row.title}}"
+      subtitle: "{{row.subtitle}}"
+      body: "{{row.body}}"
