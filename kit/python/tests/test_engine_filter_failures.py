@@ -1,6 +1,7 @@
 """Shared engine: a filter word that cannot ride in a nav arg (C++, cafe with an accent, #12, a/b) keeps the list; a list whose call
 failed says it did not load instead of showing zero rows; a tile whose value did not load carries no badge; the portal template
-reads its Started date. Runs on Python 3.9."""
+reads its Started date; the form template saves an empty input as empty text and reads "true" and "false" with the yes filter.
+Runs on Python 3.9."""
 import http.server
 import json
 import os
@@ -14,7 +15,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from test_cold_run_engine import cfg_of, fixtures_of, run, EX  # noqa: E402
+from test_cold_run_engine import cfg_of, fixtures_of, load_engine, run, EX  # noqa: E402
 
 WORDS = ("C++", "café", "#12", "a/b")
 
@@ -154,6 +155,31 @@ class PortalStarted(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         item = [x for x in json.loads(r.stdout) if x["title"] == "Website refresh"][0]
         self.assertEqual(item["f4"], "2026-01-01")
+
+
+class YesFilter(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.m = load_engine()
+
+    def test_yes_reads_booleans_and_their_text(self):
+        s = self.m.shown
+        for v, want in ((True, "Yes"), (False, "No"), ("true", "Yes"), ("false", "No"), ("yes", "Yes"), ("no", "No"),
+                        ("TRUE", "Yes"), (" False ", "No"), ("maybe", "maybe"), (None, "unknown"), ("", "unknown")):
+            self.assertEqual(s(v, "yes"), want, repr(v))
+
+
+class FormRecord(unittest.TestCase):
+    def test_an_empty_input_is_saved_as_empty_text_and_the_toggle_as_yes(self):
+        home = tempfile.mkdtemp()
+        try:
+            r = run("form-template", ["5", "Office", "2026-02-01", "", ""], env={"BOLT_APP_FIXTURE": "1", "HOME": home})
+            self.assertEqual(r.returncode, 0, r.stderr)
+            with open(os.path.join(home, ".bolt-apps", "form-template", "entries.jsonl")) as f:
+                saved = [json.loads(x) for x in f if x.strip()]
+            self.assertEqual(saved, [{"date": "2026-02-01", "amount": "5.00", "category": "Office", "description": "", "billable": "Yes"}])
+        finally:
+            shutil.rmtree(home, ignore_errors=True)
 
 
 if __name__ == "__main__":

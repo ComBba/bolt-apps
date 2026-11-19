@@ -106,7 +106,7 @@ What each filter takes and gives:
 | `whenday` | the same | the date only, `2026-11-15`; ISO strings work, so a crates.io or GitHub date needs no other filter |
 | `day` | any text that starts with a date | its first 10 characters (`2026-07-18`) |
 | `hhmm` | an ISO date-time | characters 12 to 16 (`05:30`) |
-| `yes` | a true or false value | Yes or No (it never prints blank, so a missing flag reads `unknown`; show a flag only on rows where it matters) |
+| `yes` | a true or false value, or the text true, false, yes or no in any case | Yes or No (it never prints blank, so a missing flag reads `unknown`; show a flag only on rows where it matters) |
 | `thousands` | a number or digits | `1,720,732,933`; with decimals `1,234.50`; not a number reads `unknown` |
 | `round`, `round1`, `round2` | a number | 0, 1 or 2 decimals, half up |
 | `human` | text | in_progress becomes In progress |
@@ -119,7 +119,7 @@ A `tile` value must be a number (a text value draws a `-` tile), but a tile `lab
 `=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word; any word works, `C++` or `a/b` too, and its Retry rows reload the list without the filter), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
 
 ## `form`
-`inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
+`inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values; an empty input is saved as empty text, not `unknown`), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
 
 ## `lookup`
 `endpoint`, `match` (fields compared to the typed word: exact first, then contains), `item`, `widget`, `prompt_title`, `prompt_subtitle`, `none_title`, `examples`.

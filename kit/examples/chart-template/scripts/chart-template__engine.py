@@ -114,8 +114,9 @@ def _when(v, day_only=False):
 def shown(v, filt):
     if v is None or v == "":
         return kit.UNKNOWN
-    if filt == "yes":
-        return "Yes" if v is True else ("No" if v is False else str(v))
+    if filt == "yes":   # a JSON true or false, or the text a form toggle or an API sends: "true", "false", "yes", "no"
+        t = str(v).strip().lower() if isinstance(v, str) else v
+        return "Yes" if v is True or t in ("true", "yes") else ("No" if v is False or t in ("false", "no") else str(v))
     if filt == "human":
         return human(v)
     if filt in MAPS:
@@ -154,8 +155,9 @@ def shown(v, filt):
     return str(v)
 
 
-def render(tpl, item, glob, strict=False):
-    """Fill {name} and {name|filter} from the item, then the shared values. strict=True returns None when a name is missing."""
+def render(tpl, item, glob, strict=False, blank=None):
+    """Fill {name} and {name|filter} from the item, then the shared values. strict=True returns None when a name is missing.
+    blank, when given, stands in for a missing value instead of "unknown" (a form record saves an empty input as empty text)."""
     if not isinstance(tpl, str):
         return "" if not strict else None
     missing = []
@@ -169,6 +171,8 @@ def render(tpl, item, glob, strict=False):
     out = TOKEN.sub(sub, tpl)
     if strict:
         return None if missing else one_noun(tpl, out)
+    if blank is not None:
+        return one_noun(tpl, TOKEN.sub(lambda m: blank if lookup(m.group(1), item, glob) in (None, "") else shown(lookup(m.group(1), item, glob), m.group(2)), tpl))
     return one_noun(tpl, TOKEN.sub(lambda m: shown(lookup(m.group(1), item, glob), m.group(2)), tpl))
 
 
@@ -1381,7 +1385,7 @@ def run_form(cfg, args, fx, fixtures):
     vals, bad = form_values(fm, args)
     if bad:
         kit.emit([kit.error_row("; ".join(bad[:3]), title="Not saved")])
-    rec = dict((k, render(t, vals, {})) for k, t in fm["record"].items())
+    rec = dict((k, render(t, vals, {}, blank="")) for k, t in fm["record"].items())   # an empty input is saved as "", never as the word unknown
     store_append(fm, rec)
     saved = list(reversed(store_read(fm)))
     seeds = list(fixtures.get("seed") or []) if fx else []
