@@ -318,3 +318,44 @@ test('scripts_dir_form: lint --personal and verify refuse a comment mention; the
 	}
 	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/[a-z0-9-]+__(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py)/g, '')));
 });
+
+test('a check.json load error is a finding in both library modes and exits 2 in the CLI', async (t) => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-badcfg-'));
+	t.after(() => fs.rmSync(d, { recursive: true, force: true }));
+	const file = path.join(d, 'check.json');
+	for (const [body, want] of [['{oops', /check\.json is not valid JSON/], ['[]', /check\.json must be a JSON object\./], ['null', /check\.json must be a JSON object\./], [null, /check\.json could not be read/]]) {
+		if (body === null) { fs.rmSync(file); fs.mkdirSync(file); }
+		else fs.writeFileSync(file, body);
+		for (const shared of [false, true]) {
+			const report = await checkApp(d, { shared });
+			assert.deepEqual(report.cases, []);
+			assert.deepEqual(codes(report.findings), ['load_error']);
+			assert.equal(report.findings[0].path, 'check.json');
+			assert.match(report.findings[0].message, want);
+		}
+		const plain = spawnSync(process.execPath, [CLI, 'check', d], { encoding: 'utf8' });
+		assert.equal(plain.status, 2, plain.stdout + plain.stderr);
+		assert.match(plain.stderr, want);
+		assert.equal(plain.stderr.trimEnd().split('\n').length, 1);
+		const json = spawnSync(process.execPath, [CLI, 'check', d, '--shared', '--json'], { encoding: 'utf8' });
+		assert.equal(json.status, 2, json.stdout + json.stderr);
+		assert.equal(json.stderr, '');
+		const result = JSON.parse(json.stdout);
+		assert.equal(result.ok, false);
+		assert.match(result.error, want);
+		assert.deepEqual(codes(result.findings), ['load_error']);
+	}
+});
+
+test('a valid check.json object still exits 1 for a checker finding', (t) => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-invalidcheck-'));
+	t.after(() => fs.rmSync(d, { recursive: true, force: true }));
+	fs.writeFileSync(path.join(d, 'check.json'), '{}');
+	const r = spawnSync(process.execPath, [CLI, 'check', d, '--json'], { encoding: 'utf8' });
+	assert.equal(r.status, 1, r.stdout + r.stderr);
+	const result = JSON.parse(r.stdout);
+	assert.equal(result.ok, false);
+	assert.equal(result.error, undefined);
+	assert.ok(codes(result.findings).includes('interpreter_missing'));
+	assert.ok(!codes(result.findings).includes('load_error'));
+});

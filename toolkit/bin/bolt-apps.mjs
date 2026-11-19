@@ -451,13 +451,21 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 	const [cmd, ...rest] = process.argv.slice(2);
 	const cmdCheck = async (args) => {
 		const target = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--os' && args[i - 1] !== '--case');
-		if (target && fs.existsSync(path.join(target, 'check.json'))) {
+		let hasCheck = false;
+		if (target) {
+			try { fs.lstatSync(path.join(target, 'check.json')); hasCheck = true; }
+			catch (e) { hasCheck = e.code !== 'ENOENT' && e.code !== 'ENOTDIR'; }  // only a missing file takes the non-script-app path
+		}
+		if (hasCheck) {
 			const osi = args.indexOf('--os'), osArg = osi >= 0 ? args[osi + 1] : undefined;
 			if (osi >= 0 && !OSES.includes(osArg)) die(`--os must be one of ${OSES.join(', ')}`);
-			const ci = args.indexOf('--case');
+			const ci = args.indexOf('--case'), json = args.includes('--json');
 			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden'), shared: args.includes('--shared') });
-			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
-			process.exit(reportOk(r) ? 0 : 1);
+			const load = r.findings.find((f) => f.code === 'load_error');
+			const ok = reportOk(r);
+			if (load && !json) die(load.message);
+			console.log(json ? JSON.stringify({ ok, ...(load ? { error: load.message } : {}), ...r }, null, 2) : formatReport(r));
+			process.exit(load ? 2 : ok ? 0 : 1);
 		}
 		if (!target) die('usage: ./bolt-apps check <app-folder>');
 		const has = (sub) => fs.existsSync(path.join(target, sub));

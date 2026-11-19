@@ -94,11 +94,11 @@ for (const c of ASSESS_CODES) emitted.add(c);
 for (const f of SRC) {
 	const t = read(f);
 	for (const m of t.matchAll(/'([a-z][a-z0-9]*(?:_[a-z0-9]+)+)'/g)) universe.add(m[1]);
-	for (const re of [/\b[EW]\('([a-z][a-z0-9_]+)'/g, /add\('(?:error|warning)',\s*'([a-z][a-z0-9_]+)'/g, /code:\s*'([a-z][a-z0-9_]+)'/g]) for (const m of t.matchAll(re)) emitted.add(m[1]);
+	for (const re of [/\b[EW]\('([a-z][a-z0-9_]+)'/g, /add\('(?:error|warning)',\s*'([a-z][a-z0-9_]+)'/g, /\btop\('(?:error|warning)',\s*'([a-z][a-z0-9_]+)'/g, /code:\s*'([a-z][a-z0-9_]+)'/g]) for (const m of t.matchAll(re)) emitted.add(m[1]);
 }
 for (const c of emitted) universe.add(c);
 // codes the unpublished checker inside Bolt emits; CHECKER.md says so and the toolkit does not
-const BOLT_ONLY = new Set(['sensitive_secret', 'sensitive_email', 'sensitive_internal_url', 'test_failed', 'snippet_invalid', 'search_engine_invalid', 'user_app_invalid', 'listing_invalid', 'parse_error', 'load_error', 'signature_invalid', 'owned_by_other']);
+const BOLT_ONLY = new Set(['sensitive_secret', 'sensitive_email', 'sensitive_internal_url', 'test_failed', 'snippet_invalid', 'search_engine_invalid', 'user_app_invalid', 'listing_invalid', 'parse_error', 'signature_invalid', 'owned_by_other']);
 const known = new Set([...universe, ...BOLT_ONLY]);
 {
 	const add = (o) => { if (Array.isArray(o)) o.forEach(add); else if (o && typeof o === 'object') Object.entries(o).forEach(([k, v]) => { known.add(k); add(v); }); else if (typeof o === 'string') known.add(o); };
