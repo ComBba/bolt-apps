@@ -140,6 +140,39 @@ class Live(unittest.TestCase):
         self.assertEqual(len(unread), 1)
         self.assertEqual(unread[0]["nav"], {"view": "projects", "arg": "refresh.P-1"})
 
+    def two_children(self):
+        """projects gets a second linked list, milestones, so one child list can fail while the other loads."""
+        self.cfg["endpoints"]["milestones"] = {"path": "/v1/milestones", "map": {"project_id": "projectId"}}
+        self.cfg["views"].append({"id": "milestones", "title": "Milestones", "icon": "list", "endpoint": "milestones", "item": {"title": "{title}"}})
+        self.cfg["views"][0]["children"].append({"view": "milestones", "match": "project_id"})
+        Answers.payload = dict(Answers.payload, milestones={"data": [{"id": "M-1", "title": "Beta milestone", "projectId": "P-1"}]})
+
+    def test_a_detail_keeps_the_linked_rows_that_loaded_beside_the_one_that_did_not(self):
+        self.two_children()
+        Answers.status = {"milestones": 500}
+        titles = [r["title"] for r in self.rows(["projects", "P-1"])]
+        self.assertIn("Dark mode colors", titles, "the tickets that loaded are kept")
+        self.assertEqual(titles.count("Could not read milestones"), 1)
+        self.assertNotIn("No tickets in this project", titles)
+
+    def test_a_detail_says_so_for_every_linked_list_that_did_not_load(self):
+        self.two_children()
+        Answers.status = {"milestones": 500, "tickets": 500}
+        titles = [r["title"] for r in self.rows(["projects", "P-1"])]
+        self.assertEqual([t for t in titles if t.startswith("Could not read")], ["Could not read tickets", "Could not read milestones"])
+        self.assertIn("Website refresh", titles)
+
+    def test_a_64_character_id_keeps_the_detail_on_retry(self):
+        long_id = "P" * 64
+        projects = json.loads(json.dumps(Answers.payload["projects"]))
+        projects["data"][0]["id"] = long_id
+        Answers.payload = dict(Answers.payload, projects=projects)
+        Answers.status = {"account": 500}
+        rows = self.rows(["projects", long_id])
+        self.assertIn("Website refresh", [r["title"] for r in rows], "the detail opens")
+        navs = [r["nav"] for r in rows if (r.get("nav") or {}).get("view") == "projects" and r["title"] in ("Some data did not load: account", "Refresh")]
+        self.assertEqual(navs, [{"view": "projects", "arg": long_id}] * 2, "retry opens the detail, not the list")
+
     def test_a_tile_whose_value_did_not_load_has_no_badge(self):
         Answers.status = {"tickets": 500}
         rows = dict((r["title"], r) for r in self.rows([]))
@@ -150,7 +183,7 @@ class Live(unittest.TestCase):
 
 
 class TileBadge(unittest.TestCase):
-    """A tile value that did not load skips the rule without `if`; a rule on another field still sets the badge."""
+    """A tile value that did not load skips the rule without `if` and the rules on its own field; a rule on another field still sets the badge."""
     RULES = [{"if": "status==open", "badge": "OPEN"}, {"if": "priority>=4", "badge": "URGENT"}, {"badge": "CLEAR"}]
 
     @classmethod
@@ -162,6 +195,12 @@ class TileBadge(unittest.TestCase):
 
     def test_no_value_keeps_a_badge_from_another_field(self):
         self.assertEqual(self.m.make_tile({"value": "priority", "badge": self.RULES}, {"status": "open"}, {}), (None, "OPEN"))
+
+    def test_text_in_the_value_field_never_meets_a_rule_on_that_field(self):
+        rules = [{"if": "remaining>=10", "badge": "PLENTY"}, {"if": "status==open", "badge": "OPEN"}]
+        self.assertEqual(self.m.make_tile({"value": "remaining", "badge": rules}, {"remaining": "N/A", "status": "closed"}, {}), (None, ""))
+        self.assertEqual(self.m.make_tile({"value": "remaining", "badge": rules}, {"remaining": "N/A", "status": "open"}, {}), (None, "OPEN"))
+        self.assertEqual(self.m.make_tile({"value": "remaining", "badge": [{"if": "limit<remaining", "badge": "OVER"}]}, {"remaining": "N/A", "limit": "0"}, {}), (None, ""))
 
     def test_no_value_drops_a_plain_word_badge(self):
         self.assertEqual(self.m.make_tile({"value": "priority", "badge": "NEW"}, {"status": "open"}, {}), (None, ""))

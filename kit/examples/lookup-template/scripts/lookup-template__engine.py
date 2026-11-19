@@ -237,15 +237,21 @@ def badge_for(rules, item, glob):
 
 def make_tile(spec, item, glob):
     """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero.
-    Its badge then comes only from rules with an `if` (one on another field, such as status==open, still applies): the last rule
-    has no `if`, so it would otherwise say CLEAR or BEHIND about a number that did not load. A plain word badge is left out."""
+    Its badge then comes only from rules with an `if` that do not name the value's own field (one on another field, such as
+    status==open, still applies): the last rule has no `if`, so it would say CLEAR or BEHIND about a number that did not load, and a
+    rule such as remaining>=10 would compare a text value like N/A as text. A plain word badge is left out."""
     if not spec:
         return None, ""
     val = spec.get("value")
     v = number(val) if not isinstance(val, str) or number(val) is not None else number(lookup(val, item, glob))
     rules = spec.get("badge") if isinstance(spec.get("badge"), list) else None
     if v is None:
-        return None, (badge_for([r for r in rules if isinstance(r, dict) and r.get("if")], item, glob) if rules else "")
+        own = val if isinstance(val, str) else None
+
+        def other_field(r):
+            m = RULE.match(str(r.get("if") or ""))
+            return bool(m) and own not in (m.group(1), m.group(3))
+        return None, (badge_for([r for r in rules if isinstance(r, dict) and other_field(r)], item, glob) if rules else "")
     badge = badge_for(rules, item, glob) if rules is not None else str(spec.get("badge", ""))
     mx = spec.get("max")
     mxv = None if mx is None else (number(mx) if number(mx) is not None else number(lookup(mx, item, glob)))
@@ -916,12 +922,12 @@ def detail_rows(cfg, view, data, glob, wanted, refresh_arg):
     item = found[0]
     kids = children_of(cfg, view, item, data, glob)
     rows = [back_row("Back to %s" % view.get("title", view["id"]).lower()), item_row(cfg, view, item, glob, None)]
-    for cv, x in kids[:MAX_ROWS - 4]:
-        rows.append(item_row(cfg, cv, x, glob, {"view": cv["id"], "arg": item_id(cv, x)} if cv.get("children") and item_id(cv, x) else None))
     unread = [vs[c["view"]] for c in view.get("children") or [] if data.get(vs[c["view"]]["endpoint"]) is None]
-    if not kids and unread:
-        rows.append(unread_row(unread[0], view["id"], refresh_arg))
-    elif not kids and view.get("children"):
+    for cv, x in kids[:max(0, MAX_ROWS - 4 - len(unread))]:
+        rows.append(item_row(cfg, cv, x, glob, {"view": cv["id"], "arg": item_id(cv, x)} if cv.get("children") and item_id(cv, x) else None))
+    for cv in unread:   # each linked list that did not load says so, beside the linked rows that did
+        rows.append(unread_row(cv, view["id"], refresh_arg))
+    if not kids and not unread and view.get("children"):
         rows.append(kit.row(view.get("no_children", "Nothing linked"), "No related rows", icon="list", copy=False, **noted(view["id"], "No related rows")))
     return rows
 
@@ -1213,8 +1219,12 @@ def run_views(cfg, args, fx, fixtures):
         names = sorted(set([v["endpoint"]] + objects + [vs[c["view"]]["endpoint"] for c in v.get("children") or []]))
     L = load(cfg, names, refresh, demo, fx, fixtures)
     retry = "refresh" if not detail_id or view_id == "overview" else "refresh." + detail_id
-    if not NAV_OK.match(retry) or ".." in retry:   # a filter word such as C++, café or a/b cannot ride in a nav arg; a refresh drops the filter anyway
-        retry = "refresh"
+    if not NAV_OK.match(retry) or ".." in retry:
+        # a filter word such as C++, café or a/b cannot ride in a nav arg: retry the list (a refresh drops the filter anyway).
+        # An id of 57 to 64 characters is a valid arg but too long with "refresh." in front: retry opens the detail by its id, so
+        # Enter re-reads the calls that failed (they are never cached) but serves the others from the cache until its ttl ends.
+        # A filter word that long and made of token characters takes the same path, so its retry keeps the filter.
+        retry = detail_id if NAV_OK.match(detail_id) and ".." not in detail_id else "refresh"
     data_view = view_id != "overview" and (vs[view_id].get("widget") or {}).get("mode") == "list_data"   # every row is plotted: no Back or refresh rows
     if L.stop:
         rows = stop_rows(L, view_id, retry)
