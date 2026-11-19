@@ -102,6 +102,11 @@ test('gallery lint and pack check the app file the way verify does: keys, pipe s
 	r = run(d, 'lint', b, '--json'); assert.equal(r.status, 1, r.stdout);
 	for (const c of ['transform_step_unknown', 'transform_pipe_count']) assert.ok(errors(r).includes(c), c + r.stdout);
 	assert.equal(errors(r).filter((c) => c === 'transform_step_unknown').length, 2, r.stdout);
+	// each finding points at its own line of the app file, not at line 1 or at actions
+	const lineOf = (id, text) => fs.readFileSync(path.join(d, 'apps', id, 'utilities', `${id}.yaml`), 'utf8').split('\n').findIndex((l) => l.includes(text)) + 1;
+	const at = (r_, code) => JSON.parse(r_.stdout).reports[0].findings.filter((x) => x.code === code).map((x) => x.line);
+	assert.deepEqual(at(r, 'transform_step_unknown'), [lineOf('g-pipe', 'frobnicate'), lineOf('g-pipe', 'split:')], r.stdout);
+	assert.deepEqual(at(r, 'transform_pipe_count'), [lineOf('g-pipe', 'pipe:')], r.stdout);
 	const v = JSON.parse(run(d, 'verify', b, '--json').stdout); assert.ok(v.findings.some((x) => x.code === 'transform_step_unknown' && x.fix !== 'See the message.'), JSON.stringify(v.findings));
 	// an empty pipe
 	const e = app('g-empty', 'transform', (s) => s.replace('  pipe:\n    - trim\n    - upper\n', '  pipe: []\n'));
@@ -110,6 +115,8 @@ test('gallery lint and pack check the app file the way verify does: keys, pipe s
 	const c = app('g-rec', 'recognizer', (s) => s.replace('    - regex: "(TKT-\\\\d{1,6})"\n', `    - regex: "${'a'.repeat(513)}"\n` + '    - regex: "(TKT-\\\\d{1,6})"\n'.repeat(16)));
 	r = run(d, 'lint', c, '--json'); assert.equal(r.status, 1, r.stdout);
 	for (const x of ['recognize_patterns_count', 'recognize_regex_too_long']) assert.ok(errors(r).includes(x), x + r.stdout);
+	assert.deepEqual(at(r, 'recognize_regex_too_long'), [lineOf('g-rec', 'a'.repeat(513))], r.stdout);
+	assert.deepEqual(at(r, 'recognize_patterns_count'), [lineOf('g-rec', 'patterns:')], r.stdout);
 	// the step names and limits come from schema/user-app.schema.json: the most steps it allows, each name it lists, pass
 	const PIPE = JSON.parse(fs.readFileSync(path.join(REPO, 'schema/user-app.schema.json'), 'utf8')).properties.transform.properties.pipe;
 	const names = PIPE.items.oneOf.find((o) => o.enum).enum;

@@ -176,31 +176,33 @@ export function launcherRules(root, opts = {}) {
 	}
 	// The launcher's structure, env, timeout, loopback, action and nav rules (schema/bolt-rules.json). Each is an error because the launcher refuses the file.
 	for (const f of [structureProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems]) for (const pr of f(root)) (pr.level === 'warning' ? W : E)(pr.code, pr.message);
-	for (const pr of transformProblems(root)) E(pr.code, pr.message);
+	out.push(...transformProblems(root));   // these carry the line of the step or pattern they are about
 	return out;
 }
-// transform.pipe and recognize.patterns (AGENTS.md section 3). The step names and the limits are read from schema/user-app.schema.json, not copied here.
+// Two parts of transform and recognize, with the step names and the limits read from schema/user-app.schema.json (not copied here): each transform.pipe step
+// is a listed step name, or a mapping with exactly one listed key, and the pipe has a number of steps the schema allows; recognize.patterns has a number of
+// entries the schema allows and no regex longer than its limit. Step values (such as head: -1) and what a regex matches are not checked: Bolt checks them.
 let USER_APP = null;
 export function transformProblems(root) {
-	const out = [], E = (code, message) => out.push({ level: 'error', code, message });
+	const out = [], E = (code, message, line) => out.push({ level: 'error', code, message, ...(line ? { line } : {}) });
 	USER_APP ??= JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../schema/user-app.schema.json'), 'utf8')).properties;
 	const pipeSpec = USER_APP.transform.properties.pipe, patSpec = USER_APP.recognize.properties.patterns;
 	const names = pipeSpec.items.oneOf.flatMap((o) => o.enum || []), valued = pipeSpec.items.oneOf.filter((o) => o.type === 'object').map((o) => o.required[0]);
 	const list = (n) => (n && n.t === 'l' ? n.items : null);
-	const tr = get(root, 'transform')?.value;
+	const trE = get(root, 'transform'), tr = trE?.value;
 	if (tr && tr.t === 'm') {
-		const steps = list(get(tr, 'pipe')?.value);
-		if (!steps || steps.length < pipeSpec.minItems || steps.length > pipeSpec.maxItems) E('transform_pipe_count', `transform.pipe has ${steps ? steps.length : 'no'} steps; it takes ${pipeSpec.minItems} to ${pipeSpec.maxItems}, and Bolt refuses the app file otherwise`);
+		const pipeE = get(tr, 'pipe'), steps = list(pipeE?.value), here = pipeE?.line ?? trE.line, stepLine = (i) => pipeE?.value?.lines?.[i] ?? here;
+		if (!steps || steps.length < pipeSpec.minItems || steps.length > pipeSpec.maxItems) E('transform_pipe_count', `transform.pipe has ${steps ? steps.length : 'no'} steps; it takes ${pipeSpec.minItems} to ${pipeSpec.maxItems}, and Bolt refuses the app file otherwise`, here);
 		for (const [i, s] of (steps || []).entries()) {
 			const keys = s.t === 'm' ? s.entries.map((e) => e.key) : [];
-			if (s.t === 's' ? !names.includes(s.v) : s.t !== 'm' || keys.length !== 1 || !valued.includes(keys[0])) E('transform_step_unknown', `transform.pipe[${i}] ${s.t === 's' ? `"${s.v}"` : s.t === 'm' ? `{ ${keys.join(', ')} }` : '(a list)'} is not a step Bolt knows. A step is one of ${names.join(', ')}, or exactly one of ${valued.join(', ')} with its value`);
+			if (s.t === 's' ? !names.includes(s.v) : s.t !== 'm' || keys.length !== 1 || !valued.includes(keys[0])) E('transform_step_unknown', `transform.pipe[${i}] ${s.t === 's' ? `"${s.v}"` : s.t === 'm' ? `{ ${keys.join(', ')} }` : '(a list)'} is not a step name Bolt knows. A step is one of ${names.join(', ')}, or a mapping with exactly one of ${valued.join(', ')}`, stepLine(i));
 		}
 	}
-	const rc = get(root, 'recognize')?.value;
+	const rcE = get(root, 'recognize'), rc = rcE?.value;
 	if (rc && rc.t === 'm') {
-		const pats = list(get(rc, 'patterns')?.value), max = patSpec.items.properties.regex.maxLength;
-		if (!pats || pats.length < patSpec.minItems || pats.length > patSpec.maxItems) E('recognize_patterns_count', `recognize.patterns has ${pats ? pats.length : 'no'} entries; it takes ${patSpec.minItems} to ${patSpec.maxItems}, and Bolt refuses the app file otherwise`);
-		for (const [i, p] of (pats || []).entries()) { const re = str(get(p, 'regex')?.value); if (re !== undefined && [...re].length > max) E('recognize_regex_too_long', `recognize.patterns[${i}].regex is ${[...re].length} characters; at most ${max} are allowed`); }
+		const patE = get(rc, 'patterns'), pats = list(patE?.value), here = patE?.line ?? rcE.line, max = patSpec.items.properties.regex.maxLength;
+		if (!pats || pats.length < patSpec.minItems || pats.length > patSpec.maxItems) E('recognize_patterns_count', `recognize.patterns has ${pats ? pats.length : 'no'} entries; it takes ${patSpec.minItems} to ${patSpec.maxItems}, and Bolt refuses the app file otherwise`, here);
+		for (const [i, p] of (pats || []).entries()) { const reE = get(p, 'regex'), re = str(reE?.value); if (re !== undefined && [...re].length > max) E('recognize_regex_too_long', `recognize.patterns[${i}].regex is ${[...re].length} characters; at most ${max} are allowed`, reE.line ?? patE.value.lines?.[i] ?? here); }
 	}
 	return out;
 }

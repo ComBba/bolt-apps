@@ -167,3 +167,29 @@ test('lint refuses an app whose ids disagree: the app file name, the id in it, c
 	fs.renameSync(path.join(d, 'apps', 'g', 'utilities', 'g.yaml'), path.join(d, 'apps', 'g', 'utilities', 'h.yaml'));
 	r = run(d, 'lint', 'apps/g', '--json'); assert.equal(r.status, 1, r.stdout); assert.ok(codes(r).includes('error:utilities_name_mismatch'), r.stdout);
 });
+
+test('an id finding never says to delete the file it asks you to generate again', () => {
+	const d = tmp();
+	assert.equal(run(d, 'new', 'portal-template', 'zz', '--dir', d).status, 0);
+	const app = path.join(d, 'zz'), f = path.join(app, 'utilities', 'zz.yaml');
+	// the file has the right name (the listing id) but another id inside
+	fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/^id: .*$/m, 'id: other').replace(/^chip: .*$/m, 'chip: other'));
+	const r = run(d, 'lint', app, '--personal', '--json'), fs_ = JSON.parse(r.stdout).reports[0].findings;
+	assert.equal(r.status, 1, r.stdout);
+	const msg = (c) => { const x = fs_.find((y) => y.code === c); assert.ok(x, c + r.stdout); return x.message; };
+	assert.equal(msg('utilities_name_mismatch'), 'utilities/zz.yaml holds the app "other"; the file name must be the id. Generate it again: python3 scripts/zz__engine.py --emit-yaml > utilities/zz.yaml');
+	assert.equal(msg('utilities_id_mismatch'), 'utilities/zz.yaml has the id "other", but bolt-app.json and the folder name say "zz". Set app.id to zz in scripts/zz__config.json and generate the app file again as utilities/zz.yaml');
+	for (const m of [msg('utilities_name_mismatch'), msg('utilities_id_mismatch')]) assert.doesNotMatch(m, /delete/);
+	// a file with another name: generating utilities/zz.yaml leaves it behind, so deleting it is part of the fix
+	fs.renameSync(f, path.join(app, 'utilities', 'other.yaml'));
+	const r2 = run(d, 'lint', app, '--personal', '--json'), m2 = JSON.parse(r2.stdout).reports[0].findings.find((y) => y.code === 'utilities_id_mismatch');
+	assert.ok(m2 && /and delete utilities\/other\.yaml$/.test(m2.message), r2.stdout);
+});
+
+test('a script app without the engine may keep its own app.id in its config: the id checks are for engine apps', () => {
+	const d = tmp(), dir = scriptApp(d);
+	write(path.join(dir, 'scripts', 'eagle-info__config.json'), JSON.stringify({ app: { id: 'eagle-data-source' } }));
+	const r = run(d, 'lint', 'apps/eagle-info', '--personal', '--json');
+	assert.equal(r.status, 0, r.stdout);
+	assert.ok(!JSON.parse(r.stdout).reports[0].findings.some((x) => /_id_mismatch$/.test(x.code)), r.stdout);
+});
