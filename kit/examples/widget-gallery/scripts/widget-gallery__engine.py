@@ -236,15 +236,17 @@ def badge_for(rules, item, glob):
 
 
 def make_tile(spec, item, glob):
-    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero,
-    and no badge: the last rule has no `if`, so it would otherwise say CLEAR or BEHIND about a number that did not load."""
+    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero.
+    Its badge then comes only from rules with an `if` (one on another field, such as status==open, still applies): the last rule
+    has no `if`, so it would otherwise say CLEAR or BEHIND about a number that did not load. A plain word badge is left out."""
     if not spec:
         return None, ""
     val = spec.get("value")
     v = number(val) if not isinstance(val, str) or number(val) is not None else number(lookup(val, item, glob))
+    rules = spec.get("badge") if isinstance(spec.get("badge"), list) else None
     if v is None:
-        return None, ""
-    badge = badge_for(spec.get("badge"), item, glob) if isinstance(spec.get("badge"), list) else str(spec.get("badge", ""))
+        return None, (badge_for([r for r in rules if isinstance(r, dict) and r.get("if")], item, glob) if rules else "")
+    badge = badge_for(rules, item, glob) if rules is not None else str(spec.get("badge", ""))
     mx = spec.get("max")
     mxv = None if mx is None else (number(mx) if number(mx) is not None else number(lookup(mx, item, glob)))
     return kit.safe_tile(render(spec.get("label", ""), item, glob), v, unit=spec.get("unit", ""), max=mxv,

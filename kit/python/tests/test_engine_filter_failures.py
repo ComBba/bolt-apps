@@ -149,6 +149,27 @@ class Live(unittest.TestCase):
         self.assertEqual(rows["Projects · 4"]["kpi_badge"], "MIXED", "a tile that loaded keeps its badge")
 
 
+class TileBadge(unittest.TestCase):
+    """A tile value that did not load skips the rule without `if`; a rule on another field still sets the badge."""
+    RULES = [{"if": "status==open", "badge": "OPEN"}, {"if": "priority>=4", "badge": "URGENT"}, {"badge": "CLEAR"}]
+
+    @classmethod
+    def setUpClass(cls):
+        cls.m = load_engine()
+
+    def test_no_value_and_only_the_fallback_matches_gives_no_badge(self):
+        self.assertEqual(self.m.make_tile({"value": "priority", "badge": self.RULES}, {"status": "closed"}, {}), (None, ""))
+
+    def test_no_value_keeps_a_badge_from_another_field(self):
+        self.assertEqual(self.m.make_tile({"value": "priority", "badge": self.RULES}, {"status": "open"}, {}), (None, "OPEN"))
+
+    def test_no_value_drops_a_plain_word_badge(self):
+        self.assertEqual(self.m.make_tile({"value": "priority", "badge": "NEW"}, {"status": "open"}, {}), (None, ""))
+
+    def test_a_value_still_reaches_the_fallback(self):
+        self.assertEqual(self.m.make_tile({"value": "priority", "badge": self.RULES}, {"status": "closed", "priority": 2}, {})[1], "CLEAR")
+
+
 class PortalStarted(unittest.TestCase):
     def test_the_started_field_reads_the_date(self):
         r = run("portal-template", ["projects", "P-1"], env={"BOLT_APP_FIXTURE": "1"})

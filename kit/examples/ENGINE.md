@@ -87,7 +87,7 @@ Totals over a field: `{ "endpoint": "tickets", "field_sum": "hours" }` adds the 
 `title`, `subtitle`, `icon`, `body`, `view` (drill to a view; `arg` filters it), `url` (opens a link), `tile`, `extra`, `trend` (list of numbers), `only_if`. `overview.widget` replaces the default tiles pane.
 
 ## `tile`
-`{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`. A value that cannot be read gives no tile and no badge, so a rule without `if` never says CLEAR about a count that did not load.
+`{ label, value (a stat or field name, or a number), max, unit (4 characters), note, foot, badge }`. `badge` is a word or a list of `{ "if": "ready>=80", "badge": "ON TRACK" }` rules, first match wins, last one without `if`. A value that cannot be read gives no tile, and its badge comes only from rules with an `if`: a rule on another field (`status==open`) still applies, the last rule without `if` is skipped so it never says CLEAR about a count that did not load, and a plain word badge is left out.
 
 ## `views[]`
 `id` (view count: see [the rules table](QUICKSTART.md#4-the-rules-table)), `title`, `icon`, `endpoint`, `sort` (`[{ field, order[], desc }]`), `children` (`[{ view, match }]` drills to rows of another view whose `match` field equals this row's id), `no_children`, `empty`, `widget` (`{ kind, mode, bind }`, copied into the app file; default is a detail preview built from `item.fields`). Pane kinds with app data: card, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (the same list as the rules table; chart types are line, bar and sparkline only).
