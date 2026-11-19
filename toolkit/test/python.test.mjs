@@ -95,6 +95,52 @@ test('a quoted absolute PATH entry is unquoted; a quoted relative one is still r
 	assert.deepEqual(resolveAllOnPath('python', { env: { PATH: '"C:\\Py"', PATHEXT: '.exe' }, platform: 'win32', isFile: fsOf(['C:\\Py\\python.exe']) }), ['C:\\Py\\python.exe']);
 	assert.deepEqual(resolveAllOnPath('python', { env: { PATH: '"bin"' }, platform: 'win32', isFile: () => true }), []);
 });
+// ---- version-manager shims (pyenv, asdf, mise): `#!/usr/bin/env bash` scripts that fail under check's stub-only PATH
+const shimSpawn = (answers) => (cmd, args, opts) => {
+	const seen = { cmd, args, env: opts && opts.env };
+	shimSpawn.calls.push(seen);
+	const key = `${cmd} ${args.join(' ')}`;
+	return key in answers ? { status: 0, stdout: answers[key], stderr: '' } : { status: 1, stdout: '', stderr: 'no' };
+};
+const shimOpts = (files, scripts, answers) => {
+	shimSpawn.calls = [];
+	return { spawn: shimSpawn(answers), platform: 'darwin', env: { PATH: '/opt/.pyenv/shims:/usr/bin' }, skip: ['/apps/demo'], resolve: (name, o) => resolveAllOnPath(name, { ...o, isFile: fsOf(files) }), isFile: fsOf(files), isScript: (p) => scripts.includes(p) };
+};
+const SHIM = '/opt/.pyenv/shims/python3', REAL = '/opt/.pyenv/versions/3.12.4/bin/python3';
+test('a pyenv shim resolves to the interpreter it runs, proven with an empty PATH', () => {
+	const o = shimOpts([SHIM, REAL], [SHIM], { [`${SHIM} --version`]: 'Python 3.12.4', [`${SHIM} -c import sys; print(sys.executable)`]: `${REAL}\n`, [`${REAL} --version`]: 'Python 3.12.4' });
+	const p = findPython(o);
+	assert.deepEqual([p.cmd, p.args, p.label], [REAL, [], 'python3']);
+	assert.deepEqual(shimSpawn.calls.at(-1).env, { PATH: '' });
+});
+test('a shim whose interpreter fails without PATH is kept, as before', () => {
+	const o = shimOpts([SHIM, REAL], [SHIM], { [`${SHIM} --version`]: 'Python 3.12.4', [`${SHIM} -c import sys; print(sys.executable)`]: REAL });
+	assert.equal(findPython(o).cmd, SHIM);
+});
+test('a shim pointing into the skipped app folder, at a relative path, at a missing file or at another script is kept', () => {
+	for (const real of ['/apps/demo/python3', 'python3', '/nowhere/python3', '/opt/other-shim']) {
+		const o = shimOpts([SHIM, '/apps/demo/python3', '/opt/other-shim'], [SHIM, '/opt/other-shim'], { [`${SHIM} --version`]: 'Python 3.12.4', [`${SHIM} -c import sys; print(sys.executable)`]: real, [`${real} --version`]: 'Python 3.12.4' });
+		assert.equal(findPython(o).cmd, SHIM, real);
+	}
+});
+test('a real binary is not probed again: one spawn, the path found on PATH', () => {
+	const o = shimOpts(['/usr/bin/python3'], [], { '/usr/bin/python3 --version': 'Python 3.9.6' });
+	assert.equal(findPython(o).cmd, '/usr/bin/python3');
+	assert.equal(shimSpawn.calls.length, 1);
+});
+test('isShebangScript reads only the first two bytes', async () => {
+	const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+	const { isShebangScript } = await import('../lib/python.mjs');
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'py-shim-'));
+	try {
+		fs.writeFileSync(path.join(d, 'shim'), '#!/usr/bin/env bash\nexec python "$@"\n');
+		fs.writeFileSync(path.join(d, 'bin'), Buffer.from([0xcf, 0xfa, 0xed, 0xfe]));
+		assert.equal(isShebangScript(path.join(d, 'shim')), true);
+		assert.equal(isShebangScript(path.join(d, 'bin')), false);
+		assert.equal(isShebangScript(path.join(d, 'missing')), false);
+	} finally { fs.rmSync(d, { recursive: true, force: true }); }
+});
+
 test('a stub first on PATH does not hide a real python behind it: every hit is tried', () => {
 	const files = ['/stub/python3', '/real/python3'];
 	const resolve = (name, o) => resolveAllOnPath(name, { ...o, isFile: fsOf(files) });

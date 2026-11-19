@@ -37,13 +37,36 @@ export function resolveAllOnPath(name, { env = process.env, platform = process.p
 }
 export const resolveOnPath = (name, o) => resolveAllOnPath(name, o)[0] || null;
 
+// True when the file starts with `#!`: a version-manager shim (pyenv, asdf, mise) rather than the interpreter itself.
+export function isShebangScript(p) {
+	let fd; try { fd = fs.openSync(p, 'r'); const b = Buffer.alloc(2); return fs.readSync(fd, b, 0, 2, 0) === 2 && b.toString('latin1') === '#!'; } catch { return false; } finally { if (fd !== undefined) try { fs.closeSync(fd); } catch {} }
+}
+
+// A shim such as ~/.pyenv/shims/python3 is `#!/usr/bin/env bash`: it works from a shell, but `check` runs scripts with a PATH that holds
+// only its stubs, so the shim cannot find bash and every case exits 127. Ask the shim for the interpreter it runs (sys.executable) and use
+// that instead, but only when it is an absolute file outside the skipped folders, is not itself a script, and answers --version with an
+// empty PATH. Anything else keeps the shim, as before.
+function realInterpreter(cmd, args, { spawn, platform, skip, isFile, isScript }) {
+	if (platform === 'win32' || !isScript(cmd)) return null;
+	let r; try { r = spawn(cmd, [...args, '-c', 'import sys; print(sys.executable)'], { encoding: 'utf8', timeout: 10000, cwd: path.dirname(cmd) }); } catch { return null; }
+	if (!r || r.error || r.status !== 0) return null;
+	const real = String(r.stdout || '').trim();
+	if (!real || real === cmd || !path.isAbsolute(real) || !isFile(real) || isScript(real)) return null;
+	if (skip.map((s) => norm(s, false)).includes(norm(path.dirname(real), false))) return null;
+	let v; try { v = spawn(real, ['--version'], { encoding: 'utf8', timeout: 10000, cwd: path.dirname(real), env: { PATH: '' } }); } catch { return null; }
+	return v && !v.error && v.status === 0 && versionOk(`${v.stdout || ''} ${v.stderr || ''}`) ? real : null;
+}
+
 // Returns { cmd (absolute path), args (leading arguments, such as ['-3'] for `py -3`), label } or null when none works.
-// `spawn`, `resolve`, `env`, `platform` and `skip` are injectable for tests.
-export function findPython({ spawn = spawnSync, platform = process.platform, env = process.env, skip = [process.cwd()], resolve = resolveAllOnPath } = {}) {
+// `spawn`, `resolve`, `env`, `platform`, `skip`, `isFile` and `isScript` are injectable for tests.
+export function findPython({ spawn = spawnSync, platform = process.platform, env = process.env, skip = [process.cwd()], resolve = resolveAllOnPath, isFile = (p) => { try { return fs.statSync(p).isFile(); } catch { return false; } }, isScript = isShebangScript } = {}) {
 	for (const [name, ...args] of candidates(platform)) {
 		for (const cmd of resolve(name, { env, platform, skip })) {   // every hit: a Store stub first must not hide a real python behind it
 			let r; try { r = spawn(cmd, [...args, '--version'], { encoding: 'utf8', timeout: 10000, cwd: path.dirname(cmd) }); } catch { continue; }
-			if (r && !r.error && r.status === 0 && versionOk(`${r.stdout || ''} ${r.stderr || ''}`)) return { cmd, args, label: [name, ...args].join(' ') };
+			if (r && !r.error && r.status === 0 && versionOk(`${r.stdout || ''} ${r.stderr || ''}`)) {
+				const real = realInterpreter(cmd, args, { spawn, platform, skip, isFile, isScript });
+				return { cmd: real || cmd, args: real ? [] : args, label: [name, ...args].join(' ') };
+			}
 		}
 	}
 	return null;
