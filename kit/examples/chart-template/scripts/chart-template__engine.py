@@ -1193,6 +1193,8 @@ def run_views(cfg, args, fx, fixtures):
         names = sorted(set([v["endpoint"]] + objects + [vs[c["view"]]["endpoint"] for c in v.get("children") or []]))
     L = load(cfg, names, refresh, demo, fx, fixtures)
     retry = "refresh" if not detail_id or view_id == "overview" else "refresh." + detail_id
+    if not NAV_OK.match(retry) or ".." in retry:   # a filter word such as C++, café or a/b cannot ride in a nav arg; a refresh drops the filter anyway
+        retry = "refresh"
     data_view = view_id != "overview" and (vs[view_id].get("widget") or {}).get("mode") == "list_data"   # every row is plotted: no Back or refresh rows
     if L.stop:
         rows = stop_rows(L, view_id, retry)

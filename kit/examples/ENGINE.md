@@ -116,7 +116,7 @@ What each filter takes and gives:
 A `tile` value must be a number (a text value draws a `-` tile), but a tile `label`, `note` and `foot` are templates: put text such as a version in the label (`"Latest {crate.max_stable_version}"`). Numbers in a tile get no separator; put the formatted number in the row title or subtitle with `thousands`.
 
 ## Words typed after the chip (views mode)
-`=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
+`=chip view`, `=chip view <id>` (detail), `=chip view <word>` (filter by that word; any word works, `C++` or `a/b` too, and its Retry rows reload the list without the filter), `=chip view demo-offline | demo-stale | demo-auth | demo-nokey | demo-notfound` (preview the error rows in fixture mode). A view whose widget `mode` is `list_data` (chart, table) shows only its data rows, so nothing but data is plotted.
 
 ## `form`
 `inputs[]` (`name`, `type` text, number, date, select or toggle, `label`, `required`, `default`, `placeholder`, `options`, `min`, `max`, `step`, `max_length`, `pattern`), `submit.label`, `store.file` (a local log, kept `0600`; `max_rows`), `record` (what is saved, templates over the input values), `item` (how a saved row becomes a result row), `widget`. Bad input shows one "Not saved" row and saves nothing.
