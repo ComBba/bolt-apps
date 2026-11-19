@@ -1,5 +1,5 @@
 """Shared engine: a filter word that cannot ride in a nav arg (C++, cafe with an accent, #12, a/b) keeps the list and its
-notice, cache and retry rows. Runs on Python 3.9."""
+notice, cache and retry rows; the portal template reads its Started date. Runs on Python 3.9."""
 import http.server
 import json
 import os
@@ -13,7 +13,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from test_cold_run_engine import cfg_of, fixtures_of, EX  # noqa: E402
+from test_cold_run_engine import cfg_of, fixtures_of, run, EX  # noqa: E402
 
 WORDS = ("C++", "café", "#12", "a/b")
 
@@ -113,6 +113,14 @@ class Live(unittest.TestCase):
         rows = self.rows(["projects", "P-1"])
         navs = [r["nav"] for r in rows if (r.get("nav") or {}).get("arg", "").startswith("refresh")]
         self.assertIn({"view": "projects", "arg": "refresh.P-1"}, navs)
+
+
+class PortalStarted(unittest.TestCase):
+    def test_the_started_field_reads_the_date(self):
+        r = run("portal-template", ["projects", "P-1"], env={"BOLT_APP_FIXTURE": "1"})
+        self.assertEqual(r.returncode, 0, r.stderr)
+        item = [x for x in json.loads(r.stdout) if x["title"] == "Website refresh"][0]
+        self.assertEqual(item["f4"], "2026-01-01")
 
 
 if __name__ == "__main__":
