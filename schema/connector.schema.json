@@ -20,10 +20,81 @@
     "filters": { "type": "array", "items": { "$ref": "#/$defs/Filter" } },
     "actions": { "type": "array", "items": { "$ref": "#/$defs/Action" } },
     "presentation": { "$ref": "#/$defs/Presentation" },
-    "cache_ttl_seconds": { "type": "integer", "minimum": 0, "maximum": 86400 }
+    "cache_ttl_seconds": { "type": "integer", "minimum": 0, "maximum": 86400 },
+    "placeholder_examples": { "type": "array", "items": { "type": "string" }, "description": "Sample queries shown under the chip." },
+    "dispatch": { "$ref": "#/$defs/Dispatch" },
+    "bare": { "$ref": "#/$defs/Bare" },
+    "provisioning_mode": { "type": "string", "description": "Who in the organization gets it, with departments, roles and groups (connectors page, 'Manifest part'). The published samples use public and admin_ready." },
+    "departments": { "type": "array", "items": { "type": "string" } },
+    "roles": { "type": "array", "items": { "type": "string" } },
+    "groups": { "type": "array", "items": { "type": "string" } },
+    "enabled": { "type": "boolean" },
+    "demo": { "type": "boolean", "description": "Marks a bundled sample that runs on demo data." }
   },
 
   "$defs": {
+    "Dispatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "When the chip runs (connector spec 19.7). User Apps may only use confirm; an admin manifest may declare auto.",
+      "properties": {
+        "mode": { "enum": ["confirm", "auto"] },
+        "confirm_label": { "type": "string" },
+        "confirm_hint": { "type": "string" },
+        "auto_when": {
+          "type": "array",
+          "description": "Queries that run without the confirm row. Used by the published samples; not yet described in the connector spec.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["regex"],
+            "properties": { "regex": { "type": "string" }, "reason": { "type": "string" } }
+          }
+        },
+        "choices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "label"],
+            "properties": {
+              "id": { "type": "string", "pattern": "\\S" },
+              "label": { "type": "string", "pattern": "\\S" },
+              "hint": { "type": "string" },
+              "args": { "type": "object", "additionalProperties": { "type": "string" } }
+            }
+          }
+        }
+      },
+      "if": { "required": ["choices"], "properties": { "choices": { "minItems": 1 } } },
+      "then": { "not": { "anyOf": [{ "required": ["confirm_label"] }, { "required": ["confirm_hint"] }] } }
+    },
+
+    "Bare": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Recognise text like PROJ-123 typed without the chip and offer the lookup (connectors page, 'Manifest part').",
+      "required": ["patterns"],
+      "properties": {
+        "kind": { "type": "string" },
+        "chip_key": { "type": "string" },
+        "patterns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["regex"],
+            "properties": {
+              "regex": { "type": "string" },
+              "flags": { "type": "string" },
+              "priority": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+
     "CanonicalType": {
       "enum": ["Person", "Issue", "Document", "Event", "File", "Incident", "Account", "Place", "Generic"]
     },
@@ -186,7 +257,7 @@
       "required": ["id", "kind", "target", "label"],
       "properties": {
         "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
-        "kind": { "enum": ["url", "tool", "utility", "composer"] },
+        "kind": { "enum": ["url", "tool", "utility", "composer", "clipboard"] },
         "target": { "enum": ["row", "list"] },
         "label": { "type": "string" },
         "icon": { "type": "string" },
@@ -195,7 +266,8 @@
         "flow": { "type": "array", "items": { "$ref": "#/$defs/FlowNode" } },
         "target_chip": { "type": "string", "pattern": "^=" },
         "query_template": { "type": "string" },
-        "insert": { "type": "string" }
+        "insert": { "type": "string" },
+        "value": { "type": "string", "description": "kind: clipboard only: the templated text copied, such as {{row.key}}." }
       },
       "allOf": [
         {
@@ -213,6 +285,10 @@
         {
           "if": { "properties": { "kind": { "const": "composer" } } },
           "then": { "required": ["insert"] }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "clipboard" } } },
+          "then": { "required": ["value"] }
         }
       ]
     },
@@ -246,7 +322,7 @@
       "additionalProperties": false,
       "required": ["kind"],
       "properties": {
-        "kind": { "enum": ["card", "map", "image", "date", "calc", "color", "entity", "weather"] },
+        "kind": { "enum": ["card", "map", "image", "date", "calc", "color", "entity", "entity_preview", "weather", "markdown", "chart", "table", "cards", "detail", "json_tree", "diff", "image_grid"] },
         "mode": { "enum": ["selected_row", "list_data"] },
         "bind": { "type": "object" },
         "links_for_type": { "$ref": "#/$defs/CanonicalType" }
