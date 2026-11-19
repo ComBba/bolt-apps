@@ -39,6 +39,8 @@ python3 -m unittest discover -s personal-demos/tests -v   # 8 tests: ACL before 
 
 ![Settings after Accept](evidence/acl-settings-needs-approval-after-accept.png)
 
+Issue: [SparcleHQ/sparcle.app#2](https://github.com/SparcleHQ/sparcle.app/issues/2).
+
 So someone who has approved the app is told they have not, and is invited to approve
 or decline it again. The launcher and the consent store agree; only the Settings view
 disagrees, and only for the pack-installed bridge app.
@@ -47,21 +49,23 @@ Related: Accept refuses synthetic clicks (`user_util_consent_begin failed: Press
 with the mouse or keyboard`). That is a good guard, but an agent that drives Bolt
 cannot tell whether approval failed or was never attempted. A visible message would help.
 
-## 3. `bolt-apps check` fails every case on a pyenv, asdf or mise Mac
+## 3. `bolt-apps check` fails every case on a Mac with pyenv
 
 The Python finder picks `~/.pyenv/shims/python3`, a `#!/usr/bin/env bash` script.
 `check` runs each case with a PATH that holds only its stubs, so the shim cannot find
 `bash`: `kit/examples/unit-convert` fails 15 of 15 with exit 127, and the toolkit suite
 fails 82 tests. The fix resolves a shim to the interpreter it runs, proven with an
 empty PATH, and keeps the old behavior otherwise. After it, the toolkit suite passes
-536, fails 0. Branch: [`fix/python-shim-interpreter`](https://github.com/ComBba/bolt-apps/tree/fix/python-shim-interpreter).
+536, fails 0. Pull request: [SparcleHQ/bolt-apps#47](https://github.com/SparcleHQ/bolt-apps/pull/47).
 
 ## 4. Smaller findings
 
 - The 38 connector samples published on sparcle.app all fail the public
   `schema/connector.schema.json` (fields such as `departments`, `dispatch`, `enabled`
-  and the `entity_preview` action are not in the schema).
+  and the `entity_preview` widget are not in the schema). Pull request:
+  [SparcleHQ/bolt-apps#48](https://github.com/SparcleHQ/bolt-apps/pull/48).
 - In the launcher, pasting multiline CSV after selecting `=csv2md` opens the built-in
   table actions instead of the transform, so the example's own output is never shown.
+  Issue: [SparcleHQ/sparcle.app#3](https://github.com/SparcleHQ/sparcle.app/issues/3).
 - README install steps for a hand-added User App miss the Advanced toggle and the
-  review step. Branch: [`docs/user-app-install-steps`](https://github.com/ComBba/bolt-apps/tree/docs/user-app-install-steps).
+  review step. Pull request: [SparcleHQ/bolt-apps#49](https://github.com/SparcleHQ/bolt-apps/pull/49).
