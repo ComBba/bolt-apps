@@ -152,8 +152,12 @@ test('lint refuses an app whose ids disagree: the app file name, the id in it, c
 	r = run(d, 'lint', app, '--personal', '--json'); assert.equal(r.status, 1, r.stdout);
 	for (const c of ['error:config_id_mismatch', 'error:utilities_id_mismatch']) assert.ok(codes(r).includes(c), c + r.stdout);
 	// new renames the app file of a template that has no emitter, so the copy passes as made
-	assert.equal(run(d, 'new', 'local-service-template', 'zz-local', '--dir', d).status, 0);
+	const made = run(d, 'new', 'local-service-template', 'zz-local', '--dir', d); assert.equal(made.status, 0, made.stderr);
 	assert.deepEqual(fs.readdirSync(path.join(d, 'zz-local', 'utilities')), ['zz-local.yaml']);
+	// the "Next: edit:" and "change first:" lines name files of the copy, and each one exists there
+	const named = [...made.stdout.matchAll(/^\s*(?:\d+\.\s+)?(?:edit|change first): (.+)$/gm)].flatMap((m) => m[1].split(', ')).filter((f) => /^[\w.-]+\/[\w.-]+$/.test(f));
+	assert.ok(named.includes('utilities/zz-local.yaml'), made.stdout);
+	for (const f of named) assert.ok(fs.existsSync(path.join(d, 'zz-local', f)), `new names ${f}, which the copy does not have:\n${made.stdout}`);
 	assert.doesNotMatch(fs.readFileSync(path.join(d, 'zz-local', 'README.md'), 'utf8'), /localmodels\.yaml/);
 	r = run(d, 'lint', path.join(d, 'zz-local'), '--personal', '--json'); assert.equal(r.status, 0, r.stdout); assert.ok(!codes(r).some((c) => /_mismatch$/.test(c)), r.stdout);
 	// a script app not built on the engine may name its file another way: a warning, not an error
