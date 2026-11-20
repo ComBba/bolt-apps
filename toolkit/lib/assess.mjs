@@ -272,20 +272,21 @@ const authorityHost = (auth) => {
 	const at = auth.slice(auth.lastIndexOf('@') + 1), m = /^(.*):(\d+)$/.exec(at);
 	return (m ? m[1] : at).replace(/^[[\]]+|[[\]]+$/g, '').replace(/\.+$/, '').toLowerCase();
 };
-// For the `open` and `curl or wget` rules only: text that cannot run is dropped first, so prose does not warn.
-// Conservative on purpose: a prose false positive costs a courtesy warning, a hidden command costs the whole point of the scan.
-// Lines end at \r\n, a lone \r, U+2028 or U+2029 (Python and JS treat those as line ends), so a comment never runs past one.
-// A script line is dropped only if it starts with "# " or "// " (a bare # or // may be a path or a command; #! stays).
-// In an app file only a column-0 `description:` or `placeholder_examples:` whose value is one complete line is dropped:
-// never inside a block scalar (its lines are indented) or a multi-line quoted value, and a column-0 `# ` comment.
+// For the `open` and `curl or wget` rules only. The one thing skipped: in an app file (.yaml or .yml), a column-0
+// `description:` or `placeholder_examples:` key whose value is one complete line of text, so prose such as
+// `description: Wraps curl so you can fetch pages` does not warn.
+// NOT skipped, on purpose: comment lines in scripts (# or //) and YAML # comments. A line filter cannot tell a comment
+// from a path, a string, a heredoc or a continued line, so a script comment that mentions open or curl is a known
+// remaining false positive. A prose false positive costs a courtesy warning; a hidden command costs the whole scan.
+// Also not skipped: an indented line, a block scalar (| or >), and a quoted value that runs onto more lines.
+// Lines end at \r\n, a lone \r, U+2028 or U+2029 (Python and JS treat those as line ends).
 const LINE_END = /\r\n|[\r\n\u2028\u2029]/;
 const closesQuote = (t, q) => { for (let k = 0; k < t.length; k++) { if (q === '"' && t[k] === '\\') k++; else if (t[k] === q) { if (q === "'" && t[k + 1] === "'") k++; else return true; } } return false; };
 function runnableText(name, text) {
-	const yaml = /\.ya?ml$/i.test(name), keep = []; let inQuote = null;
+	if (!/\.ya?ml$/i.test(name)) return text;
+	const keep = []; let inQuote = null;
 	for (const l of text.split(LINE_END)) {
 		if (inQuote) { keep.push(l); if (closesQuote(l, inQuote)) inQuote = null; continue; }
-		if (!yaml) { if (!/^\s*(# |\/\/ )/.test(l)) keep.push(l); continue; }
-		if (/^# /.test(l)) continue;
 		const m = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(l), v = m ? m[2].trim() : '';
 		if (m && (v[0] === '"' || v[0] === "'") && !(v.length > 1 && closesQuote(v.slice(1), v[0]))) inQuote = v[0];
 		const prose = m && /^(description|placeholder_examples)$/.test(m[1]) && v && !/^[|>]/.test(v) && !inQuote

