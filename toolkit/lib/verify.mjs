@@ -158,6 +158,16 @@ export function commandProblem(os, cmd) {
 	return null;
 }
 
+// The app file's top-level keys: one Bolt does not know, or one only company-managed apps may use, makes Bolt refuse the whole file. lint --personal runs it too.
+export function topLevelKeyProblems(root) {
+	const out = [];
+	for (const e of root && root.t === 'm' ? root.entries : []) {
+		if (!R.top_level_keys.includes(e.key)) out.push({ code: 'yaml_key_unknown', message: `unknown key "${e.key}"; Bolt refuses the whole file`, line: e.line });
+		else if (R.admin_only_keys.includes(e.key)) out.push({ code: 'yaml_admin_only_key', message: `"${e.key}" is for company-managed apps and is not allowed in a user app`, line: e.line });
+	}
+	return out;
+}
+
 // files: [{ path: 'utilities/x.yaml' | 'scripts/x.py', kind, content: Buffer }]
 export function checkManifests(files, opts = {}) {
 	const findings = [], apps = [], add = (...a) => findings.push(mk(...a));
@@ -180,10 +190,7 @@ export function checkManifests(files, opts = {}) {
 		{ const cm = chipMismatch(root); if (cm) add('warning', 'description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, file, 1); }
 		const val = (m, k) => get(m, k)?.value, S = (m, k) => str(val(m, k)), ln = (m, k, d) => get(m, k)?.line ?? d;
 		{ const cid = S(root, 'id'), cch = S(root, 'chip'); if (cid && cch && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cch) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cid.trim()) && cid.trim() !== cch.trim()) E('chip_not_id', `chip "${cch}" is not the id "${cid}". Bolt only runs an app whose chip equals its id: set chip to ${cid}`, ln(root, 'chip')); }
-		for (const e of root.entries) {
-			if (!R.top_level_keys.includes(e.key)) E('yaml_key_unknown', `unknown key "${e.key}"; Bolt refuses the whole file`, e.line);
-			else if (R.admin_only_keys.includes(e.key)) E('yaml_admin_only_key', `"${e.key}" is for company-managed apps and is not allowed in a user app`, e.line);
-		}
+		for (const pr of topLevelKeyProblems(root)) E(pr.code, pr.message, pr.line);
 		for (const k of R.required_keys) if (!get(root, k)) E('yaml_key_missing', `missing required key "${k}"`, 1);
 		if (get(root, 'schema_version') && !R.schema_versions.includes(Number(S(root, 'schema_version')))) E('schema_version_unsupported', `schema_version ${S(root, 'schema_version')} is not supported`, ln(root, 'schema_version'));
 		const rt = S(root, 'runtime'); if (get(root, 'runtime') && !R.runtimes.includes(rt)) E('runtime_not_allowed', `runtime "${rt}" is not accepted`, ln(root, 'runtime'));

@@ -12,7 +12,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { checkManifests, confirmPreview, checkPackShape, FIXES } from '../lib/verify.mjs';
+import { checkManifests, confirmPreview, checkPackShape, topLevelKeyProblems, FIXES } from '../lib/verify.mjs';
 import { get, str, notYamlHint } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem, chipMismatch } from '../lib/assess.mjs';
@@ -124,6 +124,8 @@ export function lintApp(dir, opts = {}) {
 			{ const cm = chipMismatch(a.tree); if (cm) W('description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, p); }
 			if (a.runtime === undefined) E('field_missing', 'runtime is required', p);
 			for (const pr of a.problems) out.push({ level: pr.level || 'error', code: pr.code, message: pr.message, path: p, ...(pr.line ? { line: pr.line } : {}) });
+			// a top-level key Bolt does not know, or one for company-managed apps only: Bolt refuses the whole file (verify reports these from checkManifests)
+			for (const pr of topLevelKeyProblems(a.tree)) out.push({ level: 'error', code: pr.code, message: pr.message, path: p, ...(pr.line ? { line: pr.line } : {}) });
 			{ const cch = a.tree ? (str(get(a.tree, 'chip')?.value) || '').trim() : ''; if (yid && cch && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cch) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(yid) && cch !== yid) E('chip_not_id', `chip "${cch}" is not the id "${yid}". Bolt only runs an app whose chip equals its id (the launcher looks apps up by id): set chip to ${yid}`, p); }
 			if (!yid) E('field_missing', 'id is required', p);
 			tier = Math.max(tier, a.tier); for (const x of a.permissions) perms.add(x);
@@ -392,7 +394,7 @@ function cmdVerify(args) {
 	if (fs.statSync(f).isDirectory()) {
 		kind = 'app';
 		const r = lintApp(f, { personal: true });
-		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch', 'chip_not_id'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
+		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch', 'chip_not_id', 'yaml_key_unknown', 'yaml_admin_only_key'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
 		if (r.app) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
