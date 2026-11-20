@@ -1,5 +1,6 @@
 """Shared engine: a large answer keeps an old copy (the cache holds the rows as read, cut to the fields config.json names) and an answer
-over the read limit says it is too large; the steps of a lookup chain share one deadline. Runs on Python 3.9."""
+over the read limit says it is too large; the steps of a lookup chain share one deadline; the key row names its cause; an id
+that is not a nav token still drills. Runs on Python 3.9."""
 import http.server
 import json
 import os
@@ -319,6 +320,37 @@ class KeyAdviceWords(unittest.TestCase):
             src = f.read()
         for words, _, _ in self.m.KEY_FIXES:
             self.assertIn(words, src)
+
+
+class OtherIds(LiveBase):
+    """Ids that are not nav tokens (an accent, another script, a slash, more than 64 characters) still drill, each to its own item."""
+    IDS = {"P-1": "café", "P-2": "cafè", "P-3": "東京", "P-4": "a/b " + "x" * 80}
+
+    def setUp(self):
+        LiveBase.setUp(self)
+        fx = json.loads(json.dumps(Server.payload))
+        for p in fx["projects"]["data"]:
+            p["id"] = self.IDS[p["id"]]
+        for t in fx["tickets"]["data"]:
+            t["projectId"] = self.IDS.get(t["projectId"], t["projectId"])
+        Server.payload = fx
+
+    def test_every_id_drills_to_its_own_item(self):
+        d = self.folder()
+        items = [r for r in self.rows(["projects"], d) if r.get("kpi_label") == "Progress"]
+        self.assertEqual(len(items), 4)
+        args = [(r.get("nav") or {}).get("arg") for r in items]
+        self.assertTrue(all(args), "every project row drills: %r" % args)
+        self.assertEqual(len(set(args)), 4, "no two ids share a nav arg: %r" % args)
+        for r in items:
+            rows = self.rows(["projects", r["nav"]["arg"]], d)
+            self.assertEqual([x["title"] for x in rows if x.get("kpi_label") == "Progress"], [r["title"]], "Enter opens that project")
+            self.assertTrue(rows[0]["subtitle"].startswith("Back to projects"))
+            self.assertEqual(rows[-1]["nav"], {"view": "projects", "arg": "refresh." + r["nav"]["arg"]}, "its refresh keeps the detail")
+
+    def test_a_plain_id_keeps_its_arg(self):
+        self.assertEqual(load_engine().item_id({}, {"id": "P-1"}), "P-1")
+        self.assertEqual(load_engine().item_id({}, {"id": "TK_12.3"}), "TK_12.3")
 
 
 if __name__ == "__main__":

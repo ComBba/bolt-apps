@@ -11,6 +11,7 @@ An author edits config.json and fixtures.json only. Formatting, row structure, t
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
 import concurrent.futures as cf
 import datetime
+import hashlib
 import json
 import math
 import os
@@ -19,6 +20,7 @@ import socket
 import stat
 import sys
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -839,7 +841,6 @@ def _stale_demo(L, cfg, names, fixtures, finish):
 
 
 def _hash(s):
-    import hashlib
     return hashlib.sha256(s.encode("utf-8")).hexdigest()[:8]
 
 
@@ -861,7 +862,15 @@ def sort_items(view, items):
 
 
 def item_id(view, item):
-    return token(get_path(item, view.get("id_field", "id")))
+    """The nav arg for an item. An id that is already a nav token (letters, digits, _ . -, at most 64) is used as it is. Any other id
+    (cafe with an accent, a name in another script, a/b, a longer one) becomes an ASCII part and a hash of the whole id, so two ids never
+    share an arg and none is left without one."""
+    raw = str(get_path(item, view.get("id_field", "id")))
+    if token(raw) == raw:
+        return raw
+    fold = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
+    fold = re.sub(r"\.{2,}", ".", re.sub(r"[^A-Za-z0-9_.-]+", "-", fold)).strip("-.")[:40]
+    return "%s.%s" % (fold or "id", hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12])
 
 
 def extra_fields(spec, item, glob):
