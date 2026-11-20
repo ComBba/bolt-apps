@@ -272,7 +272,8 @@ const authorityHost = (auth) => {
 	const at = auth.slice(auth.lastIndexOf('@') + 1), m = /^(.*):(\d+)$/.exec(at);
 	return (m ? m[1] : at).replace(/^[[\]]+|[[\]]+$/g, '').replace(/\.+$/, '').toLowerCase();
 };
-// For the `open` and `curl or wget` rules only. The one thing skipped: in an app file (.yaml or .yml), a column-0
+// For the `open` and `curl or wget` rules only. The one thing skipped: in an app file (the caller passes app: true; the
+// default is no skip, and a file under scripts/ is never an app file even if it is named .yaml), a column-0
 // `description:` or `placeholder_examples:` key whose value is one complete line of text, so prose such as
 // `description: Wraps curl so you can fetch pages` does not warn.
 // NOT skipped, on purpose: comment lines in scripts (# or //) and YAML # comments. A line filter cannot tell a comment
@@ -282,8 +283,8 @@ const authorityHost = (auth) => {
 // Lines end at \r\n, a lone \r, U+2028 or U+2029 (Python and JS treat those as line ends).
 const LINE_END = /\r\n|[\r\n\u2028\u2029]/;
 const closesQuote = (t, q) => { for (let k = 0; k < t.length; k++) { if (q === '"' && t[k] === '\\') k++; else if (t[k] === q) { if (q === "'" && t[k + 1] === "'") k++; else return true; } } return false; };
-function runnableText(name, text) {
-	if (!/\.ya?ml$/i.test(name)) return text;
+function runnableText(app, text) {
+	if (app !== true) return text;
 	const keep = []; let inQuote = null;
 	for (const l of text.split(LINE_END)) {
 		if (inQuote) { keep.push(l); if (closesQuote(l, inQuote)) inQuote = null; continue; }
@@ -298,8 +299,8 @@ function runnableText(name, text) {
 export function scanMentions(files, declaredHosts = []) {
 	const declared = (h) => declaredHosts.some((d) => { d = String(d).trim().toLowerCase(); return h === d || h.endsWith(`.${d}`); });
 	const out = new Set();
-	for (const { name, text } of files) {
-		const live = runnableText(name, text);
+	for (const { name, text, app } of files) {
+		const live = runnableText(app, text);
 		for (const [what, re] of SCAN_RULES) if (re.test(what === OPEN_RULE ? live : text)) out.add(`${what} (in ${name})`);
 		for (const m of text.matchAll(/https?:\/\/[^\s"']+/g)) if (/[@\\]/.test(m[0])) out.add(`a web address with a user name or a backslash in it (in ${name})`);
 		for (const line of live.split('\n').filter((l) => /\b(curl|wget)\b/.test(l))) {

