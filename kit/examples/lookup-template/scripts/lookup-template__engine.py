@@ -52,7 +52,7 @@ MAX_VIEWS = 8            # the launcher refuses an app file with more views than
 MAX_FIELDS = 5
 MAX_ROWS = 50
 REQ_TIMEOUT = 10.0
-TOTAL_BUDGET = 14.0      # all requests together; the bridge limit is 20 s
+TOTAL_BUDGET = 14.0      # all requests together; Bolt stops the script at the app file's bridge.timeout_seconds (app.timeout, 25 unless set), so that is 20 or more for an app that calls an API
 MAX_ANSWER = 5 * 1024 * 1024   # bytes read from one answer; a longer one is a failure of its own ("too large"), never cut and misread
 CACHE_MAX = getattr(getattr(kit, "cache", None), "_MAX_FILE", 1024 * 1024)   # the kit cache refuses a file larger than this
 CACHE_FORM = 2           # what a cached copy holds: the rows as read (unwrapped, mapped, cut to the fields config.json names), not the raw answer
@@ -1426,7 +1426,7 @@ def run_lookup(cfg, args, fx, fixtures):
     if lk.get("steps"):
         # a chain: each step's path may use {query} and {earlier_step.field} (the first result of an earlier step)
         pvars, glob, notices = {"query": query}, {}, []
-        deadline = kit.Deadline(TOTAL_BUDGET)   # one budget for the whole chain: the steps run one after another inside the bridge limit
+        deadline = kit.Deadline(TOTAL_BUDGET)   # one budget for the whole chain: the steps run one after another inside bridge.timeout_seconds
         for i, step in enumerate(lk["steps"]):
             L = load(cfg, [step], False, demo, fx, fixtures, pvars, deadline)
             if L.stop and L.stop[0] == "notfound" and i > 0:   # only the lookup that takes the typed word may say "no such": a later 404 means the chain broke
