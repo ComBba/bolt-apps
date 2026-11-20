@@ -12,7 +12,7 @@ All apps here run the same engine, kept as `scripts/<id>__engine.py` (every file
 python3 scripts/<id>__engine.py --emit-yaml > utilities/<id>.yaml
 ```
 
-If the config is wrong (an unknown icon, a missing key, unreadable JSON), `--emit-yaml` prints the problem on screen (for an icon it also lists the valid names), writes nothing to stdout and exits 1. The shell still creates an empty `utilities/<id>.yaml` for `>`: an empty file means the command failed, so run it again without `> ...` to read the reason. `run`, `lint` and `check` say the same when they meet an app file that is empty or is not YAML.
+If the config is wrong (an unknown icon, a missing key, unreadable JSON), `--emit-yaml` prints the problem on screen (for an icon it also lists the valid names), writes nothing to stdout and exits 1. A line break in a value the app file holds (the app title or description, a form input, a lookup example, a widget, a field label) is such a problem too: the app file keeps each value on one line, so the message names the config key to rewrite. The shell still creates an empty `utilities/<id>.yaml` for `>`: an empty file means the command failed, so run it again without `> ...` to read the reason. `run`, `lint` and `check` say the same when they meet an app file that is empty or is not YAML.
 
 The engine never connects to anything unless `api.fixture_default` is `false` (or `BOLT_APP_FIXTURE=1` is unset and the config says live).
 

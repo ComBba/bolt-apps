@@ -1051,12 +1051,46 @@ TILE_BIND = [("title", "{{row.kpi_label}}"), ("value", "{{row.kpi_value}}"), ("u
              ("subtitle", "{{row.kpi_note}}"), ("badge", "{{row.kpi_badge}}"), ("footer", "{{row.kpi_foot}}")]
 
 
+LINE_BREAKS = ("\n", "\r", "\x85", "\u2028", "\u2029")   # the plain YAML the launcher reads keeps a value on one line and escapes only \" and \\
+
+
 def yq(v):
     if isinstance(v, bool):
         return "true" if v else "false"
     if isinstance(v, (int, float)):
         return str(v)
+    if any(c in str(v) for c in LINE_BREAKS):   # emit_yaml names the config key first; this catches a value it did not list
+        raise ConfigError("a value for the app file holds a line break: %s" % json.dumps(str(v))[:60])
     return '"%s"' % str(v).replace("\\", "\\\\").replace('"', '\\"')
+
+
+def first_break(o, path):
+    """The config path of the first string (value or key) under o that holds a line break, or None."""
+    if isinstance(o, str):
+        return path if any(c in o for c in LINE_BREAKS) else None
+    for k, x in (o.items() if isinstance(o, dict) else enumerate(o) if isinstance(o, list) else ()):
+        hit = first_break(str(k), path) if isinstance(o, dict) else None
+        hit = hit or first_break(x, ("%s.%s" if isinstance(o, dict) else "%s[%s]") % (path, k))
+        if hit:
+            return hit
+    return None
+
+
+def yaml_spots(cfg):
+    """(config path, value) for every part of config.json that emit_yaml writes into the app file."""
+    app, mode = cfg.get("app") or {}, cfg.get("mode", "views")
+    out = [("app.%s" % k, app.get(k)) for k in ("id", "chip", "title", "icon", "description")]
+    if mode == "form":
+        fm = cfg.get("form") or {}
+        out += [("form.placeholder", fm.get("placeholder")), ("form.inputs", fm.get("inputs")), ("form.submit.label", (fm.get("submit") or {}).get("label")), ("form.widget", fm.get("widget"))]
+    elif mode == "lookup":
+        lk = cfg.get("lookup") or {}
+        out += [("lookup.examples", lk.get("examples")), ("lookup.widget", lk.get("widget"))]
+    else:
+        out.append(("overview.widget", (cfg.get("overview") or {}).get("widget")))
+        for i, v in enumerate(cfg.get("views") or []):
+            out.append(("views[%d].widget" % i, v.get("widget")) if v.get("widget") else ("views[%d].item.fields" % i, (v.get("item") or {}).get("fields")))
+    return out
 
 
 def yflow(v):
@@ -1116,6 +1150,10 @@ def view_widget(v):
 
 
 def emit_yaml(cfg):
+    for where, value in yaml_spots(cfg):
+        bad = first_break(value, where)
+        if bad:
+            raise ConfigError("config.json: %s holds a line break, which the app file cannot keep (each value there is one line): write it on one line" % bad)
     app, mode = cfg["app"], cfg.get("mode", "views")
     vs = cfg.get("views") or []
     words = " ".join("{{scripts_dir}}/%s" % f for f in FILE_WORDS)
