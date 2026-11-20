@@ -273,8 +273,27 @@ const authorityHost = (auth) => {
 	return (m ? m[1] : at).replace(/^[[\]]+|[[\]]+$/g, '').replace(/\.+$/, '').toLowerCase();
 };
 // For the `open` and `curl or wget` rules only: text that cannot run is dropped first, so prose does not warn.
-// That is a whole-line comment (# or //, a #! line stays) and, in an app file, the description and placeholder_examples values.
-const runnableText = (name, text) => text.split('\n').filter((l) => !/^\s*(#(?!!)|\/\/)/.test(l) && !(/\.ya?ml$/i.test(name) && /^\s*(description|placeholder_examples)\s*:/.test(l))).join('\n');
+// Conservative on purpose: a prose false positive costs a courtesy warning, a hidden command costs the whole point of the scan.
+// Lines end at \r\n, a lone \r, U+2028 or U+2029 (Python and JS treat those as line ends), so a comment never runs past one.
+// A script line is dropped only if it starts with "# " or "// " (a bare # or // may be a path or a command; #! stays).
+// In an app file only a column-0 `description:` or `placeholder_examples:` whose value is one complete line is dropped:
+// never inside a block scalar (its lines are indented) or a multi-line quoted value, and a column-0 `# ` comment.
+const LINE_END = /\r\n|[\r\n\u2028\u2029]/;
+const closesQuote = (t, q) => { for (let k = 0; k < t.length; k++) { if (q === '"' && t[k] === '\\') k++; else if (t[k] === q) { if (q === "'" && t[k + 1] === "'") k++; else return true; } } return false; };
+function runnableText(name, text) {
+	const yaml = /\.ya?ml$/i.test(name), keep = []; let inQuote = null;
+	for (const l of text.split(LINE_END)) {
+		if (inQuote) { keep.push(l); if (closesQuote(l, inQuote)) inQuote = null; continue; }
+		if (!yaml) { if (!/^\s*(# |\/\/ )/.test(l)) keep.push(l); continue; }
+		if (/^# /.test(l)) continue;
+		const m = /^([A-Za-z_][\w-]*)\s*:\s*(.*)$/.exec(l), v = m ? m[2].trim() : '';
+		if (m && (v[0] === '"' || v[0] === "'") && !(v.length > 1 && closesQuote(v.slice(1), v[0]))) inQuote = v[0];
+		const prose = m && /^(description|placeholder_examples)$/.test(m[1]) && v && !/^[|>]/.test(v) && !inQuote
+			&& (v[0] === '[' ? v.endsWith(']') : v[0] === '"' || v[0] === "'" ? v.length > 1 && v.endsWith(v[0]) : true);
+		if (!prose) keep.push(l);
+	}
+	return keep.join('\n');
+}
 export function scanMentions(files, declaredHosts = []) {
 	const declared = (h) => declaredHosts.some((d) => { d = String(d).trim().toLowerCase(); return h === d || h.endsWith(`.${d}`); });
 	const out = new Set();
