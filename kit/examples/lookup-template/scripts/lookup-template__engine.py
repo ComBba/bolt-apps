@@ -51,11 +51,18 @@ MAX_FIELDS = 5
 MAX_ROWS = 50
 REQ_TIMEOUT = 10.0
 TOTAL_BUDGET = 14.0      # all requests together; the bridge limit is 20 s
+MAX_ANSWER = 5 * 1024 * 1024   # bytes read from one answer; a longer one is a failure of its own ("too large"), never cut and misread
+CACHE_MAX = getattr(getattr(kit, "cache", None), "_MAX_FILE", 1024 * 1024)   # the kit cache refuses a file larger than this
+CACHE_FORM = 2           # what a cached copy holds: the rows as read (unwrapped, mapped, cut to the fields config.json names), not the raw answer
 DEMOS = ("demo-offline", "demo-stale", "demo-auth", "demo-nokey", "demo-notfound")
 
 
 class ConfigError(Exception):
     pass
+
+
+class TooLarge(Exception):
+    """An answer longer than MAX_ANSWER."""
 
 
 # ---------------------------------------------------------------- small helpers
@@ -479,7 +486,9 @@ def http_get(api, key, path, timeout):
             headers[api.get("auth_header", "X-API-Key")] = api.get("auth_prefix", "") + key   # an empty auth_prefix is allowed
     req = urllib.request.Request(url, headers=headers, method="GET")
     with urllib.request.build_opener(_SameHost).open(req, timeout=timeout) as r:
-        raw = r.read(5 * 1024 * 1024)
+        raw = r.read(MAX_ANSWER + 1)
+    if len(raw) > MAX_ANSWER:
+        raise TooLarge()
     return json.loads(raw.decode("utf-8")) if raw else None
 
 
@@ -516,7 +525,9 @@ def hydrate(api, key, ep, raw, deadline):
 
 
 def cause_of(e):
-    """auth | rate | timeout | conn | other"""
+    """auth | rate | notfound | timeout | conn | toolarge | other"""
+    if isinstance(e, TooLarge):
+        return "toolarge"
     if isinstance(e, urllib.error.HTTPError):
         return "auth" if e.code in (401, 403) else ("rate" if e.code == 429 else ("notfound" if e.code in (404, 410) else "other"))
     r = getattr(e, "reason", e)
@@ -584,8 +595,44 @@ def apply_map(ep, items):
     return out
 
 
-def shape_ok(v):
-    return isinstance(v, (list, dict))
+def settle(ep, raw):
+    """(value, paged) from an answer: the rows (mapped) or the object the endpoint reads, or None, and whether the answer says it holds more."""
+    v = unwrap(ep, raw)
+    if ep.get("kind", "list") == "list" and v is not None:
+        return apply_map(ep, v), paged(raw, len(v))
+    return v, False
+
+
+WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def field_words(cfg):
+    """Every name config.json mentions (each string whole, its dotted parts and the words in it), plus id, title and key, which the engine
+    reads unasked. A field of a list row outside this set is never read by a template, stat, sort, rule, link or match."""
+    out, stack = set(("id", "title", "key")), [cfg]
+    while stack:
+        o = stack.pop()
+        if isinstance(o, dict):
+            stack.extend(list(o.keys()) + list(o.values()))
+        elif isinstance(o, list):
+            stack.extend(o)
+        elif isinstance(o, str):
+            out.add(o)
+            out.update(o.split("."))
+            out.update(WORD.findall(o))
+    return out
+
+
+def cache_doc(tag, ep, value, pg, words):
+    """What the cache keeps for one endpoint, [CACHE_FORM, config tag, value, paged]: the rows as read, each list row cut to the fields
+    config.json names, so a large answer still fits. [CACHE_FORM, tag, None, "too large"] marks an answer that did not fit even so."""
+    if ep.get("kind", "list") == "list" and isinstance(value, list):
+        value = [dict((k, x) for k, x in r.items() if k in words) for r in value]
+    return [CACHE_FORM, tag, value, bool(pg)]
+
+
+def too_big_to_keep(ck, doc):
+    return len(json.dumps({"v": 1, "key": ck, "ts": time.time(), "value": doc}).encode("utf-8")) > CACHE_MAX
 
 
 class Loaded(object):
@@ -620,11 +667,11 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
     ttl = float((cfg.get("cache") or {}).get("ttl", 45))
     stale_max = float((cfg.get("cache") or {}).get("stale_max", 86400))
 
-    def finish(got, failed, stale_ages):
-        for n, raw in got.items():
-            v = unwrap(eps[n], raw)
-            L.data[n] = apply_map(eps[n], v) if eps[n].get("kind", "list") == "list" and v is not None else v
-            if eps[n].get("kind", "list") == "list" and v is not None and paged(raw, len(v)):
+    def finish(got, failed, stale_ages, no_copy=()):
+        """got holds (value, paged) by endpoint (see settle); no_copy names the failed calls whose last answer was too large to keep."""
+        for n, (v, pg) in got.items():
+            L.data[n] = v
+            if pg:
                 L.notices.append(("page", "Counts and totals cover the first page only", "%s has more rows than one answer holds (%s)" % (name, n), 0))
         if not failed:
             return L
@@ -649,17 +696,20 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         main = "auth" if "auth" in causes else max(set(causes), key=causes.count)
         text = {"timeout": "%s did not answer in %d s" % (name, int(REQ_TIMEOUT)), "auth": "%s rejected the API key" % name,
                 "rate": "%s is limiting requests, try again in a minute" % name, "conn": "Could not connect to %s" % name,
+                "toolarge": "%s sent more than %d MB, more than this app reads" % (name, MAX_ANSWER // (1024 * 1024)),
                 "other": "%s returned an error" % name}[main]
+        big = sorted(n for n in failed if n in no_copy)
+        why = (". No old copy of %s: its last answer was over %d MB, more than the cache keeps" % (", ".join(big), CACHE_MAX // (1024 * 1024))) if big else ""
         if main == "auth":
             L.stop = ("auth", text, "Check the %s key (see the setup line in the README), then press Enter to retry" % api.get("key_env", "API"), 0)
         elif not [n for n in names if n not in failed or n in stale_ages]:
-            L.stop = ("offline", text, "Enter to retry, or try again later", 0)
+            L.stop = ("offline", text, "Enter to retry" + why if why else "Enter to retry, or try again later", 0)
         elif stale_ages:
             oldest = max(stale_ages.values())
             L.notices.append(("stale", "%s is not answering. Showing data from %s ago." % (name, ago(oldest)), "%s. Enter to retry" % text, oldest))
         missing = [n for n in failed if n not in stale_ages]
         if missing and not L.stop:
-            L.notices.append(("partial", "Some data did not load: %s" % ", ".join(sorted(missing)), "%s. Enter to retry" % text, 0))
+            L.notices.append(("partial", "Some data did not load: %s" % ", ".join(sorted(missing)), "%s. Enter to retry%s" % (text, why), 0))
         return L
 
     if fixture_mode:
@@ -675,10 +725,7 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         if demo in ("demo-offline", "demo-auth", "demo-stale"):
             cause = "auth" if demo == "demo-auth" else "conn"
             return finish({}, dict((n, cause) for n in names), {}) if demo != "demo-stale" else _stale_demo(L, cfg, names, fixtures, finish)
-        got = {}
-        for n in names:
-            if n in fixtures:
-                got[n] = fixtures[n]
+        got = dict((n, settle(eps[n], fixtures[n])) for n in names if n in fixtures)
         return finish(got, dict((n, "other") for n in names if n not in fixtures), {})
     if not api.get("base_url"):
         raise ConfigError("this app has no api.base_url, so it can only show sample data")
@@ -691,15 +738,19 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
     if not key and api.get("key_env"):
         L.stop = ("nokey", "Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), 0)
         return L
-    fresh = kit.Cache(app["id"], ttl, shape_ok)
-    old = kit.Cache(app["id"] + "-stale", stale_max, shape_ok)
+    tag, words = _hash(json.dumps(cfg, sort_keys=True)), field_words(cfg)   # a copy made under another config.json is a miss: its rows were mapped and cut for that one
+
+    def doc_ok(d):   # see cache_doc
+        return isinstance(d, list) and len(d) == 4 and d[0] == CACHE_FORM and d[1] == tag and (isinstance(d[2], (list, dict)) or d[3] == "too large")
+    fresh = kit.Cache(app["id"], ttl, doc_ok)
+    old = kit.Cache(app["id"] + "-stale", stale_max, doc_ok)
     deadline = kit.Deadline(TOTAL_BUDGET)
     got, todo = {}, []
     for n in names:
         ck = "%s:%s" % (n, _hash(api["base_url"] + fill_path(eps[n]["path"], pvars)))
         hit = None if refresh else fresh.get(ck)
-        if hit is not None:
-            got[n] = hit
+        if hit is not None and hit[2] is not None:
+            got[n] = (hit[2], hit[3] is True)
             L.from_cache = True
             L.cached_age = max(L.cached_age, int(fresh.age(ck) or 0))
         else:
@@ -717,24 +768,28 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
                 return kit.Probe(n, False, reason=cause_of(e))
         return run
     res = kit.run_parallel(dict((n, fetch(n)) for n in todo), deadline) if todo else {}
-    failed, stale_ages = {}, {}
+    failed, stale_ages, no_copy = {}, {}, set()
     for n in todo:
         p, ck = res[n], "%s:%s" % (n, _hash(api["base_url"] + fill_path(eps[n]["path"], pvars)))
         if p.ok:
-            got[n] = p.value
-            fresh.put(ck, p.value)      # put() refuses failures; they are never cached
-            old.put(ck, p.value)
+            got[n] = settle(eps[n], p.value)
+            doc = cache_doc(tag, eps[n], got[n][0], got[n][1], words)
+            fresh.put(ck, doc)      # put() refuses failures; they are never cached
+            if not old.put(ck, doc) and old.enabled and too_big_to_keep(ck, doc) and (old.get(ck) or [None] * 4)[2] is None:
+                old.put(ck, [CACHE_FORM, tag, None, "too large"])   # no old copy to keep: a later failure says why
         else:
-            failed[n] = "timeout" if p.timed_out else (p.reason if p.reason in ("auth", "rate", "timeout", "conn", "notfound") else "other")
+            failed[n] = "timeout" if p.timed_out else (p.reason if p.reason in ("auth", "rate", "timeout", "conn", "notfound", "toolarge") else "other")
             prev = old.get(ck) if failed[n] != "notfound" else None   # a 404 means it is gone: never show an old copy of it
-            if prev is not None:
-                got[n] = prev
+            if prev is not None and prev[2] is not None:
+                got[n] = (prev[2], prev[3] is True)
                 stale_ages[n] = old.age(ck) or 0
-    return finish(got, failed, stale_ages)
+            elif prev is not None:
+                no_copy.add(n)
+    return finish(got, failed, stale_ages, no_copy)
 
 
 def _stale_demo(L, cfg, names, fixtures, finish):
-    got = dict((n, fixtures[n]) for n in names if n in fixtures)
+    got = dict((n, settle(cfg["endpoints"][n], fixtures[n])) for n in names if n in fixtures)
     return finish(got, dict((n, "conn") for n in names), dict((n, 10800) for n in got))
 
 
