@@ -451,10 +451,53 @@ def compute_stats(cfg, data):
 
 def find_key(app, api):
     """(key, problem). Lookup order and rules are the kit's (secrets.py): environment, then the system keychain, then
-    ~/.config/<app id>/.env (owner-only). The key is never printed, logged, cached or put in a row."""
+    ~/.config/<app id>/.env (owner-only). The key is never printed, logged, cached or put in a row. problem is the kit's
+    reason a key it found was refused, or ""."""
     env_file = os.path.expanduser(api["env_file"]) if api.get("env_file") else None
     s = kit.get_secret(app["id"], api.get("key_env", "API_KEY"), env_file=env_file)
-    return (s.value or ""), ("perm" if s.problem else "")
+    return (s.value or ""), (s.problem or "")
+
+
+def key_file(app, api):
+    return os.path.expanduser(api["env_file"]) if api.get("env_file") else kit.env_file_path(app["id"])
+
+
+# (words in the kit's reason, row title, fix) for a key the kit found and refused (secrets.py words them)
+KEY_FIXES = (("is a link", "The key file is a link", "%(path)s is a link, which is not followed: put the file itself there, then press Enter"),
+             ("is not owned by you", "The key file belongs to another user", "%(path)s is not owned by you: create it again as yourself and chmod 600 it, then press Enter"),
+             ("can be read by other users", "Tighten the permissions on the key file", "Run chmod 600 on %(path)s so other users cannot read the key, then press Enter"),
+             ("shorter than", "The %(name)s key is too short", "A key this short cannot be hidden from API answers: set the whole key where you keep it (environment, keychain or %(path)s), then press Enter"))
+
+
+def key_advice(app, api, problem):
+    """(title, subtitle) naming what is wrong with the key and the fix for that cause, or None when there is simply no key (the setup row).
+    problem is the kit's reason a key was refused; with none, the key file, when there is one, is read for why it gave no key."""
+    name, path = api.get("key_env", "API_KEY"), key_file(app, api)
+    home = os.path.expanduser("~")
+    words = {"name": name, "path": "~" + path[len(home):] if path.startswith(home + os.sep) else path}
+    if problem:
+        for part, title, fix in KEY_FIXES:
+            if part in problem:
+                return title % words, fix % words
+        return "The %s key was not used" % name, "%s; fix that, then press Enter" % kit.redact(problem)
+    try:
+        if not stat.S_ISREG(os.lstat(path).st_mode):
+            return None
+        with open(path, "r", encoding="utf-8") as f:
+            lines = [x.strip() for x in f]
+    except UnicodeDecodeError:
+        return "The key file is not plain text", "%(path)s is not UTF-8 text: save it as plain text with the line %(name)s=<key>, then press Enter" % words
+    except FileNotFoundError:
+        return None
+    except OSError:
+        return "The key file cannot be read", "%(path)s is there but you cannot read it: run chmod 600 on it, then press Enter" % words
+    lines = [x[7:].lstrip() if x.startswith("export ") else x for x in lines]
+    if any(x.startswith(name + "=") for x in lines):   # the kit read the line and found no value in it
+        return "The %(name)s line is empty" % words, "%(path)s has %(name)s= with no key after it: paste the key after the = sign, then press Enter" % words
+    if any(re.match(re.escape(name) + r"\s*[=:]", x) for x in lines):
+        return ("The %(name)s line is not in the form %(name)s=<key>" % words,
+                "In %(path)s write %(name)s=<key> with no space before the = sign, then press Enter" % words)
+    return "No %(name)s line in the key file" % words, "%(path)s has no line %(name)s=<key> (the name is case sensitive): add it, then press Enter" % words
 
 
 def https_or_loopback(url):
@@ -735,11 +778,8 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None, deadline
     if not https_or_loopback(api["base_url"]):
         raise ConfigError("api.base_url must be https (http only to this machine) so the key is never sent in the clear")
     key, problem = find_key(app, api) if api.get("key_env") else ("", "")
-    if problem == "perm":
-        L.stop = ("nokey", "Tighten the permissions on the key file", "Run chmod 600 on ~/.config/%s/.env so other users cannot read the key, then press Enter" % app["id"], 0)
-        return L
-    if not key and api.get("key_env"):
-        L.stop = ("nokey", "Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), 0)
+    if problem or (not key and api.get("key_env")):   # the row names the cause: a refused key, a key file that gives none, or no key at all
+        L.stop = ("nokey",) + (key_advice(app, api, problem) or ("Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")))) + (0,)
         return L
     tag, words = _hash(json.dumps(cfg, sort_keys=True)), field_words(cfg)   # a copy made under another config.json is a miss: its rows were mapped and cut for that one
 

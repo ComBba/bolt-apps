@@ -154,7 +154,7 @@ Bolt starts a personal app's script with an empty environment except a short all
 | Environment variable | terminal and tests only | handy for CI | never reaches the script under Bolt |
 | `inputs: type: secret` form field | accepted by the launcher; not used by these examples | typed once | the value is passed to the command as a word; not measured for the run log, so do not rely on it |
 
-The engine (and any kit app) reads the key with `kit.get_secret(app_id, NAME, env_file=...)`: environment, then keychain, then the `.env` file. When nothing is found it shows a row with the exact one-line setup (`kit.setup_hint`). `kit.redact(text, [key])` removes the key, `user:password@` in an address and key-like query values from any text before it is shown.
+The engine (and any kit app) reads the key with `kit.get_secret(app_id, NAME, env_file=...)`: environment, then keychain, then the `.env` file. When nothing is found it shows a row with the exact one-line setup (`kit.setup_hint`). A key that is found but refused (the file is a link, belongs to another user or others can read it; the key is too short) and a key file that gives no key (it cannot be read, its line is empty, written another way or missing) each get a row that names that cause, the file `env_file` points at, and the fix for it. `kit.redact(text, [key])` removes the key, `user:password@` in an address and key-like query values from any text before it is shown.
 
 Never put a key: in the app file, in `config.json`, in `fixtures.json`, in a pack, in the cache, in a query word, in row text, in an error message, in a URL you show or log. The runner also masks the values of names it forwards, but a script that reads its own key is on its own: use `redact`.
 

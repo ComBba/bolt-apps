@@ -13,7 +13,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from test_cold_run_engine import cfg_of, fixtures_of, EX  # noqa: E402
+from test_cold_run_engine import cfg_of, fixtures_of, load_engine, EX  # noqa: E402
 
 
 def tickets(n, used=0, unused=0):
@@ -221,6 +221,104 @@ class ChainBudget(unittest.TestCase):
         Slow.delay = 0.05
         rows, _ = self.lookup(5.0, "Paris")
         self.assertTrue(rows[0]["title"].startswith("New York"), rows[0]["title"])
+
+
+class KeyAdvice(LiveBase):
+    """The row for a key that is refused, or a key file that gives no key, names that cause and its fix."""
+    FILE = "~/.config/portal-template/key.env.test"   # api.env_file: the rows name this path, not the default one
+
+    def setUp(self):
+        LiveBase.setUp(self)
+        self.cfg["api"]["env_file"] = self.FILE
+        self.d = self.folder()
+        self.path = os.path.join(self.d, ".config", "portal-template", "key.env.test")
+        os.makedirs(os.path.dirname(self.path), 0o700)
+
+    def write(self, text, mode=0o600):
+        with open(self.path, "w") as f:
+            f.write(text)
+        os.chmod(self.path, mode)
+
+    def key_row(self, env_key=""):
+        rows = self.rows(["tickets"], self.d, {"EXAMPLE_API_KEY": env_key})
+        self.assertEqual(len(rows), 2, rows)
+        self.assertEqual(rows[1]["kpi_badge"], "KEY")
+        return rows[1]["title"], rows[1]["subtitle"]
+
+    def test_a_short_key_is_not_told_to_chmod(self):
+        title, sub = self.key_row("ab")
+        self.assertEqual(title, "The EXAMPLE_API_KEY key is too short")
+        self.assertNotIn("chmod", sub)
+
+    def test_a_linked_key_file_is_not_told_to_chmod(self):
+        real = os.path.join(self.d, "real.env.test")
+        with open(real, "w") as f:
+            f.write("EXAMPLE_API_KEY=abcdef123\n")
+        os.chmod(real, 0o600)
+        os.symlink(real, self.path)
+        title, sub = self.key_row()
+        self.assertEqual(title, "The key file is a link")
+        self.assertIn("~/.config/portal-template/key.env.test is a link", sub)
+        self.assertNotIn("chmod", sub)
+
+    def test_a_key_file_others_can_read_names_its_own_path(self):
+        self.write("EXAMPLE_API_KEY=abcdef123\n", 0o644)
+        self.assertEqual(self.key_row(), ("Tighten the permissions on the key file",
+                                          "Run chmod 600 on ~/.config/portal-template/key.env.test so other users cannot read the key, then press Enter"))
+
+    @unittest.skipIf(hasattr(os, "getuid") and os.getuid() == 0, "root reads any file")
+    def test_a_key_file_you_cannot_read(self):
+        self.write("EXAMPLE_API_KEY=abcdef123\n", 0o000)
+        title, sub = self.key_row()
+        self.assertEqual(title, "The key file cannot be read")
+        self.assertIn("run chmod 600 on it", sub)
+
+    def test_an_empty_key_line(self):
+        self.write("EXAMPLE_API_KEY=\n")
+        self.assertEqual(self.key_row()[0], "The EXAMPLE_API_KEY line is empty")
+
+    def test_a_key_line_in_another_form(self):
+        self.write("EXAMPLE_API_KEY = abcdef123\n")
+        title, sub = self.key_row()
+        self.assertEqual(title, "The EXAMPLE_API_KEY line is not in the form EXAMPLE_API_KEY=<key>")
+        self.assertIn("no space before the = sign", sub)
+
+    def test_a_key_file_without_the_key_line(self):
+        self.write("example_api_key=abcdef123\n")
+        title, sub = self.key_row()
+        self.assertEqual(title, "No EXAMPLE_API_KEY line in the key file")
+        self.assertIn("case sensitive", sub)
+
+    def test_no_key_file_keeps_the_setup_row(self):
+        self.assertEqual(self.key_row()[0], "Add your Example Service API key")
+
+
+class KeyAdviceWords(unittest.TestCase):
+    """Each reason the kit gives for refusing a key gets its own fix; a reason it does not know is shown as it is."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.m = load_engine()   # any copy: they are the same file
+
+    def advice(self, problem):
+        return self.m.key_advice({"id": "demo-app"}, {"key_env": "DEMO_KEY", "env_file": "/nowhere/demo.env.test"}, problem)
+
+    def test_every_kit_reason_has_its_fix(self):
+        self.assertEqual(self.advice("/nowhere/demo.env.test is not owned by you")[0], "The key file belongs to another user")
+        self.assertEqual(self.advice("/nowhere/demo.env.test is a link, which is not followed")[0], "The key file is a link")
+        self.assertEqual(self.advice("/nowhere/demo.env.test can be read by other users")[0], "Tighten the permissions on the key file")
+        self.assertEqual(self.advice("the key DEMO_KEY is shorter than 3 characters, so it cannot be hidden from API answers; use a real key")[0],
+                         "The DEMO_KEY key is too short")
+
+    def test_an_unknown_reason_is_shown(self):
+        self.assertEqual(self.advice("the keychain is locked"), ("The DEMO_KEY key was not used", "the keychain is locked; fix that, then press Enter"))
+
+    def test_the_kit_reasons_are_the_ones_matched(self):
+        """If the kit rewords a reason, this fails before a person sees the general row."""
+        with open(os.path.join(HERE, "..", "bolt_app_kit", "secrets.py")) as f:
+            src = f.read()
+        for words, _, _ in self.m.KEY_FIXES:
+            self.assertIn(words, src)
 
 
 if __name__ == "__main__":
