@@ -161,7 +161,7 @@ Never put a key: in the app file, in `config.json`, in `fixtures.json`, in a pac
 Expected install-prompt finding: an app that reads the keychain is listed as "the system keychain or the security command". That is true, so it is left in.
 
 ## More options
-- `lookup.steps` + `lookup.rows`: a chain of endpoints; a step's `path` may use `{query}` and `{earlier_step.field}` (the first result of an earlier step), values are URL-quoted. An endpoint `path` that starts with `https://` is used as is (a second host).
+- `lookup.steps` + `lookup.rows`: a chain of endpoints; a step's `path` may use `{query}` and `{earlier_step.field}` (the first result of an earlier step), values are URL-quoted. An endpoint `path` that starts with `https://` is used as is (a second host). The steps run one after another inside one time budget of 14 s for the whole run, so a slow chain ends with "<service> did not answer in time" instead of outlasting the bridge timeout.
 - `maps`: `{ "wmo": { "0": "Clear" } }`, used as `{field|wmo}`. Filter `hhmm` cuts `2026-01-01T05:30` to `05:30`.
 - `trend_path` on an overview or lookup row: a dotted path to a number list for a tile sparkline.
 - Stats `{ endpoint, field_sum }` and `{ endpoint, field_max }` total or maximise a field.

@@ -660,7 +660,8 @@ def fill_path(path, pvars):
     return TOKEN.sub(quoted, path) if pvars else path
 
 
-def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
+def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None, deadline=None):
+    """deadline: the time budget of the whole run; a lookup chain passes one to every step, so the steps together stay inside TOTAL_BUDGET."""
     L = Loaded()
     eps, api, app = cfg["endpoints"], cfg.get("api") or {}, cfg["app"]
     name = app.get("service", app["title"])
@@ -694,7 +695,9 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
             return L
         causes = [c for c in causes if c != "notfound"] or causes
         main = "auth" if "auth" in causes else max(set(causes), key=causes.count)
-        text = {"timeout": "%s did not answer in %d s" % (name, int(REQ_TIMEOUT)), "auth": "%s rejected the API key" % name,
+        late = ("%s did not answer in time (all calls together get %d s)" % (name, int(TOTAL_BUDGET)) if deadline is not None and deadline.expired()
+                else "%s did not answer in %d s" % (name, int(REQ_TIMEOUT)))
+        text = {"timeout": late, "auth": "%s rejected the API key" % name,
                 "rate": "%s is limiting requests, try again in a minute" % name, "conn": "Could not connect to %s" % name,
                 "toolarge": "%s sent more than %d MB, more than this app reads" % (name, MAX_ANSWER // (1024 * 1024)),
                 "other": "%s returned an error" % name}[main]
@@ -744,7 +747,7 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         return isinstance(d, list) and len(d) == 4 and d[0] == CACHE_FORM and d[1] == tag and (isinstance(d[2], (list, dict)) or d[3] == "too large")
     fresh = kit.Cache(app["id"], ttl, doc_ok)
     old = kit.Cache(app["id"] + "-stale", stale_max, doc_ok)
-    deadline = kit.Deadline(TOTAL_BUDGET)
+    deadline = deadline or kit.Deadline(TOTAL_BUDGET)
     got, todo = {}, []
     for n in names:
         ck = "%s:%s" % (n, _hash(api["base_url"] + fill_path(eps[n]["path"], pvars)))
@@ -758,6 +761,8 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
 
     def fetch(n):
         def run():
+            if deadline.expired():   # an earlier step of a chain used the whole budget
+                return kit.Probe(n, False, reason="timeout")
             try:
                 v = http_get(api, key, fill_path(eps[n]["path"], pvars), deadline.cap(REQ_TIMEOUT))
                 if eps[n].get("hydrate"):
@@ -1334,8 +1339,9 @@ def run_lookup(cfg, args, fx, fixtures):
     if lk.get("steps"):
         # a chain: each step's path may use {query} and {earlier_step.field} (the first result of an earlier step)
         pvars, glob, notices = {"query": query}, {}, []
+        deadline = kit.Deadline(TOTAL_BUDGET)   # one budget for the whole chain: the steps run one after another inside the bridge limit
         for i, step in enumerate(lk["steps"]):
-            L = load(cfg, [step], False, demo, fx, fixtures, pvars)
+            L = load(cfg, [step], False, demo, fx, fixtures, pvars, deadline)
             if L.stop and L.stop[0] == "notfound" and i > 0:   # only the lookup that takes the typed word may say "no such": a later 404 means the chain broke
                 kit.emit([kit.row("Found it, but the next lookup answered 404", "The first lookup worked; %s said there is nothing at that address. Try again later." % step, icon="AlertCircle", copy=False, badge="ERROR")])
             if L.stop:
