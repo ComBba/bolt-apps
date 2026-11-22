@@ -115,38 +115,46 @@ test('the toolkit refuses a bare shared name; verify says what to do', () => {
 
 test('ship: a lost ship.json cannot make a lower version; --version still wins; the reason is printed', async () => {
 	const d = tmp('ns-ship-'), home = tmp('ns-home-');
-	assert.equal(cli(home, d, 'new', 'script-template', 'shipper', '--dir', d).status, 0);
-	const ver = (r) => { assert.equal(r.status, 0, r.stdout + r.stderr); return /Shipped shipper (\S+):/.exec(r.stdout)[1]; };
-	const v1 = ver(cli(home, d, 'ship', path.join(d, 'shipper')));
+	const options = { cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } };
+	const run = (...args) => spawnSync(process.execPath, [CLI, ...args], options);
+	assert.equal(run('new', 'script-template', 'shipper', '--dir', d).status, 0);
+	const ver = (r) => {
+		assert.equal(r.status, 0, r.stdout + r.stderr);
+		const shipped = /^Shipped shipper (\S+): (.+)$/m.exec(r.stdout);
+		assert.ok(shipped, r.stdout);
+		assert.equal(shipped[2], path.join(home, '.bolt-apps', 'packs', `shipper-${shipped[1]}.boltpack`));
+		return shipped[1];
+	};
+	const v1 = ver(run('ship', path.join(d, 'shipper')));
 	assert.match(v1, /^1\.0\.\d+$/);
-	const r2 = cli(home, d, 'ship', path.join(d, 'shipper')); const v2 = ver(r2); assert.ok(newer(v2, v1), `${v2} must be higher than ${v1}`);
+	const r2 = run('ship', path.join(d, 'shipper')); const v2 = ver(r2); assert.ok(newer(v2, v1), `${v2} must be higher than ${v1}`);
 	// lose every note this computer kept
 	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json')); fs.rmSync(path.join(home, '.bolt-apps', 'packs'), { recursive: true });
 	await new Promise((r) => setTimeout(r, 1100));
-	const r3 = cli(home, d, 'ship', path.join(d, 'shipper')); const v3 = ver(r3); assert.ok(newer(v3, v2), `${v3} must be higher than ${v2} after ship.json was deleted`);
+	const r3 = run('ship', path.join(d, 'shipper')); const v3 = ver(r3); assert.ok(newer(v3, v2), `${v3} must be higher than ${v2} after ship.json was deleted`);
 	assert.match(r3.stdout, /version \S+: taken from the clock/);
 	assert.match(r3.stdout, /HIGH risk/); assert.match(r3.stdout, /owned_by_other/);
-	const forced = cli(home, d, 'ship', path.join(d, 'shipper'), '--version', '9.9.9'); assert.equal(ver(forced), '9.9.9');
-	const after = cli(home, d, 'ship', path.join(d, 'shipper')); assert.ok(newer(ver(after), '9.9.9'));
-	const bad = cli(home, d, 'ship', path.join(d, 'shipper'), '--version', 'abc'); assert.notEqual(bad.status, 0);
+	const forced = run('ship', path.join(d, 'shipper'), '--version', '9.9.9'); assert.equal(ver(forced), '9.9.9');
+	const after = run('ship', path.join(d, 'shipper')); assert.ok(newer(ver(after), '9.9.9'));
+	const bad = run('ship', path.join(d, 'shipper'), '--version', 'abc'); assert.notEqual(bad.status, 0);
 	// --version also takes a short or tagged form; the next build must still be higher than it, never 1.0.1
 	for (const v of ['20.0', 'v30.1.0-rc1']) {
-		assert.equal(ver(cli(home, d, 'ship', path.join(d, 'shipper'), '--version', v)), v);
-		const next = ver(cli(home, d, 'ship', path.join(d, 'shipper'))); assert.ok(newer(next, v), `${next} must be higher than ${v}`);
+		assert.equal(ver(run('ship', path.join(d, 'shipper'), '--version', v)), v);
+		const next = ver(run('ship', path.join(d, 'shipper'))); assert.ok(newer(next, v), `${next} must be higher than ${v}`);
 	}
 	// the same when ship.json is lost: the version is read from the packs themselves, in every form --version takes
 	for (const v of ['40', 'V41.0', 'v42.1.0-rc1', '43.1.0+build.7']) {
-		assert.equal(ver(cli(home, d, 'ship', path.join(d, 'shipper'), '--version', v)), v);
+		assert.equal(ver(run('ship', path.join(d, 'shipper'), '--version', v)), v);
 		fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
-		const lost = ver(cli(home, d, 'ship', path.join(d, 'shipper'))); assert.ok(newer(lost, v), `${lost} must be higher than ${v} after ship.json was deleted`);
+		const lost = ver(run('ship', path.join(d, 'shipper'))); assert.ok(newer(lost, v), `${lost} must be higher than ${v} after ship.json was deleted`);
 	}
 	// a pack of another app whose id starts the same (shipper-2) never counts, however its file is named
-	const top = ver(cli(home, d, 'ship', path.join(d, 'shipper')));
-	assert.equal(cli(home, d, 'new', 'script-template', 'shipper-2', '--dir', d).status, 0);
-	assert.equal(cli(home, d, 'ship', path.join(d, 'shipper-2'), '--version', '900.0.0').status, 0);
+	const top = ver(run('ship', path.join(d, 'shipper')));
+	assert.equal(run('new', 'script-template', 'shipper-2', '--dir', d).status, 0);
+	assert.equal(run('ship', path.join(d, 'shipper-2'), '--version', '900.0.0').status, 0);
 	fs.renameSync(path.join(home, '.bolt-apps', 'packs', 'shipper-2-900.0.0.boltpack'), path.join(home, '.bolt-apps', 'packs', 'shipper-900.0.0.boltpack'));
 	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
-	const own = ver(cli(home, d, 'ship', path.join(d, 'shipper'))); assert.ok(newer(own, top) && !newer(own, '900.0.0'), `${own}: only shipper's own packs count`);
+	const own = ver(run('ship', path.join(d, 'shipper'))); assert.ok(newer(own, top) && !newer(own, '900.0.0'), `${own}: only shipper's own packs count`);
 	// Invalid packs never raise the version, and ship does not open a pipe.
 	const pk = path.join(home, '.bolt-apps', 'packs'); fs.rmSync(path.join(pk, 'shipper-900.0.0.boltpack'));
 	const candidate = path.join(pk, 'shipper-999.0.0.boltpack');
@@ -166,7 +174,7 @@ test('ship: a lost ship.json cannot make a lower version; --version still wins; 
 	fs.writeFileSync(path.join(pk, 'shipper-950.0.0.boltpack'), 'not a pack');
 	if (process.platform !== 'win32') assert.equal(spawnSync('mkfifo', [path.join(pk, 'shipper-960.0.0.boltpack')]).status, 0);
 	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
-	const safe = spawnSync(process.execPath, [CLI, 'ship', path.join(d, 'shipper')], { cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home }, timeout: 120000 });
+	const safe = spawnSync(process.execPath, [CLI, 'ship', path.join(d, 'shipper')], { ...options, timeout: 120000 });
 	assert.equal(safe.error, undefined, 'ship must not block on a pipe in the packs folder'); const sv = ver(safe); assert.ok(newer(sv, own) && !newer(sv, '900.0.0'), sv);
 });
 
