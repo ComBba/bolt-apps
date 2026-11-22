@@ -116,7 +116,7 @@ test('right_widget: map takes no bind keys (warning in schema 1, error in schema
 	assert.match(only(map(2), 'right_widget_bind_unread')[0].message, /Open in Maps/);
 	assert.deepEqual(codes(appYaml({ rightWidget: '  right_widget:\n    kind: globe' })), ['right_widget_kind_invalid']);
 	assert.deepEqual(codes(appYaml({ rightWidget: '  right_widget:\n    kind: entity' })), ['right_widget_kind_invalid']);
-	assert.deepEqual(codes(appYaml({ rightWidget: '  right_widget:\n    kind: chart\n    bind:\n      type: donut' })), ['right_widget_bind_unread']);
+	assert.deepEqual(codes(appYaml({ rightWidget: '  right_widget:\n    kind: chart\n    bind:\n      type: radar' })), ['right_widget_bind_unread']);
 	for (const t of ['line', 'bar', 'sparkline']) assert.deepEqual(codes(appYaml({ rightWidget: `  right_widget:\n    kind: chart\n    bind:\n      type: ${t}` })), [], t);
 });
 test('actions: a manifest run action needs fixed text (the launcher)', () => {
@@ -189,5 +189,5 @@ test('schema: every right_widget kind is described, the enum still equals the la
 	assert.ok(kind.oneOf.every((x) => x.description.length > 20));
 	for (const k of NO_APP_DATA_KINDS) assert.match(kind.oneOf.find((x) => x.const === k).description, /cannot show app data/);
 	assert.match(kind.oneOf.find((x) => x.const === 'map').description, /Open in Maps/);
-	assert.match(kind.oneOf.find((x) => x.const === 'chart').description, /line, bar or sparkline/);
+	assert.match(kind.oneOf.find((x) => x.const === 'chart').description, /line, bar, sparkline, pie, donut or area/);
 });

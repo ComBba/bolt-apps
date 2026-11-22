@@ -9,10 +9,10 @@ Every chart the launcher can draw, each fed both ways, plus a cards-only dashboa
 | rows | one point per row, mode `list_data` | one row per series, mode `selected_row` (the selected row is plotted) |
 | in this app | `trend` is the number-list field: `item.trend_field` copies a list from your data |  |
 
-- Types: `line` (the default), `bar`, `sparkline` only. `color` is `accent` or `muted`. Hover shows values; there is nothing else interactive.
+- Types here: `line` (the default), `bar`, `sparkline`, which every Bolt draws. Pie, donut, area and several lines (`bind.series`) need Bolt 0.1.182 and are in `../chart-types`. `color` is `accent` or `muted`. Hover shows values; there is nothing else interactive.
 - Axes: bars are drawn from zero so height equals value; a line or sparkline spans the series minimum to maximum. A sparkline has no axes or labels. Latest and peak numbers are shown with the chart.
 - A row whose y is not a number is skipped and the pane says so; it is never drawn as zero. The engine hands a view a limited number of rows (see [the rules table](../QUICKSTART.md#4-the-rules-table)), so a chart here shows no more than that.
-- Not available: pie, donut, area. Stand-ins: cards with `max` and a unit as a progress meter for a share, or a table with a percent column (see `../table-template`).
+- On a Bolt older than 182 a share can be shown with cards that use `max` and a unit as a progress meter, or a table with a percent column (see `../table-template`).
 - A chart plots every row, so these views carry no Back or refresh rows; a stale or partial notice is the one extra row when data could not be refreshed.
 
 ## Copy this to build
