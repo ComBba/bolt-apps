@@ -8,8 +8,9 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
-import { readPack } from '../bin/bolt-apps.mjs';
+import { readPack, tarFile } from '../bin/bolt-apps.mjs';
 import { clockVersion, newer, bump } from '../lib/workflow.mjs';
 import { BOLT_SAYS, markdownTable } from '../lib/boltsays.mjs';
 import { scanMentions, declaredHostsOf, assessYaml } from '../lib/assess.mjs';
@@ -146,13 +147,41 @@ test('ship: a lost ship.json cannot make a lower version; --version still wins; 
 	fs.renameSync(path.join(home, '.bolt-apps', 'packs', 'shipper-2-900.0.0.boltpack'), path.join(home, '.bolt-apps', 'packs', 'shipper-900.0.0.boltpack'));
 	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
 	const own = ver(cli(home, d, 'ship', path.join(d, 'shipper'))); assert.ok(newer(own, top) && !newer(own, '900.0.0'), `${own}: only shipper's own packs count`);
-	// a file that is not a good pack (not a pack, or a pipe) is never counted and never read: ship does not hang on it
+	// Invalid packs never raise the version, and ship does not open a pipe.
 	const pk = path.join(home, '.bolt-apps', 'packs'); fs.rmSync(path.join(pk, 'shipper-900.0.0.boltpack'));
+	const candidate = path.join(pk, 'shipper-999.0.0.boltpack');
+	const fake = Buffer.from(JSON.stringify({ pack: { pack_id: 'shipper' }, bundle_version: '999.0.0' }));
+	fs.writeFileSync(candidate, zlib.gzipSync(Buffer.concat([tarFile('bundle.json', fake), Buffer.alloc(1024)])));
+	// A real pack can be renamed. Its metadata, not file name or modification time, determines its version.
+	fs.renameSync(path.join(pk, `shipper-${own}.boltpack`), path.join(pk, 'shipper-0.1.0.boltpack'));
+	const renamed = path.join(pk, 'shipper-0.1.0.boltpack');
+	const archive = zlib.gunzipSync(fs.readFileSync(renamed));
+	const manifestSize = parseInt(archive.toString('utf8', 124, 136), 8);
+	const manifestEnd = 512 + Math.ceil(manifestSize / 512) * 512;
+	const signatureEnd = manifestEnd + 1024;   // 512-byte header, 64-byte signature and padding
+	// Moving the first tar member does not change the signed bytes. The alternate order still counts.
+	fs.writeFileSync(renamed, zlib.gzipSync(Buffer.concat([archive.subarray(manifestEnd, signatureEnd), archive.subarray(0, manifestEnd), archive.subarray(signatureEnd)])));
+	assert.equal(readPack(renamed).ok, true);
+	fs.utimesSync(renamed, 1000, 1000);
 	fs.writeFileSync(path.join(pk, 'shipper-950.0.0.boltpack'), 'not a pack');
 	if (process.platform !== 'win32') assert.equal(spawnSync('mkfifo', [path.join(pk, 'shipper-960.0.0.boltpack')]).status, 0);
 	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
 	const safe = spawnSync(process.execPath, [CLI, 'ship', path.join(d, 'shipper')], { cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home }, timeout: 120000 });
 	assert.equal(safe.error, undefined, 'ship must not block on a pipe in the packs folder'); const sv = ver(safe); assert.ok(newer(sv, own) && !newer(sv, '900.0.0'), sv);
+});
+
+test('pack version hints read leading metadata without trusting it as a verified pack', async (t) => {
+	const { readPackMetadata } = await import('../lib/pack.mjs');
+	const d = tmp('ns-meta-');
+	t.after(() => fs.rmSync(d, { recursive: true, force: true }));
+	const file = path.join(d, 'build.boltpack'), meta = { bundle_version: '8.1', pack: { pack_id: 'shipper' } };
+	const header = tarFile('bundle.json', Buffer.from(JSON.stringify(meta)));
+	const write = (...entries) => fs.writeFileSync(file, zlib.gzipSync(Buffer.concat([...entries, Buffer.alloc(1024)])));
+	write(header);
+	assert.deepEqual(await readPackMetadata(file), meta);
+	assert.equal(readPack(file).ok, false, 'metadata alone is not evidence of a valid pack');
+	write(tarFile('signature.bin', Buffer.alloc(64)), header);
+	assert.equal(await readPackMetadata(file), undefined, 'other tar member orders use the full reader');
 });
 
 test('pack suggests a --version that is really higher, also for a +build version', () => {
