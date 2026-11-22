@@ -26,7 +26,7 @@ bolt-apps check kit/examples/unit-convert --shared   # script apps, Bolt 182: ru
 ```
 
 
-Exit codes: `0` every app passed, `1` at least one failed or was refused, `2` usage or load error.
+Exit codes: `0` every app passed, `1` at least one failed or was refused, `2` usage or load error. A usage error includes a missing or wrong argument, a folder that is not an app, and, for `new`, an id that is not valid or a folder that already exists.
 
 ## Machine-readable output (`--json`)
 
