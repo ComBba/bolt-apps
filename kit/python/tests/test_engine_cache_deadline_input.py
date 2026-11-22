@@ -400,6 +400,22 @@ class OtherIds(LiveBase):
         self.assertEqual(load_engine().item_id({}, {"id": "P-1"}), "P-1")
         self.assertEqual(load_engine().item_id({}, {"id": "TK_12.3"}), "TK_12.3")
 
+    def test_a_fold_truncated_at_a_separator_still_drills(self):
+        m = load_engine()
+        for separator in (".", "-"):
+            with self.subTest(separator=separator):
+                raw = "a" * 39 + separator + "b" * 30
+                arg = m.item_id({}, {"id": raw})
+                self.assertEqual(m.token(arg), arg)
+                self.assertEqual(arg.rsplit(".", 1)[0], "a" * 39)
+                Server.payload["projects"]["data"][0]["id"] = raw
+                d = self.folder()
+                items = [r for r in self.rows(["projects"], d) if r.get("kpi_label") == "Progress"]
+                self.assertEqual(len(items), 4)
+                selected = next(r for r in items if r["nav"]["arg"] == arg)
+                detail = self.rows(["projects", arg], d)
+                self.assertEqual([r["title"] for r in detail if r.get("kpi_label") == "Progress"], [selected["title"]])
+
 class OneLineYaml(unittest.TestCase):
     """--emit-yaml refuses a value with a line break, names the config key, writes nothing and exits 1."""
 

@@ -896,7 +896,7 @@ def item_id(view, item):
     if token(raw) == raw:
         return raw
     fold = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
-    fold = re.sub(r"\.{2,}", ".", re.sub(r"[^A-Za-z0-9_.-]+", "-", fold)).strip("-.")[:40]
+    fold = re.sub(r"\.{2,}", ".", re.sub(r"[^A-Za-z0-9_.-]+", "-", fold)).strip("-.")[:40].rstrip("-.")
     return "%s.%s" % (fold or "id", hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12])
 
 
