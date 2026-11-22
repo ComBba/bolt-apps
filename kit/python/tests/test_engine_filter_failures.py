@@ -253,6 +253,10 @@ class YesFilter(unittest.TestCase):
                         ("TRUE", "Yes"), (" False ", "No"), ("maybe", "maybe"), (None, "unknown"), ("", "unknown")):
             self.assertEqual(s(v, "yes"), want, repr(v))
 
+    def test_yes_keeps_other_text_as_written(self):
+        text = "  No response yet  "
+        self.assertEqual(self.m.render("{answer|yes}", {"answer": text}, {}), text)
+
 
 class FormRecord(unittest.TestCase):
     def test_an_empty_input_is_saved_as_empty_text_and_the_toggle_as_yes(self):
