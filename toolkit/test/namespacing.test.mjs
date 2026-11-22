@@ -174,8 +174,21 @@ test('ship: a lost ship.json cannot make a lower version; --version still wins; 
 	fs.writeFileSync(path.join(pk, 'shipper-950.0.0.boltpack'), 'not a pack');
 	if (process.platform !== 'win32') assert.equal(spawnSync('mkfifo', [path.join(pk, 'shipper-960.0.0.boltpack')]).status, 0);
 	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
-	const safe = spawnSync(process.execPath, [CLI, 'ship', path.join(d, 'shipper')], { ...options, timeout: 120000 });
+	// Count full reads by ship, not by its verify subprocess.
+	const trace = path.join(d, 'trace.cjs'), reads = path.join(d, 'pack-reads.log');
+	fs.writeFileSync(reads, '');
+	fs.writeFileSync(trace, `
+const fs = require('node:fs');
+const path = require('node:path');
+const read = fs.readFileSync;
+fs.readFileSync = (file, ...args) => {
+	if (typeof file === 'string' && file.endsWith('.boltpack')) fs.appendFileSync(${JSON.stringify(reads)}, path.basename(file) + '\\n');
+	return read(file, ...args);
+};`);
+	const safe = spawnSync(process.execPath, ['--require', trace, CLI, 'ship', path.join(d, 'shipper')], { ...options, timeout: 120000 });
 	assert.equal(safe.error, undefined, 'ship must not block on a pipe in the packs folder'); const sv = ver(safe); assert.ok(newer(sv, own) && !newer(sv, '900.0.0'), sv);
+	const fullyRead = fs.readFileSync(reads, 'utf8').split('\n').filter(Boolean);
+	assert.deepEqual(fullyRead.filter((f) => f !== path.basename(candidate)), [path.basename(renamed)], 'older packs must not be read in full');
 });
 
 test('pack version hints read leading metadata without trusting it as a verified pack', async (t) => {
