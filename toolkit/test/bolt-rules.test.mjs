@@ -40,7 +40,7 @@ test('bind: a bogus key on a cards pane fails lint-level rules; known keys, enum
 	assert.deepEqual(codes(bindProblems('cards', b('  layout: pie'), 'w')), ['bind_invalid']);
 	assert.deepEqual(codes(bindProblems('table', b('  columns:\n    - { label: A }'), 'w')), ['bind_invalid']);   // field is required
 	assert.deepEqual(codes(bindProblems('image_grid', b('  columns: 9'), 'w')), ['bind_invalid']);
-	assert.deepEqual(codes(bindProblems('chart', b('  type: pie'), 'w')), ['bind_invalid']);   // pie is not a launcher chart type yet
+	assert.deepEqual(codes(bindProblems('chart', b('  type: radar'), 'w')), ['bind_invalid']);   // not a chart type any Bolt draws (pie is valid from Bolt 182: charts-182.test.mjs)
 	const y = app('', '  parse: json\n  timeout_seconds: 20\n').replace('  title_field: title\n', '  title_field: title\n  right_widget:\n    kind: cards\n    mode: list_data\n    bind:\n      bogus_key: x\n');
 	assert.equal(assessYaml(y, 'demo', { pack: true }).problems.some((p) => p.code === 'right_widget_bind_unread' && !/warning/.test(p.level || '')), true);
 	assert.equal(assessYaml(y, 'demo', {}).problems.some((p) => p.code === 'right_widget_bind_unread' && p.level === 'warning'), true);

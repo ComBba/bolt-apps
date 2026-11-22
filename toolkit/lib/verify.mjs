@@ -73,6 +73,10 @@ export const FIXES = {
 	yaml_key_unknown: 'Bolt refuses a key it does not know and the app fails to load. Remove it or fix the spelling.',
 	yaml_key_missing: 'Add this required key.',
 	yaml_admin_only_key: 'This key is for company-managed apps only and Bolt refuses it in a user app. Remove it.',
+	transform_step_unknown: 'Use a step name listed for transform.pipe in schema/user-app.schema.json: a plain name such as trim or lines, or a mapping with exactly one listed key such as { split: "," }. Only the name is checked here; Bolt checks the value.',
+	transform_pipe_count: 'Give transform.pipe at least 1 step and no more than schema/user-app.schema.json allows; split a longer job into two apps.',
+	recognize_patterns_count: 'Give recognize.patterns at least 1 entry and no more than schema/user-app.schema.json allows; merge patterns with | inside one regex.',
+	recognize_regex_too_long: 'Shorten the regex to the length schema/user-app.schema.json allows, for example by splitting it into two patterns.',
 	schema_version_unsupported: `Set schema_version to ${R.schema_versions.join(' or ')}.`,
 	runtime_not_allowed: `Set runtime to one of: ${R.runtimes.join(', ')}.`,
 	id_invalid: 'Use lowercase letters, digits and hyphens, starting with a letter or digit, at most 64 characters.',
@@ -115,7 +119,7 @@ export const FIXES = {
 	command_os_missing: 'Add a command for that system, or list only the systems the app supports under platforms in bolt-app.json. This is a warning: the app simply cannot run there.',
 	right_widget_no_data: 'Use table, detail, cards or chart (image_grid for pictures). Bolt shows a plain "cannot show app data" message for image, color, weather, date and calc panes.',
 	right_widget_kind_invalid: 'Use a right_widget kind and mode Bolt accepts: kinds card, map, markdown, entity_preview, chart, table, cards, detail, json_tree, diff, image_grid (and the data-less image, color, weather, date, calc); modes selected_row or list_data.',
-	right_widget_bind_unread: 'Remove the bind key: the map, image, calc, color, weather and date panes read nothing from bind. For a chart, type is line, bar or sparkline.',
+	right_widget_bind_unread: 'Remove the bind key: the map, image, calc, color, weather and date panes read nothing from bind. For a chart, type is line, bar, sparkline, pie, donut or area.',
 	bind_needs_newer_bolt: 'Set "min_bolt_version": "0.1.182" in bolt-app.json to confirm you give the pack only to people on Bolt 182 or newer, or remove the bind key. Bolt does not read that field and cannot hold the pack back; a Bolt 181 refuses the whole pack when one app uses a key it does not know.',
 	bind_too_many_refs: 'hero.src may join at most 16 {{ }} references; Bolt draws no picture past that. Use a smaller picture so it fits in 16 parts or fewer (kit.hero_fields refuses a bigger one).',
 	hero_src_not_picture: 'Set hero.src to {{row.<field>}} joined from the row fields that hold the picture, or to a data:image URI. A pane never loads a web address.',
@@ -154,6 +158,16 @@ export function commandProblem(os, cmd) {
 	return null;
 }
 
+// The app file's top-level keys: one Bolt does not know, or one only company-managed apps may use, makes Bolt refuse the whole file. lint --personal runs it too.
+export function topLevelKeyProblems(root) {
+	const out = [];
+	for (const e of root && root.t === 'm' ? root.entries : []) {
+		if (!R.top_level_keys.includes(e.key)) out.push({ code: 'yaml_key_unknown', message: `unknown key "${e.key}"; Bolt refuses the whole file`, line: e.line });
+		else if (R.admin_only_keys.includes(e.key)) out.push({ code: 'yaml_admin_only_key', message: `"${e.key}" is for company-managed apps and is not allowed in a user app`, line: e.line });
+	}
+	return out;
+}
+
 // files: [{ path: 'utilities/x.yaml' | 'scripts/x.py', kind, content: Buffer }]
 export function checkManifests(files, opts = {}) {
 	const findings = [], apps = [], add = (...a) => findings.push(mk(...a));
@@ -176,10 +190,7 @@ export function checkManifests(files, opts = {}) {
 		{ const cm = chipMismatch(root); if (cm) add('warning', 'description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, file, 1); }
 		const val = (m, k) => get(m, k)?.value, S = (m, k) => str(val(m, k)), ln = (m, k, d) => get(m, k)?.line ?? d;
 		{ const cid = S(root, 'id'), cch = S(root, 'chip'); if (cid && cch && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cch) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cid.trim()) && cid.trim() !== cch.trim()) E('chip_not_id', `chip "${cch}" is not the id "${cid}". Bolt only runs an app whose chip equals its id: set chip to ${cid}`, ln(root, 'chip')); }
-		for (const e of root.entries) {
-			if (!R.top_level_keys.includes(e.key)) E('yaml_key_unknown', `unknown key "${e.key}"; Bolt refuses the whole file`, e.line);
-			else if (R.admin_only_keys.includes(e.key)) E('yaml_admin_only_key', `"${e.key}" is for company-managed apps and is not allowed in a user app`, e.line);
-		}
+		for (const pr of topLevelKeyProblems(root)) E(pr.code, pr.message, pr.line);
 		for (const k of R.required_keys) if (!get(root, k)) E('yaml_key_missing', `missing required key "${k}"`, 1);
 		if (get(root, 'schema_version') && !R.schema_versions.includes(Number(S(root, 'schema_version')))) E('schema_version_unsupported', `schema_version ${S(root, 'schema_version')} is not supported`, ln(root, 'schema_version'));
 		const rt = S(root, 'runtime'); if (get(root, 'runtime') && !R.runtimes.includes(rt)) E('runtime_not_allowed', `runtime "${rt}" is not accepted`, ln(root, 'runtime'));
@@ -226,7 +237,7 @@ export function checkManifests(files, opts = {}) {
 		const args = val(root, 'args'); for (const it of args?.items || []) { const fr = S(it, 'from'); if (fr !== undefined && !/^query\.word\(\s*\d+\s*\)$/.test(fr.trim())) E('args_from_unsupported', `args[].from "${fr}" is not supported`, ln(root, 'args')); }
 		// checks verify already makes with its own codes (top-level keys, timeout range, inline env, loopback host, method) are not reported twice
 		const DUP = new Set(['env_inline_value', 'timeout_out_of_range', 'http_host_not_loopback', 'http_method_not_allowed', 'action_kind', 'http_parse']);
-		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed' && !DUP.has(x.code) && !(/^(unknown_field|missing_field)$/.test(x.code) && /^the app file/.test(x.message)) && !(x.code === 'missing_field' && /"(bridge|http)" is required/.test(x.message)))) add(pr.level || 'error', pr.code, pr.message, file, ln(root, 'actions') || 1);
+		for (const pr of a.problems.filter((x) => x.code !== 'runtime_not_allowed' && !DUP.has(x.code) && !(/^(unknown_field|missing_field)$/.test(x.code) && /^the app file/.test(x.message)) && !(x.code === 'missing_field' && /"(bridge|http)" is required/.test(x.message)))) add(pr.level || 'error', pr.code, pr.message, file, pr.line || ln(root, 'actions') || 1);   // a problem that knows its line (transform, recognize) points there
 	}
 	for (const r of used) if (!scripts.has(r)) add('error', 'script_missing', `an app runs {{scripts_dir}}/${r} but the pack has no scripts/${r}`, `scripts/${r}`);
 	const usedAll = dataFilesUsed(used, [...scripts.keys()], (n) => scripts.get(n));

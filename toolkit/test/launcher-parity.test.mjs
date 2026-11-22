@@ -23,17 +23,20 @@ test('sets: image types, no-data kinds, row pane kinds and the list sizes', () =
 	assert.deepEqual(RULES.widgets.images.inline_types, s['widgets.images.inline_types']);
 	assert.deepEqual([...RULES.no_app_data_kinds].sort(), [...s.no_app_data_kinds].sort());
 	assert.deepEqual([...RULES.row_pane_kinds].sort(), [...s.row_pane_kinds].sort());
-	assert.equal(RULES.widget_kinds.length, s.widget_kinds_count);
+	assert.equal(RULES.widget_kinds.length, s.widget_kinds_count + s.widget_kinds_added_182.length);
+	assert.deepEqual(RULES.widget_kinds.slice(s.widget_kinds_count), s.widget_kinds_added_182);
 	assert.equal(RULES.actions.icons.length, s['actions.icons_count']);
 	assert.equal(RULES.actions.reserved_label_words.length, s['actions.reserved_label_words_count']);
 	assert.equal(RULES.actions.forbidden_ids.length, s['actions.forbidden_ids_count']);
 	assert.equal(RULES.env.benign_passthrough.length, s['env.benign_passthrough_count']);
 });
 
-test('chart types: the rules and the schema list only what the launcher loader accepts', () => {
-	assert.deepEqual(RULES.right_widget.bind.chart.type.values, snap.chart_types.launcher_native);
+test('chart types: the rules and the schema list only what the launcher loader accepts (the 181 types plus those 182 added)', () => {
+	const all = [...snap.chart_types.launcher_native, ...snap.chart_types.added_182];
+	assert.deepEqual(RULES.right_widget.bind.chart.type.values, all);
+	assert.deepEqual(Object.keys(RULES.right_widget.bind.chart.type.since_values), snap.chart_types.added_182);
 	const sc = JSON.parse(read('schema/user-app.schema.json'));
-	assert.deepEqual(sc.$defs.bindChart.properties.type.enum, snap.chart_types.launcher_native);
+	assert.deepEqual(sc.$defs.bindChart.properties.type.enum, all);
 });
 
 test('the schema accepts every action kind the launcher accepts, and the runner environment the docs state is the one in the rules', () => {

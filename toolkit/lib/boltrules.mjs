@@ -46,7 +46,8 @@ function bindVal(node, spec, where, out, ctx = {}) {
 	const t = spec.t;
 	if (t === 'text') { if (!node || node.t !== 's') return bad(`must be text, got ${kindWord(node?.t)}`); if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
 	else if (t === 'textOrNumber') { if (!node || node.t !== 's') bad(`must be text or a number, got ${kindWord(node?.t)}`); else if ([...node.v].length > spec.max) bad(`is longer than ${spec.max} characters`); }
-	else if (t === 'enum') { const v = scalar(node); if (v === undefined || !spec.values.includes(v)) bad(`must be one of ${spec.values.join(', ')}, got ${JSON.stringify(v ?? null)}`); }
+	else if (t === 'enum') { const v = scalar(node); if (v === undefined || !spec.values.includes(v)) bad(`must be one of ${spec.values.join(', ')}, got ${JSON.stringify(v ?? null)}`);
+		else if (spec.since_values && Object.hasOwn(spec.since_values, v)) { const g = gateProblem(where.replace(/\.[^.]+$/, ''), `${where.split('.').pop()} "${v}"`, spec.since_values[v], ctx); if (g) out.push(g); } }
 	else if (t === 'bool') { const v = scalar(node); if (!(v === 'true' || v === 'false') || node.q) bad('must be true or false'); }
 	else if (t === 'int') { const v = num(node); if (!Number.isInteger(v) || v < spec.lo || v > spec.hi) bad(`must be a whole number from ${spec.lo} to ${spec.hi}`); }
 	else if (t === 'textList') { if (!node || node.t !== 'l') bad(`must be a list, got ${kindWord(node?.t)}`); else { if (node.items.length > spec.items) bad(`has more than ${spec.items} entries`); node.items.forEach((x, i) => { if (!x || x.t !== 's' || [...x.v].length > spec.max) bad(`entry ${i} must be text of at most ${spec.max} characters`); }); } }
@@ -58,7 +59,7 @@ export const parseBoltVersion = (v) => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(
 const boltAtLeast = (have, need) => { for (let i = 0; i < 3; i++) if (have[i] !== need[i]) return have[i] > need[i]; return true; };
 // A key that only a newer Bolt reads ("since" in the rules file). A Bolt that does not know the key REFUSES THE WHOLE PACK, so an app that uses it must declare
 // min_bolt_version in bolt-app.json at or above the version. ctx.minBolt is that declaration; ctx.minBoltKnown says a bolt-app.json was read (a packed bundle carries none).
-function gateProblem(where, key, since, ctx) {
+export function gateProblem(where, key, since, ctx) {
 	const have = parseBoltVersion(ctx.minBolt), need = parseBoltVersion(since);
 	if (have && need && boltAtLeast(have, need)) return null;
 	const ver = since.replace(/^0\.1\./, ''), packed = ctx.minBoltKnown === false;   // packed: a built pack is being read, only a warning (the author may still hand it only to Bolt 182 users)

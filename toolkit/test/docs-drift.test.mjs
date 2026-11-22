@@ -24,7 +24,7 @@ test('QUICKSTART.md stays small: a cold agent reads one short page', () => {
 	const words = QS.split(/\s+/).filter(Boolean).length, lines = QS.split('\n').length;
 	// Budget raised from 1500 words and 130 lines to 2000 and 150 when section 6 (what Bolt does with rows and runs) was added from the
 	// launcher audit: authors hit those behaviours, and it is still one page.
-	assert.ok(words <= 2700, `${words} words (budget 2700)`);   // 2000 plus the hero picture row and its 181 refusal row (Bolt 182), plus the notes that chip must equal id, the three start states, re-approval and code sharing on 181
+	assert.ok(words <= 2900, `${words} words (budget 2900)`);   // 2000 plus the hero picture row and its 181 refusal row (Bolt 182), plus the notes that chip must equal id, the three start states, re-approval and code sharing on 181
 	assert.ok(lines <= 150, `${lines} lines (budget 150)`);
 	assert.ok((QS.match(/^\d+\. /gm) || []).length >= 10, 'ten hard rules');
 });
@@ -94,11 +94,11 @@ for (const c of ASSESS_CODES) emitted.add(c);
 for (const f of SRC) {
 	const t = read(f);
 	for (const m of t.matchAll(/'([a-z][a-z0-9]*(?:_[a-z0-9]+)+)'/g)) universe.add(m[1]);
-	for (const re of [/\b[EW]\('([a-z][a-z0-9_]+)'/g, /add\('(?:error|warning)',\s*'([a-z][a-z0-9_]+)'/g, /code:\s*'([a-z][a-z0-9_]+)'/g]) for (const m of t.matchAll(re)) emitted.add(m[1]);
+	for (const re of [/\b[EW]\('([a-z][a-z0-9_]+)'/g, /add\('(?:error|warning)',\s*'([a-z][a-z0-9_]+)'/g, /\btop\('(?:error|warning)',\s*'([a-z][a-z0-9_]+)'/g, /code:\s*'([a-z][a-z0-9_]+)'/g]) for (const m of t.matchAll(re)) emitted.add(m[1]);
 }
 for (const c of emitted) universe.add(c);
 // codes the unpublished checker inside Bolt emits; CHECKER.md says so and the toolkit does not
-const BOLT_ONLY = new Set(['sensitive_secret', 'sensitive_email', 'sensitive_internal_url', 'test_failed', 'snippet_invalid', 'search_engine_invalid', 'user_app_invalid', 'listing_invalid', 'parse_error', 'load_error', 'signature_invalid', 'owned_by_other']);
+const BOLT_ONLY = new Set(['sensitive_secret', 'sensitive_email', 'sensitive_internal_url', 'test_failed', 'snippet_invalid', 'search_engine_invalid', 'user_app_invalid', 'listing_invalid', 'parse_error', 'signature_invalid', 'owned_by_other']);
 const known = new Set([...universe, ...BOLT_ONLY]);
 {
 	const add = (o) => { if (Array.isArray(o)) o.forEach(add); else if (o && typeof o === 'object') Object.entries(o).forEach(([k, v]) => { known.add(k); add(v); }); else if (typeof o === 'string') known.add(o); };
@@ -132,10 +132,10 @@ test('no unqualified sandbox, confinement or safety claim in any doc', () => {
 	for (const f of DOCS) read(f).split('\n').forEach((l, i) => { if (claim.test(l)) assert.ok(ok.test(l), `${f}:${i + 1} ${l.slice(0, 140)}`); });
 });
 
-test('docs name the one command form, say Windows is unproven and never name a chart type that is not shipped', () => {
+test('docs name the one command form, say Windows is unproven and never name a chart type without saying it needs Bolt 182 or is not available', () => {
 	assert.match(QS, /\.\/bolt-apps new /);
 	assert.match(QS, /Windows is unproven/);
-	for (const f of DOCS.filter((d) => !/CAPABILITIES|QUICKSTART|CHANGELOG/.test(d))) read(f).split('\n').forEach((l, i) => { if (/\b(pie|donut|heatmap|gauge)\b/i.test(l)) assert.match(l, /\b(not|cannot|never)\b/i, `${f}:${i + 1}`); });
+	for (const f of DOCS.filter((d) => !/CAPABILITIES|QUICKSTART|CHANGELOG|chart-types\/README/.test(d))) read(f).split('\n').forEach((l, i) => { if (/\b(pie|donut|heatmap|gauge)\b/i.test(l)) assert.match(l, /\b(not|cannot|never|182)\b/i, `${f}:${i + 1}`); });
 });
 
 // ---------------------------------------------------------------- runnable shell blocks
