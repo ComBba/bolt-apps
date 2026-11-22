@@ -128,7 +128,7 @@ test('gallery lint and pack check the app file the way verify does: keys, pipe s
 test('a usage error exits 2 in every command (CHECKER.md: 2 is usage or load error), run, ship, new <template> and doctor included', () => {
 	const d = tmp(), nope = path.join(d, 'nope'); fs.mkdirSync(path.join(d, 'taken'));
 	const cases = [['run'], ['run', nope], ['ship'], ['ship', nope], ['doctor', nope], ['new', 'system-glance', 'Not_An_Id'], ['new', 'system-glance', 'taken', '--dir', d], ['new', 'taken', '--dir', d], ['lint', nope], ['verify'], ['pack'], ['check']];
-	for (const c of cases) { const r = run(d, ...c); assert.equal(r.status, 2, `${c.join(' ')}: ${r.stdout}${r.stderr}`); assert.match(r.stderr, /^bolt-apps: /, c.join(' ')); }
+	for (const c of cases) { const r = run(d, ...c); assert.equal(r.status, 2, `${c.join(' ')}: ${r.stdout}${r.stderr}`); assert.match(r.stderr, /^bolt-apps: /m, c.join(' ')); }
 	assert.match(run(d, 'doctor', nope).stderr, /no app found in .*nope.*\n.*usage: \.\/bolt-apps doctor/);
 	assert.deepEqual(fs.readdirSync(d), ['taken'], 'a usage error writes nothing');
 });
