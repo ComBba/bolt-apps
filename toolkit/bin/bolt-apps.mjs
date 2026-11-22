@@ -371,6 +371,7 @@ export const esc = (v) => String(v).replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u
 function cmdVerify(args) {
 	const json = args.includes('--json'), f = args.find((x) => !x.startsWith('--'));
 	if (!f || !fs.existsSync(f)) die('usage: ./bolt-apps verify <app-folder | file.boltpack> [--json]');
+	const scriptLabel = (x) => x.path.replace(/^scripts\//, '');
 	let findings = [], confirm = null, kind;
 	if (fs.statSync(f).isDirectory()) {
 		kind = 'app';
@@ -380,7 +381,7 @@ function cmdVerify(args) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
 			const c = checkManifests(files, { platforms: r.app.platforms, appId: r.app.id, minBolt: r.app.min_bolt_version, minBoltKnown: true }); findings.push(...c.findings);
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, '')), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map(scriptLabel), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
 		}
 	} else {
 		kind = 'pack';
@@ -390,7 +391,7 @@ function cmdVerify(args) {
 			findings.push(...checkPackShape(r.meta, r.files, r.count));
 			const files = (r.meta.entries || []).filter((e) => ['user_utility', 'script'].includes(e.kind) && r.files.has(String(e.path).replace(/^manifests\//, ''))).map((e) => ({ path: String(e.path).replace(/^manifests\//, ''), kind: e.kind, content: r.files.get(String(e.path).replace(/^manifests\//, '')) }));
 			const c = checkManifests(files, { platformsUnknown: true, minBoltKnown: false, minBolt: r.meta.listing && typeof r.meta.listing === 'object' ? r.meta.listing.min_bolt_version : undefined, appId: r.meta.pack?.pack_id }); findings.push(...c.findings);   // a pack does not record platforms, so a missing OS command is not reported here
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => x.path.replace(/^scripts\//, '')), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map(scriptLabel), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
 		}
 	}
 	const ok = !findings.some((x) => x.level === 'error');
