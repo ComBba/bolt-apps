@@ -10,6 +10,7 @@ import { parseYaml, get, str, notYamlHint } from './yamlsubset.mjs';
 import { vendorKit } from './check.mjs';
 import { formatBoltSays } from './boltsays.mjs';
 import { versionProblem } from './boltrules.mjs';
+import { readPack, readPackMetadata } from './pack.mjs';
 import { pythonCmd, spawnPython, PYTHON_MISSING } from './python.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -324,14 +325,55 @@ export function startMode(dir) {
 // ---------------------------------------------------------------- ship
 const notLink = (f) => { try { if (fs.lstatSync(f).isSymbolicLink()) die(`${f} is a link, which is not followed. Replace it with a real file or folder you own`); } catch (e) { if (e.code !== 'ENOENT') throw e; } };
 const loadShip = () => { try { const j = JSON.parse(fs.readFileSync(path.join(STATE, 'ship.json'), 'utf8')); return j && typeof j === 'object' && !Array.isArray(j) ? Object.assign(Object.create(null), j) : Object.create(null); } catch { return Object.create(null); } };
-const bump = (v) => { const p = String(v).split('.').map(Number); if (p.length !== 3 || p.some((n) => !Number.isInteger(n))) return '1.0.1'; p[2] += 1; return p.join('.'); };
 // Bolt replaces an installed pack only with a NEWER version, and compares numbers (a missing part counts as 0, "+build" is ignored, a pre-release is older). The patch
-// number here is seconds since 2026-01-01, so a build made later is always higher, even when ~/.bolt-apps/ship.json is lost or another computer made the last one.
+// number here is seconds since 2026-01-01, so a later clock value can advance a version even when ~/.bolt-apps/ship.json is lost.
 const EPOCH_MS = Date.UTC(2026, 0, 1);
 export const clockVersion = (now = Date.now()) => `1.0.${Math.max(1, Math.floor((now - EPOCH_MS) / 1000))}`;
-const core = (v) => String(v).trim().replace(/^[vV]/, '').split('+')[0].split('-')[0].split('.').map((x) => Number(x) || 0);
-export const newer = (a, b) => { const x = core(a), y = core(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; } return false; };
-export function ship(args) {
+const core = (v) => String(v).trim().replace(/^[vV]/, '').split('+')[0].split('-')[0].split('.').map((x) => /^\d+$/.test(x) ? BigInt(x) : 0n);
+export const newer = (a, b) => { const x = core(a), y = core(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? 0n) - (y[i] ?? 0n); if (d) return d > 0n; } return false; };
+// One above the last build, in any form --version accepts (2.0, v1.2.0-rc1, or four numbers): the last number goes up, so the result is always newer than `v`.
+export const bump = (v) => { const p = core(v); while (p.length < 3) p.push(0n); p[p.length - 1] += 1n; return p.join('.'); };
+// The archive name is only a filter. Its metadata identifies the app and version.
+function packVersion(meta, id) {
+	const version = meta?.bundle_version;
+	return meta?.pack?.pack_id === id && typeof version === 'string' && !versionProblem(version) ? version : null;
+}
+
+function verifiedPackVersion(file, id) {
+	try { if (!fs.lstatSync(file).isFile()) return null; } catch { return null; }
+	const pack = readPack(file);
+	return pack.ok ? packVersion(pack.meta, id) : null;
+}
+
+async function latestPackVersion(dir, id, clock, last) {
+	let files;
+	try { files = fs.readdirSync(dir, { withFileTypes: true }); } catch { return last; }
+	const candidates = [];
+	const canRaise = (version) => version && !newer(clock, version) && (!last || newer(version, last));
+	for (const entry of files) {
+		if (!entry.isFile() || !entry.name.startsWith(id + '-') || !entry.name.endsWith('.boltpack')) continue;
+		const file = path.join(dir, entry.name);
+		const meta = await readPackMetadata(file);
+		if (meta === undefined) {
+			const version = verifiedPackVersion(file, id);
+			if (canRaise(version)) last = version;
+		} else {
+			const version = packVersion(meta, id);
+			if (canRaise(version)) candidates.push({ file, version });
+		}
+	}
+	// Starting with the highest hint avoids inflating and hashing the manifest payloads of older packs.
+	// A hint alone cannot raise the chosen version. An invalid highest candidate leaves the next one a chance.
+	candidates.sort((a, b) => newer(a.version, b.version) ? -1 : newer(b.version, a.version) ? 1 : 0);
+	for (const { file, version } of candidates) {
+		if (!canRaise(version)) break;
+		const verified = verifiedPackVersion(file, id);
+		if (canRaise(verified)) last = verified;
+	}
+	return last;
+}
+
+export async function ship(args) {
 	const dir = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--version'); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps ship <app-folder> [--version X]   (lint, check, pack, verify, with the next version picked for you)', 2);
 	staleCloneNote();
 	refuseSecrets(dir);
@@ -352,10 +394,9 @@ export function ship(args) {
 	let version, why;
 	if (forced !== undefined) { const vp = versionProblem(forced); if (vp) die(`${vp}. Example: --version 1.0.5, or leave --version out and ship picks one`); version = forced; why = 'the version you asked for with --version'; }
 	else {
-		version = clockVersion(); why = 'taken from the clock, so it is higher than every earlier build, even if your ship notes are lost or another computer built the last one';
-		// the packs this computer already made also count (a lost ship.json leaves them), so a wrong clock cannot make a lower number either
-		let last = typeof state[app.id] === 'string' ? state[app.id] : null;
-		try { for (const f of fs.readdirSync(path.join(STATE, 'packs'))) { const m = new RegExp(`^${app.id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+\\.\\d+\\.\\d+)\\.boltpack$`).exec(f); if (m && (!last || newer(m[1], last))) last = m[1]; } } catch { /* no packs folder yet */ }
+		version = clockVersion(); why = 'taken from the clock, with earlier local builds checked before it is used';
+		const previous = typeof state[app.id] === 'string' ? state[app.id] : null;
+		const last = await latestPackVersion(path.join(STATE, 'packs'), app.id, version, previous);
 		if (last && !newer(version, last)) { version = bump(last); why = `one above your last build (${last})`; }
 	}
 	console.log(`ok version ${version}: ${why}`);

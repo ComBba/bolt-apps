@@ -8,9 +8,10 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
-import { readPack } from '../bin/bolt-apps.mjs';
-import { clockVersion, newer } from '../lib/workflow.mjs';
+import { readPack, tarFile } from '../bin/bolt-apps.mjs';
+import { clockVersion, newer, bump } from '../lib/workflow.mjs';
 import { BOLT_SAYS, markdownTable } from '../lib/boltsays.mjs';
 import { scanMentions, declaredHostsOf, assessYaml } from '../lib/assess.mjs';
 
@@ -118,20 +119,116 @@ test('the toolkit refuses a bare shared name; verify says what to do', () => {
 
 test('ship: a lost ship.json cannot make a lower version; --version still wins; the reason is printed', async () => {
 	const d = tmp('ns-ship-'), home = tmp('ns-home-');
-	assert.equal(cli(home, d, 'new', 'script-template', 'shipper', '--dir', d).status, 0);
-	const ver = (r) => { assert.equal(r.status, 0, r.stdout + r.stderr); return /Shipped shipper (\S+):/.exec(r.stdout)[1]; };
-	const v1 = ver(cli(home, d, 'ship', path.join(d, 'shipper')));
+	const options = { cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } };
+	const run = (...args) => spawnSync(process.execPath, [CLI, ...args], options);
+	assert.equal(run('new', 'script-template', 'shipper', '--dir', d).status, 0);
+	const ver = (r) => {
+		assert.equal(r.status, 0, r.stdout + r.stderr);
+		const shipped = /^Shipped shipper (\S+): (.+)$/m.exec(r.stdout);
+		assert.ok(shipped, r.stdout);
+		assert.equal(shipped[2], path.join(home, '.bolt-apps', 'packs', `shipper-${shipped[1]}.boltpack`));
+		return shipped[1];
+	};
+	const v1 = ver(run('ship', path.join(d, 'shipper')));
 	assert.match(v1, /^1\.0\.\d+$/);
-	const r2 = cli(home, d, 'ship', path.join(d, 'shipper')); const v2 = ver(r2); assert.ok(newer(v2, v1), `${v2} must be higher than ${v1}`);
+	const r2 = run('ship', path.join(d, 'shipper')); const v2 = ver(r2); assert.ok(newer(v2, v1), `${v2} must be higher than ${v1}`);
 	// lose every note this computer kept
 	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json')); fs.rmSync(path.join(home, '.bolt-apps', 'packs'), { recursive: true });
 	await new Promise((r) => setTimeout(r, 1100));
-	const r3 = cli(home, d, 'ship', path.join(d, 'shipper')); const v3 = ver(r3); assert.ok(newer(v3, v2), `${v3} must be higher than ${v2} after ship.json was deleted`);
+	const r3 = run('ship', path.join(d, 'shipper')); const v3 = ver(r3); assert.ok(newer(v3, v2), `${v3} must be higher than ${v2} after ship.json was deleted`);
 	assert.match(r3.stdout, /version \S+: taken from the clock/);
 	assert.match(r3.stdout, /HIGH risk/); assert.match(r3.stdout, /owned_by_other/);
-	const forced = cli(home, d, 'ship', path.join(d, 'shipper'), '--version', '9.9.9'); assert.equal(ver(forced), '9.9.9');
-	const after = cli(home, d, 'ship', path.join(d, 'shipper')); assert.ok(newer(ver(after), '9.9.9'));
-	const bad = cli(home, d, 'ship', path.join(d, 'shipper'), '--version', 'abc'); assert.notEqual(bad.status, 0);
+	const forced = run('ship', path.join(d, 'shipper'), '--version', '9.9.9'); assert.equal(ver(forced), '9.9.9');
+	const after = run('ship', path.join(d, 'shipper')); assert.ok(newer(ver(after), '9.9.9'));
+	const bad = run('ship', path.join(d, 'shipper'), '--version', 'abc'); assert.notEqual(bad.status, 0);
+	// --version also takes a short or tagged form; the next build must still be higher than it, never 1.0.1
+	for (const v of ['20.0', 'v30.1.0-rc1']) {
+		assert.equal(ver(run('ship', path.join(d, 'shipper'), '--version', v)), v);
+		const next = ver(run('ship', path.join(d, 'shipper'))); assert.ok(newer(next, v), `${next} must be higher than ${v}`);
+	}
+	// the same when ship.json is lost: the version is read from the packs themselves, in every form --version takes
+	for (const v of ['40', 'V41.0', 'v42.1.0-rc1', '43.1.0+build.7']) {
+		assert.equal(ver(run('ship', path.join(d, 'shipper'), '--version', v)), v);
+		fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
+		const lost = ver(run('ship', path.join(d, 'shipper'))); assert.ok(newer(lost, v), `${lost} must be higher than ${v} after ship.json was deleted`);
+	}
+	// a pack of another app whose id starts the same (shipper-2) never counts, however its file is named
+	const top = ver(run('ship', path.join(d, 'shipper')));
+	assert.equal(run('new', 'script-template', 'shipper-2', '--dir', d).status, 0);
+	assert.equal(run('ship', path.join(d, 'shipper-2'), '--version', '900.0.0').status, 0);
+	fs.renameSync(path.join(home, '.bolt-apps', 'packs', 'shipper-2-900.0.0.boltpack'), path.join(home, '.bolt-apps', 'packs', 'shipper-900.0.0.boltpack'));
+	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
+	const own = ver(run('ship', path.join(d, 'shipper'))); assert.ok(newer(own, top) && !newer(own, '900.0.0'), `${own}: only shipper's own packs count`);
+	// Invalid packs never raise the version, and ship does not open a pipe.
+	const pk = path.join(home, '.bolt-apps', 'packs'); fs.rmSync(path.join(pk, 'shipper-900.0.0.boltpack'));
+	const candidate = path.join(pk, 'shipper-999.0.0.boltpack');
+	const fake = Buffer.from(JSON.stringify({ pack: { pack_id: 'shipper' }, bundle_version: '999.0.0' }));
+	fs.writeFileSync(candidate, zlib.gzipSync(Buffer.concat([tarFile('bundle.json', fake), Buffer.alloc(1024)])));
+	// A real pack can be renamed. Its metadata, not file name or modification time, determines its version.
+	fs.renameSync(path.join(pk, `shipper-${own}.boltpack`), path.join(pk, 'shipper-0.1.0.boltpack'));
+	const renamed = path.join(pk, 'shipper-0.1.0.boltpack');
+	const archive = zlib.gunzipSync(fs.readFileSync(renamed));
+	const manifestSize = parseInt(archive.toString('utf8', 124, 136), 8);
+	const manifestEnd = 512 + Math.ceil(manifestSize / 512) * 512;
+	const signatureEnd = manifestEnd + 1024;   // 512-byte header, 64-byte signature and padding
+	// Moving the first tar member does not change the signed bytes. The alternate order still counts.
+	fs.writeFileSync(renamed, zlib.gzipSync(Buffer.concat([archive.subarray(manifestEnd, signatureEnd), archive.subarray(0, manifestEnd), archive.subarray(signatureEnd)])));
+	assert.equal(readPack(renamed).ok, true);
+	fs.utimesSync(renamed, 1000, 1000);
+	fs.writeFileSync(path.join(pk, 'shipper-950.0.0.boltpack'), 'not a pack');
+	if (process.platform !== 'win32') assert.equal(spawnSync('mkfifo', [path.join(pk, 'shipper-960.0.0.boltpack')]).status, 0);
+	fs.rmSync(path.join(home, '.bolt-apps', 'ship.json'));
+	// Count full reads by ship, not by its verify subprocess.
+	const trace = path.join(d, 'trace.cjs'), reads = path.join(d, 'pack-reads.log');
+	fs.writeFileSync(reads, '');
+	fs.writeFileSync(trace, `
+const fs = require('node:fs');
+const path = require('node:path');
+const read = fs.readFileSync;
+fs.readFileSync = (file, ...args) => {
+	if (typeof file === 'string' && file.endsWith('.boltpack')) fs.appendFileSync(${JSON.stringify(reads)}, path.basename(file) + '\\n');
+	return read(file, ...args);
+};`);
+	const safe = spawnSync(process.execPath, ['--require', trace, CLI, 'ship', path.join(d, 'shipper')], { ...options, timeout: 120000 });
+	assert.equal(safe.error, undefined, 'ship must not block on a pipe in the packs folder'); const sv = ver(safe); assert.ok(newer(sv, own) && !newer(sv, '900.0.0'), sv);
+	const fullyRead = fs.readFileSync(reads, 'utf8').split('\n').filter(Boolean);
+	assert.deepEqual(fullyRead.filter((f) => f !== path.basename(candidate)), [path.basename(renamed)], 'older packs must not be read in full');
+});
+
+test('pack version hints read leading metadata without trusting it as a verified pack', async (t) => {
+	const { readPackMetadata } = await import('../lib/pack.mjs');
+	const d = tmp('ns-meta-');
+	t.after(() => fs.rmSync(d, { recursive: true, force: true }));
+	const file = path.join(d, 'build.boltpack'), meta = { bundle_version: '8.1', pack: { pack_id: 'shipper' } };
+	const header = tarFile('bundle.json', Buffer.from(JSON.stringify(meta)));
+	const write = (...entries) => fs.writeFileSync(file, zlib.gzipSync(Buffer.concat([...entries, Buffer.alloc(1024)])));
+	write(header);
+	assert.deepEqual(await readPackMetadata(file), meta);
+	assert.equal(readPack(file).ok, false, 'metadata alone is not evidence of a valid pack');
+	write(tarFile('signature.bin', Buffer.alloc(64)), header);
+	assert.equal(await readPackMetadata(file), undefined, 'other tar member orders use the full reader');
+});
+
+test('pack suggests a --version that is really higher, also for a +build version', () => {
+	const d = tmp('ns-hint-'), home = tmp('ns-home-');
+	assert.equal(cli(home, d, 'new', 'script-template', 'hinted', '--dir', d).status, 0);
+	const r = cli(home, d, 'pack', path.join(d, 'hinted'), '--personal', '--key', KEY, '--version', '1.2.3+build.7', '--out', path.join(d, 'h.boltpack')); assert.equal(r.status, 0, r.stdout + r.stderr);
+	const s = /for example --version (\S+)\)/.exec(r.stdout); assert.ok(s, r.stdout); assert.ok(newer(s[1], '1.2.3+build.7'), s[1]);
+});
+
+test('bump gives a version newer than every form --version accepts', () => {
+	for (const [v, want] of [['1.0.5', '1.0.6'], ['2.0', '2.0.1'], ['2', '2.0.1'], ['v1.2.0-rc1', '1.2.1'], ['1.2.3+build.7', '1.2.4'], ['1.2.3.1000', '1.2.3.1001']]) {
+		assert.equal(bump(v), want, v); assert.ok(newer(bump(v), v), v);
+	}
+});
+
+test('bump and newer keep all digits of large version components', () => {
+	const last = '2.0.0.9007199254740992';
+	const next = '2.0.0.9007199254740993';
+	assert.equal(bump(last), next);
+	assert.equal(bump(`v${next}-rc1+build.7`), '2.0.0.9007199254740994');
+	assert.ok(newer(next, last));
+	assert.ok(!newer(last, next));
 });
 
 test('new <template> <id> puts the person in author, never the examples name, and the pack carries that name', () => {

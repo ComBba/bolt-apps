@@ -12,12 +12,14 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { readPack, contentHash, sha, PACK_MAX_BYTES } from '../lib/pack.mjs';
+export { readPack, contentHash } from '../lib/pack.mjs';
 import { checkManifests, confirmPreview, checkPackShape, topLevelKeyProblems, FIXES } from '../lib/verify.mjs';
 import { get, str, notYamlHint } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem, chipMismatch } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
-import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote } from '../lib/workflow.mjs';
+import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote, bump } from '../lib/workflow.mjs';
 import { exportShared } from '../lib/shared.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
@@ -273,40 +275,6 @@ export function tarFile(name, data) {
 	h.write(h.reduce((a, b) => a + b, 0).toString(8).padStart(6, '0') + '\0 ', 148);
 	return Buffer.concat([h, data, Buffer.alloc((512 - (data.length % 512)) % 512)]);
 }
-const PACK_LIMITS = { entries: 1024, unpacked: 64 * 1024 * 1024, inflated: 64 * 1024 * 1024 + 4 * 1024 * 1024 };
-// Only these names exist in a pack: bundle.json, signature.bin and files under manifests/. Segments are plain: no empty, ., .., backslash or leading slash.
-const canonicalName = (n) => (n === 'bundle.json' || n === 'signature.bin' || n.startsWith('manifests/') || n === 'manifests') && n.length > 0 && !n.includes('\\') && !n.startsWith('/') && n.split('/').every((seg) => seg !== '' && seg !== '.' && seg !== '..');
-class PackError extends Error { constructor(code, message) { super(message); this.code = code; } }
-function untar(buf) {
-	const files = new Map(); let off = 0, headers = 0, bytes = 0;
-	while (off + 512 <= buf.length) {
-		const h = buf.subarray(off, off + 512); if (h.every((b) => b === 0)) break;
-		if (++headers > PACK_LIMITS.entries) throw new PackError('too_many_files', `more than ${PACK_LIMITS.entries} entries`);
-		const s = (a, b) => h.subarray(a, b).toString('utf8').replace(/\0.*$/s, '');
-		const name = (s(345, 500) ? s(345, 500) + '/' : '') + s(0, 100), raw = s(124, 136).trim() || '0';
-		const want = s(148, 156).trim(); let sum = 0; for (let k = 0; k < 512; k++) sum += k >= 148 && k < 156 ? 32 : h[k];
-		if (!/^[0-7]+$/.test(want) || parseInt(want, 8) !== sum) throw new PackError('pack_malformed', 'a tar header checksum does not match');
-		if (!/^[0-7]+$/.test(raw)) throw new PackError('pack_malformed', 'a file size in the archive is not a valid number');
-		const size = parseInt(raw, 8), type = String.fromCharCode(h[156] || 48);
-		if (type !== '0' && type !== '5') throw new PackError('pack_malformed', `an archive entry of type ${JSON.stringify(type)} (only plain files and folders are allowed)`);
-		const bare = type === '5' ? name.replace(/\/$/, '') : name;
-		if (!canonicalName(bare)) throw new PackError('pack_malformed', `an archive entry has a name Bolt does not accept: ${JSON.stringify(name.slice(0, 60))}`);
-		if (!Number.isSafeInteger(size) || size < 0) throw new PackError('pack_malformed', 'a file size in the archive is invalid');
-		bytes += size; if (bytes > PACK_LIMITS.unpacked) throw new PackError('pack_too_large', 'the pack unpacks to more than 64 MB');
-		off += 512; if (off + size > buf.length) throw new PackError('pack_malformed', 'the archive ends inside a file');
-		if (type === '0') { if (files.has(name)) throw new PackError('pack_duplicate_entry', `the archive holds ${name.slice(0, 80)} twice`); files.set(name, buf.subarray(off, off + size)); }
-		off += Math.ceil(size / 512) * 512;
-	}
-	return files;
-}
-export function contentHash(manifests) {
-	const h = crypto.createHash('sha256');
-	for (const [p, c] of [...manifests].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
-		const pb = Buffer.from(p), pl = Buffer.alloc(4), cl = Buffer.alloc(8); pl.writeUInt32LE(pb.length); cl.writeBigUInt64LE(BigInt(c.length)); h.update(pl).update(pb).update(cl).update(c);
-	}
-	return h.digest('hex');
-}
-const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const KINDS = { snippets: 'snippet', search_engines: 'search_engine', utilities: 'user_utility', scripts: 'script' };
 const INTERPRETERS = { '.py': 'python3', '.sh': 'sh' };
 function cmdPack(args) {
@@ -354,7 +322,7 @@ function cmdPack(args) {
 	// to the current folder, unless that is the app folder or inside it, and then to the folder's parent.
 	const appAbs = path.resolve(dir), inApp = (f) => path.resolve(f) === appAbs || path.resolve(f).startsWith(appAbs + path.sep);
 	const outFlag = flag(args, '--out', null), out = outFlag || path.join(inApp(process.cwd()) ? path.dirname(appAbs) : process.cwd(), `${app.id}.boltpack`), gz = zlib.gzipSync(Buffer.concat(parts), { level: 9 });
-	if (gz.length > 50 * 1024 * 1024) die('pack is over the 50 MB limit', 1);
+	if (gz.length > PACK_MAX_BYTES) die('pack is over the 50 MB limit', 1);
 	fs.writeFileSync(out, gz);
 	if (outFlag && inApp(outFlag)) console.error(`warning: ${out} is inside the app folder. bolt-apps ignores *.boltpack files there, but keep packs outside the folder (for example --out ../${app.id}-${version}.boltpack).`);
 	console.log(`packed ${out} (${manifests.size} file${manifests.size === 1 ? '' : 's'}, tier ${r.tier}, signed with key ${pub.slice(0, 16)}...)`);
@@ -363,7 +331,7 @@ function cmdPack(args) {
 	for (const w of r.out.filter((x) => x.level === 'warning')) console.log(`warning ${w.code}: ${w.message} (${w.path})`);
 	for (const w of packWarnings) console.log(`warning ${w.code}: ${w.message} (${w.file})`);
 	// The launcher maps "is already installed" to same_or_older_version: Bolt refuses a pack whose bundle_version is not newer than the installed one
-	console.log(`\nversion ${version}: Bolt refuses to install a pack whose version is the same as, or older than, the one already installed (same_or_older_version). If you installed an earlier build of ${app.id}, rebuild with a higher number: bump --version (for example --version ${bumpVersion(version)}).`);
+	console.log(`\nversion ${version}: Bolt refuses to install a pack whose version is the same as, or older than, the one already installed (same_or_older_version). If you installed an earlier build of ${app.id}, rebuild with a higher number: bump --version (for example --version ${bump(version)}).`);
 	if (personal) {
 		console.log(`\nThis app is for your own use. What it can do:`);
 		for (const x of r.perms) console.log(`  - ${plainPermission(x)}`);
@@ -371,31 +339,6 @@ function cmdPack(args) {
 		for (const sc of r.files.scripts || []) console.log(`  - it includes a script (${sc}) that runs on your computer`);
 		console.log(`\nBolt will show these same facts and ask whoever installs it to confirm, because the pack is signed only by you. Anyone you give it to must trust you.\nTo install: drop ${out} on the Bolt launcher or on Bolt Apps (not Admin settings, which takes only Sparcle-signed bundles).\nOn a device whose company policy allows only approved apps, Bolt refuses it.`);
 	} else console.log('to install: drop it on the Bolt launcher. Bolt shows a review card, then asks again because it is self-signed.');
-}
-const bumpVersion = (v) => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v); return m ? `${m[1]}.${m[2]}.${Number(m[3]) + 1}` : `${v}.1`; };
-export function readPack(file) {
-	let e;
-	try {
-		if (fs.statSync(file).size > 50 * 1024 * 1024) return { ok: false, code: 'pack_too_large', reason: 'the file is larger than 50 MB' };
-		e = untar(zlib.gunzipSync(fs.readFileSync(file), { maxOutputLength: PACK_LIMITS.inflated }));
-	} catch (x) {
-		if (x instanceof PackError) return { ok: false, code: x.code, reason: x.message };
-		if (x.code === 'ERR_BUFFER_TOO_LARGE') return { ok: false, code: 'pack_too_large', reason: 'the pack unpacks to more than 64 MB' };
-		return { ok: false, code: 'pack_not_gzip_tar', reason: `not a gzip tar: ${x.message}` };
-	}
-	const bj = e.get('bundle.json'), sig = e.get('signature.bin'); if (!bj) return { ok: false, code: 'bundle_missing', reason: 'bundle.json is missing' };
-	let meta; try { meta = JSON.parse(bj.toString()); } catch { return { ok: false, code: 'bundle_not_json', reason: 'bundle.json is not JSON' }; }
-	if (!isObj(meta) || (meta.entries !== undefined && (!Array.isArray(meta.entries) || meta.entries.some((x) => !isObj(x) || typeof x.path !== 'string' || typeof x.sha256 !== 'string')))) return { ok: false, code: 'bundle_not_json', reason: 'bundle.json is not the object with an entries list of {path, sha256} that a pack has' };
-	const man = new Map([...e].filter(([p]) => p.startsWith('manifests/')).map(([p, c]) => [p.slice(10), c]));
-	const bad = (code, reason) => ({ ok: false, code, reason, meta, files: man, count: e.size });
-	if (!sig || sig.length !== 64) return bad('signature_missing', 'signature.bin is missing or not 64 bytes');
-	if (meta.signer_pubkey !== undefined && !/^[0-9a-f]{64}$/i.test(String(meta.signer_pubkey))) return bad('signature_mismatch', 'signer_pubkey is not 64 hexadecimal characters');
-	if (!meta.signer_pubkey) return bad('signed_by_other_key', 'signed by a Sparcle or company key; only Bolt can verify that');
-	let good = false; try { good = crypto.verify(null, bj, crypto.createPublicKey({ key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), Buffer.from(meta.signer_pubkey, 'hex')]), format: 'der', type: 'spki' }), sig); } catch { /* bad key */ }
-	if (!good) return bad('signature_mismatch', 'the signature does not match bundle.json');
-	if (contentHash(man) !== meta.content_sha256) return bad('content_hash_mismatch', 'files changed after signing (content hash mismatch)');
-	for (const en of meta.entries || []) { if (!String(en.path).startsWith('manifests/')) continue; const c = man.get(String(en.path).replace(/^manifests\//, '')); if (!c || sha(c) !== en.sha256) return bad('entry_hash_mismatch', `entry ${en.path} does not match its hash`); }
-	return { ok: true, meta, files: man, count: e.size };
 }
 // Pack text is untrusted: show control, format and bidi characters as \\uXXXX so a pack cannot move the cursor or forge lines.
 export const esc = (v) => String(v).replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
