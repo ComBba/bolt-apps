@@ -55,7 +55,7 @@
       "example": "kit/examples/widget-gallery",
       "snippet": "{\"kind\": \"chart\", \"mode\": \"list_data\", \"bind\": {\"type\": \"bar\", \"x\": \"label\", \"y\": \"value\", \"label\": \"label\"}}",
       "test": "kit/examples/widget-gallery/check.json",
-      "limit": "Types line, bar and sparkline only. Title is the label bind as literal text.",
+      "limit": "Types line, bar and sparkline on every Bolt; pie, donut, area and bind.series need Bolt 0.1.182 (see the next rows). Title is the label bind as literal text.",
       "kind": "chart",
       "also": [
         "chart-template",
@@ -209,14 +209,36 @@
       ]
     },
     {
-      "id": "widget.unshipped_charts",
+      "id": "widget.chart_182",
       "group": "layout",
-      "name": "Chart types: pie, donut, area, multi-series, heatmap, gauge",
-      "status": "not supported",
-      "example": null,
-      "snippet": "(none: not shipped)",
-      "test": "toolkit/test/bolt-rules.test.mjs",
-      "limit": "Not shipped. Only line, bar and sparkline draw. Do not use any other chart type."
+      "name": "Chart types: pie, donut, area, several lines (bind.series)",
+      "status": "supported",
+      "example": "kit/examples/chart-types",
+      "snippet": "{\"kind\": \"chart\", \"mode\": \"list_data\", \"bind\": {\"type\": \"pie\", \"x\": \"label\", \"y\": \"value\", \"label\": \"Deploys by day\"}}",
+      "test": "toolkit/test/charts-182.test.mjs",
+      "limit": "Needs Bolt 0.1.182: set min_bolt_version 0.1.182 in bolt-app.json, because a 181 refuses the whole pack. Pie and donut take positive values and at most 12 slices; bind.series is up to 4 lines on line or area, with no color."
+    },
+    {
+      "id": "widget.heatmap",
+      "group": "layout",
+      "name": "Pane: heatmap",
+      "status": "supported",
+      "example": "kit/examples/chart-types",
+      "snippet": "{\"kind\": \"heatmap\", \"mode\": \"list_data\", \"bind\": {\"x\": \"hour\", \"y\": \"day\", \"value\": \"requests\"}}",
+      "test": "kit/examples/chart-types/check.json",
+      "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). Grid, matrix or calendar data, 24 columns and 24 rows at most. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only.",
+      "kind": "heatmap"
+    },
+    {
+      "id": "widget.gauge",
+      "group": "layout",
+      "name": "Pane: gauge",
+      "status": "supported",
+      "example": "kit/examples/chart-types",
+      "snippet": "{\"kind\": \"gauge\", \"mode\": \"selected_row\", \"bind\": {\"value\": \"{{row.score}}\", \"max\": \"100\", \"shape\": \"half\"}}",
+      "test": "kit/examples/chart-types/check.json",
+      "limit": "Needs Bolt 0.1.182 (min_bolt_version 0.1.182). bind.value is required; the selected row is shown. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only.",
+      "kind": "gauge"
     },
     {
       "id": "layout.list_widget",

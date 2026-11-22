@@ -85,7 +85,8 @@ class Radar(unittest.TestCase):
         self.assertTrue(self.r.valid_seen({"seen": {"stars": 1}, "seen_ts": 5.0, "base": None, "base_ts": None}))
 
     def test_releases_row_does_not_claim_a_90_day_count_from_8(self):
-        src = open(os.path.join(EX, "repo-radar", "scripts", "repo-radar__radar.py")).read()
+        with open(os.path.join(EX, "repo-radar", "scripts", "repo-radar__radar.py"), encoding="utf-8") as f:
+            src = f.read()
         self.assertNotIn('"Releases · %d in 90 days"', src)
 
     def test_compare_runs_both_repos_at_once(self):
@@ -170,6 +171,43 @@ class Around(unittest.TestCase):
         self.assertGreaterEqual(stamps[1] - stamps[0], 0.35)
         self.assertGreaterEqual(stamps[2] - stamps[1], 0.35)
 
+    def test_geocoder_gate_msvcrt_and_lseek_fallback(self):
+        import errno
+        import types
+        from unittest import mock
+
+        d = tempfile.mkdtemp()
+        calls = []
+        busy = [True]
+
+        fake_msvcrt = types.ModuleType("msvcrt")
+        fake_msvcrt.LK_LOCK = 1
+        fake_msvcrt.LK_UNLCK = 0
+
+        def fake_locking(fd, mode, nbytes):
+            calls.append((mode, nbytes))
+            if mode == fake_msvcrt.LK_LOCK and busy[0]:
+                busy[0] = False
+                raise OSError(errno.EDEADLK, "Resource deadlock avoided")
+
+        fake_msvcrt.locking = fake_locking
+
+        class _NoPreadOs(object):
+            def __getattr__(self, name):
+                if name in ("pread", "pwrite"):
+                    raise AttributeError(name)
+                return getattr(os, name)
+
+        with mock.patch.dict(sys.modules, {"fcntl": None, "msvcrt": fake_msvcrt}), \
+                mock.patch.object(self.a, "os", _NoPreadOs()):
+            t0 = time.time()
+            with self.a.geocode_gate(d, 0.35):
+                pass
+            with self.a.geocode_gate(d, 0.35):
+                t1 = time.time()
+        self.assertGreaterEqual(t1 - t0, 0.30)
+        self.assertEqual(calls, [(1, 1), (1, 1), (0, 1), (1, 1), (0, 1)])
+
     def test_a_crash_is_one_plain_row(self):
         a = self.a
         old_emit, old_main = a.kit.emit, a.main
@@ -214,10 +252,17 @@ class CopiesDoNotShare(unittest.TestCase):
         d = os.path.join(tempfile.mkdtemp(), new_id)
         shutil.copytree(os.path.join(EX, app), d, ignore=shutil.ignore_patterns("__pycache__", "golden"))
         p = os.path.join(d, "scripts", app + "__config.json")
-        c = json.load(open(p))
+        with open(p, encoding="utf-8") as f:
+            c = json.load(f)
         c["app"].update({"id": new_id, "chip": new_id.replace("-", "")[:20], "title": new_id})
-        json.dump(c, open(p, "w"))
-        env = {"HOME": home, "PATH": (extra_path + os.pathsep if extra_path else "") + "/usr/bin:/bin", "BOLT_APP_FIXTURE": "1"}
+        with open(p, "w", encoding="utf-8") as f:
+            json.dump(c, f)
+        path = (extra_path + os.pathsep if extra_path else "") + (os.environ.get("PATH", "") if os.name == "nt" else "/usr/bin:/bin")
+        env = {"HOME": home, "USERPROFILE": home, "PATH": path, "BOLT_APP_FIXTURE": "1"}
+        if os.name == "nt":
+            for k in ("SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "PATHEXT"):
+                if k in os.environ:
+                    env[k] = os.environ[k]
         r = subprocess.run([sys.executable, os.path.join(d, "scripts", app + "__" + script)] + args, env=env, capture_output=True, text=True, timeout=60)
         self.assertEqual(r.returncode, 0, r.stderr[-300:])
         return json.loads(r.stdout)
@@ -237,11 +282,13 @@ class CopiesDoNotShare(unittest.TestCase):
             self.assertIn(b, have, app)
             self.assertNotIn(app, have, "a copy wrote into the original's cache: " + app)
 
+    @unittest.skipIf(os.name == "nt", "POSIX stubs")
     def test_cli_wrapper_copy(self):
         home = tempfile.mkdtemp()
         stub = tempfile.mkdtemp()
-        out = open(os.path.join(EX, "cli-wrapper-template", "fixtures", "macos", "ping.out")).read()
-        with open(os.path.join(stub, "ping"), "w") as f:
+        with open(os.path.join(EX, "cli-wrapper-template", "fixtures", "macos", "ping.out"), encoding="utf-8") as f:
+            out = f.read()
+        with open(os.path.join(stub, "ping"), "w", encoding="utf-8") as f:
             f.write("#!/bin/sh\ncat <<'EOF'\n" + out + "EOF\n")
         os.chmod(os.path.join(stub, "ping"), 0o755)
         for n in ("cli-wrapper-template-copy-a", "cli-wrapper-template-copy-b"):

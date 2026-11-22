@@ -1,0 +1,116 @@
+[
+  {
+    "title": "Pie from rows",
+    "subtitle": "share of a whole: x and y",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "pie_rows"
+    },
+    "actions": [],
+    "kpi_label": "Total",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Donut from rows",
+    "subtitle": "a pie with the total in the centre",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "donut_rows"
+    },
+    "actions": [],
+    "kpi_label": "Total",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Two lines from rows",
+    "subtitle": "bind.series: y per line",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "multi_rows"
+    },
+    "actions": [],
+    "kpi_label": "Total",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Area from rows",
+    "subtitle": "two filled lines",
+    "icon": "line-chart",
+    "body": "",
+    "nav": {
+      "view": "area_rows"
+    },
+    "actions": [],
+    "kpi_label": "Total",
+    "kpi_value": 428,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "deploys",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Heatmap from rows",
+    "subtitle": "x, y and a value per cell",
+    "icon": "activity",
+    "body": "",
+    "nav": {
+      "view": "heat_rows"
+    },
+    "actions": [],
+    "kpi_label": "Requests",
+    "kpi_value": 360,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "this week",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  },
+  {
+    "title": "Gauge from a row",
+    "subtitle": "one value on a 0 to 100 scale",
+    "icon": "activity",
+    "body": "",
+    "nav": {
+      "view": "gauge_row"
+    },
+    "actions": [],
+    "kpi_label": "Best score",
+    "kpi_value": 92,
+    "kpi_unit": "",
+    "kpi_max": "",
+    "kpi_note": "of 100",
+    "kpi_foot": "",
+    "kpi_badge": "",
+    "copy_text": "",
+    "open_url": ""
+  }
+]

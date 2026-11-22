@@ -26,7 +26,9 @@
   "detail",
   "json_tree",
   "diff",
-  "image_grid"
+  "image_grid",
+  "heatmap",
+  "gauge"
  ],
  "no_app_data_kinds": [
   "image",
@@ -215,8 +217,35 @@
      "values": [
       "line",
       "bar",
-      "sparkline"
-     ]
+      "sparkline",
+      "pie",
+      "donut",
+      "area"
+     ],
+     "since_values": {
+      "pie": "0.1.182",
+      "donut": "0.1.182",
+      "area": "0.1.182"
+     }
+    },
+    "series": {
+     "t": "list",
+     "since": "0.1.182",
+     "items": 4,
+     "keys": {
+      "values": {
+       "t": "text",
+       "max": 200
+      },
+      "y": {
+       "t": "text",
+       "max": 200
+      },
+      "label": {
+       "t": "text",
+       "max": 200
+      }
+     }
     },
     "x": {
      "t": "text",
@@ -449,7 +478,102 @@
    "calc": {},
    "color": {},
    "weather": {},
-   "date": {}
+   "date": {},
+   "heatmap": {
+    "x": {
+     "t": "text",
+     "max": 200
+    },
+    "y": {
+     "t": "text",
+     "max": 200
+    },
+    "value": {
+     "t": "text",
+     "max": 200
+    },
+    "rows": {
+     "t": "text",
+     "max": 200
+    },
+    "cols": {
+     "t": "text",
+     "max": 200
+    },
+    "col_labels": {
+     "t": "text",
+     "max": 200
+    },
+    "layout": {
+     "t": "enum",
+     "values": [
+      "grid",
+      "calendar"
+     ]
+    },
+    "label": {
+     "t": "text",
+     "max": 200
+    },
+    "unit": {
+     "t": "text",
+     "max": 200
+    }
+   },
+   "gauge": {
+    "value": {
+     "t": "text",
+     "max": 4096,
+     "required": true
+    },
+    "min": {
+     "t": "textOrNumber",
+     "max": 4096
+    },
+    "max": {
+     "t": "textOrNumber",
+     "max": 4096
+    },
+    "label": {
+     "t": "text",
+     "max": 4096
+    },
+    "unit": {
+     "t": "text",
+     "max": 4096
+    },
+    "shape": {
+     "t": "enum",
+     "values": [
+      "ring",
+      "half"
+     ]
+    },
+    "thresholds": {
+     "t": "list",
+     "items": 8,
+     "keys": {
+      "at": {
+       "t": "textOrNumber",
+       "max": 4096,
+       "required": true
+      },
+      "label": {
+       "t": "text",
+       "max": 200
+      },
+      "tone": {
+       "t": "enum",
+       "values": [
+        "ok",
+        "warn",
+        "error",
+        "neutral"
+       ]
+      }
+     }
+    }
+   }
   },
   "strict_from_schema_version": 2,
   "packs_always_strict": true
@@ -976,5 +1100,9 @@
    "press",
    "outname"
   ]
+ },
+ "kind_since": {
+  "heatmap": "0.1.182",
+  "gauge": "0.1.182"
  }
 }

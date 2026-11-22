@@ -9,7 +9,7 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | Pane: card | supported | [widget-gallery-2](widget-gallery-2) | `kit/examples/widget-gallery-2/check.json` | One card for the selected row. Strings in bind: up to 4096 characters. |
 | Pane: markdown | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | The bind.body template is limited to 16384 characters (the expanded body is not); the kit hands at most 8000 characters and 40 lines. |
 | Pane: entity_preview | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Facts list up to 40 entries, one tile above. Config default for a detail view. |
-| Pane: chart | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Types line, bar and sparkline only. Title is the label bind as literal text. |
+| Pane: chart | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Types line, bar and sparkline on every Bolt; pie, donut, area and bind.series need Bolt 0.1.182 (see the next rows). Title is the label bind as literal text. |
 | Pane: table | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Up to 40 columns; totals sum, avg, min, max, count; the engine hands it at most 50 rows. |
 | Pane: cards | supported | [acme-dash](acme-dash) | `kit/examples/acme-dash/check.json` | Layout tiles (a tile per row, at most 24 rows, and a row with no number draws an empty "-" tile) or the default grid (up to 500 cards, no number needed); tile label cut at 24 characters. The 24 cap applies only to bind.layout tiles. |
 | Pane: detail | supported | [widget-gallery](widget-gallery) | `kit/examples/widget-gallery/check.json` | Label and value fields of the selected row. |
@@ -22,7 +22,9 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 | A picture from a web API in a pane | partial | [script-template](script-template) | `kit/python/tests/test_script_template_live.py` | The app cannot point a pane at a web picture (every pane loads inline data: images only). Its script fetches a small JPEG from an allowlisted host (name the picture host in hosts, not only the API host), checks it, and puts it in the row as data:image/jpeg;base64 split over img1 to img4 (about 12 KB of picture in all). Ask the host for a small size; one that is too big is dropped, the row stays. Read from the launcher source and sample runs, not seen in a running Bolt. |
 | Panes: image, color, weather, date, calc | not supported | none | `toolkit/test/launcher-rules.test.mjs` | A personal app cannot show its own data in these panes: Bolt shows "This app asks for ... pane, which cannot show app data". |
 | Pane: map | not supported | none | `toolkit/test/launcher-rules.test.mjs` | Draws the launcher own map, not your rows; any bind key is refused. No message is shown. |
-| Chart types: pie, donut, area, multi-series, heatmap, gauge | not supported | none | `toolkit/test/bolt-rules.test.mjs` | Not shipped. Only line, bar and sparkline draw. Do not use any other chart type. |
+| Chart types: pie, donut, area, several lines (bind.series) | supported | [chart-types](chart-types) | `toolkit/test/charts-182.test.mjs` | Needs Bolt 0.1.182: set min_bolt_version 0.1.182 in bolt-app.json, because a 181 refuses the whole pack. Pie and donut take positive values and at most 12 slices; bind.series is up to 4 lines on line or area, with no color. |
+| Pane: heatmap | supported | [chart-types](chart-types) | `kit/examples/chart-types/check.json` | Needs Bolt 0.1.182 (min_bolt_version 0.1.182). Grid, matrix or calendar data, 24 columns and 24 rows at most. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only. |
+| Pane: gauge | supported | [chart-types](chart-types) | `kit/examples/chart-types/check.json` | Needs Bolt 0.1.182 (min_bolt_version 0.1.182). bind.value is required; the selected row is shown. Drawn by no real Bolt in this repo yet: the app is lint and fixture tested only. |
 | presentation.widget (list, table, cards, detail) | partial | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | Only validated: it names the row layout and does not change the left list. With table, cards or detail and no right_widget the right panel opens empty (from the source, not run live). Use list. |
 | Several views in one app | supported | [acme-dash](acme-dash) | `kit/examples/acme-dash/check.json` | At most 8 entries in presentation.views; the overview needs no entry (the engine uses 7 plus an overview entry); view ids match `^[a-z][a-z0-9_-]{0,23}$`. |
 | Drill from an overview row to a list | supported | [portal-template](portal-template) | `kit/examples/portal-template/check.json` | One Enter. A nav arg is one plain token matching `^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$`; no slash. A chain to another app, or a chain a script writes on a row, only pre-fills the next command (second Enter); a fixed-text chain to the same app written in the app file runs directly. Use nav to drill. |
@@ -167,6 +169,24 @@ One row per capability. Status is derived from the code and `schema/bolt-rules.j
 
 ```
 {"kind": "cards", "mode": "list_data", "bind": {"layout": "grid", "title": "{{row.title}}", "image": "{{row.img1}}{{row.img2}}{{row.img3}}{{row.img4}}"}}
+```
+
+### Chart types: pie, donut, area, several lines (bind.series) (`widget.chart_182`)
+
+```
+{"kind": "chart", "mode": "list_data", "bind": {"type": "pie", "x": "label", "y": "value", "label": "Deploys by day"}}
+```
+
+### Pane: heatmap (`widget.heatmap`)
+
+```
+{"kind": "heatmap", "mode": "list_data", "bind": {"x": "hour", "y": "day", "value": "requests"}}
+```
+
+### Pane: gauge (`widget.gauge`)
+
+```
+{"kind": "gauge", "mode": "selected_row", "bind": {"value": "{{row.score}}", "max": "100", "shape": "half"}}
 ```
 
 ### presentation.widget (list, table, cards, detail) (`layout.list_widget`)
