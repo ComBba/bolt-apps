@@ -25,7 +25,7 @@ One folder, `apps/<id>/`, that holds:
 | `search_engines/<id>.json` | | `{"id", "name", "urlTemplate"}` |
 | `utilities/<id>.yaml` | | [`schema/user-app.schema.json`](schema/user-app.schema.json), `runtime: transform` only |
 
-No other files and no other folders. The checker refuses anything else (`unknown_file`).
+No other files and no other folders. The checker refuses anything else (`unknown_file`). The toolkit skips what the OS or git leaves in a folder (`.DS_Store`, `Thumbs.db`, `desktop.ini`, `.git`, `.gitignore`, `.gitattributes`) and never packs it.
 
 The signed file format these travel in is a Boltpack; its `bundle.json` is described by
 [`schema/boltpack-manifest.schema.json`](schema/boltpack-manifest.schema.json). You do not
@@ -273,7 +273,7 @@ runtime: transform
 id: sortu
 chip: sortu
 title: Sort and dedupe lines
-icon: list-ordered
+icon: list
 description: Sort pasted lines and drop repeats, on this device
 emits: Generic
 placeholder_examples:

@@ -27,7 +27,7 @@ The gallery takes tier 1 and 2 only. An app that runs programs or reaches the ne
 
 | Command | What it does |
 |---|---|
-| `new <template> <id> [--dir d]` | Copies a working template from `kit/examples` (`new --list` shows them and what to edit), renames it, writes the app file and records goldens, so `check` passes before you change anything. |
+| `new <template> <id> [--dir d] [--author "Your name"]` | Copies a working template from `kit/examples` (`new --list` shows them and what to edit), renames it, puts your name in `author` (pack copies it into the pack as the author's name, so it is in every copy of the pack you share; with no `--author` it is your login name, so pass `--author` to use another name), writes the app file and records goldens, so `check` passes before you change anything. |
 | `new <id> --type snippet\|search\|transform\|recognizer` | Creates `apps/<id>/` with `bolt-app.json`, a README and one content file. Every template passes `lint` and carries a test you can edit. |
 | `run <app> [view [word]] [--sample\|--live] [--json]` | Runs the app as Bolt would and prints the rows. It executes the app's own command with your real HOME and PATH. |
 | `ship <app>` | `lint --personal`, `check`, makes your key once, `pack` with the next version, `verify`; prints how to install. |
@@ -50,7 +50,7 @@ The gallery takes tier 1 and 2 only. An app that runs programs or reaches the ne
 ./bolt-apps check kit/examples/system-glance --os linux
 ```
 
-`check` for script apps is a first slice. Run it only on code you have read: it executes the script on your machine, and the empty environment is not a sandbox. It runs your script against recorded command output on this machine. It does not run the real launcher, Windows, or the real tools of another OS; those cases are labelled "fixture-tested only".
+`check` for script apps is a first slice. Run it only on code you have read: it executes the script on your machine, and the empty environment is not a sandbox. It runs your script against recorded command output on this machine. It does not run the real launcher or the real tools of another OS; cases for other OSes are labelled "fixture-tested only".
 
 ## What this toolkit does not do
 
@@ -65,11 +65,13 @@ A `.boltpack` is a gzip tar of `bundle.json`, `signature.bin` (Ed25519 over the 
 ## Tests
 
 ```
-node --test toolkit/test/
+node --test toolkit/test/*.test.mjs
 (cd kit/python && python3 -m unittest discover -s tests)
 ```
 
-Round trip for every template, tamper refusal, tier and permission rules, key handling; the kit: icon drift, the row contract, `check` (failing apps fail, the example passes) and the Python unit tests. The suite takes about a minute because it runs a hung-command case.
+Node 22 and newer expand `*.test.mjs` themselves. On Node 18 or 20 in PowerShell or cmd, which pass the `*` through unexpanded, run `node --test toolkit/test/` instead.
+
+Round trip for every template, tamper refusal, tier and permission rules, key handling; the kit: icon drift, the row contract, `check` (failing apps fail, the example passes) and the Python unit tests. On recent GitHub Actions runs the Node suite took about 7 to 10 minutes, because it runs the examples end to end and a hung-command case.
 
 ## For AI agents
 

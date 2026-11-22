@@ -10,6 +10,7 @@ import { parseIconKeys } from '../../kit/schema/gen-icons.mjs';
 import { createHash } from 'node:crypto';
 import { assessYaml } from '../lib/assess.mjs';
 import { flatKitSource, checkApp, checkRows, inside, platformFindings, schemaCheck, treeHash, vendorKit, KIT_ROOT, KIT_PY } from '../lib/check.mjs';
+import { pythonCmd } from '../lib/python.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const EXAMPLE = path.join(root, 'kit', 'examples', 'system-glance');
@@ -110,7 +111,9 @@ test('check fails a script that prints a string tile value, a long label and bra
 });
 
 test('check fails a hung script that has no deadline', async () => {
-	const body = `import subprocess\nsubprocess.run(["/bin/sleep","6"])\nprint("[]")`;
+	const body = process.platform === 'win32'
+		? `import time\ntime.sleep(6)\nprint("[]")`
+		: `import subprocess\nsubprocess.run(["/bin/sleep","6"])\nprint("[]")`;
 	const d = brokenApp(body, { expect: { max_seconds: 2 } });
 	const r = await checkApp(d);
 	assert.ok(codes(r.cases[0].findings).includes('deadline_exceeded'));
@@ -125,9 +128,17 @@ test('check fails non-JSON output, a non-zero exit, and a clean-zero on a failed
 });
 
 test('the script runs with an empty environment and a temp HOME', async () => {
-	const body = `import os, json\nprint(json.dumps([{"title":"extra:" + str([k for k in os.environ if k not in ("HOME","PATH","USER","LOGNAME","PYTHONNOUSERSITE","PYTHONDONTWRITEBYTECODE","PYTHONUNBUFFERED","GIT_CONFIG_NOSYSTEM","GIT_OPTIONAL_LOCKS","GIT_TERMINAL_PROMPT","LC_CTYPE","__CF_USER_TEXT_ENCODING","CPATH","LIBRARY_PATH","MANPATH","SDKROOT")]) + " home:" + os.environ.get("HOME","")[:9]}]))`;
-	const r = await checkApp(brokenApp(body, { expect: { text_present: ['extra:[]', 'home:/'] } }));
-	assert.ok(!codes(r.cases[0].findings).includes('expected_text_missing'), JSON.stringify(r.cases[0].findings));
+	if (process.platform === 'win32') {
+		const allowed = 'HOME PATH USER LOGNAME PYTHONNOUSERSITE PYTHONDONTWRITEBYTECODE PYTHONUNBUFFERED GIT_CONFIG_NOSYSTEM GIT_OPTIONAL_LOCKS GIT_TERMINAL_PROMPT LC_CTYPE __CF_USER_TEXT_ENCODING CPATH LIBRARY_PATH MANPATH SDKROOT USERPROFILE SYSTEMROOT COMSPEC PATHEXT TEMP TMP PYTHONUTF8 HOMEDRIVE HOMEPATH LOGONSERVER SYSTEMDRIVE USERDOMAIN USERNAME WINDIR';
+		const tmpRoot = path.resolve(os.tmpdir()).toLowerCase();
+		const body = `import os, json\nallowed = set(${JSON.stringify(allowed)}.split())\nh = os.path.abspath(os.environ.get("HOME",""))\nin_tmp = h.lower().startswith(${JSON.stringify(tmpRoot)}) and os.path.basename(h) == "home" and h == os.path.abspath(os.environ.get("USERPROFILE",""))\nprint(json.dumps([{"title":"extra:" + str([k for k in os.environ if k not in allowed]) + " home_tmp:" + ("1" if in_tmp else "0")}]))`;
+		const r = await checkApp(brokenApp(body, { expect: { text_present: ['extra:[]', 'home_tmp:1'] } }));
+		assert.ok(!codes(r.cases[0].findings).includes('expected_text_missing'), JSON.stringify(r.cases[0].findings));
+	} else {
+		const body = `import os, json\nprint(json.dumps([{"title":"extra:" + str([k for k in os.environ if k not in ("HOME","PATH","USER","LOGNAME","PYTHONNOUSERSITE","PYTHONDONTWRITEBYTECODE","PYTHONUNBUFFERED","GIT_CONFIG_NOSYSTEM","GIT_OPTIONAL_LOCKS","GIT_TERMINAL_PROMPT","LC_CTYPE","__CF_USER_TEXT_ENCODING","CPATH","LIBRARY_PATH","MANPATH","SDKROOT")]) + " home:" + os.environ.get("HOME","")[:9]}]))`;
+		const r = await checkApp(brokenApp(body, { expect: { text_present: ['extra:[]', 'home:/'] } }));
+		assert.ok(!codes(r.cases[0].findings).includes('expected_text_missing'), JSON.stringify(r.cases[0].findings));
+	}
 });
 
 test('golden snapshots: a missing or changed golden fails, --update-golden writes it', async () => {
@@ -179,13 +190,15 @@ test('kit guard: extra files, binaries, pyc and symlinks inside the kit director
 	assert.ok((await add((k) => fs.writeFileSync(path.join(k, 'evil.pyd'), 'x'))).includes('kit_modified'));
 	assert.ok((await add((k) => fs.writeFileSync(path.join(k, 'extra.py'), 'x = 1'))).includes('kit_modified'));
 	assert.ok((await add((k) => fs.writeFileSync(path.join(k, 'fmt.cpython-313.pyc'), 'x'))).includes('kit_modified'));
-	assert.ok((await add((k) => fs.symlinkSync('/etc/hosts', path.join(k, 'link.py')))).includes('kit_modified'));
-	assert.ok((await add((k) => { fs.rmSync(path.join(k, 'fmt.py')); fs.symlinkSync(path.join(k, 'text.py'), path.join(k, 'fmt.py')); })).includes('kit_modified'));
+	if (process.platform !== 'win32') {
+		assert.ok((await add((k) => fs.symlinkSync('/etc/hosts', path.join(k, 'link.py')))).includes('kit_modified'));
+		assert.ok((await add((k) => { fs.rmSync(path.join(k, 'fmt.py')); fs.symlinkSync(path.join(k, 'text.py'), path.join(k, 'fmt.py')); })).includes('kit_modified'));
+	}
 	assert.ok((await add((k) => { fs.mkdirSync(path.join(k, 'sub')); fs.writeFileSync(path.join(k, 'sub', 'a.py'), ''); })).includes('kit_modified'));
 	assert.ok(!(await add((k) => { fs.mkdirSync(path.join(k, '__pycache__'), { recursive: true }); fs.writeFileSync(path.join(k, '__pycache__', 'x.pyc'), 'x'); })).includes('kit_modified'));
 });
 
-test('symlinks inside the app folder cannot redirect kit vendor or check outside it', async () => {
+test('symlinks inside the app folder cannot redirect kit vendor or check outside it', { skip: process.platform === 'win32' }, async () => {
 	const out = fs.mkdtempSync(path.join(os.tmpdir(), 'outside-'));
 	fs.mkdirSync(path.join(out, 'bolt_app_kit')); fs.writeFileSync(path.join(out, 'bolt_app_kit', 'keep.txt'), 'precious');
 	const a = tmpCopy(); fs.rmSync(path.join(a, 'scripts'), { recursive: true }); fs.symlinkSync(out, path.join(a, 'scripts'));
@@ -212,9 +225,10 @@ test('CLI: check exits 0 on the example and 1 on a broken app; plain apps keep t
 });
 
 test('the Python kit unit tests pass (3.9+)', (t) => {
-	const py = spawnSync('python3', ['--version']);
-	if (py.status !== 0) return t.skip('python3 not available');
-	const r = spawnSync('python3', ['-m', 'unittest', 'discover', '-s', 'tests'], { cwd: path.join(root, 'kit', 'python'), encoding: 'utf8' });
+	if (process.platform === 'win32') return t.skip('kit unit tests use POSIX mode bits');
+	const py = pythonCmd();
+	if (!py) return t.skip('python not available');
+	const r = spawnSync(py.cmd, [...py.args, '-m', 'unittest', 'discover', '-s', 'tests'], { cwd: path.join(root, 'kit', 'python'), encoding: 'utf8' });
 	assert.equal(r.status, 0, r.stderr.slice(-2000));
 });
 
@@ -249,8 +263,9 @@ test('flat kit guard: edited, missing, shadowed and outdated are caught', async 
 	assert.ok(codes((await checkApp(d, { only: 'overview' })).findings).includes('kit_diverged'));
 });
 
-test('flat kit behaves like the package kit (same rows, same refusals)', () => {
-	const run = (dir, code) => spawnSync('python3', ['-c', code], { encoding: 'utf8', env: { PYTHONPATH: dir, PATH: process.env.PATH, PYTHONDONTWRITEBYTECODE: '1' } });
+test('flat kit behaves like the package kit (same rows, same refusals)', (t) => {
+	const py = pythonCmd(); if (!py) return t.skip('python not available');
+	const run = (dir, code) => spawnSync(py.cmd, [...py.args, '-c', code], { encoding: 'utf8', env: { PYTHONPATH: dir, PATH: process.env.PATH, PYTHONDONTWRITEBYTECODE: '1' } });
 	const code = 'import bolt_app_kit as k, json\nr=[k.row("a {{x}}", "b", tile=k.tile("T", 5, "%", 10), nav={"view":"v","arg":"a"}), k.back_row("x")]\nprint(json.dumps(r), k.validate_rows(r), k.__version__)\ntry:\n k.tile("T","x")\nexcept k.KitError as e:\n print("refused")\ntry:\n k.row("a", icon="nope")\nexcept k.KitError:\n print("icon refused")';
 	const flatDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-flatdir-')); fs.copyFileSync(path.join(ACME, 'scripts', 'acme-dash__bolt_app_kit.py'), path.join(flatDir, 'bolt_app_kit.py'));
 	const a = run(flatDir, code), b = run(path.join(root, 'kit', 'python'), code);
@@ -302,4 +317,66 @@ test('scripts_dir_form: lint --personal and verify refuse a comment mention; the
 		assert.equal(r.status, 1, cmd); assert.match(r.stdout, /scripts_dir_form/);
 	}
 	for (const app of ['acme-dash', 'portal-template']) assert.ok(!/scripts_dir/.test(fs.readFileSync(path.join(root, 'kit', 'examples', app, 'utilities', `${app}.yaml`), 'utf8').replace(/\{\{scripts_dir\}\}\/[a-z0-9-]+__(engine\.py|config\.json|fixtures\.json|bolt_app_kit\.py)/g, '')));
+});
+
+test('a check.json load error is a finding in both library modes and exits 2 in the CLI', async (t) => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-badcfg-'));
+	t.after(() => fs.rmSync(d, { recursive: true, force: true }));
+	const file = path.join(d, 'check.json');
+	for (const [body, want] of [['{oops', /check\.json is not valid JSON/], ['[]', /check\.json must be a JSON object\./], ['null', /check\.json must be a JSON object\./], [null, /check\.json could not be read/]]) {
+		if (body === null) { fs.rmSync(file); fs.mkdirSync(file); }
+		else fs.writeFileSync(file, body);
+		for (const shared of [false, true]) {
+			const report = await checkApp(d, { shared });
+			assert.deepEqual(report.cases, []);
+			assert.deepEqual(codes(report.findings), ['load_error']);
+			assert.equal(report.findings[0].path, 'check.json');
+			assert.match(report.findings[0].message, want);
+		}
+		const plain = spawnSync(process.execPath, [CLI, 'check', d], { encoding: 'utf8' });
+		assert.equal(plain.status, 2, plain.stdout + plain.stderr);
+		assert.match(plain.stderr, want);
+		assert.equal(plain.stderr.trimEnd().split('\n').length, 1);
+		const json = spawnSync(process.execPath, [CLI, 'check', d, '--shared', '--json'], { encoding: 'utf8' });
+		assert.equal(json.status, 2, json.stdout + json.stderr);
+		assert.equal(json.stderr, '');
+		const result = JSON.parse(json.stdout);
+		assert.equal(result.ok, false);
+		assert.match(result.error, want);
+		assert.deepEqual(codes(result.findings), ['load_error']);
+	}
+});
+
+test('a valid check.json object still exits 1 for a checker finding', (t) => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-invalidcheck-'));
+	t.after(() => fs.rmSync(d, { recursive: true, force: true }));
+	fs.writeFileSync(path.join(d, 'check.json'), '{}');
+	const r = spawnSync(process.execPath, [CLI, 'check', d, '--json'], { encoding: 'utf8' });
+	assert.equal(r.status, 1, r.stdout + r.stderr);
+	const result = JSON.parse(r.stdout);
+	assert.equal(result.ok, false);
+	assert.equal(result.error, undefined);
+	assert.ok(codes(result.findings).includes('interpreter_missing'));
+	assert.ok(!codes(result.findings).includes('load_error'));
+});
+
+test('check takes the script app path when check.json is present but cannot be reached', { skip: process.platform === 'win32' }, (t) => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-unreachablecfg-'));
+	t.after(() => { fs.chmodSync(d, 0o755); fs.rmSync(d, { recursive: true, force: true }); });
+	const app = path.join(d, 'app');
+	fs.mkdirSync(app);
+	fs.symlinkSync('missing.json', path.join(app, 'check.json'));
+	const dangling = spawnSync(process.execPath, [CLI, 'check', app, '--json'], { encoding: 'utf8' });
+	assert.equal(dangling.status, 2, dangling.stdout + dangling.stderr);
+	const result = JSON.parse(dangling.stdout);
+	assert.match(result.error, /check\.json could not be read \(ENOENT\)/);
+	assert.deepEqual(codes(result.findings), ['load_error']);
+	if (process.getuid() === 0) return;  // root reads a folder with no permissions
+	fs.rmSync(path.join(app, 'check.json'));
+	fs.writeFileSync(path.join(app, 'check.json'), '{}');
+	fs.chmodSync(d, 0o000);
+	const locked = spawnSync(process.execPath, [CLI, 'check', app], { encoding: 'utf8' });
+	fs.chmodSync(d, 0o755);
+	assert.equal(locked.status, 2, locked.stdout + locked.stderr);
+	assert.match(locked.stderr, /check\.json could not be read \(EACCES\)/);
 });

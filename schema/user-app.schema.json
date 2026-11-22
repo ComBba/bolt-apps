@@ -1627,7 +1627,9 @@
                 "detail",
                 "json_tree",
                 "diff",
-                "image_grid"
+                "image_grid",
+                "heatmap",
+                "gauge"
               ],
               "oneOf": [
                 {
@@ -1668,7 +1670,7 @@
                 },
                 {
                   "const": "chart",
-                  "description": "A chart of the rows. bind.type is one of line, bar or sparkline; any other value is refused (an error from schema_version 2)."
+                  "description": "A chart of the rows. bind.type is line, bar, sparkline, pie, donut or area; pie, donut, area and bind.series need Bolt 0.1.182 or newer (a 181 refuses the whole pack). Any other value is refused (an error from schema_version 2)."
                 },
                 {
                   "const": "table",
@@ -1693,6 +1695,14 @@
                 {
                   "const": "image_grid",
                   "description": "A grid of pictures from bind.src (1 to 8 columns)."
+                },
+                {
+                  "const": "heatmap",
+                  "description": "A grid, matrix or calendar of numbers shaded in five steps (Bolt 0.1.182 and later; a Bolt 0.1.181 refuses the whole pack that uses it)."
+                },
+                {
+                  "const": "gauge",
+                  "description": "One value on a min to max scale as a ring or half ring (Bolt 0.1.182 and later; a Bolt 0.1.181 refuses the whole pack that uses it)."
                 }
               ]
             },
@@ -1865,6 +1875,38 @@
                 "properties": {
                   "bind": {
                     "$ref": "#/$defs/bindImageGrid"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "heatmap"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindHeatmap"
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "gauge"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "bind": {
+                    "$ref": "#/$defs/bindGauge"
                   }
                 }
               }
@@ -2049,7 +2091,10 @@
           "enum": [
             "line",
             "bar",
-            "sparkline"
+            "sparkline",
+            "pie",
+            "donut",
+            "area"
           ]
         },
         "x": {
@@ -2072,6 +2117,26 @@
         },
         "unit": {
           "$ref": "#/$defs/name"
+        },
+        "series": {
+          "type": "array",
+          "maxItems": 4,
+          "description": "Several lines on one chart (type line or area). Bolt 0.1.182 and later; a 181 refuses the whole pack. A series takes values or y and an optional label; a color is refused.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "values": {
+                "$ref": "#/$defs/name"
+              },
+              "y": {
+                "$ref": "#/$defs/name"
+              },
+              "label": {
+                "$ref": "#/$defs/name"
+              }
+            }
+          }
         }
       }
     },
@@ -2328,6 +2393,111 @@
           }
         }
       ]
+    },
+    "bindHeatmap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "x": {
+          "$ref": "#/$defs/name"
+        },
+        "y": {
+          "$ref": "#/$defs/name"
+        },
+        "value": {
+          "$ref": "#/$defs/name"
+        },
+        "rows": {
+          "$ref": "#/$defs/name"
+        },
+        "cols": {
+          "$ref": "#/$defs/name"
+        },
+        "col_labels": {
+          "$ref": "#/$defs/name"
+        },
+        "layout": {
+          "enum": [
+            "grid",
+            "calendar"
+          ]
+        },
+        "label": {
+          "$ref": "#/$defs/name"
+        },
+        "unit": {
+          "$ref": "#/$defs/name"
+        }
+      }
+    },
+    "bindGauge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "$ref": "#/$defs/text"
+        },
+        "min": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096
+        },
+        "max": {
+          "type": [
+            "string",
+            "number"
+          ],
+          "maxLength": 4096
+        },
+        "label": {
+          "$ref": "#/$defs/text"
+        },
+        "unit": {
+          "$ref": "#/$defs/text"
+        },
+        "shape": {
+          "enum": [
+            "ring",
+            "half"
+          ]
+        },
+        "thresholds": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "at"
+            ],
+            "properties": {
+              "at": {
+                "type": [
+                  "string",
+                  "number"
+                ],
+                "maxLength": 4096
+              },
+              "label": {
+                "$ref": "#/$defs/name"
+              },
+              "tone": {
+                "enum": [
+                  "ok",
+                  "warn",
+                  "error",
+                  "neutral"
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
