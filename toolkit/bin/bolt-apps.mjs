@@ -31,6 +31,8 @@ const rd = (f) => fs.readFileSync(f, 'utf8');
 const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
 
 // ---------- lint ----------
+// Skip only these OS and Git names, including case variants on case-insensitive file systems. Other root and content dot files are checked.
+const LEFTOVER = /^(\.DS_Store|Thumbs\.db|desktop\.ini|\.git|\.gitignore|\.gitattributes)$/i;
 // opts.personal: the app is for its author's own use (tier 3 and script apps allowed). The gallery rules are the default.
 export function lintApp(dir, opts = {}) {
 	const personal = opts.personal === true;
@@ -54,13 +56,14 @@ export function lintApp(dir, opts = {}) {
 	const files = { snippets: [], search_engines: [], utilities: [] }, scripts = [], assessed = [], sizes = {};
 	if (personal) files.scripts = scripts;
 	for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+		if (LEFTOVER.test(ent.name)) continue; // what Finder, Explorer and git leave in a folder is skipped, never packed
 		if (ent.isFile() && (ent.name === 'bolt-app.json' || ent.name === 'README.md' || ent.name.endsWith('.boltpack'))) continue; // a pack built here earlier is never packed
 		if (personal && ((ent.isFile() && (ent.name === 'check.json' || ent.name === 'bolt_app_kit.lock.json')) || (ent.isDirectory() && (ent.name === 'fixtures' || ent.name === 'golden')))) continue; // author-side only, never packed
 		if (personal && ent.isDirectory() && ent.name === 'scripts') {
 			// What the launcher refuses is a link, an odd name, a case clash, a file that is also a folder, or a script another app already owns: every file here must be named <app id>__<name>.
 			const walk = (rel) => {
 				for (const f of fs.readdirSync(path.join(dir, 'scripts', rel), { withFileTypes: true })) {
-					if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
+					if (f.name.startsWith('.') || f.name === '__pycache__' || LEFTOVER.test(f.name)) continue; // editor and OS leftovers are never packed
 					const r = rel ? `${rel}/${f.name}` : f.name;
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
 					else if (f.isDirectory()) walk(r);
@@ -77,6 +80,7 @@ export function lintApp(dir, opts = {}) {
 		}
 		if (ent.isDirectory() && Object.hasOwn(files, ent.name)) {
 			for (const f of fs.readdirSync(path.join(dir, ent.name))) {
+				if (LEFTOVER.test(f)) continue; // never packed
 				const okExt = ent.name === 'utilities' ? /\.ya?ml$/.test(f) : f.endsWith('.json');
 				if (okExt) files[ent.name].push(f); else E('unknown_file', 'not an allowed file here', `${ent.name}/${f}`);
 			}
@@ -209,7 +213,7 @@ function cmdLint(args) {
 	let bad = 0; const reports = [];
 	for (const d of dirs) {
 		const r = lintApp(d, { personal }), errs = r.out.filter((x) => x.level === 'error'); if (errs.length) bad++;
-		reports.push({ app: r.id, ok: !errs.length, findings: r.out });
+		reports.push({ app: r.id, ok: !errs.length, findings: r.out.map((x) => ({ ...x, file: x.path, fix: FIXES[x.code] || x.message })) });   // file and fix as verify --json has them; path stays
 		if (!json) { console.log(`${errs.length ? 'FAIL' : 'ok  '} ${r.id}`); for (const f of r.out) console.log(`     ${f.level} ${f.code}: ${f.message} (${f.path})`); }
 	}
 	if (json) console.log(JSON.stringify({ ok: !bad, reports }, null, 2));
@@ -221,18 +225,24 @@ function cmdLint(args) {
 const TEMPLATES = {
 	snippet: (id) => { const key = keyOf(id); return { tier: 1, perms: ['copies_to_clipboard'], summary: `Type ;${key}, fill in a name, get a greeting. Replace this with your text.`, files: { [`snippets/${key}.json`]: { key, label: id, content: 'Hello {input:Name=world}' } }, tests: [{ kind: 'snippet', name: 'fills the name', target: key, fields: { Name: 'Bolt' }, expect: 'Hello Bolt' }] }; },
 	search: (id) => { const p = prefixOf(id); return { tier: 1, perms: ['opens_links:example.com'], summary: `Type ${p} and a query to search example.com. Replace the site.`, files: { [`search_engines/${p}.json`]: { id: p, name: id, urlTemplate: 'https://example.com/search?q={q}' } }, tests: [{ kind: 'search', name: 'builds the link', target: p, query: 'hello', expect: 'https://example.com/search?q=hello' }] }; },
-	transform: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: `Type =${id}, paste text, get it upper-cased. Replace the pipe steps.`, files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: "${id}"\ntitle: "${id}"\nicon: wand\ndescription: Trim and upper-case what you paste\nemits: Generic\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n` }, tests: [{ kind: 'transform', name: 'trims and upper-cases', target: id, input: '  hello  ', expect: 'HELLO' }] }),
+	transform: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: `Type =${id}, paste text, get it upper-cased. Replace the pipe steps.`, files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: "${id}"\ntitle: "${id}"\nicon: type\ndescription: Trim and upper-case what you paste\nemits: Generic\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n` }, tests: [{ kind: 'transform', name: 'trims and upper-cases', target: id, input: '  hello  ', expect: 'HELLO' }] }),
 	recognizer: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: 'Paste a ticket key like TKT-123 and get its link. Replace the pattern and links.', files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: "${id}"\ntitle: "${id}"\nicon: link\ndescription: Recognize a ticket key and copy its link\nemits: Generic\nplaceholder_examples:\n  - "TKT-123"\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n\nrecognize:\n  patterns:\n    - regex: "(TKT-\\\\d{1,6})"\n  reps:\n    - label: Link\n      template: "https://example.com/tickets/{1}"\n` }, tests: [{ kind: 'recognizer', name: 'recognizes ticket keys and nothing else', target: id, positive: ['TKT-123'], negative: ['TKT', 'TKT-', 'see TKT-123 here'], expect_rep: [{ input: 'TKT-123', label: 'Link', value: 'https://example.com/tickets/TKT-123' }] }] }),
 };
 const keyOf = (id) => { let k = id.replace(/[^a-z0-9_-]/g, '').slice(0, 24); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 24); };
 const prefixOf = (id) => { let k = id.replace(/[^a-z0-9]/g, '').slice(0, 12); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 12); };
+// The default author when --author is left out: the login name, looked up only then (os.userInfo throws where the user has no passwd entry).
+const loginName = () => { try { return os.userInfo().username || 'me'; } catch { return process.env.USER || process.env.USERNAME || 'me'; } };
 function flag(args, name, dflt) { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : dflt; }
 function cmdNew(args) {
 	staleCloneNote();
 	if (args[0] === '--list' || args[0] === 'list') return newList();
-	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
+	const suppliedAuthor = flag(args, '--author', null);
+	if (args.includes('--author') && (!suppliedAuthor?.trim() || suppliedAuthor.startsWith('--'))) die('--author requires a non-empty name');
+	const author = suppliedAuthor ?? loginName();
+	const authorNote = suppliedAuthor === null ? 'The default author is your login name when available. Review author.name in bolt-app.json and change it if needed before sharing the pack.' : '';
+	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'), author, authorNote);
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
-	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps'), author = flag(args, '--author', os.userInfo().username);
+	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps');
 	if (!id || !ID.test(id)) die(`usage: ./bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);
 	if (!TEMPLATES[type]) die(`unknown --type "${type}". Types: ${Object.keys(TEMPLATES).join(', ')}`);
 	const dir = path.join(root, id); if (fs.existsSync(dir)) die(`${dir} already exists`);
@@ -242,6 +252,7 @@ function cmdNew(args) {
 	fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify(listing, null, 2) + '\n');
 	fs.writeFileSync(path.join(dir, 'README.md'), `# ${id}\n\n${t.summary}\n\n## Who it is for\n\n## What it saves\n\n## Permissions\n\n${t.perms.map((p) => `- \`${p}\``).join('\n')}\n\n## Sample\n\nShow one real input and output.\n`);
 	console.log(`created ${dir} (${type}, tier ${t.tier})\nnext: edit it, then  ./bolt-apps lint ${dir}  and  ./bolt-apps pack ${dir}`);
+	if (authorNote) console.log(authorNote);
 }
 
 // ---------- keys, tar, pack, verify ----------
@@ -334,6 +345,7 @@ export const esc = (v) => String(v).replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u
 function cmdVerify(args) {
 	const json = args.includes('--json'), f = args.find((x) => !x.startsWith('--'));
 	if (!f || !fs.existsSync(f)) die('usage: ./bolt-apps verify <app-folder | file.boltpack> [--json]');
+	const scriptLabel = (x) => x.path.replace(/^scripts\//, '');
 	let findings = [], confirm = null, kind;
 	if (fs.statSync(f).isDirectory()) {
 		kind = 'app';
@@ -343,7 +355,7 @@ function cmdVerify(args) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
 			const c = checkManifests(files, { platforms: r.app.platforms, appId: r.app.id, minBolt: r.app.min_bolt_version, minBoltKnown: true }); findings.push(...c.findings);
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map(scriptLabel), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
 		}
 	} else {
 		kind = 'pack';
@@ -353,11 +365,11 @@ function cmdVerify(args) {
 			findings.push(...checkPackShape(r.meta, r.files, r.count));
 			const files = (r.meta.entries || []).filter((e) => ['user_utility', 'script'].includes(e.kind) && r.files.has(String(e.path).replace(/^manifests\//, ''))).map((e) => ({ path: String(e.path).replace(/^manifests\//, ''), kind: e.kind, content: r.files.get(String(e.path).replace(/^manifests\//, '')) }));
 			const c = checkManifests(files, { platformsUnknown: true, minBoltKnown: false, minBolt: r.meta.listing && typeof r.meta.listing === 'object' ? r.meta.listing.min_bolt_version : undefined, appId: r.meta.pack?.pack_id }); findings.push(...c.findings);   // a pack does not record platforms, so a missing OS command is not reported here
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map(scriptLabel), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
 		}
 	}
 	const ok = !findings.some((x) => x.level === 'error');
-	if (json) console.log(JSON.stringify({ ok, kind, findings, confirm }, null, 2));
+	if (json) console.log(JSON.stringify({ ok, kind, findings: findings.map((x) => ({ ...x, path: x.file })), confirm }, null, 2));   // path as lint --json has it; file stays
 	else {
 		for (const x of findings) console.log(`${x.level.toUpperCase().padEnd(7)} ${esc(x.code)}  ${esc(x.file || '')}${x.line ? ':' + x.line : ''}\n        ${esc(x.message)}\n        fix: ${esc(x.fix)}`);
 		if (confirm) {
@@ -375,7 +387,7 @@ function cmdVerify(args) {
 // ---------- main ----------
 const HELP = `bolt-apps: author toolkit for Bolt Apps
 
-  new <template> <id> [--dir .]                           copy a template (new --list shows them): renamed, check passes, next steps printed
+  new <template> <id> [--dir .] [--author "Your name"]   copy a template (new --list shows them): renamed, check passes, next steps printed
   new <id> [--type snippet|search|transform|recognizer]   start a gallery app from a small template
   run <app-folder> [view [word]] [--sample|--live] [--json]  run the app as Bolt would and show the rows (the debug loop)
   ship <app-folder>                                       lint, check, pack, verify with the next version picked; prints how to install
@@ -397,13 +409,21 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 	const [cmd, ...rest] = process.argv.slice(2);
 	const cmdCheck = async (args) => {
 		const target = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--os' && args[i - 1] !== '--case');
-		if (target && fs.existsSync(path.join(target, 'check.json'))) {
+		let hasCheck = false;
+		if (target) {
+			try { fs.lstatSync(path.join(target, 'check.json')); hasCheck = true; }
+			catch (e) { hasCheck = e.code !== 'ENOENT' && e.code !== 'ENOTDIR'; }  // only a missing file takes the non-script-app path
+		}
+		if (hasCheck) {
 			const osi = args.indexOf('--os'), osArg = osi >= 0 ? args[osi + 1] : undefined;
 			if (osi >= 0 && !OSES.includes(osArg)) die(`--os must be one of ${OSES.join(', ')}`);
-			const ci = args.indexOf('--case');
+			const ci = args.indexOf('--case'), json = args.includes('--json');
 			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden'), shared: args.includes('--shared') });
-			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
-			process.exit(reportOk(r) ? 0 : 1);
+			const load = r.findings.find((f) => f.code === 'load_error');
+			const ok = reportOk(r);
+			if (load && !json) die(load.message);
+			console.log(json ? JSON.stringify({ ok, ...(load ? { error: load.message } : {}), ...r }, null, 2) : formatReport(r));
+			process.exit(load ? 2 : ok ? 0 : 1);
 		}
 		if (!target) die('usage: ./bolt-apps check <app-folder>');
 		const has = (sub) => fs.existsSync(path.join(target, sub));
