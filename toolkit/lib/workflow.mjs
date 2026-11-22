@@ -92,7 +92,7 @@ export function userUtilsClashes(dir, id, appDir) {
 	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => !f.startsWith('.') && f !== '__pycache__');   // what a pack of this app writes into scripts/ (pack leaves these two out)
 	for (const f of scripts) if (own.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'script', blocks: true });
 	const flat = own.filter((f) => f.startsWith(`${id}__`)).map((f) => f.slice(id.length + 2));
-	for (const f of scripts) if (flat.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'old flat name', blocks: false });
+	for (const f of scripts) if (!own.includes(f) && flat.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'old flat name', blocks: false });
 	return out;
 }
 

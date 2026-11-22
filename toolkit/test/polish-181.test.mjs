@@ -126,6 +126,15 @@ test('doctor: advises removing only a file the pack would write; another app\'s 
 	assert.deepEqual(fs.readdirSync(uu, { recursive: true }).sort(), [...before, path.join('scripts', helper)].sort(), 'doctor must not change the folder');
 });
 
+test('doctor: a packed script is not also an old flat name', () => {
+	const app = tmp('p181-app'), uu = tmp('p181-uu');
+	for (const dir of [app, uu]) fs.mkdirSync(path.join(dir, 'scripts'));
+	const file = path.join(uu, 'scripts', 'demo__helper.py');
+	fs.writeFileSync(file, 'x');
+	for (const name of ['demo__helper.py', 'demo__demo__helper.py']) fs.writeFileSync(path.join(app, 'scripts', name), 'x');
+	assert.deepEqual(userUtilsClashes(uu, 'demo', app), [{ file, kind: 'script', blocks: true }]);
+});
+
 test('userUtilsDir: per OS, with the override', () => {
 	assert.equal(userUtilsDir({}, 'darwin', '/h'), '/h/Library/Application Support/app.sparcle.bolt.enterprise/user-utils');
 	assert.equal(userUtilsDir({ APPDATA: 'C:\\A' }, 'win32', 'C:\\h'), path.join('C:\\A', 'app.sparcle.bolt.enterprise', 'user-utils'));
