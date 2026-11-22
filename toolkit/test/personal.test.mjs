@@ -95,10 +95,12 @@ test('the permissions a personal pack writes into its listing pass lint and veri
 	// The same list in the folder's bolt-app.json: the folder and the pack agree
 	const j = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); j.permissions = listed; write(path.join(dir, 'bolt-app.json'), JSON.stringify(j));
 	for (const cmd of [['lint', 'apps/eagle-info', '--personal'], ['verify', 'apps/eagle-info']]) { const r = run(d, ...cmd); assert.equal(r.status, 0, `${cmd[0]}: ${r.stdout}${r.stderr}`); assert.doesNotMatch(r.stdout, /permission_unknown/); }
-	// The gallery takes it too (no permission_unknown); a word Bolt does not know is still refused
+	// A word Bolt does not know is still refused, by lint --personal and by the gallery lint
 	j.permissions = ['opens_links', 'opens_link']; write(path.join(dir, 'bolt-app.json'), JSON.stringify(j));
-	const g = run(d, 'lint', 'apps/eagle-info', '--personal', '--json'), codes = JSON.parse(g.stdout).reports[0].findings.filter((x) => x.code === 'permission_unknown');
-	assert.deepEqual(codes.map((x) => x.message), ['unknown permission "opens_link"']);
+	for (const mode of [['--personal'], []]) {
+		const g = run(d, 'lint', 'apps/eagle-info', ...mode, '--json'), codes = JSON.parse(g.stdout).reports[0].findings.filter((x) => x.code === 'permission_unknown');
+		assert.deepEqual(codes.map((x) => x.message), ['unknown permission "opens_link"'], mode.join(' ') || 'gallery');
+	}
 });
 
 test('--personal also packs an ordinary tier 2 app, and a local-service app says its port', () => {
