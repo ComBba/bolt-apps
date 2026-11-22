@@ -555,22 +555,38 @@ export function presenceProblems(rows, { sampleMode, bannerPromised, minRows, st
 	return out;
 }
 
+function readCheckConfig(appDir) {
+	const file = path.join(appDir, 'check.json');
+	let text;
+	try { text = fs.readFileSync(file, 'utf8'); }
+	catch (e) { return { error: `${file} could not be read (${e.code}). Check the file and its permissions, then run check again` }; }
+
+	let cfg;
+	try { cfg = JSON.parse(text); }
+	catch { return { error: `${file} is not valid JSON. Fix it, then run check again` }; }
+	if (!cfg || typeof cfg !== 'object' || Array.isArray(cfg)) return { error: `${file} must be a JSON object. Fix it, then run check again` };
+	return { cfg };
+}
+
 // opts.shared: run every case as Bolt 182+ would, with BOLT_APP_SHARED_DIR naming a fresh export of THIS repo's kit. The rows must still match the
 // golden files and the expectations, so a shared kit and an app's own copy are proven to give the same answer.
 export async function checkApp(appDir, opts = {}) {
-	if (!opts.shared) return checkAppRun(appDir, opts);
+	const report = { app: path.basename(path.resolve(appDir)), host_os: hostOs(), findings: [], cases: [] };
+	const { cfg, error } = readCheckConfig(appDir);
+	if (error) {
+		report.findings.push({ level: 'error', code: 'load_error', message: error, path: 'check.json' });
+		return report;
+	}
+	if (!opts.shared) return checkAppRun(appDir, cfg, report, opts);
 	const { exportShared } = await import('./shared.mjs');
 	const base = fs.mkdtempSync(path.join(os.tmpdir(), 'bolt-apps-shared-'));
 	try {
 		exportShared(path.join(base, 'bolt-apps-shared'));
-		return await checkAppRun(appDir, { ...opts, sharedDir: path.join(base, 'bolt-apps-shared') });
+		return await checkAppRun(appDir, cfg, report, { ...opts, sharedDir: path.join(base, 'bolt-apps-shared') });
 	} finally { fs.rmSync(base, { recursive: true, force: true }); }
 }
-async function checkAppRun(appDir, opts = {}) {
-	const cfgFile = path.join(appDir, 'check.json');
-	const cfg = JSON.parse(fs.readFileSync(cfgFile, 'utf8'));
-	const host = hostOs();
-	const report = { app: path.basename(path.resolve(appDir)), host_os: host, findings: [], cases: [] };
+async function checkAppRun(appDir, cfg, report, opts) {
+	const host = report.host_os;
 	const top = (level, code, message, p) => report.findings.push({ level, code, message, path: p });
 	let listing = null;
 	try { listing = JSON.parse(fs.readFileSync(path.join(appDir, 'bolt-app.json'), 'utf8')); } catch {}
