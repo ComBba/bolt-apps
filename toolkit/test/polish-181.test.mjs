@@ -124,6 +124,7 @@ test('doctor: advises removing only a file the pack would write; another app\'s 
 	assert.equal(d2.status, 1, d2.stdout);
 	assert.match(d2.stdout, new RegExp(`FIX  script in your Bolt user apps folder: [^\\n]*${helper.replace(/\./g, '\\.')}`)); assert.match(d2.stdout, /file_exists/);
 	assert.equal((d2.stdout.match(/^FIX /gm) || []).length, 1, d2.stdout);
+	assert.match(d2.stdout, new RegExp(`Remove it: ${process.platform === 'win32' ? 'del' : 'rm'} [^\\n]*${helper.replace(/\./g, '\\.')}`));
 	assert.deepEqual(fs.readdirSync(uu, { recursive: true }).sort(), [...before, path.join('scripts', helper)].sort(), 'doctor must not change the folder');
 });
 
