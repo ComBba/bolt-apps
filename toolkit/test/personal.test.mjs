@@ -75,6 +75,24 @@ test('personal packs refuse what Bolt would break or reject, with the fix in the
 	}
 });
 
+test('lint --personal refuses an unknown or admin-only top-level key as verify does, each reported once by verify', () => {
+	const d = tmp(), dir = scriptApp(d);
+	write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE + 'colour: blue\nscopes: [read]\n');
+	const lines = BRIDGE.split('\n').length;   // the two keys are the last two lines
+	const l = run(d, 'lint', 'apps/eagle-info', '--personal', '--json'), lj = JSON.parse(l.stdout);
+	assert.equal(l.status, 1, l.stdout);
+	const got = lj.reports[0].findings.filter((x) => /^yaml_(key_unknown|admin_only_key)$/.test(x.code)).map((x) => [x.level, x.code, x.path, x.line]);
+	assert.deepEqual(got, [['error', 'yaml_key_unknown', 'utilities/eagle-info.yaml', lines], ['error', 'yaml_admin_only_key', 'utilities/eagle-info.yaml', lines + 1]]);
+	const v = run(d, 'verify', 'apps/eagle-info', '--json'), vj = JSON.parse(v.stdout);
+	assert.equal(v.status, 1);
+	for (const c of ['yaml_key_unknown', 'yaml_admin_only_key']) assert.equal(vj.findings.filter((x) => x.code === c).length, 1, `${c} once: ${v.stdout}`);
+	const p = run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', path.join(d, 'e.boltpack'));
+	assert.equal(p.status, 1); assert.match(p.stderr, /yaml_key_unknown: unknown key "colour"/); assert.ok(!fs.existsSync(path.join(d, 'e.boltpack')));
+	// a known top-level key is not reported
+	write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE + 'description: "Look up eagles"\n');
+	assert.equal(run(d, 'lint', 'apps/eagle-info', '--personal').status, 0);
+});
+
 test('the permissions printed come from the files, not from what bolt-app.json claims', () => {
 	const d = tmp(), dir = scriptApp(d, { permissions: [], tier: 1 });
 	write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE + 'actions:\n  - { id: o, kind: url, label: Open, url_template: "https://example.org/{{q}}" }\n  - { id: p, kind: url, label: Any, url_template: "{{link}}" }\n');
