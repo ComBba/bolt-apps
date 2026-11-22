@@ -135,6 +135,21 @@ test('doctor: a packed script is not also an old flat name', () => {
 	assert.deepEqual(userUtilsClashes(uu, 'demo', app), [{ file, kind: 'script', blocks: true }]);
 });
 
+test('doctor: a case variant clashes only when the packed spelling resolves on disk', (t) => {
+	const app = tmp('p181-app'), uu = tmp('p181-uu');
+	for (const dir of [app, uu]) fs.mkdirSync(path.join(dir, 'scripts'));
+	const file = path.join(uu, 'scripts', 'demo__HELPER.py');
+	const packedPath = path.join(uu, 'scripts', 'demo__helper.py');
+	fs.writeFileSync(file, 'x');
+	fs.writeFileSync(path.join(app, 'scripts', 'demo__helper.py'), 'x');
+	const exists = fs.existsSync;
+	let caseInsensitive = false;
+	t.mock.method(fs, 'existsSync', (f) => f === packedPath ? caseInsensitive : exists(f));
+	assert.deepEqual(userUtilsClashes(uu, 'demo', app), []);
+	caseInsensitive = true;
+	assert.deepEqual(userUtilsClashes(uu, 'demo', app), [{ file, kind: 'script', blocks: true }]);
+});
+
 test('userUtilsDir: per OS, with the override', () => {
 	assert.equal(userUtilsDir({}, 'darwin', '/h'), '/h/Library/Application Support/app.sparcle.bolt.enterprise/user-utils');
 	assert.equal(userUtilsDir({ APPDATA: 'C:\\A' }, 'win32', 'C:\\h'), path.join('C:\\A', 'app.sparcle.bolt.enterprise', 'user-utils'));

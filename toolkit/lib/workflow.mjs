@@ -87,12 +87,19 @@ export function userUtilsClashes(dir, id, appDir) {
 	const out = [];
 	try { if (!fs.statSync(dir).isDirectory()) return out; } catch { return out; }
 	const ls = (d) => { try { return fs.readdirSync(d); } catch { return []; } };
-	const top = ls(dir), scripts = ls(path.join(dir, 'scripts'));
+	const scriptsDir = path.join(dir, 'scripts');
+	const top = ls(dir), scripts = ls(scriptsDir);
 	for (const f of top) if (f === `${id}.yaml` || f === `${id}.yml`) out.push({ file: path.join(dir, f), kind: 'app file', blocks: true });
 	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => !f.startsWith('.') && f !== '__pycache__');   // what a pack of this app writes into scripts/ (pack leaves these two out)
-	for (const f of scripts) if (own.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'script', blocks: true });
+	const installed = new Set(scripts), byCase = new Map(scripts.map((f) => [f.toLowerCase(), f]));
+	const blocks = new Set();
+	for (const f of own) {
+		const name = installed.has(f) ? f : byCase.get(f.toLowerCase());
+		if (name && (name === f || fs.existsSync(path.join(scriptsDir, f)))) blocks.add(name);
+	}
+	for (const f of scripts) if (blocks.has(f)) out.push({ file: path.join(scriptsDir, f), kind: 'script', blocks: true });
 	const flat = own.filter((f) => f.startsWith(`${id}__`)).map((f) => f.slice(id.length + 2));
-	for (const f of scripts) if (!own.includes(f) && flat.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'old flat name', blocks: false });
+	for (const f of scripts) if (!blocks.has(f) && flat.includes(f)) out.push({ file: path.join(scriptsDir, f), kind: 'old flat name', blocks: false });
 	return out;
 }
 
