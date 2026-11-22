@@ -55,7 +55,7 @@ REQ_TIMEOUT = 10.0
 TOTAL_BUDGET = 14.0      # all requests together; Bolt stops the script at the app file's bridge.timeout_seconds (app.timeout, 25 unless set), so that is 20 or more for an app that calls an API
 MAX_ANSWER = 5 * 1024 * 1024   # bytes read from one answer; a longer one is a failure of its own ("too large"), never cut and misread
 CACHE_MAX = getattr(getattr(kit, "cache", None), "_MAX_FILE", 1024 * 1024)   # the kit cache refuses a file larger than this
-CACHE_FORM = 2           # what a cached copy holds: the rows as read (unwrapped, mapped, cut to the fields config.json names), not the raw answer
+CACHE_FORM = 3           # unwrapped, mapped rows, with whole records and lookup matches kept when the config uses them
 DEMOS = ("demo-offline", "demo-stale", "demo-auth", "demo-nokey", "demo-notfound")
 
 
@@ -651,10 +651,10 @@ def settle(ep, raw):
 WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 
-def field_words(cfg):
-    """Every name config.json mentions (each string whole, its dotted parts and the words in it), plus id, title and key, which the engine
-    reads unasked. A field of a list row outside this set is never read by a template, stat, sort, rule, link or match."""
-    out, stack = set(("id", "title", "key")), [cfg]
+def cache_reads(cfg):
+    """Names used by templates, stats, sorts and matches, plus the implicit id, title and key. Keep exact template and badge paths
+    too: a path can consume an entire endpoint or record, including fields it does not name individually."""
+    fields, paths, stack = {"id", "title", "key"}, set(), [cfg]
     while stack:
         o = stack.pop()
         if isinstance(o, dict):
@@ -662,18 +662,35 @@ def field_words(cfg):
         elif isinstance(o, list):
             stack.extend(o)
         elif isinstance(o, str):
-            out.add(o)
-            out.update(o.split("."))
-            out.update(WORD.findall(o))
-    return out
+            fields.add(o)
+            fields.update(o.split("."))
+            fields.update(WORD.findall(o))
+            paths.update(m.group(1) for m in TOKEN.finditer(o))
+            rule = RULE.match(o)
+            if rule:
+                paths.update((rule.group(1), rule.group(3)))
+    return fields, paths
 
 
-def cache_doc(tag, ep, value, pg, words):
-    """What the cache keeps for one endpoint, [CACHE_FORM, config tag, value, paged]: the rows as read, each list row cut to the fields
-    config.json names, so a large answer still fits. [CACHE_FORM, tag, None, "too large"] marks an answer that did not fit even so."""
-    if ep.get("kind", "list") == "list" and isinstance(value, list):
-        value = [dict((k, x) for k, x in r.items() if k in words) for r in value]
-    return [CACHE_FORM, tag, value, bool(pg)]
+def whole_record_indexes(name, paths, lookup_step):
+    """A lookup chain exposes only its first record; elsewhere a path can read a whole list or an indexed record."""
+    if lookup_step:
+        return {"0"} if name in paths else set()
+    if name in paths:
+        return None   # the full list is read
+    prefix = name + "."
+    tails = (path[len(prefix):] for path in paths if path.startswith(prefix))
+    return {i.lstrip("0") or "0" for i in tails if i.isdigit()}
+
+
+def cache_doc(tag, value, pg, fields, whole_records, lookup_step):
+    """Keep mapped rows, whether the answer was paged, and whether trimming hid a successful first record in a lookup chain."""
+    pruned_match = False
+    if isinstance(value, list) and whole_records is not None:
+        rows = [row if str(i) in whole_records else {k: v for k, v in row.items() if k in fields} for i, row in enumerate(value)]
+        pruned_match = bool(lookup_step and value and value[0] and not rows[0])
+        value = rows
+    return [CACHE_FORM, tag, value, bool(pg), pruned_match]
 
 
 def too_big_to_keep(ck, doc):
@@ -686,6 +703,7 @@ class Loaded(object):
     def __init__(self):
         self.data, self.notices, self.stop = {}, [], None
         self.cached_age, self.from_cache = 0, False
+        self.pruned_lookup_matches = set()
 
 
 NOW_OVERRIDE = [None]   # sample mode sets this from fixtures.json "_now" so {today} does not drift
@@ -783,10 +801,18 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None, deadline
     if problem or (not key and api.get("key_env")):   # the row names the cause: a refused key, a key file that gives none, or no key at all
         L.stop = ("nokey",) + (key_advice(app, api, problem) or ("Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")))) + (0,)
         return L
-    tag, words = _hash(json.dumps(cfg, sort_keys=True)), field_words(cfg)   # a copy made under another config.json is a miss: its rows were mapped and cut for that one
+    tag = _hash(json.dumps(cfg, sort_keys=True))   # a copy made under another config.json is a miss: its rows were mapped and cut for that one
+    fields, paths = cache_reads(cfg)
+    lookup_step = pvars is not None
 
     def doc_ok(d):   # see cache_doc
-        return isinstance(d, list) and len(d) == 4 and d[0] == CACHE_FORM and d[1] == tag and (isinstance(d[2], (list, dict)) or d[3] == "too large")
+        return isinstance(d, list) and len(d) == 5 and d[0] == CACHE_FORM and d[1] == tag and (isinstance(d[2], (list, dict)) or d[3] == "too large")
+
+    def from_cache(n, doc):
+        if doc[4]:
+            L.pruned_lookup_matches.add(n)
+        return doc[2], doc[3] is True
+
     fresh = kit.Cache(app["id"], ttl, doc_ok)
     old = kit.Cache(app["id"] + "-stale", stale_max, doc_ok)
     deadline = deadline or kit.Deadline(TOTAL_BUDGET)
@@ -795,7 +821,7 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None, deadline
         ck = "%s:%s" % (n, _hash(api["base_url"] + fill_path(eps[n]["path"], pvars)))
         hit = None if refresh else fresh.get(ck)
         if hit is not None and hit[2] is not None:
-            got[n] = (hit[2], hit[3] is True)
+            got[n] = from_cache(n, hit)
             L.from_cache = True
             L.cached_age = max(L.cached_age, int(fresh.age(ck) or 0))
         else:
@@ -820,15 +846,16 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None, deadline
         p, ck = res[n], "%s:%s" % (n, _hash(api["base_url"] + fill_path(eps[n]["path"], pvars)))
         if p.ok:
             got[n] = settle(eps[n], p.value)
-            doc = cache_doc(tag, eps[n], got[n][0], got[n][1], words)
+            whole_records = whole_record_indexes(n, paths, lookup_step)
+            doc = cache_doc(tag, got[n][0], got[n][1], fields, whole_records, lookup_step)
             fresh.put(ck, doc)      # put() refuses failures; they are never cached
-            if not old.put(ck, doc) and old.enabled and too_big_to_keep(ck, doc) and (old.get(ck) or [None] * 4)[2] is None:
-                old.put(ck, [CACHE_FORM, tag, None, "too large"])   # no old copy to keep: a later failure says why
+            if not old.put(ck, doc) and old.enabled and too_big_to_keep(ck, doc) and (old.get(ck) or [None] * 5)[2] is None:
+                old.put(ck, [CACHE_FORM, tag, None, "too large", False])   # no old copy to keep: a later failure says why
         else:
             failed[n] = "timeout" if p.timed_out else (p.reason if p.reason in ("auth", "rate", "timeout", "conn", "notfound", "toolarge") else "other")
             prev = old.get(ck) if failed[n] != "notfound" else None   # a 404 means it is gone: never show an old copy of it
             if prev is not None and prev[2] is not None:
-                got[n] = (prev[2], prev[3] is True)
+                got[n] = from_cache(n, prev)
                 stale_ages[n] = old.age(ck) or 0
             elif prev is not None:
                 no_copy.add(n)
@@ -1436,7 +1463,7 @@ def run_lookup(cfg, args, fx, fixtures):
             notices += notice_rows(L, "overview", "refresh", 45)
             got = L.data.get(step)
             first = got[0] if isinstance(got, list) and got else got
-            if first in (None, [], {}):
+            if first in (None, [], {}) and step not in L.pruned_lookup_matches:
                 kit.emit([kit.row(lk.get("none_title", "No match"), 'Nothing found for "%s"' % query, icon="Search", copy=False)])
             glob[step] = first
             pvars[step] = first

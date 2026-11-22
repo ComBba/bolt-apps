@@ -32,12 +32,14 @@ class Server(http.server.BaseHTTPRequestHandler):
     """Answers by the last path segment: Server.status[name] is an HTTP status, Server.payload[name] the answer (default the sample answer)."""
     status = {}
     payload = {}
+    hits = []
 
     def log_message(self, *a):
         pass
 
     def do_GET(self):
         name = self.path.split("?")[0].strip("/").split("/")[-1]
+        Server.hits.append(name)
         code = Server.status.get(name, 200)
         body = json.dumps(Server.payload.get(name, {}) if code == 200 else {"message": "server error"}).encode()
         try:
@@ -60,6 +62,7 @@ class LiveBase(unittest.TestCase):
         threading.Thread(target=self.srv.serve_forever, daemon=True).start()
         Server.status = {}
         Server.payload = fixtures_of(self.app)
+        Server.hits.clear()
         self.cfg = cfg_of(self.app)
         self.cfg["api"].update({"base_url": "http://localhost:%d" % self.srv.server_address[1], "fixture_default": False, "on_missing_key": "setup"})
         self.dirs = []
@@ -92,6 +95,15 @@ class LiveBase(unittest.TestCase):
         r = self.run_engine(args, d or self.folder(), env)
         self.assertEqual(r.returncode, 0, r.stderr)
         return json.loads(r.stdout)
+
+    def cached_rows(self, args):
+        d = self.folder()
+        first = self.rows(args, d)
+        Server.hits.clear()
+        again = [row for row in self.rows(args, d) if row.get("kpi_badge") != "CACHED"]
+        self.assertEqual(Server.hits, [], "the second run reads the cache")
+        self.assertEqual(again, first)
+        return again
 
 
 class LargeAnswers(LiveBase):
@@ -143,6 +155,42 @@ class LargeAnswers(LiveBase):
         titles = [r["title"] for r in self.rows(["tickets"], d)]
         self.assertNotIn("Crash on startup", titles, "rows mapped for the old config are not reused")
         self.assertIn("open", titles)
+
+    def test_a_whole_list_or_indexed_record_keeps_its_unlisted_fields(self):
+        Server.payload["tickets"] = {"data": [{"id": "TK-1", "opaque_only": "kept in the rendered record"}]}
+        for path in ("tickets", "tickets.0"):
+            with self.subTest(path=path):
+                self.cfg["overview"]["rows"] = [{"title": "Tickets", "subtitle": "{" + path + "}", "icon": "list"}]
+                rows = self.cached_rows(["overview"])
+                self.assertIn("kept in the rendered record", rows[0]["subtitle"])
+
+
+class ChainCache(LiveBase):
+    app = "lookup-template"
+
+    def setUp(self):
+        super().setUp()
+        self.cfg["endpoints"]["geocode"]["path"] = "/geocode?name={query}"
+        self.cfg["endpoints"]["weather"]["path"] = "/weather"
+        self.cfg["lookup"]["rows"] = [{"title": "Found it", "subtitle": "Synthetic lookup", "icon": "globe"}]
+        Server.payload["weather"] = {"current": {}}
+
+    def test_a_projected_first_record_still_counts_as_a_match(self):
+        # Keeping this whole record would miss the cache's 1 MB limit.
+        Server.payload["geocode"] = {"results": [{"opaque_only": "s" * (1100 * 1024)}]}
+        rows = self.cached_rows(["Example"])
+        self.assertEqual(rows[0]["title"], "Found it")
+
+    def test_a_whole_first_record_keeps_unlisted_fields(self):
+        self.cfg["lookup"]["rows"][0]["subtitle"] = "{geocode}"
+        Server.payload["geocode"] = {"results": [{"id": "G-1", "opaque_only": "kept"}, {"unused": "s" * (1100 * 1024)}]}
+        rows = self.cached_rows(["Example"])
+        self.assertIn("'opaque_only': 'kept'", rows[0]["subtitle"])
+
+    def test_an_empty_first_record_still_means_no_match(self):
+        Server.payload["geocode"] = {"results": [{}]}
+        rows = self.cached_rows(["Example"])
+        self.assertEqual(rows[0]["title"], "No such place")
 
 
 class Slow(http.server.BaseHTTPRequestHandler):
