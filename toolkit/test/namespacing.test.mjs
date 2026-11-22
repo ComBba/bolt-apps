@@ -73,7 +73,7 @@ test('`new` from the same template with two ids gives disjoint paths, and so doe
 	for (let i = 0; i < sets.length; i++) for (let j = i + 1; j < sets.length; j++) assert.deepEqual(clashes(sets[i][1], sets[j][1]), []);
 });
 
-test('a copy made with `new` keeps none of the template\'s chip, id or title in what the person reads', () => {
+test('a copy made with `new` rewrites the template chip, id and file prefix outside the README credit', () => {
 	const d = tmp('ns-words-'), home = tmp('ns-home-');
 	for (const t of ['branch-explorer', 'acme-dash', 'portal-template', 'script-template', 'pulse-feed', 'around', 'repo-radar', 'cli-wrapper-template', 'unit-convert', 'widget-gallery']) {
 		const yamlT = fs.readFileSync(path.join(EX, t, 'utilities', fs.readdirSync(path.join(EX, t, 'utilities'))[0]), 'utf8');
@@ -87,7 +87,11 @@ test('a copy made with `new` keeps none of the template\'s chip, id or title in 
 		for (const f of files) {
 			const text = fs.readFileSync(f, 'utf8'), rel = path.relative(path.join(d, id), f);
 			if (oldChip !== newChip) assert.ok(!new RegExp(`=${oldChip}(?![A-Za-z0-9_-])`).test(text), `${t}: ${rel} still tells the person to type =${oldChip}`);
-			assert.ok(!new RegExp(`(?<![A-Za-z0-9_-])${t}(?![A-Za-z0-9_]|-[A-Za-z0-9])`).test(text) || /README\.md$/.test(rel) === false, `${t}: ${rel} still names the template ${t}`);
+			if (/README\.md$/.test(rel)) {
+				const credit = `\n> Based on the \`${t}\` example from Bolt Apps,`;
+				const readme = rel === 'README.md' ? text.replace(credit, '\n') : text;
+				assert.doesNotMatch(readme, new RegExp(`(?<![A-Za-z0-9_-])${t}(?![A-Za-z0-9_]|-[A-Za-z0-9])`), `${t}: ${rel} still names the template ${t}`);
+			}
 			assert.ok(!text.includes(`${t}__`), `${t}: ${rel} still has the template's file prefix`);
 		}
 		const lint = cli(home, d, 'lint', path.join(d, id), '--personal'); assert.equal(lint.status, 0, lint.stdout);
@@ -133,14 +137,25 @@ test('ship: a lost ship.json cannot make a lower version; --version still wins; 
 test('new <template> <id> puts the person in author, never the examples name, and the pack carries that name', () => {
 	const d = tmp('ns-author-'), home = tmp('ns-home-');
 	const author = (id) => JSON.parse(fs.readFileSync(path.join(d, id, 'bolt-app.json'), 'utf8')).author;
-	assert.equal(cli(home, d, 'new', 'portal-template', 'mine', '--dir', d, '--author', 'Tester').status, 0);
+	const authorReminder = /login name.*author\.name in bolt-app\.json.*before sharing/;
+	const custom = cli(home, d, 'new', 'portal-template', 'mine', '--dir', d, '--author', 'Tester');
+	assert.equal(custom.status, 0, custom.stdout + custom.stderr);
+	assert.doesNotMatch(custom.stdout, authorReminder);
+	assert.match(custom.stdout, /replace the template text in README\.md and keep the source credit/);
 	assert.deepEqual(author('mine'), { name: 'Tester' });
 	const out = path.join(d, 'mine.boltpack'); packOf(path.join(d, 'mine'), out);
 	const r = readPack(out); assert.ok(r.ok, r.reason); assert.equal(r.meta.signed_by, 'Tester'); assert.equal(r.meta.pack.author.name, 'Tester');
 	assert.doesNotMatch(JSON.stringify(r.meta), /Bolt Apps examples|github\.com/);
 	// with no --author, the login name, as `new <id>` does
-	assert.equal(cli(home, d, 'new', 'script-template', 'mine-2', '--dir', d).status, 0);
-	assert.deepEqual(author('mine-2'), { name: os.userInfo().username });
+	for (const [id, args] of [['mine-2', ['script-template']], ['mine-3', []]]) {
+		const created = cli(home, d, 'new', ...args, id, '--dir', d);
+		assert.equal(created.status, 0, created.stdout + created.stderr);
+		assert.match(created.stdout, authorReminder);
+		assert.deepEqual(author(id), { name: os.userInfo().username });
+	}
+	const readme = fs.readFileSync(path.join(d, 'mine', 'README.md'), 'utf8');
+	assert.match(readme, /`portal-template` example.*Apache-2\.0/);
+	assert.match(readme, /author credit.*`derived_from`/);
 });
 
 test('the transform `new` writes and the AGENTS.md worked example use icons the launcher has (no icon_unknown)', () => {
