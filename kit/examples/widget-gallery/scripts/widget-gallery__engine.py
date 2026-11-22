@@ -11,6 +11,7 @@ An author edits config.json and fixtures.json only. Formatting, row structure, t
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
 import concurrent.futures as cf
 import datetime
+import errno
 import hashlib
 import json
 import math
@@ -19,6 +20,7 @@ import re
 import socket
 import stat
 import sys
+import threading
 import time
 import unicodedata
 import urllib.error
@@ -1547,6 +1549,27 @@ def store_read(fm):
     return out
 
 
+_STORE_LOCK = threading.Lock()
+
+
+def _win_lock(fd):
+    """Windows byte lock on the log's lock file: retry a busy lock a few times, raise if it never frees (a row is never dropped quietly).
+    Returns False where there is no msvcrt."""
+    try:
+        import msvcrt
+    except ImportError:
+        return False
+    for attempt in range(5):
+        try:
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+            return True
+        except OSError as e:
+            if e.errno not in (errno.EDEADLK, errno.EACCES) or attempt == 4:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
 def store_append(fm, rec):
     """Append one record to the local log (folder 0700, file 0600, never through a link); keep the newest max_rows."""
     p = store_path(fm)
@@ -1559,23 +1582,39 @@ def store_append(fm, rec):
             os.chmod(d, 0o700)   # a folder that already existed with looser permissions is tightened
     except (OSError, AttributeError):
         pass
-    lock = os.open(p + ".lock", os.O_WRONLY | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
-    try:
+    with _STORE_LOCK:
+        lock = os.open(p + ".lock", os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
+        win_locked = False
         try:
-            import fcntl
-            fcntl.flock(lock, fcntl.LOCK_EX)   # two submits at once must not lose a row
-        except ImportError:
-            pass
-        rows = store_read(fm) + [rec]
-        rows = rows[-int(fm["store"].get("max_rows", 200)):]
-        tmp = "%s.tmp%d" % (p, os.getpid())
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0), 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            for r in rows:
-                f.write(json.dumps(r, ensure_ascii=True) + "\n")
-        os.replace(tmp, p)
-    finally:
-        os.close(lock)
+            try:
+                import fcntl
+                fcntl.flock(lock, fcntl.LOCK_EX)   # two submits at once must not lose a row
+            except ImportError:
+                win_locked = _win_lock(lock)
+            rows = store_read(fm) + [rec]
+            rows = rows[-int(fm["store"].get("max_rows", 200)):]
+            tmp = "%s.tmp%d.%d" % (p, os.getpid(), threading.get_ident())
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                for r in rows:
+                    f.write(json.dumps(r, ensure_ascii=True) + "\n")
+            for attempt in range(5):   # Windows can hold the target for a moment
+                try:
+                    os.replace(tmp, p)
+                    break
+                except PermissionError:
+                    if attempt == 4:
+                        raise
+                    time.sleep(0.05 * (attempt + 1))
+        finally:
+            if win_locked:
+                try:
+                    import msvcrt
+                    os.lseek(lock, 0, os.SEEK_SET)
+                    msvcrt.locking(lock, msvcrt.LK_UNLCK, 1)
+                except OSError:
+                    pass
+            os.close(lock)
 
 
 def run_form(cfg, args, fx, fixtures):
