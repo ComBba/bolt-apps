@@ -591,7 +591,11 @@ class CacheRowsInEveryApp(unittest.TestCase):
         return out
 
     def test_rows_from_the_cache_equal_rows_from_the_answers(self):
-        self.assertEqual(len(ENGINE_APPS), 14)
+        # every engine copy (kit/examples/*/scripts/*__engine.py) is in a folder named for its app, so none is skipped
+        copies = [f for a in os.listdir(EX) if os.path.isdir(os.path.join(EX, a, "scripts"))
+                  for f in os.listdir(os.path.join(EX, a, "scripts")) if f.endswith("__engine.py")]
+        self.assertEqual(len(ENGINE_APPS), len(copies))
+        self.assertGreater(len(ENGINE_APPS), 0)
         ran = []
         for app in ENGINE_APPS:
             cfg = self.live(app)
