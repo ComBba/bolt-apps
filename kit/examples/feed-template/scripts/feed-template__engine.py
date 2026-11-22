@@ -11,6 +11,7 @@ An author edits config.json and fixtures.json only. Formatting, row structure, t
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
 import concurrent.futures as cf
 import datetime
+import errno
 import hashlib
 import json
 import math
@@ -1551,6 +1552,24 @@ def store_read(fm):
 _STORE_LOCK = threading.Lock()
 
 
+def _win_lock(fd):
+    """Windows byte lock on the log's lock file: retry a busy lock a few times, raise if it never frees (a row is never dropped quietly).
+    Returns False where there is no msvcrt."""
+    try:
+        import msvcrt
+    except ImportError:
+        return False
+    for attempt in range(5):
+        try:
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+            return True
+        except OSError as e:
+            if e.errno not in (errno.EDEADLK, errno.EACCES) or attempt == 4:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
 def store_append(fm, rec):
     """Append one record to the local log (folder 0700, file 0600, never through a link); keep the newest max_rows."""
     p = store_path(fm)
@@ -1571,13 +1590,7 @@ def store_append(fm, rec):
                 import fcntl
                 fcntl.flock(lock, fcntl.LOCK_EX)   # two submits at once must not lose a row
             except ImportError:
-                try:
-                    import msvcrt
-                    os.lseek(lock, 0, os.SEEK_SET)
-                    msvcrt.locking(lock, msvcrt.LK_LOCK, 1)
-                    win_locked = True
-                except (ImportError, OSError):
-                    pass
+                win_locked = _win_lock(lock)
             rows = store_read(fm) + [rec]
             rows = rows[-int(fm["store"].get("max_rows", 200)):]
             tmp = "%s.tmp%d.%d" % (p, os.getpid(), threading.get_ident())
@@ -1585,7 +1598,14 @@ def store_append(fm, rec):
             with os.fdopen(fd, "w", encoding="utf-8") as f:
                 for r in rows:
                     f.write(json.dumps(r, ensure_ascii=True) + "\n")
-            os.replace(tmp, p)
+            for attempt in range(5):   # Windows can hold the target for a moment
+                try:
+                    os.replace(tmp, p)
+                    break
+                except PermissionError:
+                    if attempt == 4:
+                        raise
+                    time.sleep(0.05 * (attempt + 1))
         finally:
             if win_locked:
                 try:
