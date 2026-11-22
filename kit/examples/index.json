@@ -8,6 +8,7 @@
       "acme-dash",
       "lookup-template",
       "chart-template",
+      "chart-types",
       "table-template",
       "repo-radar",
       "around",
@@ -209,6 +210,33 @@
         "scripts/chart-template__fixtures.json"
       ],
       "check": "./bolt-apps check kit/examples/chart-template",
+      "verified": "not verified in real Bolt"
+    },
+    {
+      "id": "chart-types",
+      "need": "a pie, donut, area, several lines, a heatmap or a gauge over rows (Bolt 182 or newer)",
+      "layout": "overview tiles that open a pie, a donut, a two-line chart, an area, a heatmap and a gauge",
+      "mode": "views",
+      "widgets": [
+        "cards",
+        "chart",
+        "heatmap",
+        "gauge"
+      ],
+      "techniques": [
+        "pie and bind.series (Bolt 182)",
+        "heatmap and gauge panes (Bolt 182)",
+        "min_bolt_version 0.1.182 in bolt-app.json",
+        "field_sum stats"
+      ],
+      "sources": [
+        "any REST API"
+      ],
+      "edit": [
+        "scripts/chart-types__config.json",
+        "scripts/chart-types__fixtures.json"
+      ],
+      "check": "./bolt-apps check kit/examples/chart-types",
       "verified": "not verified in real Bolt"
     },
     {

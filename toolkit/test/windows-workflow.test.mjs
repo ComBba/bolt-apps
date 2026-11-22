@@ -49,6 +49,9 @@ test('doctor: handles loose .env and clash removal advice per OS', () => {
 	}
 	const uu = path.join(root, 'uu');
 	fs.mkdirSync(path.join(uu, 'scripts'), { recursive: true });
+	// Main only advises removal for a file the pack would write, so the app ships a utility of the same name
+	fs.mkdirSync(path.join(dir, 'utilities'), { recursive: true });
+	fs.writeFileSync(path.join(dir, 'utilities', `${id}.yaml`), 'x');
 	fs.writeFileSync(path.join(uu, `${id}.yaml`), 'x');
 
 	const d = cli(home, ['doctor', dir], { BOLT_USER_UTILS_DIR: uu });

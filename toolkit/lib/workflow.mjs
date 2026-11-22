@@ -18,6 +18,7 @@ const EXAMPLES = path.resolve(HERE, '../../kit/examples');
 const STATE = path.join(os.homedir(), '.bolt-apps');
 const DOCS = 'https://sparcle.app/docs/extend/agent-guide.md';
 const q = (p) => (/^[A-Za-z0-9_./:@%+=,~-]+$/.test(p) ? p : `'${String(p).replace(/'/g, `'\\''`)}'`);   // a path with spaces is printed in quotes so it can be pasted
+// Exit codes as in CHECKER.md: 1 when the app fails or is refused, 2 for a usage error (wrong arguments, no app folder), as the other commands do
 const die = (m, code = 1) => { console.error(`bolt-apps: ${m}`); process.exit(code); };
 const bolt = (args, opts = {}) => spawnSync(process.execPath, [CLI, ...args], { encoding: 'utf8', ...opts });
 
@@ -78,18 +79,27 @@ export function userUtilsDir(env = process.env, platform = process.platform, hom
 	const base = platform === 'darwin' ? path.join(home, 'Library', 'Application Support') : platform === 'win32' ? (env.APPDATA || path.join(home, 'AppData', 'Roaming')) : (env.XDG_CONFIG_HOME || path.join(home, '.config'));
 	return path.join(base, sub, 'user-utils');
 }
-// Names only, never contents and never a write. Lists the files in Bolt's user apps folder that would stop a pack of this app installing (file_exists).
-// Old flat names are the app's own script names without the `<id>__` prefix (a hand copy from before apps were namespaced): never from a pack.
-// An `<id>.yaml` or `scripts/<id>__*` file is what a pack of this app leaves, so names alone cannot say whether it is a problem: kind says which.
+// Names only, never contents and never a write. A file the pack would write may be from an installed pack or a hand copy.
+// Old flat names are the app's own script names without the `<id>__` prefix (a hand copy from before apps were namespaced, or another app that uses the same
+// common name, such as bolt_app_kit.py). The pack writes only <id>__<name>, so such a file cannot stop it installing: it is listed with blocks: false.
 export function userUtilsClashes(dir, id, appDir) {
 	const out = [];
 	try { if (!fs.statSync(dir).isDirectory()) return out; } catch { return out; }
 	const ls = (d) => { try { return fs.readdirSync(d); } catch { return []; } };
-	const top = ls(dir), scripts = ls(path.join(dir, 'scripts'));
-	for (const f of top) if (f === `${id}.yaml` || f === `${id}.yml`) out.push({ file: path.join(dir, f), kind: 'app file' });
-	for (const f of scripts) if (f.startsWith(`${id}__`)) out.push({ file: path.join(dir, 'scripts', f), kind: 'script' });
-	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => f.startsWith(`${id}__`)).map((f) => f.slice(id.length + 2));
-	for (const f of scripts) if (own.includes(f)) out.push({ file: path.join(dir, 'scripts', f), kind: 'old flat name' });
+	const scriptsDir = path.join(dir, 'scripts');
+	const top = ls(dir), scripts = ls(scriptsDir);
+	const utilities = new Set(appDir ? ls(path.join(appDir, 'utilities')).filter((f) => /\.ya?ml$/.test(f)) : []);
+	for (const f of top) if (utilities.has(f)) out.push({ file: path.join(dir, f), kind: 'app file', blocks: true });
+	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => !f.startsWith('.') && f !== '__pycache__');   // what a pack of this app writes into scripts/ (pack leaves these two out)
+	const installed = new Set(scripts), byCase = new Map(scripts.map((f) => [f.toLowerCase(), f]));
+	const blocks = new Set();
+	for (const f of own) {
+		const name = installed.has(f) ? f : byCase.get(f.toLowerCase());
+		if (name && (name === f || fs.existsSync(path.join(scriptsDir, f)))) blocks.add(name);
+	}
+	for (const f of scripts) if (blocks.has(f)) out.push({ file: path.join(scriptsDir, f), kind: 'script', blocks: true });
+	const flat = own.filter((f) => f.startsWith(`${id}__`)).map((f) => f.slice(id.length + 2));
+	for (const f of scripts) if (!blocks.has(f) && flat.includes(f)) out.push({ file: path.join(scriptsDir, f), kind: 'old flat name', blocks: false });
 	return out;
 }
 
@@ -99,13 +109,13 @@ export function newList() {
 	for (const a of apps) console.log(`  ${a.id.padEnd(24)} ${a.need || a.layout}\n  ${''.padEnd(24)} edit: ${(a.edit || []).join(', ')}`);
 	console.log(`\nStart with the one whose "need" matches. Not sure: ${DOCS}`);
 }
-export function newFromTemplate(template, id, root) {
+export function newFromTemplate(template, id, root, author, authorNote = '') {
 	staleCloneNote();
 	const src = path.join(EXAMPLES, template);
-	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`);
-	if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) die('the id is lowercase letters, digits and hyphens, at most 64 characters, for example my-tool');
+	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`, 2);
+	if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(id)) die('the id is lowercase letters, digits and hyphens, at most 64 characters, for example my-tool', 2);
 	const dir = path.join(root, id);
-	if (fs.existsSync(dir) || (() => { try { fs.lstatSync(dir); return true; } catch { return false; } })()) die(`${q(dir)} already exists (or is a link). Choose another id, or delete it first`);
+	if (fs.existsSync(dir) || (() => { try { fs.lstatSync(dir); return true; } catch { return false; } })()) die(`${q(dir)} already exists (or is a link). Choose another id, or delete it first`, 2);
 	const fail = (m) => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* nothing more to do */ } die(m); };   // never leave a half-made folder behind
 	try { fs.cpSync(src, dir, { recursive: true, filter: (f) => !/__pycache__|\.boltpack$|[\\/]golden([\\/]|$)/.test(f) }); } catch (e) { fail(`could not copy the template: ${e.message}`); }
 	// The chip is what the person types after =. Bolt's chip rule is the id rule (^[a-z0-9][a-z0-9-]{0,63}$), so the id itself is always a valid chip, hyphens included: a new
@@ -129,15 +139,22 @@ export function newFromTemplate(template, id, root) {
 	if (oldChip && oldChip !== chip) parts.push(`=${esc(oldChip)}(?![A-Za-z0-9_-])`);
 	if (oldTitle && oldTitle !== title) parts.push(`(?<![A-Za-z0-9_-])${esc(oldTitle)}(?![A-Za-z0-9_-])`);
 	const oneRe = new RegExp(parts.map((x) => `(${x})`).join('|'), 'g');
+	// The copy's one app file is utilities/<id>.yaml (lint: utilities_name_mismatch), whatever the template named its own; its README and notes say so too.
+	const oldAppFiles = fs.existsSync(tud) ? fs.readdirSync(tud).filter((f) => /\.ya?ml$/.test(f)) : [];
+	const oldAppFile = oldAppFiles.length === 1 && oldAppFiles[0] !== `${id}.yaml` ? oldAppFiles[0] : undefined;
+	const renameAppFile = (s) => (oldAppFile ? s.split(`utilities/${oldAppFile}`).join(`utilities/${id}.yaml`) : s);
 	const reword = (s) => (template === id ? s : s.replace(oneRe, (m, g1, g2, g3, g4) => (g1 ? `${id}__` : g2 ? id : g3 ? `=${chip}` : title)));
-	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = reword(s); if (r !== s) fs.writeFileSync(f, r); } } };
+	const walkText = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const f = path.join(d, e.name); if (e.isDirectory()) walkText(f); else if (/\.(md|json|ya?ml|py)$/.test(e.name) && !/__bolt_app_kit\.py$|fixtures\.json$/.test(e.name)) { const s = fs.readFileSync(f, 'utf8'), r = renameAppFile(reword(s)); if (r !== s) fs.writeFileSync(f, r); } } };
 	// the template's README runs its commands from the repo root; the copy lives elsewhere, so they run from inside the folder
 	edit('README.md', (s) => s.split('node toolkit/bin/bolt-apps.mjs').join('bolt-apps').split(`kit/examples/${template}`).join('.'));
 	walkText(dir);
 	if (fs.existsSync(sd0)) { const longest = fs.readdirSync(sd0).map((f) => `manifests/scripts/${f}`).filter((n) => n.length > 100)[0]; if (longest) fail(`the id "${id}" is too long: ${longest.slice(10)} would not fit: Bolt allows 128 characters per name (every file starts with <app id>__, ids are up to 64), and this toolkit packs at most 82 for a script name. Choose a shorter id.`); }
 	// The listing text (summary, role, saves) and the app description described the TEMPLATE. Say so plainly instead of leaving another app's words on yours: lint warns (listing_todo) until they are rewritten.
-	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; j.summary = `TODO describe your app: what =${chip} shows, in one line.`; j.role = 'TODO describe who this app is for.'; j.saves = 'TODO describe what it saves them.'; return JSON.stringify(j, null, 2) + '\n'; });
-	edit('README.md', (s) => `> Template text below: replace it with what your app does. The files \`new\` leaves for you to rewrite are listed in ENGINE.md, "Make it yours".\n\n${s}`);
+	// The author was the template's too, and pack copies author.name into the pack (signed_by and the pack author): a copy carries the person's name (--author, or their login name, as `new <id>` does), never the examples' name and link.
+	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; j.summary = `TODO describe your app: what =${chip} shows, in one line.`; j.role = 'TODO describe who this app is for.'; j.saves = 'TODO describe what it saves them.'; j.author = { name: author }; return JSON.stringify(j, null, 2) + '\n'; });
+	edit('README.md', (s) => `> Template text below: replace it with what your app does. Keep the source credit. The files \`new\` leaves for you to rewrite are listed in ENGINE.md, "Make it yours".\n>\n`
+		+ `> Based on the \`${template}\` example from Bolt Apps, licensed under Apache-2.0. Keep the license and notices with any code you copy.\n`
+		+ `> If you build on someone else's app, keep their author credit and record the original app ID in \`derived_from\` in \`bolt-app.json\`.\n\n${s}`);
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; j.app.description = `TODO describe your app: one line on what =${chip} shows.`; } return JSON.stringify(j, null, 2) + '\n'; });
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
@@ -149,7 +166,10 @@ export function newFromTemplate(template, id, root) {
 		if (r.status !== 0) fail(`could not generate the app file: ${String(r.stderr || (r.error && r.error.message) || PYTHON_MISSING).slice(-300)}`);
 		for (const y of fs.readdirSync(ud)) fs.rmSync(path.join(ud, y));
 		fs.writeFileSync(path.join(ud, `${id}.yaml`), r.stdout);
-	} else if (fs.existsSync(ud)) for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
+	} else if (fs.existsSync(ud)) {
+		for (const y of fs.readdirSync(ud)) { const p = path.join(ud, y); fs.writeFileSync(p, fs.readFileSync(p, 'utf8').replace(/^id: .*$/m, `id: ${id}`).replace(/^chip: .*$/m, `chip: ${chip}`).replace(/^title: .*$/m, `title: "${title}"`)); }
+		if (oldAppFile && fs.existsSync(path.join(ud, oldAppFile))) fs.renameSync(path.join(ud, oldAppFile), path.join(ud, `${id}.yaml`));
+	}
 	// the vendored kit is named for its app: re-vendor it under the new name (the template's lock and file name carry the old id)
 	if (fs.existsSync(path.join(dir, 'check.json')) && fs.existsSync(path.join(dir, 'scripts', `${id}__bolt_app_kit.py`))) { try { vendorKit(dir, { flat: true }); } catch (e) { fail(`could not vendor the kit: ${e.message}`); } }
 	let note = '', minimal = false;
@@ -160,7 +180,11 @@ export function newFromTemplate(template, id, root) {
 		const r2 = r.status === 0 ? bolt(['check', dir]) : r;   // a second plain run proves the recorded goldens agree with a fresh run
 		note = r2.status === 0 ? `check passes on the sample data${minimal ? ' (check.json was rewritten with one case per view and none of the template words: it checks that every row is well formed)' : ''}${pruned ? ` (${pruned} expected-text line${pruned === 1 ? '' : 's'} about the template's own sample words were dropped from check.json; add your own once your data is in)` : ''}` : `CHECK DOES NOT PASS YET (it did not pass straight after the copy, which is a toolkit fault, not yours):\n${(r2.stdout + r2.stderr).slice(-900)}`;
 	}
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map((f) => f.split(`${template}__`).join(`${id}__`)).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${String(fe).split(`${template}__`).join(`${id}__`)}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note: replace it\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
+	// index.json names the template's own files; say the names they have in the copy (scripts renamed to <id>__, the app file to utilities/<id>.yaml)
+	const copyPath = (f) => renameAppFile(f.split(`${template}__`).join(`${id}__`));
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}`);
+	if (authorNote) console.log(authorNote);
+	console.log(`\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note. Replace the template text and keep the source credit\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
 }
 
 // For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).
@@ -240,7 +264,7 @@ function paneOf(root, view) {
 }
 export function runApp(args) {
 	const flags = args.filter((a) => a.startsWith('--')), rest = args.filter((a) => !a.startsWith('--'));
-	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app about as Bolt would (an approximation: the launcher is the final judge) and shows the rows. Note: it executes the app\'s own command on your computer with your real HOME and PATH; --live reads your real keychain and ~/.config/<id>/.env. Run only code you have read.');
+	const dir = rest[0]; if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps run <app-folder> [view [word]] [--sample | --live] [--json]\n  Runs the app about as Bolt would (an approximation: the launcher is the final judge) and shows the rows. Note: it executes the app\'s own command on your computer with your real HOME and PATH; --live reads your real keychain and ~/.config/<id>/.env. Run only code you have read.', 2);
 	refuseSecrets(dir);
 	const words = rest.slice(1);
 	const b = bridgeCommand(dir, words); if (b.error) die(b.error);
@@ -317,7 +341,7 @@ export const clockVersion = (now = Date.now()) => `1.0.${Math.max(1, Math.floor(
 const core = (v) => String(v).trim().replace(/^[vV]/, '').split('+')[0].split('-')[0].split('.').map((x) => Number(x) || 0);
 export const newer = (a, b) => { const x = core(a), y = core(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; } return false; };
 export function ship(args) {
-	const dir = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--version'); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps ship <app-folder> [--version X]   (lint, check, pack, verify, with the next version picked for you)');
+	const dir = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--version'); if (!dir || !fs.existsSync(path.join(dir, 'bolt-app.json'))) die('usage: ./bolt-apps ship <app-folder> [--version X]   (lint, check, pack, verify, with the next version picked for you)', 2);
 	staleCloneNote();
 	refuseSecrets(dir);
 	let app; try { app = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); } catch (e) { die(`${q(path.join(dir, 'bolt-app.json'))} is not valid JSON (${e.message}). Fix it, then run ship again`); }
@@ -376,6 +400,8 @@ user apps folder would stop its pack installing (Bolt message file_exists). That
 Environment: BOLT_USER_UTILS_DIR=<folder> checks that folder instead of the default (macOS ~/Library/Application Support/app.sparcle.bolt.enterprise/user-utils,
 Windows %APPDATA%\\app.sparcle.bolt.enterprise\\user-utils, Linux ~/.config/app.sparcle.bolt.enterprise/user-utils).`); return; }
 	const dir = args.find((a) => !a.startsWith('--'));
+	// a folder that is not an app is a usage error: checking only the computer and saying "All good" would hide the typo
+	if (dir && !fs.existsSync(path.join(dir, 'bolt-app.json'))) die(`no app found in ${q(dir)} (an app folder has a bolt-app.json)\nusage: ./bolt-apps doctor [app-folder] [--bolt-says]`, 2);
 	const line = (ok, what, fix) => console.log(`${ok ? 'ok  ' : 'FIX '} ${what}${ok ? '' : `\n       ${fix}`}`);
 	let bad = 0; const chk = (ok, what, fix) => { if (!ok) bad++; line(ok, what, fix); };
 	const nodeMajor = Number(process.versions.node.split('.')[0]); chk(nodeMajor >= 18, `node ${process.versions.node}`, 'Install Node 18 or newer (https://nodejs.org).');
@@ -398,8 +424,10 @@ Windows %APPDATA%\\app.sparcle.bolt.enterprise\\user-utils, Linux ~/.config/app.
 		const uu = userUtilsDir(), shippedHere = typeof loadShip()[id] === 'string';
 		for (const c of userUtilsClashes(uu, id, dir)) {
 			const how = process.platform === 'win32' ? `del "${String(c.file).replace(/"/g, '""')}"` : `rm ${q(c.file)}`;
-			if (c.kind !== 'old flat name' && shippedHere) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder: expected if you installed a pack of ${id} (a newer version replaces it).`); continue; }
-			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `${c.kind === 'old flat name' ? 'A hand copy from before scripts were named <app id>__<name>' : `You have not shipped ${id} from here, so this is likely a hand copy`}: Bolt refuses the pack with file_exists. Remove it: ${how}   (or Settings, Desktop, User Apps, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
+			// A name the pack does not write cannot stop it installing, and another app may use the file: never advise removing it
+			if (!c.blocks) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder. It does not stop this pack installing (the pack names its scripts ${id}__<name>), and another app may use it: leave it unless you know it is left from a hand copy of ${id}.`); continue; }
+			if (shippedHere) { console.log(`     ${c.kind} ${q(c.file)} is in your Bolt user apps folder: expected if you installed a pack of ${id} (a newer version replaces it).`); continue; }
+			chk(false, `${c.kind} in your Bolt user apps folder: ${q(c.file)}`, `You have not shipped ${id} from here, so this is likely a hand copy: Bolt refuses the pack with file_exists. Remove it: ${how}   (or Settings, Desktop, User Apps, Open folder, then delete it). If a pack of ${id} put it there, leave it.`);
 		}
 	} else console.log('\n(give an app folder to also check its key file, lint and verify: ./bolt-apps doctor <app-folder>)');
 	console.log(bad ? `\n${bad} thing(s) to fix.` : '\nAll good.');
