@@ -126,7 +126,7 @@ Not absorbed: the Windows OEM code page for some console tools (decode with `enc
 
 `bolt-apps check <app> [--json] [--os macos|linux|windows] [--case text] [--shared] [--update-golden]` runs when the app folder has a `check.json`. (Snippet, search and transform apps still go through Bolt's own engines, which are not published; `check` on them says so.)
 
-`--case text` runs only the cases whose name contains the text. `--shared` runs every case on a fresh export of this repository's kit, as Bolt's shared kit would be loaded (`kit export-shared`).
+`--case text` runs only the cases whose name contains the text. `--shared` offers a fresh export of this repository's kit to the selected cases, as Bolt offers its shared kit (`kit export-shared`). The loader chooses which copy to use. If the script does not load the exported copy, the case fails with `shared_kit_not_used`.
 
 **Run it only on code you have read.** `check` executes the app's script and interpreter on your machine. The minimal environment, temp HOME and stub PATH make the result repeatable; they are not a sandbox. A script can still read your real home directory, call tools by absolute path and use the network. Paths named in `check.json` must stay inside the app folder (`kit vendor` refuses anything else).
 
