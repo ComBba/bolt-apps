@@ -11,6 +11,8 @@ An author edits config.json and fixtures.json only. Formatting, row structure, t
 cache come from bolt_app_kit. Fixture mode (no key, no network) reads fixtures.json."""
 import concurrent.futures as cf
 import datetime
+import errno
+import hashlib
 import json
 import math
 import os
@@ -18,7 +20,9 @@ import re
 import socket
 import stat
 import sys
+import threading
 import time
+import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -50,12 +54,19 @@ MAX_VIEWS = 8            # the launcher refuses an app file with more views than
 MAX_FIELDS = 5
 MAX_ROWS = 50
 REQ_TIMEOUT = 10.0
-TOTAL_BUDGET = 14.0      # all requests together; the bridge limit is 20 s
+TOTAL_BUDGET = 14.0      # all requests together; Bolt stops the script at the app file's bridge.timeout_seconds (app.timeout, 25 unless set), so that is 20 or more for an app that calls an API
+MAX_ANSWER = 5 * 1024 * 1024   # bytes read from one answer; a longer one is a failure of its own ("too large"), never cut and misread
+CACHE_MAX = getattr(getattr(kit, "cache", None), "_MAX_FILE", 1024 * 1024)   # the kit cache refuses a file larger than this
+CACHE_FORM = 3           # unwrapped, mapped rows, with whole records and lookup matches kept when the config uses them
 DEMOS = ("demo-offline", "demo-stale", "demo-auth", "demo-nokey", "demo-notfound")
 
 
 class ConfigError(Exception):
     pass
+
+
+class TooLarge(Exception):
+    """An answer longer than MAX_ANSWER."""
 
 
 # ---------------------------------------------------------------- small helpers
@@ -114,8 +125,9 @@ def _when(v, day_only=False):
 def shown(v, filt):
     if v is None or v == "":
         return kit.UNKNOWN
-    if filt == "yes":
-        return "Yes" if v is True else ("No" if v is False else str(v))
+    if filt == "yes":   # a JSON true or false, or the text a form toggle or an API sends: "true", "false", "yes", "no"
+        t = str(v).strip().lower() if isinstance(v, str) else v
+        return "Yes" if v is True or t in ("true", "yes") else ("No" if v is False or t in ("false", "no") else str(v))
     if filt == "human":
         return human(v)
     if filt in MAPS:
@@ -154,8 +166,9 @@ def shown(v, filt):
     return str(v)
 
 
-def render(tpl, item, glob, strict=False):
-    """Fill {name} and {name|filter} from the item, then the shared values. strict=True returns None when a name is missing."""
+def render(tpl, item, glob, strict=False, blank=None):
+    """Fill {name} and {name|filter} from the item, then the shared values. strict=True returns None when a name is missing.
+    blank, when given, stands in for a missing value instead of "unknown" (a form record saves an empty input as empty text)."""
     if not isinstance(tpl, str):
         return "" if not strict else None
     missing = []
@@ -169,6 +182,8 @@ def render(tpl, item, glob, strict=False):
     out = TOKEN.sub(sub, tpl)
     if strict:
         return None if missing else one_noun(tpl, out)
+    if blank is not None:
+        return one_noun(tpl, TOKEN.sub(lambda m: blank if lookup(m.group(1), item, glob) in (None, "") else shown(lookup(m.group(1), item, glob), m.group(2)), tpl))
     return one_noun(tpl, TOKEN.sub(lambda m: shown(lookup(m.group(1), item, glob), m.group(2)), tpl))
 
 
@@ -232,14 +247,25 @@ def badge_for(rules, item, glob):
 
 
 def make_tile(spec, item, glob):
-    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero."""
+    """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero.
+    Its badge then skips rules naming the value's field on the left or reading it on the right. Ordering rules naming it on the
+    right are skipped even when it is absent; == and != keep that word as plain text when absent. Rules on another field, such as
+    status==open, still apply. The last rule has no `if`, so it would say CLEAR or BEHIND about a number that did not load, and a
+    rule such as remaining>=10 would compare a text value like N/A as text. A plain word badge is left out."""
     if not spec:
         return None, ""
-    badge = badge_for(spec.get("badge"), item, glob) if isinstance(spec.get("badge"), list) else str(spec.get("badge", ""))
     val = spec.get("value")
     v = number(val) if not isinstance(val, str) or number(val) is not None else number(lookup(val, item, glob))
+    rules = spec.get("badge") if isinstance(spec.get("badge"), list) else None
     if v is None:
-        return None, badge
+        own = val if isinstance(val, str) else None
+
+        def other_field(r):   # skip own-field reads and ordering on its name; absent-field == and != keep plain text
+            m = RULE.match(str(r.get("if") or ""))
+            return bool(m) and m.group(1) != own and not (m.group(3) == own and
+                (m.group(2) in (">=", "<=", ">", "<") or lookup(own, item, glob) is not None))
+        return None, (badge_for([r for r in rules if isinstance(r, dict) and other_field(r)], item, glob) if rules else "")
+    badge = badge_for(rules, item, glob) if rules is not None else str(spec.get("badge", ""))
     mx = spec.get("max")
     mxv = None if mx is None else (number(mx) if number(mx) is not None else number(lookup(mx, item, glob)))
     return kit.safe_tile(render(spec.get("label", ""), item, glob), v, unit=spec.get("unit", ""), max=mxv,
@@ -431,10 +457,57 @@ def compute_stats(cfg, data):
 
 def find_key(app, api):
     """(key, problem). Lookup order and rules are the kit's (secrets.py): environment, then the system keychain, then
-    ~/.config/<app id>/.env (owner-only). The key is never printed, logged, cached or put in a row."""
+    ~/.config/<app id>/.env (owner-only). The key is never printed, logged, cached or put in a row. problem is the kit's
+    reason a key it found was refused, or ""."""
     env_file = os.path.expanduser(api["env_file"]) if api.get("env_file") else None
     s = kit.get_secret(app["id"], api.get("key_env", "API_KEY"), env_file=env_file)
-    return (s.value or ""), ("perm" if s.problem else "")
+    return (s.value or ""), (s.problem or "")
+
+
+def key_file(app, api):
+    return os.path.expanduser(api["env_file"]) if api.get("env_file") else kit.env_file_path(app["id"])
+
+
+# (words in the kit's reason, row title, fix) for a key the kit found and refused (secrets.py words them)
+KEY_FIXES = (("is a link", "The key file is a link", "%(path)s is a link, which is not followed: put the file itself there, then press Enter"),
+             ("is not owned by you", "The key file belongs to another user", "%(path)s is not owned by you: create it again as yourself and chmod 600 it, then press Enter"),
+             ("can be read by other users", "Tighten the permissions on the key file", "Run chmod 600 on %(path)s so other users cannot read the key, then press Enter"),
+             ("shorter than", "The %(name)s key is too short", "A key this short cannot be hidden from API answers: set the whole key where you keep it (environment, keychain or %(path)s), then press Enter"))
+
+
+def key_advice(app, api, problem):
+    """(title, subtitle) naming what is wrong with the key and the fix for that cause, or None when there is simply no key (the setup row).
+    problem is the kit's reason a key was refused; with none, the key file, when there is one, is read for why it gave no key."""
+    name, path = api.get("key_env", "API_KEY"), key_file(app, api)
+    if os.name == "nt":
+        path = os.path.normpath(path)
+    home = os.path.expanduser("~")
+    words = {"name": name, "path": "~" + path[len(home):] if path.startswith(home + os.sep) else path}
+    if problem:
+        for part, title, fix in KEY_FIXES:
+            if part in problem:
+                return title % words, fix % words
+        return "The %s key was not used" % name, "%s; fix that, then press Enter" % kit.redact(problem)
+    try:
+        if not stat.S_ISREG(os.lstat(path).st_mode):
+            return None
+        with open(path, "r", encoding="utf-8") as f:
+            lines = [x.strip() for x in f]
+    except UnicodeDecodeError:
+        return "The key file is not plain text", "%(path)s is not UTF-8 text: save it as plain text with the line %(name)s=<key>, then press Enter" % words
+    except FileNotFoundError:
+        return None
+    except OSError:
+        if os.name == "nt":
+            return "The key file cannot be read", "%(path)s is there but you cannot read it: make sure your Windows account can read it (file Properties, Security), then press Enter" % words
+        return "The key file cannot be read", "%(path)s is there but you cannot read it: run chmod 600 on it, then press Enter" % words
+    lines = [x[7:].lstrip() if x.startswith("export ") else x for x in lines]
+    if any(x.startswith(name + "=") for x in lines):   # the kit read the line and found no value in it
+        return "The %(name)s line is empty" % words, "%(path)s has %(name)s= with no key after it: paste the key after the = sign, then press Enter" % words
+    if any(re.match(re.escape(name) + r"\s*[=:]", x) for x in lines):
+        return ("The %(name)s line is not in the form %(name)s=<key>" % words,
+                "In %(path)s write %(name)s=<key> with no space before the = sign, then press Enter" % words)
+    return "No %(name)s line in the key file" % words, "%(path)s has no line %(name)s=<key> (the name is case sensitive): add it, then press Enter" % words
 
 
 def https_or_loopback(url):
@@ -466,7 +539,9 @@ def http_get(api, key, path, timeout):
             headers[api.get("auth_header", "X-API-Key")] = api.get("auth_prefix", "") + key   # an empty auth_prefix is allowed
     req = urllib.request.Request(url, headers=headers, method="GET")
     with urllib.request.build_opener(_SameHost).open(req, timeout=timeout) as r:
-        raw = r.read(5 * 1024 * 1024)
+        raw = r.read(MAX_ANSWER + 1)
+    if len(raw) > MAX_ANSWER:
+        raise TooLarge()
     return json.loads(raw.decode("utf-8")) if raw else None
 
 
@@ -503,7 +578,9 @@ def hydrate(api, key, ep, raw, deadline):
 
 
 def cause_of(e):
-    """auth | rate | timeout | conn | other"""
+    """auth | rate | notfound | timeout | conn | toolarge | other"""
+    if isinstance(e, TooLarge):
+        return "toolarge"
     if isinstance(e, urllib.error.HTTPError):
         return "auth" if e.code in (401, 403) else ("rate" if e.code == 429 else ("notfound" if e.code in (404, 410) else "other"))
     r = getattr(e, "reason", e)
@@ -571,8 +648,61 @@ def apply_map(ep, items):
     return out
 
 
-def shape_ok(v):
-    return isinstance(v, (list, dict))
+def settle(ep, raw):
+    """(value, paged) from an answer: the rows (mapped) or the object the endpoint reads, or None, and whether the answer says it holds more."""
+    v = unwrap(ep, raw)
+    if ep.get("kind", "list") == "list" and v is not None:
+        return apply_map(ep, v), paged(raw, len(v))
+    return v, False
+
+
+WORD = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def cache_reads(cfg):
+    """Names used by templates, stats, sorts and matches, plus the implicit id, title and key. Keep exact template and badge paths
+    too: a path can consume an entire endpoint or record, including fields it does not name individually."""
+    fields, paths, stack = {"id", "title", "key"}, set(), [cfg]
+    while stack:
+        o = stack.pop()
+        if isinstance(o, dict):
+            stack.extend(list(o.keys()) + list(o.values()))
+        elif isinstance(o, list):
+            stack.extend(o)
+        elif isinstance(o, str):
+            fields.add(o)
+            fields.update(o.split("."))
+            fields.update(WORD.findall(o))
+            paths.update(m.group(1) for m in TOKEN.finditer(o))
+            rule = RULE.match(o)
+            if rule:
+                paths.update((rule.group(1), rule.group(3)))
+    return fields, paths
+
+
+def whole_record_indexes(name, paths, lookup_step):
+    """A lookup chain exposes only its first record; elsewhere a path can read a whole list or an indexed record."""
+    if lookup_step:
+        return {"0"} if name in paths else set()
+    if name in paths:
+        return None   # the full list is read
+    prefix = name + "."
+    tails = (path[len(prefix):] for path in paths if path.startswith(prefix))
+    return {i.lstrip("0") or "0" for i in tails if i.isdigit()}
+
+
+def cache_doc(tag, value, pg, fields, whole_records, lookup_step):
+    """Keep mapped rows, whether the answer was paged, and whether trimming hid a successful first record in a lookup chain."""
+    pruned_match = False
+    if isinstance(value, list) and whole_records is not None:
+        rows = [row if str(i) in whole_records else {k: v for k, v in row.items() if k in fields} for i, row in enumerate(value)]
+        pruned_match = bool(lookup_step and value and value[0] and not rows[0])
+        value = rows
+    return [CACHE_FORM, tag, value, bool(pg), pruned_match]
+
+
+def too_big_to_keep(ck, doc):
+    return len(json.dumps({"v": 1, "key": ck, "ts": time.time(), "value": doc}).encode("utf-8")) > CACHE_MAX
 
 
 class Loaded(object):
@@ -581,6 +711,7 @@ class Loaded(object):
     def __init__(self):
         self.data, self.notices, self.stop = {}, [], None
         self.cached_age, self.from_cache = 0, False
+        self.pruned_lookup_matches = set()
 
 
 NOW_OVERRIDE = [None]   # sample mode sets this from fixtures.json "_now" so {today} does not drift
@@ -600,18 +731,19 @@ def fill_path(path, pvars):
     return TOKEN.sub(quoted, path) if pvars else path
 
 
-def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
+def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None, deadline=None):
+    """deadline: the time budget of the whole run; a lookup chain passes one to every step, so the steps together stay inside TOTAL_BUDGET."""
     L = Loaded()
     eps, api, app = cfg["endpoints"], cfg.get("api") or {}, cfg["app"]
     name = app.get("service", app["title"])
     ttl = float((cfg.get("cache") or {}).get("ttl", 45))
     stale_max = float((cfg.get("cache") or {}).get("stale_max", 86400))
 
-    def finish(got, failed, stale_ages):
-        for n, raw in got.items():
-            v = unwrap(eps[n], raw)
-            L.data[n] = apply_map(eps[n], v) if eps[n].get("kind", "list") == "list" and v is not None else v
-            if eps[n].get("kind", "list") == "list" and v is not None and paged(raw, len(v)):
+    def finish(got, failed, stale_ages, no_copy=()):
+        """got holds (value, paged) by endpoint (see settle); no_copy names the failed calls whose last answer was too large to keep."""
+        for n, (v, pg) in got.items():
+            L.data[n] = v
+            if pg:
                 L.notices.append(("page", "Counts and totals cover the first page only", "%s has more rows than one answer holds (%s)" % (name, n), 0))
         if not failed:
             return L
@@ -634,19 +766,24 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
             return L
         causes = [c for c in causes if c != "notfound"] or causes
         main = "auth" if "auth" in causes else max(set(causes), key=causes.count)
-        text = {"timeout": "%s did not answer in %d s" % (name, int(REQ_TIMEOUT)), "auth": "%s rejected the API key" % name,
+        late = ("%s did not answer in time (all calls together get %d s)" % (name, int(TOTAL_BUDGET)) if deadline is not None and deadline.expired()
+                else "%s did not answer in %d s" % (name, int(REQ_TIMEOUT)))
+        text = {"timeout": late, "auth": "%s rejected the API key" % name,
                 "rate": "%s is limiting requests, try again in a minute" % name, "conn": "Could not connect to %s" % name,
+                "toolarge": "%s sent more than %d MB, more than this app reads" % (name, MAX_ANSWER // (1024 * 1024)),
                 "other": "%s returned an error" % name}[main]
+        big = sorted(n for n in failed if n in no_copy)
+        why = (". No old copy of %s: its last answer was over %d MB, more than the cache keeps" % (", ".join(big), CACHE_MAX // (1024 * 1024))) if big else ""
         if main == "auth":
             L.stop = ("auth", text, "Check the %s key (see the setup line in the README), then press Enter to retry" % api.get("key_env", "API"), 0)
         elif not [n for n in names if n not in failed or n in stale_ages]:
-            L.stop = ("offline", text, "Enter to retry, or try again later", 0)
+            L.stop = ("offline", text, "Enter to retry" + why if why else "Enter to retry, or try again later", 0)
         elif stale_ages:
             oldest = max(stale_ages.values())
             L.notices.append(("stale", "%s is not answering. Showing data from %s ago." % (name, ago(oldest)), "%s. Enter to retry" % text, oldest))
         missing = [n for n in failed if n not in stale_ages]
         if missing and not L.stop:
-            L.notices.append(("partial", "Some data did not load: %s" % ", ".join(sorted(missing)), "%s. Enter to retry" % text, 0))
+            L.notices.append(("partial", "Some data did not load: %s" % ", ".join(sorted(missing)), "%s. Enter to retry%s" % (text, why), 0))
         return L
 
     if fixture_mode:
@@ -662,31 +799,37 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
         if demo in ("demo-offline", "demo-auth", "demo-stale"):
             cause = "auth" if demo == "demo-auth" else "conn"
             return finish({}, dict((n, cause) for n in names), {}) if demo != "demo-stale" else _stale_demo(L, cfg, names, fixtures, finish)
-        got = {}
-        for n in names:
-            if n in fixtures:
-                got[n] = fixtures[n]
+        got = dict((n, settle(eps[n], fixtures[n])) for n in names if n in fixtures)
         return finish(got, dict((n, "other") for n in names if n not in fixtures), {})
     if not api.get("base_url"):
         raise ConfigError("this app has no api.base_url, so it can only show sample data")
     if not https_or_loopback(api["base_url"]):
         raise ConfigError("api.base_url must be https (http only to this machine) so the key is never sent in the clear")
     key, problem = find_key(app, api) if api.get("key_env") else ("", "")
-    if problem == "perm":
-        L.stop = ("nokey", "Tighten the permissions on the key file", "Run chmod 600 on ~/.config/%s/.env so other users cannot read the key, then press Enter" % app["id"], 0)
+    if problem or (not key and api.get("key_env")):   # the row names the cause: a refused key, a key file that gives none, or no key at all
+        L.stop = ("nokey",) + (key_advice(app, api, problem) or ("Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")))) + (0,)
         return L
-    if not key and api.get("key_env"):
-        L.stop = ("nokey", "Add your %s API key" % name, kit.setup_hint(app["id"], api.get("key_env", "API_KEY")), 0)
-        return L
-    fresh = kit.Cache(app["id"], ttl, shape_ok)
-    old = kit.Cache(app["id"] + "-stale", stale_max, shape_ok)
-    deadline = kit.Deadline(TOTAL_BUDGET)
+    tag = _hash(json.dumps(cfg, sort_keys=True))   # a copy made under another config.json is a miss: its rows were mapped and cut for that one
+    fields, paths = cache_reads(cfg)
+    lookup_step = pvars is not None
+
+    def doc_ok(d):   # see cache_doc
+        return isinstance(d, list) and len(d) == 5 and d[0] == CACHE_FORM and d[1] == tag and (isinstance(d[2], (list, dict)) or d[3] == "too large")
+
+    def from_cache(n, doc):
+        if doc[4]:
+            L.pruned_lookup_matches.add(n)
+        return doc[2], doc[3] is True
+
+    fresh = kit.Cache(app["id"], ttl, doc_ok)
+    old = kit.Cache(app["id"] + "-stale", stale_max, doc_ok)
+    deadline = deadline or kit.Deadline(TOTAL_BUDGET)
     got, todo = {}, []
     for n in names:
         ck = "%s:%s" % (n, _hash(api["base_url"] + fill_path(eps[n]["path"], pvars)))
         hit = None if refresh else fresh.get(ck)
-        if hit is not None:
-            got[n] = hit
+        if hit is not None and hit[2] is not None:
+            got[n] = from_cache(n, hit)
             L.from_cache = True
             L.cached_age = max(L.cached_age, int(fresh.age(ck) or 0))
         else:
@@ -694,6 +837,8 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
 
     def fetch(n):
         def run():
+            if deadline.expired():   # an earlier step of a chain used the whole budget
+                return kit.Probe(n, False, reason="timeout")
             try:
                 v = http_get(api, key, fill_path(eps[n]["path"], pvars), deadline.cap(REQ_TIMEOUT))
                 if eps[n].get("hydrate"):
@@ -704,29 +849,33 @@ def load(cfg, names, refresh, demo, fixture_mode, fixtures, pvars=None):
                 return kit.Probe(n, False, reason=cause_of(e))
         return run
     res = kit.run_parallel(dict((n, fetch(n)) for n in todo), deadline) if todo else {}
-    failed, stale_ages = {}, {}
+    failed, stale_ages, no_copy = {}, {}, set()
     for n in todo:
         p, ck = res[n], "%s:%s" % (n, _hash(api["base_url"] + fill_path(eps[n]["path"], pvars)))
         if p.ok:
-            got[n] = p.value
-            fresh.put(ck, p.value)      # put() refuses failures; they are never cached
-            old.put(ck, p.value)
+            got[n] = settle(eps[n], p.value)
+            whole_records = whole_record_indexes(n, paths, lookup_step)
+            doc = cache_doc(tag, got[n][0], got[n][1], fields, whole_records, lookup_step)
+            fresh.put(ck, doc)      # put() refuses failures; they are never cached
+            if not old.put(ck, doc) and old.enabled and too_big_to_keep(ck, doc) and (old.get(ck) or [None] * 5)[2] is None:
+                old.put(ck, [CACHE_FORM, tag, None, "too large", False])   # no old copy to keep: a later failure says why
         else:
-            failed[n] = "timeout" if p.timed_out else (p.reason if p.reason in ("auth", "rate", "timeout", "conn", "notfound") else "other")
+            failed[n] = "timeout" if p.timed_out else (p.reason if p.reason in ("auth", "rate", "timeout", "conn", "notfound", "toolarge") else "other")
             prev = old.get(ck) if failed[n] != "notfound" else None   # a 404 means it is gone: never show an old copy of it
-            if prev is not None:
-                got[n] = prev
+            if prev is not None and prev[2] is not None:
+                got[n] = from_cache(n, prev)
                 stale_ages[n] = old.age(ck) or 0
-    return finish(got, failed, stale_ages)
+            elif prev is not None:
+                no_copy.add(n)
+    return finish(got, failed, stale_ages, no_copy)
 
 
 def _stale_demo(L, cfg, names, fixtures, finish):
-    got = dict((n, fixtures[n]) for n in names if n in fixtures)
+    got = dict((n, settle(cfg["endpoints"][n], fixtures[n])) for n in names if n in fixtures)
     return finish(got, dict((n, "conn") for n in names), dict((n, 10800) for n in got))
 
 
 def _hash(s):
-    import hashlib
     return hashlib.sha256(s.encode("utf-8")).hexdigest()[:8]
 
 
@@ -748,7 +897,16 @@ def sort_items(view, items):
 
 
 def item_id(view, item):
-    return token(get_path(item, view.get("id_field", "id")))
+    """The nav arg for an item. A nav token (letters, digits, _ . -, at most 64) is used as it is unless it ends in . and 12 lowercase hex
+    digits. Those ids and non-token ids become an ASCII part and a hash of the whole id, keeping derived args separate from unchanged ids."""
+    raw = str(get_path(item, view.get("id_field", "id")))
+    if token(raw) == raw and not re.search(r"\.[0-9a-f]{12}\Z", raw):
+        return raw
+    fold = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
+    fold = re.sub(r"\.{2,}", ".", re.sub(r"[^A-Za-z0-9_.-]+", "-", fold)).strip("-.")[:40].rstrip("-.")
+    if fold == "refresh" or fold.startswith("refresh."):
+        fold = "id-" + fold
+    return "%s.%s" % (fold or "id", hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12])
 
 
 def extra_fields(spec, item, glob):
@@ -814,9 +972,11 @@ def notice_rows(L, view_id, arg, ttl):
         rows.append(kit.row(title, sub, icon="AlertCircle", nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body=sub if NOTE_ACTIVE[0] else "", copy=False,
                             tile=tile, badge={"stale": "STALE", "partial": "PARTIAL", "page": "FIRST PAGE"}[kind]))
     if not rows and L.from_cache and L.cached_age >= 2:
-        rows.append(kit.row("Loaded from cache, %d s old" % L.cached_age, "Enter to refresh (data is kept %d s)" % ttl, icon="RefreshCw",
-                            nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body="Enter to refresh (data is kept %d s)" % ttl if NOTE_ACTIVE[0] else "", copy=False,
-                            tile=kit.tile("Data age", L.cached_age, "s", ttl, note="from cache, Enter to refresh"), badge="CACHED"))
+        forced = arg == "refresh" or arg.startswith("refresh.")   # not for an id too long for "refresh.<id>": Enter reopens it from the cache
+        sub = "Enter to refresh (data is kept %d s)" % ttl if forced else "Data is kept %d s; this id is too long for a forced refresh" % ttl
+        rows.append(kit.row("Loaded from cache, %d s old" % L.cached_age, sub, icon="RefreshCw",
+                            nav={"view": view_id, "arg": arg}, pane=NOTE_ACTIVE[0] or view_id, body=sub if NOTE_ACTIVE[0] else "", copy=False,
+                            tile=kit.tile("Data age", L.cached_age, "s", ttl, note="from cache, Enter to refresh" if forced else "from cache"), badge="CACHED"))
     return rows
 
 
@@ -863,7 +1023,17 @@ def children_of(cfg, view, item, data, glob):
     return rows
 
 
+def unread_row(view, at, arg="refresh"):
+    """The row for a list whose call failed with no old copy to show: it says the list did not load, never "0 rows" or "nothing linked".
+    Enter reloads the view `at` (the list itself, or the detail the list belongs to)."""
+    sub = "The list did not load, so it is not shown as empty. Enter to retry"
+    return kit.row("Could not read %s" % view.get("title", view["id"]).lower(), sub, icon="AlertCircle", nav={"view": at, "arg": arg},
+                   copy=False, badge="ERROR", **dict(noted(at, sub), **dict(("f%d" % (i + 1), "") for i in range(MAX_FIELDS))))
+
+
 def list_rows(cfg, view, data, glob, flt):
+    if data.get(view["endpoint"]) is None:   # not read: a failed call is never shown as an empty list
+        return [back_row("Back to the overview")], [unread_row(view, view["id"])]
     vs = views_by_id(cfg)
     items = sort_items(view, data.get(view["endpoint"]) or [])
     nav_to_detail = bool(view.get("children"))
@@ -899,9 +1069,12 @@ def detail_rows(cfg, view, data, glob, wanted, refresh_arg):
     item = found[0]
     kids = children_of(cfg, view, item, data, glob)
     rows = [back_row("Back to %s" % view.get("title", view["id"]).lower()), item_row(cfg, view, item, glob, None)]
-    for cv, x in kids[:MAX_ROWS - 4]:
+    unread = [vs[c["view"]] for c in view.get("children") or [] if data.get(vs[c["view"]]["endpoint"]) is None]
+    for cv, x in kids[:max(0, MAX_ROWS - 4 - len(unread))]:
         rows.append(item_row(cfg, cv, x, glob, {"view": cv["id"], "arg": item_id(cv, x)} if cv.get("children") and item_id(cv, x) else None))
-    if not kids and view.get("children"):
+    for cv in unread:   # each linked list that did not load says so, beside the linked rows that did
+        rows.append(unread_row(cv, view["id"], refresh_arg))
+    if not kids and not unread and view.get("children"):
         rows.append(kit.row(view.get("no_children", "Nothing linked"), "No related rows", icon="list", copy=False, **noted(view["id"], "No related rows")))
     return rows
 
@@ -914,12 +1087,46 @@ TILE_BIND = [("title", "{{row.kpi_label}}"), ("value", "{{row.kpi_value}}"), ("u
              ("subtitle", "{{row.kpi_note}}"), ("badge", "{{row.kpi_badge}}"), ("footer", "{{row.kpi_foot}}")]
 
 
+LINE_BREAKS = ("\n", "\r", "\x85", "\u2028", "\u2029")   # the plain YAML the launcher reads keeps a value on one line and escapes only \" and \\
+
+
 def yq(v):
     if isinstance(v, bool):
         return "true" if v else "false"
     if isinstance(v, (int, float)):
         return str(v)
+    if any(c in str(v) for c in LINE_BREAKS):   # emit_yaml names the config key first; this catches a value it did not list
+        raise ConfigError("a value for the app file holds a line break: %s" % json.dumps(str(v))[:60])
     return '"%s"' % str(v).replace("\\", "\\\\").replace('"', '\\"')
+
+
+def first_break(o, path):
+    """The config path of the first string (value or key) under o that holds a line break, or None."""
+    if isinstance(o, str):
+        return path if any(c in o for c in LINE_BREAKS) else None
+    for k, x in (o.items() if isinstance(o, dict) else enumerate(o) if isinstance(o, list) else ()):
+        hit = first_break(str(k), path) if isinstance(o, dict) else None
+        hit = hit or first_break(x, ("%s.%s" if isinstance(o, dict) else "%s[%s]") % (path, k))
+        if hit:
+            return hit
+    return None
+
+
+def yaml_spots(cfg):
+    """(config path, value) for every part of config.json that emit_yaml writes into the app file."""
+    app, mode = cfg.get("app") or {}, cfg.get("mode", "views")
+    out = [("app.%s" % k, app.get(k)) for k in ("id", "chip", "title", "icon", "description")]
+    if mode == "form":
+        fm = cfg.get("form") or {}
+        out += [("form.placeholder", fm.get("placeholder")), ("form.inputs", fm.get("inputs")), ("form.submit.label", (fm.get("submit") or {}).get("label")), ("form.widget", fm.get("widget"))]
+    elif mode == "lookup":
+        lk = cfg.get("lookup") or {}
+        out += [("lookup.examples", lk.get("examples")), ("lookup.widget", lk.get("widget"))]
+    else:
+        out.append(("overview.widget", (cfg.get("overview") or {}).get("widget")))
+        for i, v in enumerate(cfg.get("views") or []):
+            out.append(("views[%d].widget" % i, v.get("widget")) if v.get("widget") else ("views[%d].item.fields" % i, (v.get("item") or {}).get("fields")))
+    return out
 
 
 def yflow(v):
@@ -979,6 +1186,10 @@ def view_widget(v):
 
 
 def emit_yaml(cfg):
+    for where, value in yaml_spots(cfg):
+        bad = first_break(value, where)
+        if bad:
+            raise ConfigError("config.json: %s holds a line break, which the app file cannot keep (each value there is one line): write it on one line" % bad)
     app, mode = cfg["app"], cfg.get("mode", "views")
     vs = cfg.get("views") or []
     words = " ".join("{{scripts_dir}}/%s" % f for f in FILE_WORDS)
@@ -1193,6 +1404,12 @@ def run_views(cfg, args, fx, fixtures):
         names = sorted(set([v["endpoint"]] + objects + [vs[c["view"]]["endpoint"] for c in v.get("children") or []]))
     L = load(cfg, names, refresh, demo, fx, fixtures)
     retry = "refresh" if not detail_id or view_id == "overview" else "refresh." + detail_id
+    if not NAV_OK.match(retry) or ".." in retry:
+        # a filter word such as C++, café or a/b cannot ride in a nav arg: retry the list (a refresh drops the filter anyway).
+        # An id of 57 to 64 characters is a valid arg but too long with "refresh." in front: retry opens the detail by its id, so
+        # Enter re-reads the calls that failed (they are never cached) but serves the others from the cache until its ttl ends.
+        # A filter word that long and made of token characters takes the same path, so its retry keeps the filter.
+        retry = detail_id if NAV_OK.match(detail_id) and ".." not in detail_id else "refresh"
     data_view = view_id != "overview" and (vs[view_id].get("widget") or {}).get("mode") == "list_data"   # every row is plotted: no Back or refresh rows
     if L.stop:
         rows = stop_rows(L, view_id, retry)
@@ -1211,7 +1428,9 @@ def run_views(cfg, args, fx, fixtures):
         notes = notice_rows(L, view_id, retry, ttl)
         if detail_id:
             body = detail_rows(cfg, v, L.data, glob, detail_id, retry)
-            rows = body[:1] + notes + body[1:] + ([] if never_fetches(cfg) else [refresh_row(view_id, retry)])
+            again = refresh_row(view_id, retry) if retry == "refresh" or retry.startswith("refresh.") else refresh_row(   # a long id: Enter reopens the item, it does not skip the cache
+                view_id, retry, title="Reload", sub="Enter reads the calls that failed again; the rest comes from the cache (kept %d s)" % ttl)
+            rows = body[:1] + notes + body[1:] + ([] if never_fetches(cfg) else [again])
         else:
             head, body = list_rows(cfg, v, L.data, glob, flt)
             if data_view and body:   # only a stale or partial notice is worth a row among the data; a skipped cell shows as a gap
@@ -1243,8 +1462,9 @@ def run_lookup(cfg, args, fx, fixtures):
     if lk.get("steps"):
         # a chain: each step's path may use {query} and {earlier_step.field} (the first result of an earlier step)
         pvars, glob, notices = {"query": query}, {}, []
+        deadline = kit.Deadline(TOTAL_BUDGET)   # one budget for the whole chain: the steps run one after another inside bridge.timeout_seconds
         for i, step in enumerate(lk["steps"]):
-            L = load(cfg, [step], False, demo, fx, fixtures, pvars)
+            L = load(cfg, [step], False, demo, fx, fixtures, pvars, deadline)
             if L.stop and L.stop[0] == "notfound" and i > 0:   # only the lookup that takes the typed word may say "no such": a later 404 means the chain broke
                 kit.emit([kit.row("Found it, but the next lookup answered 404", "The first lookup worked; %s said there is nothing at that address. Try again later." % step, icon="AlertCircle", copy=False, badge="ERROR")])
             if L.stop:
@@ -1252,7 +1472,7 @@ def run_lookup(cfg, args, fx, fixtures):
             notices += notice_rows(L, "overview", "refresh", 45)
             got = L.data.get(step)
             first = got[0] if isinstance(got, list) and got else got
-            if first in (None, [], {}):
+            if first in (None, [], {}) and step not in L.pruned_lookup_matches:
                 kit.emit([kit.row(lk.get("none_title", "No match"), 'Nothing found for "%s"' % query, icon="Search", copy=False)])
             glob[step] = first
             pvars[step] = first
@@ -1329,6 +1549,27 @@ def store_read(fm):
     return out
 
 
+_STORE_LOCK = threading.Lock()
+
+
+def _win_lock(fd):
+    """Windows byte lock on the log's lock file: retry a busy lock a few times, raise if it never frees (a row is never dropped quietly).
+    Returns False where there is no msvcrt."""
+    try:
+        import msvcrt
+    except ImportError:
+        return False
+    for attempt in range(5):
+        try:
+            os.lseek(fd, 0, os.SEEK_SET)
+            msvcrt.locking(fd, msvcrt.LK_LOCK, 1)
+            return True
+        except OSError as e:
+            if e.errno not in (errno.EDEADLK, errno.EACCES) or attempt == 4:
+                raise
+            time.sleep(0.05 * (attempt + 1))
+
+
 def store_append(fm, rec):
     """Append one record to the local log (folder 0700, file 0600, never through a link); keep the newest max_rows."""
     p = store_path(fm)
@@ -1341,23 +1582,39 @@ def store_append(fm, rec):
             os.chmod(d, 0o700)   # a folder that already existed with looser permissions is tightened
     except (OSError, AttributeError):
         pass
-    lock = os.open(p + ".lock", os.O_WRONLY | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
-    try:
+    with _STORE_LOCK:
+        lock = os.open(p + ".lock", os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0), 0o600)
+        win_locked = False
         try:
-            import fcntl
-            fcntl.flock(lock, fcntl.LOCK_EX)   # two submits at once must not lose a row
-        except ImportError:
-            pass
-        rows = store_read(fm) + [rec]
-        rows = rows[-int(fm["store"].get("max_rows", 200)):]
-        tmp = "%s.tmp%d" % (p, os.getpid())
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0), 0o600)
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            for r in rows:
-                f.write(json.dumps(r, ensure_ascii=True) + "\n")
-        os.replace(tmp, p)
-    finally:
-        os.close(lock)
+            try:
+                import fcntl
+                fcntl.flock(lock, fcntl.LOCK_EX)   # two submits at once must not lose a row
+            except ImportError:
+                win_locked = _win_lock(lock)
+            rows = store_read(fm) + [rec]
+            rows = rows[-int(fm["store"].get("max_rows", 200)):]
+            tmp = "%s.tmp%d.%d" % (p, os.getpid(), threading.get_ident())
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                for r in rows:
+                    f.write(json.dumps(r, ensure_ascii=True) + "\n")
+            for attempt in range(5):   # Windows can hold the target for a moment
+                try:
+                    os.replace(tmp, p)
+                    break
+                except PermissionError:
+                    if attempt == 4:
+                        raise
+                    time.sleep(0.05 * (attempt + 1))
+        finally:
+            if win_locked:
+                try:
+                    import msvcrt
+                    os.lseek(lock, 0, os.SEEK_SET)
+                    msvcrt.locking(lock, msvcrt.LK_UNLCK, 1)
+                except OSError:
+                    pass
+            os.close(lock)
 
 
 def run_form(cfg, args, fx, fixtures):
@@ -1365,7 +1622,7 @@ def run_form(cfg, args, fx, fixtures):
     vals, bad = form_values(fm, args)
     if bad:
         kit.emit([kit.error_row("; ".join(bad[:3]), title="Not saved")])
-    rec = dict((k, render(t, vals, {})) for k, t in fm["record"].items())
+    rec = dict((k, render(t, vals, {}, blank="")) for k, t in fm["record"].items())   # an empty input is saved as "", never as the word unknown
     store_append(fm, rec)
     saved = list(reversed(store_read(fm)))
     seeds = list(fixtures.get("seed") or []) if fx else []

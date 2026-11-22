@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "chart-types",
+  "title": "Chart types",
+  "role": "Anyone who wants a pie, donut, area, several lines, a heatmap or a gauge in a pane",
+  "saves": "Working out the bind keys of the chart types Bolt 182 added",
+  "summary": "Type =chart-types, then open a pie, a donut, a two-line chart, an area, a heatmap and a gauge. Needs Bolt 0.1.182 or newer. Runs on sample data.",
+  "author": {
+    "name": "Bolt Apps examples",
+    "link": "https://github.com/SparcleHQ/bolt-apps"
+  },
+  "tier": 3,
+  "permissions": [
+    "runs_commands",
+    "network",
+    "files"
+  ],
+  "platforms": [
+    "macos",
+    "linux"
+  ],
+  "min_bolt_version": "0.1.182",
+  "requires": [
+    {
+      "interpreter": "python",
+      "min_version": "3.9"
+    }
+  ],
+  "tests": []
+}

@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
-import { RULES, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems } from './boltrules.mjs';
+import { RULES, gateProblem, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems } from './boltrules.mjs';
 export function httpsLiteralHost(t) {
 	const rest = String(t).trim();
 	if (!rest.startsWith('https://')) return null;
@@ -121,11 +121,10 @@ export const MAX_VIEWS = 8;                                   // the launcher MA
 const VIEW_NAME = /^[a-z][a-z0-9_-]{0,23}$/;                  // the launcher name_re
 export const NAV_ARG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/; // the launcher NAV_ARG_RE
 export const isNavToken = (s) => typeof s === 'string' && NAV_ARG_RE.test(s) && !s.includes('..'); // the launcher isNavArg
-export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid']; // the launcher
+export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid', 'heatmap', 'gauge']; // the launcher (heatmap and gauge from Bolt 182)
 const RIGHT_WIDGET_MODES = ['selected_row', 'list_data'];     // the launcher
 export const NO_APP_DATA_KINDS = ['image', 'color', 'weather', 'date', 'calc']; // the launcher NO_APP_DATA
 const BIND_NONE = ['map', 'image', 'calc', 'color', 'weather', 'date']; // the launcher BIND_NONE: these panes read nothing from bind
-const CHART_TYPES = ['line', 'bar', 'sparkline'];             // the launcher
 const OS3 = ['macos', 'linux', 'windows'];
 // The launcher: a double-quoted YAML string can spell the placeholder with escapes the text check cannot see, so Bolt
 // refuses to pin the app down at all. The regex is the launcher's own, applied to the whole file text (comments too).
@@ -173,6 +172,8 @@ export function launcherRules(root, opts = {}) {
 		const kind = str(get(rw, 'kind')?.value), mode = str(get(rw, 'mode')?.value), bind = get(rw, 'bind')?.value;
 		if (kind !== undefined && !RIGHT_WIDGET_KINDS.includes(kind)) E('right_widget_kind_invalid', `${p}.kind "${kind}" is not one of ${RIGHT_WIDGET_KINDS.join(', ')}`);
 		if (mode !== undefined && !RIGHT_WIDGET_MODES.includes(mode)) E('right_widget_kind_invalid', `${p}.mode "${mode}" is not one of ${RIGHT_WIDGET_MODES.join(', ')}`);
+		// a pane only a newer Bolt knows (heatmap, gauge: Bolt 182): a 181 refuses the whole pack, so the app must declare min_bolt_version
+		if (kind !== undefined && RULES.kind_since && RULES.kind_since[kind]) { const g = gateProblem(p, 'kind', RULES.kind_since[kind], { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown }); if (g) (g.level === 'warning' ? W : E)(g.code, g.message.replace(`${p}.kind:`, `${p}.kind "${kind}":`)); }
 		if (NO_APP_DATA_KINDS.includes(kind)) W('right_widget_no_data', `${p}.kind "${kind}" passes validation but Bolt shows "This app asks for a ${kind} pane, which cannot show app data" instead of your rows. Use table, detail, cards or chart${kind === 'image' ? ' (image_grid for pictures)' : ''}`);
 		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);
@@ -189,10 +190,38 @@ export function launcherRules(root, opts = {}) {
 	}
 	// The launcher's structure, env, timeout, loopback, action and nav rules (schema/bolt-rules.json). Each is an error because the launcher refuses the file.
 	for (const f of [structureProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems]) for (const pr of f(root)) (pr.level === 'warning' ? W : E)(pr.code, pr.message);
+	out.push(...transformProblems(root));   // these carry the line of the step or pattern they are about
+	return out;
+}
+// Two parts of transform and recognize, with the step names and the limits read from schema/user-app.schema.json (not copied here): each transform.pipe step
+// is a listed step name, or a mapping with exactly one listed key, and the pipe has a number of steps the schema allows; recognize.patterns has a number of
+// entries the schema allows and no regex longer than its limit. Step values (such as head: -1) and what a regex matches are not checked: Bolt checks them.
+let USER_APP = null;
+export function transformProblems(root) {
+	const out = [], E = (code, message, line) => out.push({ level: 'error', code, message, ...(line ? { line } : {}) });
+	USER_APP ??= JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../schema/user-app.schema.json'), 'utf8')).properties;
+	const pipeSpec = USER_APP.transform.properties.pipe, patSpec = USER_APP.recognize.properties.patterns;
+	const names = pipeSpec.items.oneOf.flatMap((o) => o.enum || []), valued = pipeSpec.items.oneOf.filter((o) => o.type === 'object').map((o) => o.required[0]);
+	const list = (n) => (n && n.t === 'l' ? n.items : null);
+	const trE = get(root, 'transform'), tr = trE?.value;
+	if (tr && tr.t === 'm') {
+		const pipeE = get(tr, 'pipe'), steps = list(pipeE?.value), here = pipeE?.line ?? trE.line, stepLine = (i) => pipeE?.value?.lines?.[i] ?? here;
+		if (!steps || steps.length < pipeSpec.minItems || steps.length > pipeSpec.maxItems) E('transform_pipe_count', `transform.pipe has ${steps ? steps.length : 'no'} steps; it takes ${pipeSpec.minItems} to ${pipeSpec.maxItems}, and Bolt refuses the app file otherwise`, here);
+		for (const [i, s] of (steps || []).entries()) {
+			const keys = s.t === 'm' ? s.entries.map((e) => e.key) : [];
+			if (s.t === 's' ? !names.includes(s.v) : s.t !== 'm' || keys.length !== 1 || !valued.includes(keys[0])) E('transform_step_unknown', `transform.pipe[${i}] ${s.t === 's' ? `"${s.v}"` : s.t === 'm' ? `{ ${keys.join(', ')} }` : '(a list)'} is not a step name Bolt knows. A step is one of ${names.join(', ')}, or a mapping with exactly one of ${valued.join(', ')}`, stepLine(i));
+		}
+	}
+	const rcE = get(root, 'recognize'), rc = rcE?.value;
+	if (rc && rc.t === 'm') {
+		const patE = get(rc, 'patterns'), pats = list(patE?.value), here = patE?.line ?? rcE.line, max = patSpec.items.properties.regex.maxLength;
+		if (!pats || pats.length < patSpec.minItems || pats.length > patSpec.maxItems) E('recognize_patterns_count', `recognize.patterns has ${pats ? pats.length : 'no'} entries; it takes ${patSpec.minItems} to ${patSpec.maxItems}, and Bolt refuses the app file otherwise`, here);
+		for (const [i, p] of (pats || []).entries()) { const reE = get(p, 'regex'), re = str(reE?.value); if (re !== undefined && [...re].length > max) E('recognize_regex_too_long', `recognize.patterns[${i}].regex is ${[...re].length} characters; at most ${max} are allowed`, reE.line ?? patE.value.lines?.[i] ?? here); }
+	}
 	return out;
 }
 // Codes assessYaml can return as problems: verify takes these from checkManifests, so the folder view drops lint's copy.
-export const ASSESS_CODES = new Set(['unknown_field', 'missing_field', 'bind_invalid', 'env_passthrough_max', 'env_name', 'env_secret_name', 'env_not_allowed', 'env_inline_value', 'timeout_default', 'timeout_out_of_range', 'http_port', 'http_port_reserved', 'http_host_not_loopback', 'http_method_not_allowed', 'http_parse', 'action_id', 'action_kind', 'action_field', 'run_action_template', 'action_primary', 'action_icon', 'action_label_reserved', 'action_url', 'action_url_internal', 'action_url_port', 'action_admin_only', 'input_type', 'bridge_cwd', 'env_passthrough_duplicate', 'http_header', 'view_arg_index', 'scripts_dir_form', 'runtime_not_allowed', 'action_not_allowed', 'views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template', 'bind_needs_newer_bolt', 'bind_too_many_refs', 'hero_src_not_picture']);
+export const ASSESS_CODES = new Set(['transform_pipe_count', 'transform_step_unknown', 'recognize_patterns_count', 'recognize_regex_too_long', 'unknown_field', 'missing_field', 'bind_invalid', 'env_passthrough_max', 'env_name', 'env_secret_name', 'env_not_allowed', 'env_inline_value', 'timeout_default', 'timeout_out_of_range', 'http_port', 'http_port_reserved', 'http_host_not_loopback', 'http_method_not_allowed', 'http_parse', 'action_id', 'action_kind', 'action_field', 'run_action_template', 'action_primary', 'action_icon', 'action_label_reserved', 'action_url', 'action_url_internal', 'action_url_port', 'action_admin_only', 'input_type', 'bridge_cwd', 'env_passthrough_duplicate', 'http_header', 'view_arg_index', 'scripts_dir_form', 'runtime_not_allowed', 'action_not_allowed', 'views_too_many', 'view_name_invalid', 'view_arg_missing', 'view_arg_unknown', 'view_arg_not_query_word', 'view_arg_lead_default', 'view_arg_without_views', 'command_os_missing', 'right_widget_no_data', 'right_widget_kind_invalid', 'right_widget_bind_unread', 'run_action_template', 'bind_needs_newer_bolt', 'bind_too_many_refs', 'hero_src_not_picture']);
 export const MAX_HASHED_FILE_BYTES = 2 * 1024 * 1024;         // the launcher MAX_HASHED_FILE_BYTES
 const WORDS = [
 	[/^runs_commands$/, 'run programs on your computer'], [/^network:localhost:(\d+)$/, 'talk to a service on this computer (port $1)'],

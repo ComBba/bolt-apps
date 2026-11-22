@@ -12,12 +12,14 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { checkManifests, confirmPreview, checkPackShape, FIXES } from '../lib/verify.mjs';
+import { readPack, contentHash, sha, PACK_MAX_BYTES } from '../lib/pack.mjs';
+export { readPack, contentHash } from '../lib/pack.mjs';
+import { checkManifests, confirmPreview, checkPackShape, topLevelKeyProblems, FIXES } from '../lib/verify.mjs';
 import { get, str, notYamlHint } from '../lib/yamlsubset.mjs';
 import { assessYaml, plainPermission, listingPermissions, plainName, dataFilesUsed, escapeProblem, ASSESS_CODES, MAX_HASHED_FILE_BYTES } from '../lib/assess.mjs';
 import { iconProblem, chipMismatch, pipeNotSupportedProblems } from '../lib/assess.mjs';
 import { versionProblem, layoutProblems, namespaceProblems } from '../lib/boltrules.mjs';
-import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote } from '../lib/workflow.mjs';
+import { newList, newFromTemplate, listTemplates, hasTemplate, runApp, ship, doctor, staleCloneNote, bump } from '../lib/workflow.mjs';
 import { exportShared } from '../lib/shared.mjs';
 import { checkApp, formatReport, reportOk, platformFindings, vendorKit, OSES } from '../lib/check.mjs';
 
@@ -29,6 +31,8 @@ const rd = (f) => fs.readFileSync(f, 'utf8');
 const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
 
 // ---------- lint ----------
+// Skip only these OS and Git names, including case variants on case-insensitive file systems. Other root and content dot files are checked.
+const LEFTOVER = /^(\.DS_Store|Thumbs\.db|desktop\.ini|\.git|\.gitignore|\.gitattributes)$/i;
 // opts.personal: the app is for its author's own use (tier 3 and script apps allowed). The gallery rules are the default.
 export function lintApp(dir, opts = {}) {
 	const personal = opts.personal === true;
@@ -52,13 +56,14 @@ export function lintApp(dir, opts = {}) {
 	const files = { snippets: [], search_engines: [], utilities: [] }, scripts = [], assessed = [], sizes = {};
 	if (personal) files.scripts = scripts;
 	for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+		if (LEFTOVER.test(ent.name)) continue; // what Finder, Explorer and git leave in a folder is skipped, never packed
 		if (ent.isFile() && (ent.name === 'bolt-app.json' || ent.name === 'README.md' || ent.name.endsWith('.boltpack'))) continue; // a pack built here earlier is never packed
 		if (personal && ((ent.isFile() && (ent.name === 'check.json' || ent.name === 'bolt_app_kit.lock.json')) || (ent.isDirectory() && (ent.name === 'fixtures' || ent.name === 'golden')))) continue; // author-side only, never packed
 		if (personal && ent.isDirectory() && ent.name === 'scripts') {
 			// What the launcher refuses is a link, an odd name, a case clash, a file that is also a folder, or a script another app already owns: every file here must be named <app id>__<name>.
 			const walk = (rel) => {
 				for (const f of fs.readdirSync(path.join(dir, 'scripts', rel), { withFileTypes: true })) {
-					if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
+					if (f.name.startsWith('.') || f.name === '__pycache__' || LEFTOVER.test(f.name)) continue; // editor and OS leftovers are never packed
 					const r = rel ? `${rel}/${f.name}` : f.name;
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
 					else if (f.isDirectory()) walk(r);
@@ -75,13 +80,18 @@ export function lintApp(dir, opts = {}) {
 		}
 		if (ent.isDirectory() && Object.hasOwn(files, ent.name)) {
 			for (const f of fs.readdirSync(path.join(dir, ent.name))) {
+				if (LEFTOVER.test(f)) continue; // never packed
 				const okExt = ent.name === 'utilities' ? /\.ya?ml$/.test(f) : f.endsWith('.json');
 				if (okExt) files[ent.name].push(f); else E('unknown_file', 'not an allowed file here', `${ent.name}/${f}`);
 			}
 		} else E('unknown_file', 'only bolt-app.json, README.md, snippets/, search_engines/ and utilities/ are allowed', ent.name);
 	}
-	const targets = new Set(), perms = new Set(); let tier = 0;
+	const targets = new Set(), perms = new Set(), yids = []; let tier = 0;
+	const engine = personal && typeof app.id === 'string' && fs.existsSync(path.join(dir, 'scripts', `${app.id}__engine.py`));   // built from the portal template: the app file is generated as utilities/<id>.yaml
 	const need = (...p) => p.forEach((x) => perms.add(x));
+	// How to move from the app file at rel to utilities/<id>.yaml after `regen` writes that file. A name that differs only in case is one file where case is ignored
+	// (the macOS default): writing utilities/<id>.yaml lands in it and deleting it would delete the new file, so it is renamed first instead.
+	const afterRegen = (rel, regen) => { const t = `utilities/${app.id}.yaml`, R = regen.charAt(0).toUpperCase() + regen.slice(1); return rel === t ? R : rel.toLowerCase() === t.toLowerCase() ? `Rename it (the names differ only in case, so a file system that ignores case treats them as one file): mv ${rel} ${t}, then ${regen}` : `${R}, then delete ${rel}`; };
 	for (const f of files.snippets) {
 		const p = `snippets/${f}`; tier = Math.max(tier, 1);
 		let s; try { s = JSON.parse(rd(path.join(dir, p))); } catch (e) { E('bad_json', e.message, p); continue; }
@@ -109,6 +119,10 @@ export function lintApp(dir, opts = {}) {
 		{ const ia = assessYaml(y, undefined, {}); const ic = ia.tree ? str(get(ia.tree, 'icon')?.value) : undefined; const ip = ic && iconProblem(ic); if (ip) W('icon_unknown', `${p}: ${ip} (a warning here: the launcher still shows the app; an icon in scripts/config.json is an error because the kit refuses it)`, p); }
 		const a = assessYaml(y, undefined, { platforms: app.platforms, pack: personal, minBolt: app.min_bolt_version, minBoltKnown: true }), rt = a.runtime, yid = a.unknown || !a.tree ? undefined : (str(get(a.tree, 'id')?.value) || '').trim() || undefined;
 		if (a.unknown) { tier = 3; E('yaml_unreadable_here', `this tool cannot interpret ${a.why}, so it cannot tell what the app can do; Bolt may read it differently. Write plain YAML in the supported subset (see AGENTS.md section 2). ${notYamlHint(y)}`.trim(), p); if (personal) assessed.push(a); continue; }
+		if (yid && ID.test(yid)) yids.push([f, yid]);   // an id Bolt refuses outright is its own finding (verify: id_invalid); comparing it with names would only repeat that
+		// utilities/<id>.yaml: the gallery (AGENTS.md section 9) and an app generated by the engine template name the file for the id inside it. Another script app may
+		// name its file otherwise (several kit examples do), so there it is a warning.
+		if (yid && ID.test(yid) && f.replace(/\.ya?ml$/, '') !== yid) (personal && !engine ? W : E)('utilities_name_mismatch', `${p} holds the app "${yid}"; the file name must be the id${engine ? `. ${afterRegen(p, `generate it again: python3 scripts/${app.id}__engine.py --emit-yaml > utilities/${app.id}.yaml`)}` : `: rename it to utilities/${yid}.yaml`}${personal && !engine ? '. A warning for a script app; the engine template and the gallery refuse it' : ''}`, p);
 		if (!personal) for (const pr of pipeNotSupportedProblems(a.tree)) W(pr.code, `${p}: ${pr.message}`, p);
 		if (personal) {
 			if (`manifests/utilities/${f}`.length > 100) E('app_file_name', 'the name is too long for a pack (manifests/utilities/<name> must be at most 100 bytes)', p);
@@ -116,7 +130,9 @@ export function lintApp(dir, opts = {}) {
 			assessed.push(a);
 			{ const cm = chipMismatch(a.tree); if (cm) W('description_chip_mismatch', `the description or placeholder says to type ${cm.wrong.join(', ')}, but this app's chip is =${cm.chip}. A copied template keeps its old words`, p); }
 			if (a.runtime === undefined) E('field_missing', 'runtime is required', p);
-			for (const pr of a.problems) add(pr.level || 'error', pr.code, pr.message, p);
+			for (const pr of a.problems) out.push({ level: pr.level || 'error', code: pr.code, message: pr.message, path: p, ...(pr.line ? { line: pr.line } : {}) });
+			// a top-level key Bolt does not know, or one for company-managed apps only: Bolt refuses the whole file (verify reports these from checkManifests)
+			for (const pr of topLevelKeyProblems(a.tree)) out.push({ level: 'error', code: pr.code, message: pr.message, path: p, ...(pr.line ? { line: pr.line } : {}) });
 			{ const cch = a.tree ? (str(get(a.tree, 'chip')?.value) || '').trim() : ''; if (yid && cch && /^[a-z0-9][a-z0-9-]{0,63}$/.test(cch) && /^[a-z0-9][a-z0-9-]{0,63}$/.test(yid) && cch !== yid) E('chip_not_id', `chip "${cch}" is not the id "${yid}". Bolt only runs an app whose chip equals its id (the launcher looks apps up by id): set chip to ${yid}`, p); }
 			if (!yid) E('field_missing', 'id is required', p);
 			tier = Math.max(tier, a.tier); for (const x of a.permissions) perms.add(x);
@@ -126,11 +142,20 @@ export function lintApp(dir, opts = {}) {
 		if (rt !== 'transform') { tier = 3; E('tier3_not_accepted', `runtime "${rt}" runs commands or the network; only runtime: transform is allowed here`, p); continue; }
 		if (a.tier >= 3 || a.permissions.includes('runs_own_command_on_press')) { tier = 3; E('tier3_not_accepted', `${a.reasons[0] || (a.tier < 3 ? 'it has a button that runs a command (Bolt rates it tier 2, the gallery does not take it)' : 'it can act outside Bolt')}; only apps that act inside Bolt (no detect block, fixed https links) are allowed here`, p); continue; }
 		tier = Math.max(tier, 2); need(...a.permissions.filter((x) => PERMS.includes(x) || x.startsWith('opens_links:')));
+		// The app file checks verify and pack --personal run (checkManifests: top-level and required keys, the runtime blocks, the launcher rules this toolkit
+		// mirrors, pipe step names and counts, pattern counts and regex lengths). Not everything Bolt refuses is among them. The install prompt text search
+		// (script_mentions) is a note for self-signed packs only.
+		for (const x of checkManifests([{ path: p, kind: 'user_utility', content: Buffer.from(y) }], { platforms: app.platforms, appId: app.id, minBolt: app.min_bolt_version, minBoltKnown: true }).findings) if (x.code !== 'script_mentions') out.push({ level: x.level, code: x.code, message: x.message, path: p, ...(x.line ? { line: x.line } : {}) });
 		if (!yid) E('field_missing', 'id is required', p); else targets.add(`transform:${yid}`), targets.add(`recognizer:${yid}`);
 	}
 	const cfgRel = personal ? ['config.json', `${app.id}__config.json`].find((n) => fs.existsSync(path.join(dir, 'scripts', n))) : undefined;
 	if (cfgRel) {   // a kit app keeps its row icons in scripts/<app id>__config.json
 		try { const walk = (o, at) => { if (Array.isArray(o)) o.forEach((v, i) => walk(v, `${at}[${i}]`)); else if (isObj(o)) for (const [k, v] of Object.entries(o)) { if (k === 'icon' && typeof v === 'string') { const ip = iconProblem(v); if (ip) E('icon_unknown', `scripts/${cfgRel} ${at ? at + '.' : ''}icon: ${ip}`, `scripts/${cfgRel}`); } walk(v, at ? `${at}.${k}` : k); } }; walk(JSON.parse(rd(path.join(dir, 'scripts', cfgRel))), ''); } catch { /* an unreadable config.json is the script's own error */ }
+		// In an engine app the config's app.id is the id the app file is generated with: it, the app file and bolt-app.json (the folder name) must agree.
+		// Another script app's config is its own data, and its app.id may mean something else, so it is not compared.
+		let cid; if (engine) try { const j = JSON.parse(rd(path.join(dir, 'scripts', cfgRel))); if (isObj(j) && isObj(j.app) && typeof j.app.id === 'string') cid = j.app.id; } catch { /* as above */ }
+		if (cid !== undefined && cid !== app.id) E('config_id_mismatch', `scripts/${cfgRel} says app.id "${cid}", but bolt-app.json and the folder name say "${app.id}". Set app.id (and app.chip) to ${app.id} in the config and generate the app file again`, `scripts/${cfgRel}`);
+		if (cid !== undefined && !yids.some(([, i]) => i === app.id)) for (const [f, i] of yids) if (i && i !== app.id) E('utilities_id_mismatch', `utilities/${f} has the id "${i}", but bolt-app.json and the folder name say "${app.id}". Set app.id to ${app.id} in scripts/${cfgRel}${f === `${app.id}.yaml` ? ` and generate the app file again as utilities/${app.id}.yaml` : f.toLowerCase() === `${app.id}.yaml`.toLowerCase() ? `, rename the file (mv utilities/${f} utilities/${app.id}.yaml) and generate the app file again as utilities/${app.id}.yaml` : `, generate the app file again as utilities/${app.id}.yaml and delete utilities/${f}`}`, `utilities/${f}`);
 	}
 	if (personal && files.utilities.length > 1) {
 		// A copy that regenerates utilities/<new>.yaml but leaves the old file behind would pack two apps. If one file already carries this app's id,
@@ -155,7 +180,8 @@ export function lintApp(dir, opts = {}) {
 	for (const x of platformFindings(app)) out.push(x);
 	if (!Array.isArray(app.permissions)) E('field_missing', 'permissions must be an array', 'bolt-app.json');
 	const declared = new Set((Array.isArray(app.permissions) ? app.permissions : []).filter((x) => typeof x === 'string'));
-	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links:[a-z0-9.:-]+$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
+	// opens_links with no host is what pack --personal lists for a link that is not a fixed https address, and the listing schema allows it
+	for (const x of declared) if (!PERMS.includes(x) && !/^opens_links(:[a-z0-9.:-]+)?$/.test(x)) E('permission_unknown', `unknown permission "${x}"`, 'bolt-app.json');
 	if (!personal) for (const x of perms) if (!declared.has(x)) E('permission_undeclared', `content needs "${x}" but bolt-app.json does not declare it`, 'bolt-app.json');
 	if (personal) {
 		// The install prompt and `verify` show the permissions computed from the app files; bolt-app.json permissions is listing text only.
@@ -163,7 +189,7 @@ export function lintApp(dir, opts = {}) {
 		const missing = [...comp].filter((x) => !declared.has(x)), ignored = [...declared].filter((x) => !comp.has(x));
 		if (missing.length) W('permissions_differ', `bolt-app.json permissions and the permissions computed from the app files disagree${missing.length ? `; computed but not declared: ${missing.join(', ')}` : ''}${ignored.length ? `; declared but not computed: ${ignored.join(', ')} (verify and the install prompt never show these and nothing checks them: keep one only if it is true of the app, for example network for a script that makes web requests)` : ''}. The computed list wins for what verify and the install prompt show; bolt-app.json is listing text`, 'bolt-app.json');
 	}
-	for (const x of declared) if (!perms.has(x) && PERMS.includes(x) && tier < 3 && !personal) W('permission_unused', `"${x}" is declared but nothing uses it`, 'bolt-app.json');
+	for (const x of declared) if (!perms.has(x) && (PERMS.includes(x) || x === 'opens_links') && tier < 3 && !personal) W('permission_unused', `"${x}" is declared but nothing uses it`, 'bolt-app.json');
 	// tests
 	const tests = (Array.isArray(app.tests) ? app.tests : []).filter(isObj);
 	if (!tests.length && !personal) E('no_tests', 'every content file needs at least one test in bolt-app.json', 'bolt-app.json');
@@ -188,7 +214,7 @@ function cmdLint(args) {
 	let bad = 0; const reports = [];
 	for (const d of dirs) {
 		const r = lintApp(d, { personal }), errs = r.out.filter((x) => x.level === 'error'); if (errs.length) bad++;
-		reports.push({ app: r.id, ok: !errs.length, findings: r.out });
+		reports.push({ app: r.id, ok: !errs.length, findings: r.out.map((x) => ({ ...x, file: x.path, fix: FIXES[x.code] || x.message })) });   // file and fix as verify --json has them; path stays
 		if (!json) { console.log(`${errs.length ? 'FAIL' : 'ok  '} ${r.id}`); for (const f of r.out) console.log(`     ${f.level} ${f.code}: ${f.message} (${f.path})`); }
 	}
 	if (json) console.log(JSON.stringify({ ok: !bad, reports }, null, 2));
@@ -200,18 +226,24 @@ function cmdLint(args) {
 const TEMPLATES = {
 	snippet: (id) => { const key = keyOf(id); return { tier: 1, perms: ['copies_to_clipboard'], summary: `Type ;${key}, fill in a name, get a greeting. Replace this with your text.`, files: { [`snippets/${key}.json`]: { key, label: id, content: 'Hello {input:Name=world}' } }, tests: [{ kind: 'snippet', name: 'fills the name', target: key, fields: { Name: 'Bolt' }, expect: 'Hello Bolt' }] }; },
 	search: (id) => { const p = prefixOf(id); return { tier: 1, perms: ['opens_links:example.com'], summary: `Type ${p} and a query to search example.com. Replace the site.`, files: { [`search_engines/${p}.json`]: { id: p, name: id, urlTemplate: 'https://example.com/search?q={q}' } }, tests: [{ kind: 'search', name: 'builds the link', target: p, query: 'hello', expect: 'https://example.com/search?q=hello' }] }; },
-	transform: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: `Type =${id}, paste text, get it upper-cased. Replace the pipe steps.`, files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: "${id}"\ntitle: "${id}"\nicon: wand\ndescription: Trim and upper-case what you paste\nemits: Generic\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n` }, tests: [{ kind: 'transform', name: 'trims and upper-cases', target: id, input: '  hello  ', expect: 'HELLO' }] }),
+	transform: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: `Type =${id}, paste text, get it upper-cased. Replace the pipe steps.`, files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: "${id}"\ntitle: "${id}"\nicon: type\ndescription: Trim and upper-case what you paste\nemits: Generic\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n` }, tests: [{ kind: 'transform', name: 'trims and upper-cases', target: id, input: '  hello  ', expect: 'HELLO' }] }),
 	recognizer: (id) => ({ tier: 2, perms: ['copies_to_clipboard', 'reads_launcher_input'], summary: 'Paste a ticket key like TKT-123 and get its link. Replace the pattern and links.', files: { [`utilities/${id}.yaml`]: `schema_version: 1\nruntime: transform\nid: "${id}"\nchip: "${id}"\ntitle: "${id}"\nicon: link\ndescription: Recognize a ticket key and copy its link\nemits: Generic\nplaceholder_examples:\n  - "TKT-123"\n\npresentation:\n  widget: detail\n\ntransform:\n  pipe:\n    - trim\n    - upper\n\nrecognize:\n  patterns:\n    - regex: "(TKT-\\\\d{1,6})"\n  reps:\n    - label: Link\n      template: "https://example.com/tickets/{1}"\n` }, tests: [{ kind: 'recognizer', name: 'recognizes ticket keys and nothing else', target: id, positive: ['TKT-123'], negative: ['TKT', 'TKT-', 'see TKT-123 here'], expect_rep: [{ input: 'TKT-123', label: 'Link', value: 'https://example.com/tickets/TKT-123' }] }] }),
 };
 const keyOf = (id) => { let k = id.replace(/[^a-z0-9_-]/g, '').slice(0, 24); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 24); };
 const prefixOf = (id) => { let k = id.replace(/[^a-z0-9]/g, '').slice(0, 12); return /^[a-z]/.test(k) ? k : `a${k}`.slice(0, 12); };
+// The default author when --author is left out: the login name, looked up only then (os.userInfo throws where the user has no passwd entry).
+const loginName = () => { try { return os.userInfo().username || 'me'; } catch { return process.env.USER || process.env.USERNAME || 'me'; } };
 function flag(args, name, dflt) { const i = args.indexOf(name); return i >= 0 && args[i + 1] ? args[i + 1] : dflt; }
 function cmdNew(args) {
 	staleCloneNote();
 	if (args[0] === '--list' || args[0] === 'list') return newList();
-	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'));
+	const suppliedAuthor = flag(args, '--author', null);
+	if (args.includes('--author') && (!suppliedAuthor?.trim() || suppliedAuthor.startsWith('--'))) die('--author requires a non-empty name');
+	const author = suppliedAuthor ?? loginName();
+	const authorNote = suppliedAuthor === null ? 'The default author is your login name when available. Review author.name in bolt-app.json and change it if needed before sharing the pack.' : '';
+	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'), author, authorNote);
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
-	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps'), author = flag(args, '--author', os.userInfo().username);
+	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps');
 	if (!id || !ID.test(id)) die(`usage: ./bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);
 	if (!TEMPLATES[type]) die(`unknown --type "${type}". Types: ${Object.keys(TEMPLATES).join(', ')}`);
 	const dir = path.join(root, id); if (fs.existsSync(dir)) die(`${dir} already exists`);
@@ -221,6 +253,7 @@ function cmdNew(args) {
 	fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify(listing, null, 2) + '\n');
 	fs.writeFileSync(path.join(dir, 'README.md'), `# ${id}\n\n${t.summary}\n\n## Who it is for\n\n## What it saves\n\n## Permissions\n\n${t.perms.map((p) => `- \`${p}\``).join('\n')}\n\n## Sample\n\nShow one real input and output.\n`);
 	console.log(`created ${dir} (${type}, tier ${t.tier})\nnext: edit it, then  ./bolt-apps lint ${dir}  and  ./bolt-apps pack ${dir}`);
+	if (authorNote) console.log(authorNote);
 }
 
 // ---------- keys, tar, pack, verify ----------
@@ -243,40 +276,6 @@ export function tarFile(name, data) {
 	h.write(h.reduce((a, b) => a + b, 0).toString(8).padStart(6, '0') + '\0 ', 148);
 	return Buffer.concat([h, data, Buffer.alloc((512 - (data.length % 512)) % 512)]);
 }
-const PACK_LIMITS = { entries: 1024, unpacked: 64 * 1024 * 1024, inflated: 64 * 1024 * 1024 + 4 * 1024 * 1024 };
-// Only these names exist in a pack: bundle.json, signature.bin and files under manifests/. Segments are plain: no empty, ., .., backslash or leading slash.
-const canonicalName = (n) => (n === 'bundle.json' || n === 'signature.bin' || n.startsWith('manifests/') || n === 'manifests') && n.length > 0 && !n.includes('\\') && !n.startsWith('/') && n.split('/').every((seg) => seg !== '' && seg !== '.' && seg !== '..');
-class PackError extends Error { constructor(code, message) { super(message); this.code = code; } }
-function untar(buf) {
-	const files = new Map(); let off = 0, headers = 0, bytes = 0;
-	while (off + 512 <= buf.length) {
-		const h = buf.subarray(off, off + 512); if (h.every((b) => b === 0)) break;
-		if (++headers > PACK_LIMITS.entries) throw new PackError('too_many_files', `more than ${PACK_LIMITS.entries} entries`);
-		const s = (a, b) => h.subarray(a, b).toString('utf8').replace(/\0.*$/s, '');
-		const name = (s(345, 500) ? s(345, 500) + '/' : '') + s(0, 100), raw = s(124, 136).trim() || '0';
-		const want = s(148, 156).trim(); let sum = 0; for (let k = 0; k < 512; k++) sum += k >= 148 && k < 156 ? 32 : h[k];
-		if (!/^[0-7]+$/.test(want) || parseInt(want, 8) !== sum) throw new PackError('pack_malformed', 'a tar header checksum does not match');
-		if (!/^[0-7]+$/.test(raw)) throw new PackError('pack_malformed', 'a file size in the archive is not a valid number');
-		const size = parseInt(raw, 8), type = String.fromCharCode(h[156] || 48);
-		if (type !== '0' && type !== '5') throw new PackError('pack_malformed', `an archive entry of type ${JSON.stringify(type)} (only plain files and folders are allowed)`);
-		const bare = type === '5' ? name.replace(/\/$/, '') : name;
-		if (!canonicalName(bare)) throw new PackError('pack_malformed', `an archive entry has a name Bolt does not accept: ${JSON.stringify(name.slice(0, 60))}`);
-		if (!Number.isSafeInteger(size) || size < 0) throw new PackError('pack_malformed', 'a file size in the archive is invalid');
-		bytes += size; if (bytes > PACK_LIMITS.unpacked) throw new PackError('pack_too_large', 'the pack unpacks to more than 64 MB');
-		off += 512; if (off + size > buf.length) throw new PackError('pack_malformed', 'the archive ends inside a file');
-		if (type === '0') { if (files.has(name)) throw new PackError('pack_duplicate_entry', `the archive holds ${name.slice(0, 80)} twice`); files.set(name, buf.subarray(off, off + size)); }
-		off += Math.ceil(size / 512) * 512;
-	}
-	return files;
-}
-export function contentHash(manifests) {
-	const h = crypto.createHash('sha256');
-	for (const [p, c] of [...manifests].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) {
-		const pb = Buffer.from(p), pl = Buffer.alloc(4), cl = Buffer.alloc(8); pl.writeUInt32LE(pb.length); cl.writeBigUInt64LE(BigInt(c.length)); h.update(pl).update(pb).update(cl).update(c);
-	}
-	return h.digest('hex');
-}
-const sha = (b) => crypto.createHash('sha256').update(b).digest('hex');
 const KINDS = { snippets: 'snippet', search_engines: 'search_engine', utilities: 'user_utility', scripts: 'script' };
 const INTERPRETERS = { '.py': 'python3', '.sh': 'sh' };
 function cmdPack(args) {
@@ -324,7 +323,7 @@ function cmdPack(args) {
 	// to the current folder, unless that is the app folder or inside it, and then to the folder's parent.
 	const appAbs = path.resolve(dir), inApp = (f) => path.resolve(f) === appAbs || path.resolve(f).startsWith(appAbs + path.sep);
 	const outFlag = flag(args, '--out', null), out = outFlag || path.join(inApp(process.cwd()) ? path.dirname(appAbs) : process.cwd(), `${app.id}.boltpack`), gz = zlib.gzipSync(Buffer.concat(parts), { level: 9 });
-	if (gz.length > 50 * 1024 * 1024) die('pack is over the 50 MB limit', 1);
+	if (gz.length > PACK_MAX_BYTES) die('pack is over the 50 MB limit', 1);
 	fs.writeFileSync(out, gz);
 	if (outFlag && inApp(outFlag)) console.error(`warning: ${out} is inside the app folder. bolt-apps ignores *.boltpack files there, but keep packs outside the folder (for example --out ../${app.id}-${version}.boltpack).`);
 	console.log(`packed ${out} (${manifests.size} file${manifests.size === 1 ? '' : 's'}, tier ${r.tier}, signed with key ${pub.slice(0, 16)}...)`);
@@ -333,7 +332,7 @@ function cmdPack(args) {
 	for (const w of r.out.filter((x) => x.level === 'warning')) console.log(`warning ${w.code}: ${w.message} (${w.path})`);
 	for (const w of packWarnings) console.log(`warning ${w.code}: ${w.message} (${w.file})`);
 	// The launcher maps "is already installed" to same_or_older_version: Bolt refuses a pack whose bundle_version is not newer than the installed one
-	console.log(`\nversion ${version}: Bolt refuses to install a pack whose version is the same as, or older than, the one already installed (same_or_older_version). If you installed an earlier build of ${app.id}, rebuild with a higher number: bump --version (for example --version ${bumpVersion(version)}).`);
+	console.log(`\nversion ${version}: Bolt refuses to install a pack whose version is the same as, or older than, the one already installed (same_or_older_version). If you installed an earlier build of ${app.id}, rebuild with a higher number: bump --version (for example --version ${bump(version)}).`);
 	if (personal) {
 		console.log(`\nThis app is for your own use. What it can do:`);
 		for (const x of r.perms) console.log(`  - ${plainPermission(x)}`);
@@ -342,46 +341,22 @@ function cmdPack(args) {
 		console.log(`\nBolt will show these same facts and ask whoever installs it to confirm, because the pack is signed only by you. Anyone you give it to must trust you.\nTo install: drop ${out} on the Bolt launcher or on Bolt Apps (not Admin settings, which takes only Sparcle-signed bundles).\nOn a device whose company policy allows only approved apps, Bolt refuses it.`);
 	} else console.log('to install: drop it on the Bolt launcher. Bolt shows a review card, then asks again because it is self-signed.');
 }
-const bumpVersion = (v) => { const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(v); return m ? `${m[1]}.${m[2]}.${Number(m[3]) + 1}` : `${v}.1`; };
-export function readPack(file) {
-	let e;
-	try {
-		if (fs.statSync(file).size > 50 * 1024 * 1024) return { ok: false, code: 'pack_too_large', reason: 'the file is larger than 50 MB' };
-		e = untar(zlib.gunzipSync(fs.readFileSync(file), { maxOutputLength: PACK_LIMITS.inflated }));
-	} catch (x) {
-		if (x instanceof PackError) return { ok: false, code: x.code, reason: x.message };
-		if (x.code === 'ERR_BUFFER_TOO_LARGE') return { ok: false, code: 'pack_too_large', reason: 'the pack unpacks to more than 64 MB' };
-		return { ok: false, code: 'pack_not_gzip_tar', reason: `not a gzip tar: ${x.message}` };
-	}
-	const bj = e.get('bundle.json'), sig = e.get('signature.bin'); if (!bj) return { ok: false, code: 'bundle_missing', reason: 'bundle.json is missing' };
-	let meta; try { meta = JSON.parse(bj.toString()); } catch { return { ok: false, code: 'bundle_not_json', reason: 'bundle.json is not JSON' }; }
-	if (!isObj(meta) || (meta.entries !== undefined && (!Array.isArray(meta.entries) || meta.entries.some((x) => !isObj(x) || typeof x.path !== 'string' || typeof x.sha256 !== 'string')))) return { ok: false, code: 'bundle_not_json', reason: 'bundle.json is not the object with an entries list of {path, sha256} that a pack has' };
-	const man = new Map([...e].filter(([p]) => p.startsWith('manifests/')).map(([p, c]) => [p.slice(10), c]));
-	const bad = (code, reason) => ({ ok: false, code, reason, meta, files: man, count: e.size });
-	if (!sig || sig.length !== 64) return bad('signature_missing', 'signature.bin is missing or not 64 bytes');
-	if (meta.signer_pubkey !== undefined && !/^[0-9a-f]{64}$/i.test(String(meta.signer_pubkey))) return bad('signature_mismatch', 'signer_pubkey is not 64 hexadecimal characters');
-	if (!meta.signer_pubkey) return bad('signed_by_other_key', 'signed by a Sparcle or company key; only Bolt can verify that');
-	let good = false; try { good = crypto.verify(null, bj, crypto.createPublicKey({ key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), Buffer.from(meta.signer_pubkey, 'hex')]), format: 'der', type: 'spki' }), sig); } catch { /* bad key */ }
-	if (!good) return bad('signature_mismatch', 'the signature does not match bundle.json');
-	if (contentHash(man) !== meta.content_sha256) return bad('content_hash_mismatch', 'files changed after signing (content hash mismatch)');
-	for (const en of meta.entries || []) { if (!String(en.path).startsWith('manifests/')) continue; const c = man.get(String(en.path).replace(/^manifests\//, '')); if (!c || sha(c) !== en.sha256) return bad('entry_hash_mismatch', `entry ${en.path} does not match its hash`); }
-	return { ok: true, meta, files: man, count: e.size };
-}
 // Pack text is untrusted: show control, format and bidi characters as \\uXXXX so a pack cannot move the cursor or forge lines.
 export const esc = (v) => String(v).replace(/[\u0000-\u001f\u007f-\u009f\u00ad\u200b-\u200f\u2028-\u202e\u2060-\u2069\ufeff]/g, (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 function cmdVerify(args) {
 	const json = args.includes('--json'), f = args.find((x) => !x.startsWith('--'));
 	if (!f || !fs.existsSync(f)) die('usage: ./bolt-apps verify <app-folder | file.boltpack> [--json]');
+	const scriptLabel = (x) => x.path.replace(/^scripts\//, '');
 	let findings = [], confirm = null, kind;
 	if (fs.statSync(f).isDirectory()) {
 		kind = 'app';
 		const r = lintApp(f, { personal: true });
-		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch', 'chip_not_id'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
+		findings = r.out.filter((x) => !(x.code === 'field_missing' && /^(id|runtime) is required$/.test(x.message)) && !ASSESS_CODES.has(x.code) && !['script_missing', 'script_unused', 'script_too_large', 'helper_not_hashed', 'yaml_escape', 'yaml_unreadable_here', 'script_not_namespaced', 'description_chip_mismatch', 'chip_not_id', 'yaml_key_unknown', 'yaml_admin_only_key'].includes(x.code)).map((x) => ({ level: x.level, code: x.code, message: x.message, file: x.path, fix: FIXES[x.code] || x.message }));
 		if (r.app) {
 			const files = [];
 			for (const [folder, names] of Object.entries(r.files)) for (const n of names) if (KINDS[folder]) files.push({ path: `${folder}/${n}`, kind: KINDS[folder], content: fs.readFileSync(path.join(f, folder, n)) });
 			const c = checkManifests(files, { platforms: r.app.platforms, appId: r.app.id, minBolt: r.app.min_bolt_version, minBoltKnown: true }); findings.push(...c.findings);
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map(scriptLabel), signer: 'not signed yet: ./bolt-apps pack signs it with your key', unknownAssess: c.unknownAssess });
 		}
 	} else {
 		kind = 'pack';
@@ -391,11 +366,11 @@ function cmdVerify(args) {
 			findings.push(...checkPackShape(r.meta, r.files, r.count));
 			const files = (r.meta.entries || []).filter((e) => ['user_utility', 'script'].includes(e.kind) && r.files.has(String(e.path).replace(/^manifests\//, ''))).map((e) => ({ path: String(e.path).replace(/^manifests\//, ''), kind: e.kind, content: r.files.get(String(e.path).replace(/^manifests\//, '')) }));
 			const c = checkManifests(files, { platformsUnknown: true, minBoltKnown: false, minBolt: r.meta.listing && typeof r.meta.listing === 'object' ? r.meta.listing.min_bolt_version : undefined, appId: r.meta.pack?.pack_id }); findings.push(...c.findings);   // a pack does not record platforms, so a missing OS command is not reported here
-			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map((x) => path.basename(x.path)), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
+			confirm = confirmPreview({ apps: c.apps, files, scriptsList: files.filter((x) => x.kind === 'script').map(scriptLabel), signer: `self-signed by key ${r.meta.signer_pubkey}; identity is not verified`, unknownAssess: c.unknownAssess });
 		}
 	}
 	const ok = !findings.some((x) => x.level === 'error');
-	if (json) console.log(JSON.stringify({ ok, kind, findings, confirm }, null, 2));
+	if (json) console.log(JSON.stringify({ ok, kind, findings: findings.map((x) => ({ ...x, path: x.file })), confirm }, null, 2));   // path as lint --json has it; file stays
 	else {
 		for (const x of findings) console.log(`${x.level.toUpperCase().padEnd(7)} ${esc(x.code)}  ${esc(x.file || '')}${x.line ? ':' + x.line : ''}\n        ${esc(x.message)}\n        fix: ${esc(x.fix)}`);
 		if (confirm) {
@@ -413,7 +388,7 @@ function cmdVerify(args) {
 // ---------- main ----------
 const HELP = `bolt-apps: author toolkit for Bolt Apps
 
-  new <template> <id> [--dir .]                           copy a template (new --list shows them): renamed, check passes, next steps printed
+  new <template> <id> [--dir .] [--author "Your name"]   copy a template (new --list shows them): renamed, check passes, next steps printed
   new <id> [--type snippet|search|transform|recognizer]   start a gallery app from a small template
   run <app-folder> [view [word]] [--sample|--live] [--json]  run the app as Bolt would and show the rows (the debug loop)
   ship <app-folder>                                       lint, check, pack, verify with the next version picked; prints how to install
@@ -435,13 +410,21 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(file
 	const [cmd, ...rest] = process.argv.slice(2);
 	const cmdCheck = async (args) => {
 		const target = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--os' && args[i - 1] !== '--case');
-		if (target && fs.existsSync(path.join(target, 'check.json'))) {
+		let hasCheck = false;
+		if (target) {
+			try { fs.lstatSync(path.join(target, 'check.json')); hasCheck = true; }
+			catch (e) { hasCheck = e.code !== 'ENOENT' && e.code !== 'ENOTDIR'; }  // only a missing file takes the non-script-app path
+		}
+		if (hasCheck) {
 			const osi = args.indexOf('--os'), osArg = osi >= 0 ? args[osi + 1] : undefined;
 			if (osi >= 0 && !OSES.includes(osArg)) die(`--os must be one of ${OSES.join(', ')}`);
-			const ci = args.indexOf('--case');
+			const ci = args.indexOf('--case'), json = args.includes('--json');
 			const r = await checkApp(target, { os: osArg, only: ci >= 0 ? args[ci + 1] : undefined, updateGolden: args.includes('--update-golden'), shared: args.includes('--shared') });
-			console.log(args.includes('--json') ? JSON.stringify({ ok: reportOk(r), ...r }, null, 2) : formatReport(r));
-			process.exit(reportOk(r) ? 0 : 1);
+			const load = r.findings.find((f) => f.code === 'load_error');
+			const ok = reportOk(r);
+			if (load && !json) die(load.message);
+			console.log(json ? JSON.stringify({ ok, ...(load ? { error: load.message } : {}), ...r }, null, 2) : formatReport(r));
+			process.exit(load ? 2 : ok ? 0 : 1);
 		}
 		if (!target) die('usage: ./bolt-apps check <app-folder>');
 		const has = (sub) => fs.existsSync(path.join(target, sub));
