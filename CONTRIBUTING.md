@@ -62,6 +62,10 @@ One app per pull request. Use the template; it asks for the kind, tier, permissi
 the app saves, the output from section 3, and confirmation that you used demo data only. Sign off
 every commit (`git commit -s`), see [Licence](#licence) below.
 
+Line endings: the repo stores text files with LF, and `.gitattributes` keeps `*.cmd` and `*.bat` as CRLF.
+If you cloned before `.gitattributes` was added (common on Windows), run `git add --renormalize .` once,
+or clone again, so your files do not show as modified.
+
 ## Review
 
 1. The checker runs again in CI. A red check blocks the merge.
