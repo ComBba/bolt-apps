@@ -228,6 +228,7 @@ function cmdNew(args) {
 	staleCloneNote();
 	if (args[0] === '--list' || args[0] === 'list') return newList();
 	const suppliedAuthor = flag(args, '--author', null);
+	if (args.includes('--author') && (!suppliedAuthor?.trim() || suppliedAuthor.startsWith('--'))) die('--author requires a non-empty name');
 	const author = suppliedAuthor ?? loginName();
 	const authorNote = suppliedAuthor === null ? 'The default author is your login name when available. Review author.name in bolt-app.json and change it if needed before sharing the pack.' : '';
 	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'), author, authorNote);

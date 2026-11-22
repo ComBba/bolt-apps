@@ -159,6 +159,18 @@ test('new <template> <id> puts the person in author, never the examples name, an
 	assert.match(readme, /author credit.*`derived_from`/);
 });
 
+test('new rejects a missing or blank --author value without creating an app', () => {
+	const d = tmp('ns-author-invalid-'), home = tmp('ns-home-');
+	for (const prefix of [['portal-template'], []]) {
+		for (const args of [['--author', '--dir', d], ['--dir', d, '--author'], ['--dir', d, '--author', ''], ['--dir', d, '--author', '   ']]) {
+			const r = cli(home, d, 'new', ...prefix, 'mine', ...args);
+			assert.equal(r.status, 2, r.stdout + r.stderr);
+			assert.match(r.stderr, /--author requires a non-empty name/);
+			assert.deepEqual(fs.readdirSync(d), []);
+		}
+	}
+});
+
 test('the transform `new` writes and the AGENTS.md worked example use icons the launcher has (no icon_unknown)', () => {
 	const d = tmp('ns-icon-'), home = tmp('ns-home-');
 	assert.equal(cli(home, d, 'new', 'g-app', '--type', 'transform', '--dir', d, '--author', 'Tester').status, 0);
