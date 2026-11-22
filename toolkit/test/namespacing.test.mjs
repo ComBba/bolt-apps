@@ -171,6 +171,26 @@ test('new rejects a missing or blank --author value without creating an app', ()
 	}
 });
 
+test('new skips the login lookup for --author and falls back if no login is available', () => {
+	const d = tmp('ns-author-login-'), home = tmp('ns-home-');
+	const preload = path.join(d, 'no-login.cjs');
+	fs.writeFileSync(preload, "require('node:os').userInfo = () => { process.stderr.write('userInfo called\\n'); throw new Error('no login'); };\n");
+	const create = (id, ...args) => {
+		const r = spawnSync(process.execPath, ['--require', preload, CLI, 'new', 'portal-template', id, '--dir', d, ...args], {
+			cwd: d, encoding: 'utf8', env: { ...process.env, HOME: home, USER: 'FixtureUser' },
+		});
+		assert.equal(r.status, 0, r.stdout + r.stderr);
+		const { author } = JSON.parse(fs.readFileSync(path.join(d, id, 'bolt-app.json'), 'utf8'));
+		return { author, stderr: r.stderr };
+	};
+	const explicit = create('explicit', '--author', 'Tester');
+	assert.deepEqual(explicit.author, { name: 'Tester' });
+	assert.doesNotMatch(explicit.stderr, /userInfo called/);
+	const fallback = create('fallback');
+	assert.deepEqual(fallback.author, { name: 'FixtureUser' });
+	assert.match(fallback.stderr, /userInfo called/);
+});
+
 test('the transform `new` writes and the AGENTS.md worked example use icons the launcher has (no icon_unknown)', () => {
 	const d = tmp('ns-icon-'), home = tmp('ns-home-');
 	assert.equal(cli(home, d, 'new', 'g-app', '--type', 'transform', '--dir', d, '--author', 'Tester').status, 0);
