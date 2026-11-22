@@ -227,6 +227,10 @@ class TileBadge(unittest.TestCase):
         self.assertEqual(self.m.make_tile({"value": "active", "badge": rules}, {"status": "active"}, {}), (None, "ON"))
         self.assertEqual(self.m.make_tile({"value": "active", "badge": rules}, {"status": "active", "active": "N/A"}, {}), (None, ""))
 
+    def test_an_ordering_rule_on_the_right_skips_a_missing_value_field(self):
+        rules = [{"if": "limit<remaining", "badge": "OVER"}]
+        self.assertEqual(self.m.make_tile({"value": "remaining", "badge": rules}, {"limit": "0"}, {}), (None, ""))
+
     def test_no_value_drops_a_plain_word_badge(self):
         self.assertEqual(self.m.make_tile({"value": "priority", "badge": "NEW"}, {"status": "open"}, {}), (None, ""))
 
