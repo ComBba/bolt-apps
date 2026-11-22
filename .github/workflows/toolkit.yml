@@ -1,12 +1,13 @@
 # Tests the author toolkit. No secrets, runs on pull requests from anyone.
 name: toolkit
 
+# docs-drift reads root Markdown as well as the docs in the listed directories.
 on:
   pull_request:
-    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "**.md", ".github/workflows/toolkit.yml"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "*.md", ".github/workflows/toolkit.yml"]
   push:
     branches: [main]
-    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "**.md", ".github/workflows/toolkit.yml"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "*.md", ".github/workflows/toolkit.yml"]
 
 permissions:
   contents: read
