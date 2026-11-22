@@ -412,6 +412,20 @@ class OtherIds(LiveBase):
             rows = self.rows(["projects", item["nav"]["arg"]], d)
             self.assertEqual([r["title"] for r in rows if r.get("kpi_label") == "Progress"], [item["title"]])
 
+    def test_derived_args_do_not_enter_the_refresh_namespace(self):
+        m = load_engine()
+        for raw in ("refresh.é", "refresh.東京", "refresh.850f7dc43910"):
+            with self.subTest(raw=raw):
+                arg = m.item_id({}, {"id": raw})
+                self.assertEqual(m.token(arg), arg)
+                self.assertFalse(arg.startswith("refresh."), arg)
+                Server.payload["projects"]["data"][0]["id"] = raw
+                d = self.folder()
+                selected = next(r for r in self.rows(["projects"], d) if (r.get("nav") or {}).get("arg") == arg)
+                for detail_arg in (arg, "refresh." + arg):
+                    rows = self.rows(["projects", detail_arg], d)
+                    self.assertEqual([r["title"] for r in rows if r.get("kpi_label") == "Progress"], [selected["title"]])
+
     def test_a_fold_truncated_at_a_separator_still_drills(self):
         m = load_engine()
         for separator in (".", "-"):

@@ -896,6 +896,8 @@ def item_id(view, item):
         return raw
     fold = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
     fold = re.sub(r"\.{2,}", ".", re.sub(r"[^A-Za-z0-9_.-]+", "-", fold)).strip("-.")[:40].rstrip("-.")
+    if fold == "refresh" or fold.startswith("refresh."):
+        fold = "id-" + fold
     return "%s.%s" % (fold or "id", hashlib.sha256(raw.encode("utf-8")).hexdigest()[:12])
 
 
