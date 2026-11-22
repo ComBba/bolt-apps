@@ -889,11 +889,10 @@ def sort_items(view, items):
 
 
 def item_id(view, item):
-    """The nav arg for an item. An id that is already a nav token (letters, digits, _ . -, at most 64) is used as it is. Any other id
-    (cafe with an accent, a name in another script, a/b, a longer one) becomes an ASCII part and a hash of the whole id, so two ids never
-    share an arg and none is left without one."""
+    """The nav arg for an item. A nav token (letters, digits, _ . -, at most 64) is used as it is unless it ends in . and 12 lowercase hex
+    digits. Those ids and non-token ids become an ASCII part and a hash of the whole id, keeping derived args separate from unchanged ids."""
     raw = str(get_path(item, view.get("id_field", "id")))
-    if token(raw) == raw:
+    if token(raw) == raw and not re.search(r"\.[0-9a-f]{12}\Z", raw):
         return raw
     fold = unicodedata.normalize("NFKD", raw).encode("ascii", "ignore").decode("ascii")
     fold = re.sub(r"\.{2,}", ".", re.sub(r"[^A-Za-z0-9_.-]+", "-", fold)).strip("-.")[:40].rstrip("-.")

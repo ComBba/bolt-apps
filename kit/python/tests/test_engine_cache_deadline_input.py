@@ -400,6 +400,18 @@ class OtherIds(LiveBase):
         self.assertEqual(load_engine().item_id({}, {"id": "P-1"}), "P-1")
         self.assertEqual(load_engine().item_id({}, {"id": "TK_12.3"}), "TK_12.3")
 
+    def test_a_token_matching_a_derived_arg_drills_to_its_own_item(self):
+        projects = Server.payload["projects"]["data"]
+        projects[0]["id"], projects[1]["id"] = "café", "cafe.850f7dc43910"
+        d = self.folder()
+        titles = {p["name"] for p in projects[:2]}
+        items = [r for r in self.rows(["projects"], d) if r["title"] in titles]
+        self.assertEqual(len(items), 2)
+        self.assertEqual(len({r["nav"]["arg"] for r in items}), 2)
+        for item in items:
+            rows = self.rows(["projects", item["nav"]["arg"]], d)
+            self.assertEqual([r["title"] for r in rows if r.get("kpi_label") == "Progress"], [item["title"]])
+
     def test_a_fold_truncated_at_a_separator_still_drills(self):
         m = load_engine()
         for separator in (".", "-"):
