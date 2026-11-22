@@ -359,3 +359,24 @@ test('a valid check.json object still exits 1 for a checker finding', (t) => {
 	assert.ok(codes(result.findings).includes('interpreter_missing'));
 	assert.ok(!codes(result.findings).includes('load_error'));
 });
+
+test('check takes the script app path when check.json is present but cannot be reached', { skip: process.platform === 'win32' }, (t) => {
+	const d = fs.mkdtempSync(path.join(os.tmpdir(), 'kit-unreachablecfg-'));
+	t.after(() => { fs.chmodSync(d, 0o755); fs.rmSync(d, { recursive: true, force: true }); });
+	const app = path.join(d, 'app');
+	fs.mkdirSync(app);
+	fs.symlinkSync('missing.json', path.join(app, 'check.json'));
+	const dangling = spawnSync(process.execPath, [CLI, 'check', app, '--json'], { encoding: 'utf8' });
+	assert.equal(dangling.status, 2, dangling.stdout + dangling.stderr);
+	const result = JSON.parse(dangling.stdout);
+	assert.match(result.error, /check\.json could not be read \(ENOENT\)/);
+	assert.deepEqual(codes(result.findings), ['load_error']);
+	if (process.getuid() === 0) return;  // root reads a folder with no permissions
+	fs.rmSync(path.join(app, 'check.json'));
+	fs.writeFileSync(path.join(app, 'check.json'), '{}');
+	fs.chmodSync(d, 0o000);
+	const locked = spawnSync(process.execPath, [CLI, 'check', app], { encoding: 'utf8' });
+	fs.chmodSync(d, 0o755);
+	assert.equal(locked.status, 2, locked.stdout + locked.stderr);
+	assert.match(locked.stderr, /check\.json could not be read \(EACCES\)/);
+});
