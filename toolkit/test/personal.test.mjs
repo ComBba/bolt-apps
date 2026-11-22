@@ -103,6 +103,15 @@ test('the permissions a personal pack writes into its listing pass lint and veri
 	}
 });
 
+test('the gallery lint warns about a bare opens_links that no gallery content uses', () => {
+	const d = tmp(); run(d, 'new', 'acmesearch', '--type', 'search');
+	const f = path.join(d, 'apps', 'acmesearch', 'bolt-app.json'), j = JSON.parse(fs.readFileSync(f, 'utf8'));
+	j.permissions.push('opens_links'); write(f, JSON.stringify(j));
+	const r = run(d, 'lint', 'apps/acmesearch', '--json'), found = JSON.parse(r.stdout).reports[0].findings;
+	assert.equal(r.status, 0, r.stdout);
+	assert.deepEqual(found.map((x) => [x.level, x.code, x.message]), [['warning', 'permission_unused', '"opens_links" is declared but nothing uses it']]);
+});
+
 test('--personal also packs an ordinary tier 2 app, and a local-service app says its port', () => {
 	const d = tmp(); run(d, 'new', 'up', '--type', 'transform');
 	assert.equal(run(d, 'pack', 'apps/up', '--personal', '--key', keyed(d), '--out', path.join(d, 'u.boltpack')).status, 0);
