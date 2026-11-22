@@ -475,6 +475,8 @@ def key_advice(app, api, problem):
     """(title, subtitle) naming what is wrong with the key and the fix for that cause, or None when there is simply no key (the setup row).
     problem is the kit's reason a key was refused; with none, the key file, when there is one, is read for why it gave no key."""
     name, path = api.get("key_env", "API_KEY"), key_file(app, api)
+    if os.name == "nt":
+        path = os.path.normpath(path)
     home = os.path.expanduser("~")
     words = {"name": name, "path": "~" + path[len(home):] if path.startswith(home + os.sep) else path}
     if problem:
@@ -492,6 +494,8 @@ def key_advice(app, api, problem):
     except FileNotFoundError:
         return None
     except OSError:
+        if os.name == "nt":
+            return "The key file cannot be read", "%(path)s is there but you cannot read it: make sure your Windows account can read it (file Properties, Security), then press Enter" % words
         return "The key file cannot be read", "%(path)s is there but you cannot read it: run chmod 600 on it, then press Enter" % words
     lines = [x[7:].lstrip() if x.startswith("export ") else x for x in lines]
     if any(x.startswith(name + "=") for x in lines):   # the kit read the line and found no value in it

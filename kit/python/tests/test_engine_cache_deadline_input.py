@@ -3,7 +3,9 @@ over the read limit says it is too large; the steps of a lookup chain share one 
 that is not a nav token still drills; --emit-yaml refuses a value with a line break. Runs on Python 3.9."""
 import http.server
 import json
+import ntpath
 import os
+import posixpath
 import shutil
 import subprocess
 import sys
@@ -11,6 +13,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -361,6 +364,19 @@ class KeyAdviceWords(unittest.TestCase):
 
     def test_an_unknown_reason_is_shown(self):
         self.assertEqual(self.advice("the keychain is locked"), ("The DEMO_KEY key was not used", "the keychain is locked; fix that, then press Enter"))
+
+    def test_an_unreadable_key_file_uses_native_advice_and_paths(self):
+        with self.subTest(os="windows"):
+            with patch.object(self.m.os, "name", "nt"), patch.object(self.m.os, "path", ntpath), patch.object(self.m.os, "sep", "\\"), \
+                    patch.dict(os.environ, {"USERPROFILE": r"C:\profiles\example"}), patch.object(self.m.os, "lstat", side_effect=PermissionError()):
+                advice = self.m.key_advice({"id": "demo-app"}, {"env_file": "C:/profiles/example/.config/demo-app/.env"}, "")
+            self.assertEqual(advice, ("The key file cannot be read",
+                                      r"~\.config\demo-app\.env is there but you cannot read it: make sure your Windows account can read it (file Properties, Security), then press Enter"))
+        with self.subTest(os="posix"):
+            with patch.object(self.m.os, "name", "posix"), patch.object(self.m.os, "path", posixpath), patch.object(self.m.os, "sep", "/"), \
+                    patch.object(self.m.os, "lstat", side_effect=PermissionError()):
+                self.assertEqual(self.advice(""), ("The key file cannot be read",
+                                                  "/nowhere/demo.env.test is there but you cannot read it: run chmod 600 on it, then press Enter"))
 
     def test_the_kit_reasons_are_the_ones_matched(self):
         """If the kit rewords a reason, this fails before a person sees the general row."""
