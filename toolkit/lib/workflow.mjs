@@ -109,7 +109,7 @@ export function newList() {
 	for (const a of apps) console.log(`  ${a.id.padEnd(24)} ${a.need || a.layout}\n  ${''.padEnd(24)} edit: ${(a.edit || []).join(', ')}`);
 	console.log(`\nStart with the one whose "need" matches. Not sure: ${DOCS}`);
 }
-export function newFromTemplate(template, id, root) {
+export function newFromTemplate(template, id, root, author, authorNote = '') {
 	staleCloneNote();
 	const src = path.join(EXAMPLES, template);
 	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`, 2);
@@ -150,8 +150,11 @@ export function newFromTemplate(template, id, root) {
 	walkText(dir);
 	if (fs.existsSync(sd0)) { const longest = fs.readdirSync(sd0).map((f) => `manifests/scripts/${f}`).filter((n) => n.length > 100)[0]; if (longest) fail(`the id "${id}" is too long: ${longest.slice(10)} would not fit: Bolt allows 128 characters per name (every file starts with <app id>__, ids are up to 64), and this toolkit packs at most 82 for a script name. Choose a shorter id.`); }
 	// The listing text (summary, role, saves) and the app description described the TEMPLATE. Say so plainly instead of leaving another app's words on yours: lint warns (listing_todo) until they are rewritten.
-	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; j.summary = `TODO describe your app: what =${chip} shows, in one line.`; j.role = 'TODO describe who this app is for.'; j.saves = 'TODO describe what it saves them.'; return JSON.stringify(j, null, 2) + '\n'; });
-	edit('README.md', (s) => `> Template text below: replace it with what your app does. The files \`new\` leaves for you to rewrite are listed in ENGINE.md, "Make it yours".\n\n${s}`);
+	// The author was the template's too, and pack copies author.name into the pack (signed_by and the pack author): a copy carries the person's name (--author, or their login name, as `new <id>` does), never the examples' name and link.
+	edit('bolt-app.json', (t) => { const j = JSON.parse(t); j.id = id; j.title = title; j.summary = `TODO describe your app: what =${chip} shows, in one line.`; j.role = 'TODO describe who this app is for.'; j.saves = 'TODO describe what it saves them.'; j.author = { name: author }; return JSON.stringify(j, null, 2) + '\n'; });
+	edit('README.md', (s) => `> Template text below: replace it with what your app does. Keep the source credit. The files \`new\` leaves for you to rewrite are listed in ENGINE.md, "Make it yours".\n>\n`
+		+ `> Based on the \`${template}\` example from Bolt Apps, licensed under Apache-2.0. Keep the license and notices with any code you copy.\n`
+		+ `> If you build on someone else's app, keep their author credit and record the original app ID in \`derived_from\` in \`bolt-app.json\`.\n\n${s}`);
 	const cfgName = `scripts/${id}__config.json`;
 	edit(cfgName, (t) => { const j = JSON.parse(t); if (j.app) { j.app.id = id; j.app.chip = chip; j.app.title = title; j.app.description = `TODO describe your app: one line on what =${chip} shows.`; } return JSON.stringify(j, null, 2) + '\n'; });
 	// regenerate the app file from the config when the template has an emitter, else rewrite id, chip and title in place
@@ -179,7 +182,9 @@ export function newFromTemplate(template, id, root) {
 	}
 	// index.json names the template's own files; say the names they have in the copy (scripts renamed to <id>__, the app file to utilities/<id>.yaml)
 	const copyPath = (f) => renameAppFile(f.split(`${template}__`).join(`${id}__`));
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note: replace it\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}`);
+	if (authorNote) console.log(authorNote);
+	console.log(`\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note. Replace the template text and keep the source credit\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
 }
 
 // For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).
