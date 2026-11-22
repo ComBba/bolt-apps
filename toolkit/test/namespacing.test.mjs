@@ -197,6 +197,15 @@ test('bump gives a version newer than every form --version accepts', () => {
 	}
 });
 
+test('bump and newer keep all digits of large version components', () => {
+	const last = '2.0.0.9007199254740992';
+	const next = '2.0.0.9007199254740993';
+	assert.equal(bump(last), next);
+	assert.equal(bump(`v${next}-rc1+build.7`), '2.0.0.9007199254740994');
+	assert.ok(newer(next, last));
+	assert.ok(!newer(last, next));
+});
+
 test('clockVersion follows the rules of Bolt\'s own version order', () => {
 	const a = clockVersion(Date.UTC(2026, 10, 15)), b = clockVersion(Date.UTC(2026, 10, 15, 0, 0, 1));
 	assert.ok(newer(b, a)); assert.ok(newer('1.0.1000000', '1.0.999999')); assert.ok(!newer('1.0', '1.0.0'));

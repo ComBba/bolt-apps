@@ -317,10 +317,10 @@ const loadShip = () => { try { const j = JSON.parse(fs.readFileSync(path.join(ST
 // number here is seconds since 2026-01-01, so a later clock value can advance a version even when ~/.bolt-apps/ship.json is lost.
 const EPOCH_MS = Date.UTC(2026, 0, 1);
 export const clockVersion = (now = Date.now()) => `1.0.${Math.max(1, Math.floor((now - EPOCH_MS) / 1000))}`;
-const core = (v) => String(v).trim().replace(/^[vV]/, '').split('+')[0].split('-')[0].split('.').map((x) => Number(x) || 0);
-export const newer = (a, b) => { const x = core(a), y = core(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0; } return false; };
+const core = (v) => String(v).trim().replace(/^[vV]/, '').split('+')[0].split('-')[0].split('.').map((x) => /^\d+$/.test(x) ? BigInt(x) : 0n);
+export const newer = (a, b) => { const x = core(a), y = core(b); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] ?? 0n) - (y[i] ?? 0n); if (d) return d > 0n; } return false; };
 // One above the last build, in any form --version accepts (2.0, v1.2.0-rc1, or four numbers): the last number goes up, so the result is always newer than `v`.
-export const bump = (v) => { const p = core(v); while (p.length < 3) p.push(0); p[p.length - 1] += 1; return p.join('.'); };
+export const bump = (v) => { const p = core(v); while (p.length < 3) p.push(0n); p[p.length - 1] += 1n; return p.join('.'); };
 // The archive name is only a filter. Its metadata identifies the app and version.
 function packVersion(meta, id) {
 	const version = meta?.bundle_version;
