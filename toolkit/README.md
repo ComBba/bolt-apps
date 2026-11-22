@@ -50,7 +50,7 @@ The gallery takes tier 1 and 2 only. An app that runs programs or reaches the ne
 ./bolt-apps check kit/examples/system-glance --os linux
 ```
 
-`check` for script apps is a first slice. Run it only on code you have read: it executes the script on your machine, and the empty environment is not a sandbox. It runs your script against recorded command output on this machine. It does not run the real launcher, Windows, or the real tools of another OS; those cases are labelled "fixture-tested only".
+`check` for script apps is a first slice. Run it only on code you have read: it executes the script on your machine, and the empty environment is not a sandbox. It runs your script against recorded command output on this machine. It does not run the real launcher or the real tools of another OS; cases for other OSes are labelled "fixture-tested only".
 
 ## What this toolkit does not do
 
