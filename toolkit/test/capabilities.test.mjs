@@ -77,8 +77,8 @@ test('limits come from the rules file: every placeholder resolves and the key li
 	for (const r of caps.rows) if (r.id !== 'actions.footer') assert.ok(!/footer buttons/i.test(r.limit) || /rules/.test(r.limit), r.id);
 });
 
-test('no row claims a sandbox, confinement or a widget that is not shipped', () => {
-	const bad = /\b(sandboxed|confined|pie|donut|heatmap|gauge)\b/i, strip = (x) => x.replace(/\bnot confined\b/gi, '');
+test('no row claims a sandbox or confinement', () => {
+	const bad = /\b(sandboxed|confined)\b/i, strip = (x) => x.replace(/\bnot confined\b/gi, '');
 	for (const r of caps.rows.filter((x) => x.status !== 'not supported')) assert.ok(!bad.test(strip(r.name + ' ' + r.limit)), r.id);
 	assert.equal(caps.rows.find((r) => r.id === 'security.sandbox').status, 'not supported');
 	assert.equal(caps.rows.find((r) => r.id === 'platform.windows').status, 'partial');

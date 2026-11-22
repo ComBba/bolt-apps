@@ -1,0 +1,78 @@
+{
+  "script": "scripts/chart-types__engine.py",
+  "interpreter": "python3",
+  "manifest_actions": 2,
+  "kit": "scripts/chart-types__bolt_app_kit.py",
+  "fixture": true,
+  "cases": [
+    {
+      "name": "overview dashboard",
+      "os": "macos",
+      "args": [
+        "overview"
+      ],
+      "golden": "golden/overview.json"
+    },
+    {
+      "name": "pie from rows (Bolt 182)",
+      "os": "macos",
+      "args": [
+        "pie_rows"
+      ],
+      "golden": "golden/pie-rows.json"
+    },
+    {
+      "name": "donut from rows (Bolt 182)",
+      "os": "macos",
+      "args": [
+        "donut_rows"
+      ],
+      "golden": "golden/donut-rows.json"
+    },
+    {
+      "name": "two lines from rows with bind.series (Bolt 182)",
+      "os": "macos",
+      "args": [
+        "multi_rows"
+      ],
+      "golden": "golden/multi-rows.json"
+    },
+    {
+      "name": "area with bind.series (Bolt 182)",
+      "os": "macos",
+      "args": [
+        "area_rows"
+      ],
+      "golden": "golden/area-rows.json"
+    },
+    {
+      "name": "heatmap from rows (Bolt 182)",
+      "os": "macos",
+      "args": [
+        "heat_rows"
+      ],
+      "golden": "golden/heat-rows.json"
+    },
+    {
+      "name": "gauge from the selected row (Bolt 182)",
+      "os": "macos",
+      "args": [
+        "gauge_row"
+      ],
+      "golden": "golden/gauge-row.json"
+    },
+    {
+      "name": "no key and no sample switch: the sample data is shown, with the sample label and a key hint on a tile (api.on_missing_key sample)",
+      "os": "macos",
+      "fixture": "unset",
+      "args": [
+        "overview"
+      ],
+      "expect": {
+        "text_present": [
+          "sample data"
+        ]
+      }
+    }
+  ]
+}

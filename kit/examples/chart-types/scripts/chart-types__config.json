@@ -1,0 +1,320 @@
+{
+  "app": {
+    "id": "chart-types",
+    "chip": "chart-types",
+    "title": "Chart Types",
+    "icon": "line-chart",
+    "description": "Pie, donut, area, two-line charts, a heatmap and a gauge from rows. Needs Bolt 0.1.182 or newer. Sample data.",
+    "service": "Chart Types"
+  },
+  "api": {
+    "base_url": "https://api.example.com",
+    "key_env": "CHART_API_KEY",
+    "fixture_default": false,
+    "on_missing_key": "sample",
+    "fixture_file": "fixtures.json",
+    "fixture_banner": false
+  },
+  "cache": {
+    "ttl": 45,
+    "stale_max": 86400
+  },
+  "endpoints": {
+    "weekly": {
+      "path": "/v1/deploys"
+    },
+    "traffic": {
+      "path": "/v1/traffic"
+    },
+    "health": {
+      "path": "/v1/health"
+    }
+  },
+  "stats": {
+    "deploys_total": {
+      "endpoint": "weekly",
+      "field_sum": "count"
+    },
+    "requests_total": {
+      "endpoint": "traffic",
+      "field_sum": "requests"
+    },
+    "score_max": {
+      "endpoint": "health",
+      "field_max": "score"
+    }
+  },
+  "overview": {
+    "widget": {
+      "kind": "cards",
+      "mode": "list_data",
+      "bind": {
+        "layout": "tiles",
+        "title": "{{row.kpi_label}}",
+        "value": "{{row.kpi_value}}",
+        "unit": "{{row.kpi_unit}}",
+        "delta": "{{row.delta}}",
+        "delta_label": "{{row.since}}",
+        "max": "{{row.kpi_max}}",
+        "trend": "{{row.trend}}",
+        "subtitle": "{{row.kpi_note}}",
+        "badge": "{{row.kpi_badge}}",
+        "footer": "{{row.kpi_foot}}"
+      }
+    },
+    "rows": [
+      {
+        "title": "Pie from rows",
+        "subtitle": "share of a whole: x and y",
+        "icon": "line-chart",
+        "view": "pie_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
+      },
+      {
+        "title": "Donut from rows",
+        "subtitle": "a pie with the total in the centre",
+        "icon": "line-chart",
+        "view": "donut_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
+      },
+      {
+        "title": "Two lines from rows",
+        "subtitle": "bind.series: y per line",
+        "icon": "line-chart",
+        "view": "multi_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
+      },
+      {
+        "title": "Area from rows",
+        "subtitle": "two filled lines",
+        "icon": "line-chart",
+        "view": "area_rows",
+        "tile": {
+          "label": "Total",
+          "value": "deploys_total",
+          "note": "deploys"
+        }
+      },
+      {
+        "title": "Heatmap from rows",
+        "subtitle": "x, y and a value per cell",
+        "icon": "activity",
+        "view": "heat_rows",
+        "tile": {
+          "label": "Requests",
+          "value": "requests_total",
+          "note": "this week"
+        }
+      },
+      {
+        "title": "Gauge from a row",
+        "subtitle": "one value on a 0 to 100 scale",
+        "icon": "activity",
+        "view": "gauge_row",
+        "tile": {
+          "label": "Best score",
+          "value": "score_max",
+          "note": "of 100"
+        }
+      }
+    ]
+  },
+  "views": [
+    {
+      "id": "pie_rows",
+      "title": "Pie (rows)",
+      "icon": "line-chart",
+      "endpoint": "weekly",
+      "item": {
+        "title": "{day} · {count}",
+        "subtitle": "deploys per day",
+        "extra": {
+          "label": "{day}",
+          "value": "{count}"
+        }
+      },
+      "widget": {
+        "kind": "chart",
+        "mode": "list_data",
+        "bind": {
+          "type": "pie",
+          "x": "label",
+          "y": "value",
+          "label": "Deploys by day"
+        }
+      }
+    },
+    {
+      "id": "donut_rows",
+      "title": "Donut (rows)",
+      "icon": "line-chart",
+      "endpoint": "weekly",
+      "item": {
+        "title": "{day} · {count}",
+        "subtitle": "deploys per day",
+        "extra": {
+          "label": "{day}",
+          "value": "{count}"
+        }
+      },
+      "widget": {
+        "kind": "chart",
+        "mode": "list_data",
+        "bind": {
+          "type": "donut",
+          "x": "label",
+          "y": "value",
+          "label": "Deploys by day"
+        }
+      }
+    },
+    {
+      "id": "multi_rows",
+      "title": "Two lines (rows)",
+      "icon": "line-chart",
+      "endpoint": "weekly",
+      "item": {
+        "title": "{day} · {count}",
+        "subtitle": "deploys and failures per day",
+        "extra": {
+          "label": "{day}",
+          "value": "{count}",
+          "failed": "{failed}"
+        }
+      },
+      "widget": {
+        "kind": "chart",
+        "mode": "list_data",
+        "bind": {
+          "type": "line",
+          "x": "label",
+          "label": "Deploys and failures",
+          "series": [
+            {
+              "y": "value",
+              "label": "Deploys"
+            },
+            {
+              "y": "failed",
+              "label": "Failed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "area_rows",
+      "title": "Area (rows)",
+      "icon": "line-chart",
+      "endpoint": "weekly",
+      "item": {
+        "title": "{day} · {count}",
+        "subtitle": "deploys and failures per day",
+        "extra": {
+          "label": "{day}",
+          "value": "{count}",
+          "failed": "{failed}"
+        }
+      },
+      "widget": {
+        "kind": "chart",
+        "mode": "list_data",
+        "bind": {
+          "type": "area",
+          "x": "label",
+          "label": "Deploys and failures",
+          "series": [
+            {
+              "y": "value",
+              "label": "Deploys"
+            },
+            {
+              "y": "failed",
+              "label": "Failed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "heat_rows",
+      "title": "Heatmap (rows)",
+      "icon": "activity",
+      "endpoint": "traffic",
+      "item": {
+        "title": "{day} {hour}:00 · {requests}",
+        "subtitle": "requests per hour",
+        "extra": {
+          "day": "{day}",
+          "hour": "{hour}",
+          "requests": "{requests}"
+        }
+      },
+      "widget": {
+        "kind": "heatmap",
+        "mode": "list_data",
+        "bind": {
+          "x": "hour",
+          "y": "day",
+          "value": "requests",
+          "label": "Requests per hour",
+          "unit": " req"
+        }
+      }
+    },
+    {
+      "id": "gauge_row",
+      "title": "Gauge (row)",
+      "icon": "activity",
+      "endpoint": "health",
+      "item": {
+        "title": "{name} · {score}",
+        "subtitle": "score out of 100",
+        "extra": {
+          "score": "{score}",
+          "name": "{name}"
+        }
+      },
+      "widget": {
+        "kind": "gauge",
+        "mode": "selected_row",
+        "bind": {
+          "value": "{{row.score}}",
+          "min": "0",
+          "max": "100",
+          "label": "{{row.name}}",
+          "shape": "half",
+          "thresholds": [
+            {
+              "at": "0",
+              "label": "Low",
+              "tone": "error"
+            },
+            {
+              "at": "50",
+              "label": "Fair",
+              "tone": "warn"
+            },
+            {
+              "at": "80",
+              "label": "Good",
+              "tone": "ok"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
