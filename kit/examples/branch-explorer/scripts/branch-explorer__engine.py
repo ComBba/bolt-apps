@@ -246,8 +246,9 @@ def badge_for(rules, item, glob):
 
 def make_tile(spec, item, glob):
     """A KPI tile from {label, value, max, unit, note, foot, badge}. A value that cannot be read gives no tile, never a zero.
-    Its badge then comes only from rules with an `if` that do not name the value's own field (one on another field, such as
-    status==open, still applies): the last rule has no `if`, so it would say CLEAR or BEHIND about a number that did not load, and a
+    Its badge then skips rules naming the value's field on the left or reading it on the right. Ordering rules naming it on the
+    right are skipped even when it is absent; == and != keep that word as plain text when absent. Rules on another field, such as
+    status==open, still apply. The last rule has no `if`, so it would say CLEAR or BEHIND about a number that did not load, and a
     rule such as remaining>=10 would compare a text value like N/A as text. A plain word badge is left out."""
     if not spec:
         return None, ""
@@ -257,9 +258,10 @@ def make_tile(spec, item, glob):
     if v is None:
         own = val if isinstance(val, str) else None
 
-        def other_field(r):   # skipped: a rule whose left side is the value's field, or whose right side reads that field (the same word as plain text is kept)
+        def other_field(r):   # skip own-field reads and ordering on its name; absent-field == and != keep plain text
             m = RULE.match(str(r.get("if") or ""))
-            return bool(m) and m.group(1) != own and not (m.group(3) == own and lookup(own, item, glob) is not None)
+            return bool(m) and m.group(1) != own and not (m.group(3) == own and
+                (m.group(2) in (">=", "<=", ">", "<") or lookup(own, item, glob) is not None))
         return None, (badge_for([r for r in rules if isinstance(r, dict) and other_field(r)], item, glob) if rules else "")
     badge = badge_for(rules, item, glob) if rules is not None else str(spec.get("badge", ""))
     mx = spec.get("max")

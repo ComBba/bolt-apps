@@ -63,7 +63,9 @@ class Live(unittest.TestCase):
         self.dirs.append(d)
         scripts = os.path.join(EX, "portal-template", "scripts")
         for f in os.listdir(scripts):
-            shutil.copy(os.path.join(scripts, f), os.path.join(d, f))
+            source = os.path.join(scripts, f)
+            if os.path.isfile(source):
+                shutil.copy(source, os.path.join(d, f))
         with open(os.path.join(d, "portal-template__config.json"), "w") as f:
             json.dump(self.cfg, f)
         return d
@@ -76,6 +78,15 @@ class Live(unittest.TestCase):
         r = subprocess.run([sys.executable, os.path.join(d, "portal-template__engine.py")] + args, env=e, capture_output=True, text=True, cwd=d)
         self.assertEqual(r.returncode, 0, r.stderr)
         return json.loads(r.stdout)
+
+    def test_folder_copies_files_when_a_bytecode_directory_exists(self):
+        cache = os.path.join(EX, "portal-template", "scripts", "__pycache__")
+        created = not os.path.exists(cache)
+        if created:
+            os.mkdir(cache)
+            self.addCleanup(os.rmdir, cache)
+        d = self.folder()
+        self.assertTrue(os.path.isfile(os.path.join(d, "portal-template__config.json")))
 
     def assert_list_kept(self, rows, word):
         text = json.dumps(rows, ensure_ascii=False)
@@ -227,6 +238,10 @@ class TileBadge(unittest.TestCase):
         self.assertEqual(self.m.make_tile({"value": "active", "badge": rules}, {"status": "active"}, {}), (None, "ON"))
         self.assertEqual(self.m.make_tile({"value": "active", "badge": rules}, {"status": "active", "active": "N/A"}, {}), (None, ""))
 
+    def test_an_ordering_rule_on_the_right_skips_a_missing_value_field(self):
+        rules = [{"if": "limit<remaining", "badge": "OVER"}]
+        self.assertEqual(self.m.make_tile({"value": "remaining", "badge": rules}, {"limit": "0"}, {}), (None, ""))
+
     def test_no_value_drops_a_plain_word_badge(self):
         self.assertEqual(self.m.make_tile({"value": "priority", "badge": "NEW"}, {"status": "open"}, {}), (None, ""))
 
@@ -252,6 +267,10 @@ class YesFilter(unittest.TestCase):
         for v, want in ((True, "Yes"), (False, "No"), ("true", "Yes"), ("false", "No"), ("yes", "Yes"), ("no", "No"),
                         ("TRUE", "Yes"), (" False ", "No"), ("maybe", "maybe"), (None, "unknown"), ("", "unknown")):
             self.assertEqual(s(v, "yes"), want, repr(v))
+
+    def test_yes_keeps_other_text_as_written(self):
+        text = "  No response yet  "
+        self.assertEqual(self.m.render("{answer|yes}", {"answer": text}, {}), text)
 
 
 class FormRecord(unittest.TestCase):
