@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseYaml, Unreadable, get, str } from './yamlsubset.mjs';
-import { RULES, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems } from './boltrules.mjs';
+import { RULES, gateProblem, structureProblems, bindProblems, envProblems, timeoutProblems, httpProblems, actionProblems, paneNavProblems } from './boltrules.mjs';
 export function httpsLiteralHost(t) {
 	const rest = String(t).trim();
 	if (!rest.startsWith('https://')) return null;
@@ -108,11 +108,10 @@ export const MAX_VIEWS = 8;                                   // the launcher MA
 const VIEW_NAME = /^[a-z][a-z0-9_-]{0,23}$/;                  // the launcher name_re
 export const NAV_ARG_RE = /^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$/; // the launcher NAV_ARG_RE
 export const isNavToken = (s) => typeof s === 'string' && NAV_ARG_RE.test(s) && !s.includes('..'); // the launcher isNavArg
-export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid']; // the launcher
+export const RIGHT_WIDGET_KINDS = ['card', 'map', 'image', 'calc', 'color', 'weather', 'date', 'markdown', 'entity_preview', 'chart', 'table', 'cards', 'detail', 'json_tree', 'diff', 'image_grid', 'heatmap', 'gauge']; // the launcher (heatmap and gauge from Bolt 182)
 const RIGHT_WIDGET_MODES = ['selected_row', 'list_data'];     // the launcher
 export const NO_APP_DATA_KINDS = ['image', 'color', 'weather', 'date', 'calc']; // the launcher NO_APP_DATA
 const BIND_NONE = ['map', 'image', 'calc', 'color', 'weather', 'date']; // the launcher BIND_NONE: these panes read nothing from bind
-const CHART_TYPES = ['line', 'bar', 'sparkline'];             // the launcher
 const OS3 = ['macos', 'linux', 'windows'];
 // The launcher: a double-quoted YAML string can spell the placeholder with escapes the text check cannot see, so Bolt
 // refuses to pin the app down at all. The regex is the launcher's own, applied to the whole file text (comments too).
@@ -160,6 +159,8 @@ export function launcherRules(root, opts = {}) {
 		const kind = str(get(rw, 'kind')?.value), mode = str(get(rw, 'mode')?.value), bind = get(rw, 'bind')?.value;
 		if (kind !== undefined && !RIGHT_WIDGET_KINDS.includes(kind)) E('right_widget_kind_invalid', `${p}.kind "${kind}" is not one of ${RIGHT_WIDGET_KINDS.join(', ')}`);
 		if (mode !== undefined && !RIGHT_WIDGET_MODES.includes(mode)) E('right_widget_kind_invalid', `${p}.mode "${mode}" is not one of ${RIGHT_WIDGET_MODES.join(', ')}`);
+		// a pane only a newer Bolt knows (heatmap, gauge: Bolt 182): a 181 refuses the whole pack, so the app must declare min_bolt_version
+		if (kind !== undefined && RULES.kind_since && RULES.kind_since[kind]) { const g = gateProblem(p, 'kind', RULES.kind_since[kind], { minBolt: opts.minBolt, minBoltKnown: opts.minBoltKnown }); if (g) (g.level === 'warning' ? W : E)(g.code, g.message.replace(`${p}.kind:`, `${p}.kind "${kind}":`)); }
 		if (NO_APP_DATA_KINDS.includes(kind)) W('right_widget_no_data', `${p}.kind "${kind}" passes validation but Bolt shows "This app asks for a ${kind} pane, which cannot show app data" instead of your rows. Use table, detail, cards or chart${kind === 'image' ? ' (image_grid for pictures)' : ''}`);
 		const bad = (code, m) => (strict ? E : W)(code, strict ? m : `${m} (a warning for schema_version 1, an error from schema_version 2)`);
 		if (BIND_NONE.includes(kind) && bind && bind.t === 'm' && bind.entries.length) bad('right_widget_bind_unread', `${p}.bind.${bind.entries[0].key}: a ${kind} pane reads nothing from bind; remove the key${kind === 'map' ? ' (the map takes the launcher\'s own state; use an "Open in Maps" url action for a place)' : ''}`);

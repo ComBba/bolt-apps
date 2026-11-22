@@ -103,7 +103,11 @@
   "actions.icons_count": 37,
   "actions.reserved_label_words_count": 12,
   "actions.forbidden_ids_count": 13,
-  "env.benign_passthrough_count": 25
+  "env.benign_passthrough_count": 25,
+  "widget_kinds_added_182": [
+   "heatmap",
+   "gauge"
+  ]
  },
  "chart_types": {
   "launcher_native": [
@@ -111,7 +115,13 @@
    "bar",
    "sparkline"
   ],
-  "note": "The PWA on main also draws pie, donut, area and series, but the native loader still refuses them, so they are not shipped."
+  "note": "launcher_native is the 181 loader. Bolt 0.1.182 (native f16dccef4 and 92272fc78, pwa 3f5150839 and 63c1a74bb, first in tag v0.1.182) also reads pie, donut, area, bind.series, and the heatmap and gauge panes; a 181 refuses a pack that uses them, so such an app declares min_bolt_version 0.1.182.",
+  "added_182": [
+   "pie",
+   "donut",
+   "area"
+  ],
+  "series_added_182": true
  },
  "behaviours_from_source_not_run_live": [
   "drill cache: last 8 lists for 5 minutes by typed input",
