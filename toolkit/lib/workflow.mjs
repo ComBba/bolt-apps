@@ -99,7 +99,7 @@ export function newList() {
 	for (const a of apps) console.log(`  ${a.id.padEnd(24)} ${a.need || a.layout}\n  ${''.padEnd(24)} edit: ${(a.edit || []).join(', ')}`);
 	console.log(`\nStart with the one whose "need" matches. Not sure: ${DOCS}`);
 }
-export function newFromTemplate(template, id, root, author) {
+export function newFromTemplate(template, id, root, author, authorNote = '') {
 	staleCloneNote();
 	const src = path.join(EXAMPLES, template);
 	if (!fs.existsSync(path.join(src, 'bolt-app.json'))) die(`no template "${template}". Run: ./bolt-apps new --list`);
@@ -172,7 +172,9 @@ export function newFromTemplate(template, id, root, author) {
 	}
 	// index.json names the template's own files; say the names they have in the copy (scripts renamed to <id>__, the app file to utilities/<id>.yaml)
 	const copyPath = (f) => renameAppFile(f.split(`${template}__`).join(`${id}__`));
-	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}\n\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - replace the template text in README.md and keep the source credit\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
+	console.log(`created ${q(dir)} from ${template} (id ${id}, chip =${chip}). ${note}`);
+	if (authorNote) console.log(authorNote);
+	console.log(`\nNext:\n${[`edit: ${(listTemplates().find((a) => a.id === template)?.edit || ['the files its README names']).map(copyPath).join(', ')}${(() => { const fe = listTemplates().find((a) => a.id === template)?.first_edit; return fe ? `\n     change first: ${copyPath(String(fe))}` : ''; })()}`, connectStep(dir, id), `./bolt-apps run ${q(dir)} --sample      (see the rows) and  ./bolt-apps check ${q(dir)}`, `./bolt-apps ship ${q(dir)}              (lint, check, pack, verify, then drop the .boltpack on Bolt)`].filter(Boolean).map((t, i) => `  ${i + 1}. ${t}`).join('\n')}\n\nMake it yours (full list: ENGINE.md, "Make it yours"):\n  - the listing in bolt-app.json and the config description say TODO\n  - README.md starts with a note. Replace the template text and keep the source credit\n  - check.json ${minimal ? 'has one case per view' : 'still expects the template words'}\n  - once your data is final, run ./bolt-apps check ${q(dir)} --update-golden and read what changed.`);
 }
 
 // For an engine app in views or lookup mode, replace the template's check.json cases by one case per view, taken from the app's own config (view ids, the first example query).

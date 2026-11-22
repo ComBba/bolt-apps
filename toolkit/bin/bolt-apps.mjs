@@ -229,13 +229,8 @@ function cmdNew(args) {
 	if (args[0] === '--list' || args[0] === 'list') return newList();
 	const suppliedAuthor = flag(args, '--author', null);
 	const author = suppliedAuthor ?? loginName();
-	const noteDefaultAuthor = () => {
-		if (suppliedAuthor === null) console.log('The default author is your login name when available. Review author.name in bolt-app.json and change it if needed before sharing the pack.');
-	};
-	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) {
-		newFromTemplate(args[0], args[1], flag(args, '--dir', '.'), author);
-		return noteDefaultAuthor();
-	}
+	const authorNote = suppliedAuthor === null ? 'The default author is your login name when available. Review author.name in bolt-app.json and change it if needed before sharing the pack.' : '';
+	if (args.length >= 2 && !args[0].startsWith('--') && !args[1].startsWith('--') && hasTemplate(args[0])) return newFromTemplate(args[0], args[1], flag(args, '--dir', '.'), author, authorNote);
 	const id = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--type' && args[args.indexOf(a) - 1] !== '--dir' && args[args.indexOf(a) - 1] !== '--author');
 	const type = flag(args, '--type', 'snippet'), root = flag(args, '--dir', 'apps');
 	if (!id || !ID.test(id)) die(`usage: ./bolt-apps new <id> [--type ${Object.keys(TEMPLATES).join('|')}] [--dir apps] [--author "Your name"]\n  id: lowercase letters, digits and hyphens`);
@@ -247,7 +242,7 @@ function cmdNew(args) {
 	fs.writeFileSync(path.join(dir, 'bolt-app.json'), JSON.stringify(listing, null, 2) + '\n');
 	fs.writeFileSync(path.join(dir, 'README.md'), `# ${id}\n\n${t.summary}\n\n## Who it is for\n\n## What it saves\n\n## Permissions\n\n${t.perms.map((p) => `- \`${p}\``).join('\n')}\n\n## Sample\n\nShow one real input and output.\n`);
 	console.log(`created ${dir} (${type}, tier ${t.tier})\nnext: edit it, then  ./bolt-apps lint ${dir}  and  ./bolt-apps pack ${dir}`);
-	noteDefaultAuthor();
+	if (authorNote) console.log(authorNote);
 }
 
 // ---------- keys, tar, pack, verify ----------

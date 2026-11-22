@@ -141,7 +141,7 @@ test('new <template> <id> puts the person in author, never the examples name, an
 	const custom = cli(home, d, 'new', 'portal-template', 'mine', '--dir', d, '--author', 'Tester');
 	assert.equal(custom.status, 0, custom.stdout + custom.stderr);
 	assert.doesNotMatch(custom.stdout, authorReminder);
-	assert.match(custom.stdout, /replace the template text in README\.md and keep the source credit/);
+	assert.match(custom.stdout, /README\.md starts with a note\. Replace the template text and keep the source credit/);
 	assert.deepEqual(author('mine'), { name: 'Tester' });
 	const out = path.join(d, 'mine.boltpack'); packOf(path.join(d, 'mine'), out);
 	const r = readPack(out); assert.ok(r.ok, r.reason); assert.equal(r.meta.signed_by, 'Tester'); assert.equal(r.meta.pack.author.name, 'Tester');
@@ -151,6 +151,7 @@ test('new <template> <id> puts the person in author, never the examples name, an
 		const created = cli(home, d, 'new', ...args, id, '--dir', d);
 		assert.equal(created.status, 0, created.stdout + created.stderr);
 		assert.match(created.stdout, authorReminder);
+		if (args.length) assert.ok(created.stdout.search(authorReminder) < created.stdout.indexOf("Make it yours"), created.stdout);
 		assert.deepEqual(author(id), { name: os.userInfo().username });
 	}
 	const readme = fs.readFileSync(path.join(d, 'mine', 'README.md'), 'utf8');
