@@ -102,6 +102,34 @@ test('the permissions printed come from the files, not from what bolt-app.json c
 	assert.equal(readPack(path.join(d, 'e.boltpack')).meta.listing.tier, 3);
 });
 
+test('the permissions a personal pack writes into its listing pass lint and verify when bolt-app.json declares them (bare opens_links too)', () => {
+	const d = tmp(), dir = scriptApp(d);
+	write(path.join(dir, 'utilities', 'eagle-info.yaml'), BRIDGE + 'actions:\n  - { id: p, kind: url, label: Any, url_template: "{{link}}" }\n');
+	const out = path.join(d, 'e.boltpack');
+	assert.equal(run(d, 'pack', 'apps/eagle-info', '--personal', '--key', keyed(d), '--out', out).status, 0);
+	const listed = readPack(out).meta.listing.permissions;
+	assert.ok(listed.includes('opens_links'), JSON.stringify(listed));   // a link that is not a fixed https address is listed as plain opens_links (the listing schema allows it)
+	assert.equal(run(d, 'verify', out).status, 0);
+	// The same list in the folder's bolt-app.json: the folder and the pack agree
+	const j = JSON.parse(fs.readFileSync(path.join(dir, 'bolt-app.json'), 'utf8')); j.permissions = listed; write(path.join(dir, 'bolt-app.json'), JSON.stringify(j));
+	for (const cmd of [['lint', 'apps/eagle-info', '--personal'], ['verify', 'apps/eagle-info']]) { const r = run(d, ...cmd); assert.equal(r.status, 0, `${cmd[0]}: ${r.stdout}${r.stderr}`); assert.doesNotMatch(r.stdout, /permission_unknown/); }
+	// A word Bolt does not know is still refused, by lint --personal and by the gallery lint
+	j.permissions = ['opens_links', 'opens_link']; write(path.join(dir, 'bolt-app.json'), JSON.stringify(j));
+	for (const mode of [['--personal'], []]) {
+		const g = run(d, 'lint', 'apps/eagle-info', ...mode, '--json'), codes = JSON.parse(g.stdout).reports[0].findings.filter((x) => x.code === 'permission_unknown');
+		assert.deepEqual(codes.map((x) => x.message), ['unknown permission "opens_link"'], mode.join(' ') || 'gallery');
+	}
+});
+
+test('the gallery lint warns about a bare opens_links that no gallery content uses', () => {
+	const d = tmp(); run(d, 'new', 'acmesearch', '--type', 'search');
+	const f = path.join(d, 'apps', 'acmesearch', 'bolt-app.json'), j = JSON.parse(fs.readFileSync(f, 'utf8'));
+	j.permissions.push('opens_links'); write(f, JSON.stringify(j));
+	const r = run(d, 'lint', 'apps/acmesearch', '--json'), found = JSON.parse(r.stdout).reports[0].findings;
+	assert.equal(r.status, 0, r.stdout);
+	assert.deepEqual(found.map((x) => [x.level, x.code, x.message]), [['warning', 'permission_unused', '"opens_links" is declared but nothing uses it']]);
+});
+
 test('--personal also packs an ordinary tier 2 app, and a local-service app says its port', () => {
 	const d = tmp(); run(d, 'new', 'up', '--type', 'transform');
 	assert.equal(run(d, 'pack', 'apps/up', '--personal', '--key', keyed(d), '--out', path.join(d, 'u.boltpack')).status, 0);
