@@ -1,13 +1,13 @@
 # Tests the author toolkit. No secrets, runs on pull requests from anyone.
 name: toolkit
 
-# docs-drift reads root Markdown as well as the docs in the listed directories.
+# docs-drift reads root Markdown as well as the docs in the listed directories; legal reads LICENSE and NOTICE; the Windows launcher test reads bolt-apps.cmd.
 on:
   pull_request:
-    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "*.md", ".github/workflows/toolkit.yml"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "bolt-apps.cmd", "*.md", "LICENSE", "NOTICE", ".github/workflows/toolkit.yml"]
   push:
     branches: [main]
-    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "*.md", ".github/workflows/toolkit.yml"]
+    paths: ["toolkit/**", "apps/**", "schema/**", "kit/**", "docs/**", "conformance/**", "scripts/**", "bolt-apps", "bolt-apps.cmd", "*.md", "LICENSE", "NOTICE", ".github/workflows/toolkit.yml"]
 
 permissions:
   contents: read
