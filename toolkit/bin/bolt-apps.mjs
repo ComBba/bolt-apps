@@ -29,8 +29,8 @@ const rd = (f) => fs.readFileSync(f, 'utf8');
 const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
 
 // ---------- lint ----------
-// Files the OS or git put in any folder: never part of an app, so lint skips them and pack leaves them out. Only these names: a dot file such as .backup.yaml is still the author's and is checked.
-const LEFTOVER = /^(\.DS_Store|Thumbs\.db|desktop\.ini|\.git|\.gitignore|\.gitattributes)$/;
+// Skip only these OS and Git names, including case variants on case-insensitive file systems. Other root and content dot files are checked.
+const LEFTOVER = /^(\.DS_Store|Thumbs\.db|desktop\.ini|\.git|\.gitignore|\.gitattributes)$/i;
 // opts.personal: the app is for its author's own use (tier 3 and script apps allowed). The gallery rules are the default.
 export function lintApp(dir, opts = {}) {
 	const personal = opts.personal === true;
@@ -61,7 +61,7 @@ export function lintApp(dir, opts = {}) {
 			// What the launcher refuses is a link, an odd name, a case clash, a file that is also a folder, or a script another app already owns: every file here must be named <app id>__<name>.
 			const walk = (rel) => {
 				for (const f of fs.readdirSync(path.join(dir, 'scripts', rel), { withFileTypes: true })) {
-					if (f.name.startsWith('.') || f.name === '__pycache__') continue; // editor and OS leftovers are never packed
+					if (f.name.startsWith('.') || f.name === '__pycache__' || LEFTOVER.test(f.name)) continue; // editor and OS leftovers are never packed
 					const r = rel ? `${rel}/${f.name}` : f.name;
 					if (f.isSymbolicLink()) E('script_symlink', `scripts/${r} is a symlink. Bolt refuses a script that is a link ("is a link, not a file"), and a pack cannot carry one. Copy the real file in`, `scripts/${r}`);
 					else if (f.isDirectory()) walk(r);
