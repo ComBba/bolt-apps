@@ -78,9 +78,7 @@ export function userUtilsDir(env = process.env, platform = process.platform, hom
 	const base = platform === 'darwin' ? path.join(home, 'Library', 'Application Support') : platform === 'win32' ? (env.APPDATA || path.join(home, 'AppData', 'Roaming')) : (env.XDG_CONFIG_HOME || path.join(home, '.config'));
 	return path.join(base, sub, 'user-utils');
 }
-// Names only, never contents and never a write. Lists the files in Bolt's user apps folder that would stop a pack of this app installing (file_exists):
-// a script with the same name as one the pack writes. An `<id>.yaml` or a script of the pack is also what an install of this app leaves, so names alone
-// cannot say whether it is a problem: kind says which.
+// Names only, never contents and never a write. A file the pack would write may be from an installed pack or a hand copy.
 // Old flat names are the app's own script names without the `<id>__` prefix (a hand copy from before apps were namespaced, or another app that uses the same
 // common name, such as bolt_app_kit.py). The pack writes only <id>__<name>, so such a file cannot stop it installing: it is listed with blocks: false.
 export function userUtilsClashes(dir, id, appDir) {
@@ -89,7 +87,8 @@ export function userUtilsClashes(dir, id, appDir) {
 	const ls = (d) => { try { return fs.readdirSync(d); } catch { return []; } };
 	const scriptsDir = path.join(dir, 'scripts');
 	const top = ls(dir), scripts = ls(scriptsDir);
-	for (const f of top) if (f === `${id}.yaml` || f === `${id}.yml`) out.push({ file: path.join(dir, f), kind: 'app file', blocks: true });
+	const utilities = new Set(appDir ? ls(path.join(appDir, 'utilities')).filter((f) => /\.ya?ml$/.test(f)) : []);
+	for (const f of top) if (utilities.has(f)) out.push({ file: path.join(dir, f), kind: 'app file', blocks: true });
 	const own = ls(path.join(appDir || '', 'scripts')).filter((f) => !f.startsWith('.') && f !== '__pycache__');   // what a pack of this app writes into scripts/ (pack leaves these two out)
 	const installed = new Set(scripts), byCase = new Map(scripts.map((f) => [f.toLowerCase(), f]));
 	const blocks = new Set();

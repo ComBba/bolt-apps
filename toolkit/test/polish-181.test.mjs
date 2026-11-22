@@ -87,14 +87,15 @@ test('doctor: scans the user apps folder by name only and says what to remove; d
 	const app = path.join(dir, 'my-pipe');
 	const helper = fs.readdirSync(path.join(app, 'scripts')).find((f) => f.startsWith('my-pipe__') && f.endsWith('.py') && !/bolt_app_kit/.test(f));
 	const flat = helper.slice('my-pipe__'.length);
-	fs.mkdirSync(path.join(uu, 'scripts')); fs.writeFileSync(path.join(uu, 'my-pipe.yaml'), 'x'); fs.writeFileSync(path.join(uu, 'scripts', flat), 'x'); fs.writeFileSync(path.join(uu, 'scripts', 'other__a.py'), 'x');
+	const installedAppFile = path.join(uu, fs.readdirSync(path.join(app, 'utilities')).find((f) => /\.ya?ml$/.test(f)));
+	fs.mkdirSync(path.join(uu, 'scripts')); fs.writeFileSync(installedAppFile, 'x'); fs.writeFileSync(path.join(uu, 'scripts', flat), 'x'); fs.writeFileSync(path.join(uu, 'scripts', 'other__a.py'), 'x');
 	const before = fs.readdirSync(uu, { recursive: true }).sort();
 	const d = run(home, ['doctor', app], { BOLT_USER_UTILS_DIR: uu });
 	assert.equal(d.status, 1, d.stdout);
-	assert.match(d.stdout, /my-pipe\.yaml/); assert.match(d.stdout, new RegExp(`scripts[\\\\/]${flat.replace(/\./g, '\\.')}`)); assert.match(d.stdout, /file_exists/); assert.match(d.stdout, /rm |del /);
+	assert.ok(d.stdout.includes(installedAppFile), d.stdout); assert.match(d.stdout, new RegExp(`scripts[\\\\/]${flat.replace(/\./g, '\\.')}`)); assert.match(d.stdout, /file_exists/); assert.match(d.stdout, /rm |del /);
 	assert.doesNotMatch(d.stdout, /other__a/);
 	assert.deepEqual(fs.readdirSync(uu, { recursive: true }).sort(), before, 'doctor must not change the folder');
-	assert.equal(fs.readFileSync(path.join(uu, 'my-pipe.yaml'), 'utf8'), 'x');
+	assert.equal(fs.readFileSync(installedAppFile, 'utf8'), 'x');
 	const none = run(home, ['doctor', app], { BOLT_USER_UTILS_DIR: path.join(uu, 'missing') });
 	assert.doesNotMatch(none.stdout, /user apps folder/);
 	assert.match(run(home, ['doctor', '--help']).stdout, /BOLT_USER_UTILS_DIR/);
@@ -124,6 +125,15 @@ test('doctor: advises removing only a file the pack would write; another app\'s 
 	assert.match(d2.stdout, new RegExp(`FIX  script in your Bolt user apps folder: [^\\n]*${helper.replace(/\./g, '\\.')}`)); assert.match(d2.stdout, /file_exists/);
 	assert.equal((d2.stdout.match(/^FIX /gm) || []).length, 1, d2.stdout);
 	assert.deepEqual(fs.readdirSync(uu, { recursive: true }).sort(), [...before, path.join('scripts', helper)].sort(), 'doctor must not change the folder');
+});
+
+test('doctor: a snippet-only pack does not clash with an installed app file', () => {
+	const home = tmp('p181-home'), uu = tmp('p181-uu');
+	assert.equal(run(home, ['keygen']).status, 0);
+	fs.writeFileSync(path.join(uu, 'clean-list.yaml'), 'x');
+	const d = run(home, ['doctor', path.join(REPO, 'apps', 'clean-list')], { BOLT_USER_UTILS_DIR: uu });
+	assert.equal(d.status, 0, d.stdout + d.stderr);
+	assert.doesNotMatch(d.stdout, /clean-list\.yaml|file_exists/);
 });
 
 test('doctor: a packed script is not also an old flat name', () => {
